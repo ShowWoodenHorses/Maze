@@ -1,0 +1,39 @@
+[Ll]ibrary/
+[Tt]emp/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Mm]emoryCaptures/
+[Pp]rojectSettings/EditorBuildSettings.asset
+
+# Asset meta data should be tracked
+# *.meta
+
+# Visual Studio cache
+.vs/
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+
+# Rider
+.idea/
+*.sln.iml
+
+# Unity cache
+**/obj/
+*.pidb
+*.booproj
+*.svd
+
+# Crash Reports
+sysinfo.txt
+
+# VSCode
+.vscode/
+
+UserSettings/
+.vsconfig
