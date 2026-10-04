@@ -25,7 +25,15 @@ namespace Maze.Core.Visual
             var geometry = level.Geometry;
             level.VisualData.ResetCellAssignments(geometry.CellCount);
             for (var i = 0; i < geometry.CellCount; i++)
-                level.VisualData.SetCellAssignment(i, ChooseCell(level, geometry.ToPosition(i)));
+                AssignCell(level, geometry.ToPosition(i));
+        }
+
+        /// <summary>Both layers of one cell; a layer the cell does not have is cleared.</summary>
+        private static void AssignCell(LevelData level, GridPosition position)
+        {
+            var index = level.Geometry.ToIndex(position);
+            foreach (var layer in CellLayers.All)
+                level.VisualData.SetCellAssignment(layer, index, ChooseCell(level, position, layer));
         }
 
         /// <summary>
@@ -72,7 +80,7 @@ namespace Maze.Core.Visual
         public static void ReassignAround(LevelData level, GridPosition center)
         {
             var geometry = level.Geometry;
-            if (level.VisualData.CellAssignmentCount != geometry.CellCount)
+            if (!level.VisualData.HasCellAssignments(geometry.CellCount))
             {
                 AssignAll(level, clearOverrides: false);
                 return;
@@ -85,7 +93,7 @@ namespace Maze.Core.Visual
                 if (!geometry.IsInside(p))
                     continue;
 
-                level.VisualData.SetCellAssignment(geometry.ToIndex(p), ChooseCell(level, p));
+                AssignCell(level, p);
                 foreach (var entity in level.AllEntities())
                     if (entity.Position == p)
                         UpdateOrientation(level, entity);
@@ -208,20 +216,20 @@ namespace Maze.Core.Visual
             return variant != null && variant.HasColor ? variant.ColorTag : null;
         }
 
-        public static VisualChoice ChooseCell(LevelData level, GridPosition position)
+        /// <summary>Floor layer: weighted floor variant for every cell. Wall layer: wall variant by neighbour shape.</summary>
+        public static VisualChoice ChooseCell(LevelData level, GridPosition position, CellLayer layer)
         {
             var theme = level.VisualTheme;
-            if (theme == null)
+            var geometry = level.Geometry;
+            if (theme == null || !CellLayers.Exists(geometry.GetCell(position), layer))
                 return VisualChoice.None;
 
-            var geometry = level.Geometry;
-            var context = new CellVisualContext(geometry, position);
-            var kind = VisualKinds.ForCell(context.CellType);
+            var kind = CellLayers.Kind(layer);
             var category = VisualCategory.General;
             var rotation = 0;
 
-            if (kind == VisualKind.Wall)
-                (category, rotation) = WallShapes.Classify(context.WallConnections);
+            if (layer == CellLayer.Wall)
+                (category, rotation) = WallShapes.Classify(new CellVisualContext(geometry, position).WallConnections);
 
             var key = VisualSelector.CellKey(level.Generation.VisualSeed, kind, geometry.ToIndex(position));
             var variant = VisualSelector.PickOrDefault(theme.GetSet(kind), category, null, key);

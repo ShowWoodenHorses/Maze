@@ -17,10 +17,11 @@ namespace Maze.Tests.EditMode.Level
         public void TearDown() => Object.DestroyImmediate(_level);
 
         [Test]
-        public void NewLevel_HasDefaultEvenGeometryAndNoObjects()
+        public void NewLevel_HasDefaultOddGeometryAndNoObjects()
         {
             Assert.IsTrue(_level.Geometry.IsConsistent);
-            Assert.IsTrue(_level.Generation.HasEvenSize);
+            Assert.IsTrue(_level.Generation.HasOddSize);
+            Assert.AreEqual(_level.Generation.Width, _level.Geometry.Width);
             Assert.IsEmpty(_level.AllIds());
         }
 
@@ -79,10 +80,10 @@ namespace Maze.Tests.EditMode.Level
         }
 
         [Test]
-        public void HasEvenSize_DetectsOddDimensions()
+        public void HasOddSize_DetectsEvenDimensions()
         {
-            _level.Generation.Width = 21;
-            Assert.IsFalse(_level.Generation.HasEvenSize);
+            _level.Generation.Width = 20;
+            Assert.IsFalse(_level.Generation.HasOddSize);
         }
     }
 }

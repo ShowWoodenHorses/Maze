@@ -69,9 +69,6 @@ namespace Maze.Core.Visual
 
     public static class VisualKinds
     {
-        /// <summary>Wall cells use the Wall set; Floor and Door cells use the Floor set (floor under the door).</summary>
-        public static VisualKind ForCell(CellType cellType) => cellType == CellType.Wall ? VisualKind.Wall : VisualKind.Floor;
-
         /// <summary>False for entities without a visual (player starts).</summary>
         public static bool TryGetForEntity(LevelEntityData entity, out VisualKind kind, out ScriptableObject definition)
         {

@@ -88,8 +88,8 @@ namespace Maze.Tests.EditMode.Navigation
         [Test]
         public void MatchesBfsDistance_OnGeneratedMazesWithLoops_ReusingOneInstance()
         {
-            var settings = new LevelGenerationSettings { Width = 30, Height = 30, LoopDensity = 0.3f };
-            var pathfinder = new GridPathfinder(30, 30);
+            var settings = new LevelGenerationSettings { Width = 31, Height = 31, LoopDensity = 0.3f };
+            var pathfinder = new GridPathfinder(31, 31);
             var path = new List<GridPosition>();
 
             for (var seed = 0; seed < 20; seed++)
@@ -100,8 +100,8 @@ namespace Maze.Tests.EditMode.Navigation
                 var start = new GridPosition(1, 1);
                 var distances = Bfs(geometry, start);
 
-                for (var y = 1; y < 28; y += 2)
-                for (var x = 1; x < 28; x += 2)
+                for (var y = 1; y < 30; y += 2)
+                for (var x = 1; x < 30; x += 2)
                 {
                     var goal = new GridPosition(x, y);
                     Assert.IsTrue(pathfinder.TryFindPath(start, goal, mask, path));

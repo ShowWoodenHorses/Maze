@@ -15,8 +15,8 @@ namespace Maze.Core.Level
     [Serializable]
     public sealed class LevelGenerationSettings
     {
-        [SerializeField] private int _width = 20;
-        [SerializeField] private int _height = 20;
+        [SerializeField] private int _width = 21;
+        [SerializeField] private int _height = 21;
         [SerializeField] private int _mazeSeed;
         [SerializeField] private int _visualSeed;
         [SerializeField] private MazeAlgorithm _mazeAlgorithm = MazeAlgorithm.RecursiveBacktracker;
@@ -33,7 +33,11 @@ namespace Maze.Core.Level
         public int InitialPlayerStartCount { get => _initialPlayerStartCount; internal set => _initialPlayerStartCount = value; }
         public int InitialExitCount { get => _initialExitCount; internal set => _initialExitCount = value; }
 
-        /// <summary>Width and height must be even (ТЗ §12).</summary>
-        public bool HasEvenSize => _width % 2 == 0 && _height % 2 == 0;
+        /// <summary>
+        /// The generator needs odd width and height: a border wall plus alternating passage/wall cells, all one
+        /// cell thick, fit exactly into an odd size (21 = wall + 10 x (passage, wall)). Project decision that
+        /// replaces the "even size" rule of ТЗ §12, which left a redundant double wall at the top/right.
+        /// </summary>
+        public bool HasOddSize => _width % 2 == 1 && _height % 2 == 1;
     }
 }

@@ -16,7 +16,7 @@ namespace Maze.Core.Level
     {
         [SerializeField] private LevelSettings _settings = new LevelSettings();
         [SerializeField] private LevelGenerationSettings _generation = new LevelGenerationSettings();
-        [SerializeField] private LevelGeometry _geometry = new LevelGeometry(20, 20);
+        [SerializeField] private LevelGeometry _geometry = new LevelGeometry(21, 21);
         [SerializeField] private List<DoorData> _doors = new List<DoorData>();
         [SerializeField] private List<PlayerStartData> _playerStarts = new List<PlayerStartData>();
         [SerializeField] private List<ExitData> _exits = new List<ExitData>();

@@ -9,23 +9,23 @@ namespace Maze.Core.Generation
     /// <summary>
     /// Generates the logical maze for "Generate New" (ТЗ §12–14).
     ///
-    /// Layout: the outer border is always wall. "Rooms" sit at odd coordinates (1, 1), (3, 1), ...;
-    /// cells between two rooms are carvable walls; cells with both coordinates even are permanent pillars,
-    /// so passages are always exactly one cell wide. Because width and height are even, the last inner
-    /// column and row (Width - 2, Height - 2) stay solid wall.
+    /// Layout: the outer border is always wall. "Rooms" sit at odd coordinates (1, 1), (3, 1), ... up to
+    /// (Width - 2, Height - 2); cells between two rooms are carvable walls; cells with both coordinates even are
+    /// permanent pillars, so passages are always exactly one cell wide. Width and height are odd, so the layout
+    /// fills the grid exactly: no redundant wall rows or columns.
     ///
     /// The result depends only on the settings: same settings, same maze, on every platform.
     /// </summary>
     public sealed class MazeGenerator
     {
-        public const int MinSize = 4;
+        public const int MinSize = 5;
 
         public MazeGenerationResult Generate(LevelGenerationSettings settings)
         {
             if (settings == null) throw new ArgumentNullException(nameof(settings));
 
-            var cols = (settings.Width - 2) / 2;
-            var rows = (settings.Height - 2) / 2;
+            var cols = (settings.Width - 1) / 2;
+            var rows = (settings.Height - 1) / 2;
             ValidateSettings(settings, cols * rows);
 
             var random = new DeterministicRandom(settings.MazeSeed);
@@ -55,8 +55,8 @@ namespace Maze.Core.Generation
 
         private static void ValidateSettings(LevelGenerationSettings settings, int roomCount)
         {
-            if (!settings.HasEvenSize)
-                throw new ArgumentException($"Level size must be even, got {settings.Width}x{settings.Height}.");
+            if (!settings.HasOddSize)
+                throw new ArgumentException($"Level size must be odd (e.g. 21x21), got {settings.Width}x{settings.Height}.");
 
             if (settings.Width < MinSize || settings.Height < MinSize)
                 throw new ArgumentException($"Level size must be at least {MinSize}x{MinSize}.");

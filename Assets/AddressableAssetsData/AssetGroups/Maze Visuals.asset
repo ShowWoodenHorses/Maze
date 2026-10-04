@@ -1,0 +1,158 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Maze Visuals
+  m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.AddressableAssetGroup
+  m_GroupName: Maze Visuals
+  m_GUID: 53448397b8cdb104f8abe7d68a0b8a0a
+  m_SerializeEntries:
+  - m_GUID: 05534052652194744903bc027a133509
+    m_Address: Assets/_Project/Art/Placeholders/wall_isolated.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 05dafb7dc9ef64b43970de2bdc5cf2ad
+    m_Address: Assets/_Project/Art/Placeholders/fragment_01.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 193d58e81267ac143bd7dbc3192ca6c0
+    m_Address: Assets/_Project/Art/Placeholders/door_green.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 22d9508cdfcebae4f898dc3270a841e9
+    m_Address: Assets/_Project/Art/Placeholders/key_red.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 25b654f452a9c0f42bcc6873bd55b37b
+    m_Address: Assets/_Project/Art/Placeholders/wall_straight_01.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 267996229ea51bd4db76cbb4f8e296ad
+    m_Address: Assets/_Project/Art/Placeholders/door_blue.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2bf304437e5febf4ab790bdf8259bd60
+    m_Address: Assets/_Project/Art/Placeholders/wall_end.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 309bd111d7d2d0e4db1e7ab7610bf954
+    m_Address: Assets/_Project/Art/Placeholders/floor_03.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 38b2943fcbbd3e04999a3ffe42b0306b
+    m_Address: Assets/_Project/Art/Placeholders/floor_02.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3b7037896ac67ff409db276fb3328ee4
+    m_Address: Assets/_Project/Art/Placeholders/medkit_01.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 42ebc84ac539e0749aa91a37e048b6a7
+    m_Address: Assets/_Project/Art/Placeholders/floor_01.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4ba4be40fed048a4388042ed91c4fe88
+    m_Address: Assets/_Project/Art/Placeholders/zombie_01.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 520c66d654da1a646b2469f856ee6122
+    m_Address: Assets/_Project/Art/Placeholders/wall_straight_02.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 52a40ffef88101d488aa917a4847fb26
+    m_Address: Assets/_Project/Art/Placeholders/key_green.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 70ef0f35b3c7c8b47853e9399130d57b
+    m_Address: Assets/_Project/Art/Placeholders/key_yellow.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 74b4e6258f807744eb65f5231a73b5e4
+    m_Address: Assets/_Project/Art/Placeholders/wall_cross.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8b3ad0b31d4acb54eb31040339252903
+    m_Address: Assets/_Project/Art/Placeholders/floor_special_blood.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9f094055fdac6324e908944a519e5e9f
+    m_Address: Assets/_Project/Art/Placeholders/door_red.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a5da9085dfba01444a84de434ec89334
+    m_Address: Assets/_Project/Art/Placeholders/zombie_02.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a9dc04b5f2ede4d4d9e4c294f51db4de
+    m_Address: Assets/_Project/Art/Placeholders/weapon_01.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bf895cb5fd4363f479ff71d9c859c4cb
+    m_Address: Assets/_Project/Art/Placeholders/door_wood.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e70302ea4c17d6442b2e7555d6d824bf
+    m_Address: Assets/_Project/Art/Placeholders/wall_t.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ea281acffbcd71f48b626a6e95dde94f
+    m_Address: Assets/_Project/Art/Placeholders/key_blue.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ea58a74de66ad6149960500c35476343
+    m_Address: Assets/_Project/Art/Placeholders/wall_corner.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f7aca19616ac6834a8fad517cc155f7c
+    m_Address: Assets/_Project/Art/Placeholders/door_yellow.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fe2ce03998847d64baa571bdc36e833e
+    m_Address: Assets/_Project/Art/Placeholders/exit_01.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: 7b0b4a63a91ea59479d6f21c16e4df79, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: c72d0c790f25c014c9746abe9c233581, type: 2}
+    - {fileID: 11400000, guid: 6b08b5ded3ce2cf43b90f25b9f404ab5, type: 2}
+    m_SchemaDisplayOrder:
+    - Maze Visuals_BundledAssetGroupSchema
+    - Maze Visuals_ContentUpdateGroupSchema
+  m_IncludeInBuild: 1
+  m_IncludeInBuildMigrated: 1

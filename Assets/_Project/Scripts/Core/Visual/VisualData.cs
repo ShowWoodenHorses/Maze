@@ -37,15 +37,18 @@ namespace Maze.Core.Visual
     public sealed class CellVisualOverride
     {
         [SerializeField] private GridPosition _position;
+        [SerializeField] private CellLayer _layer;
         [SerializeField] private VisualChoice _choice;
 
-        public CellVisualOverride(GridPosition position, VisualChoice choice)
+        public CellVisualOverride(GridPosition position, CellLayer layer, VisualChoice choice)
         {
             _position = position;
+            _layer = layer;
             _choice = choice;
         }
 
         public GridPosition Position => _position;
+        public CellLayer Layer => _layer;
         public VisualChoice Choice { get => _choice; internal set => _choice = value; }
     }
 
@@ -66,30 +69,38 @@ namespace Maze.Core.Visual
     }
 
     /// <summary>
-    /// Saved visual design of a level (ТЗ §25). Geometry assignments are stored per cell (row-major,
-    /// same indexing as LevelGeometry); door and exit cells get a floor assignment, the door/exit itself
-    /// is an object assignment. Overrides are the designer's manual choices and win over assignments.
+    /// Saved visual design of a level (ТЗ §25). Geometry assignments are stored per cell and layer (row-major,
+    /// same indexing as LevelGeometry): every cell has a Floor-layer assignment, wall cells also a Wall-layer one.
+    /// Doors and exits themselves are object assignments. Overrides are the designer's manual choices
+    /// (per cell and layer) and win over assignments.
     /// </summary>
     [Serializable]
     public sealed class VisualData
     {
-        [SerializeField] private VisualChoice[] _cellAssignments = Array.Empty<VisualChoice>();
+        [SerializeField] private VisualChoice[] _floorAssignments = Array.Empty<VisualChoice>();
+        [SerializeField] private VisualChoice[] _wallAssignments = Array.Empty<VisualChoice>();
         [SerializeField] private List<CellVisualOverride> _cellOverrides = new List<CellVisualOverride>();
         [SerializeField] private List<ObjectVisualAssignment> _objectAssignments = new List<ObjectVisualAssignment>();
         [SerializeField] private List<ObjectVisualAssignment> _objectOverrides = new List<ObjectVisualAssignment>();
 
-        public int CellAssignmentCount => _cellAssignments.Length;
         public IReadOnlyList<CellVisualOverride> CellOverrides => _cellOverrides;
         public IReadOnlyList<ObjectVisualAssignment> ObjectAssignments => _objectAssignments;
         public IReadOnlyList<ObjectVisualAssignment> ObjectOverrides => _objectOverrides;
 
-        public VisualChoice GetCellAssignment(int cellIndex) =>
-            cellIndex >= 0 && cellIndex < _cellAssignments.Length ? _cellAssignments[cellIndex] : VisualChoice.None;
+        /// <summary>False if assignments were made for a different level size (or never made).</summary>
+        public bool HasCellAssignments(int cellCount) =>
+            _floorAssignments.Length == cellCount && _wallAssignments.Length == cellCount;
 
-        public bool TryGetCellOverride(GridPosition position, out VisualChoice choice)
+        public VisualChoice GetCellAssignment(CellLayer layer, int cellIndex)
+        {
+            var assignments = Layer(layer);
+            return cellIndex >= 0 && cellIndex < assignments.Length ? assignments[cellIndex] : VisualChoice.None;
+        }
+
+        public bool TryGetCellOverride(GridPosition position, CellLayer layer, out VisualChoice choice)
         {
             foreach (var entry in _cellOverrides)
-                if (entry.Position == position)
+                if (entry.Position == position && entry.Layer == layer)
                 {
                     choice = entry.Choice;
                     return true;
@@ -108,29 +119,54 @@ namespace Maze.Core.Visual
             return entry != null;
         }
 
-        internal void ResetCellAssignments(int cellCount) => _cellAssignments = new VisualChoice[cellCount];
+        internal void ResetCellAssignments(int cellCount)
+        {
+            _floorAssignments = new VisualChoice[cellCount];
+            _wallAssignments = new VisualChoice[cellCount];
+        }
 
-        internal void SetCellAssignment(int cellIndex, VisualChoice choice) => _cellAssignments[cellIndex] = choice;
+        internal void SetCellAssignment(CellLayer layer, int cellIndex, VisualChoice choice) => Layer(layer)[cellIndex] = choice;
 
-        internal void SetCellOverride(GridPosition position, VisualChoice choice)
+        internal void SetCellOverride(GridPosition position, CellLayer layer, VisualChoice choice)
         {
             foreach (var entry in _cellOverrides)
-                if (entry.Position == position)
+                if (entry.Position == position && entry.Layer == layer)
                 {
                     entry.Choice = choice;
                     return;
                 }
 
-            _cellOverrides.Add(new CellVisualOverride(position, choice));
+            _cellOverrides.Add(new CellVisualOverride(position, layer, choice));
         }
 
-        internal bool ClearCellOverride(GridPosition position) => _cellOverrides.RemoveAll(o => o.Position == position) > 0;
+        internal bool ClearCellOverride(GridPosition position, CellLayer layer) =>
+            _cellOverrides.RemoveAll(o => o.Position == position && o.Layer == layer) > 0;
+
+        private VisualChoice[] Layer(CellLayer layer) => layer == CellLayer.Floor ? _floorAssignments : _wallAssignments;
 
         internal void SetObjectAssignment(string entityId, VisualChoice choice) => Set(_objectAssignments, entityId, choice);
 
         internal void SetObjectOverride(string entityId, VisualChoice choice) => Set(_objectOverrides, entityId, choice);
 
         internal bool ClearObjectOverride(string entityId) => _objectOverrides.RemoveAll(o => o.EntityId == entityId) > 0;
+
+        internal void RemoveObject(string entityId)
+        {
+            _objectAssignments.RemoveAll(o => o.EntityId == entityId);
+            _objectOverrides.RemoveAll(o => o.EntityId == entityId);
+        }
+
+        /// <summary>Keeps the visual design of an object when its id changes.</summary>
+        internal void RenameObject(string oldId, string newId)
+        {
+            foreach (var entry in _objectAssignments)
+                if (entry.EntityId == oldId)
+                    entry.EntityId = newId;
+
+            foreach (var entry in _objectOverrides)
+                if (entry.EntityId == oldId)
+                    entry.EntityId = newId;
+        }
 
         /// <summary>Drops assignments and overrides of entities that no longer exist.</summary>
         internal void RetainObjects(ICollection<string> existingEntityIds)
@@ -147,7 +183,8 @@ namespace Maze.Core.Visual
 
         internal void Clear()
         {
-            _cellAssignments = Array.Empty<VisualChoice>();
+            _floorAssignments = Array.Empty<VisualChoice>();
+            _wallAssignments = Array.Empty<VisualChoice>();
             _objectAssignments.Clear();
             ClearOverrides();
         }

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Maze.Core.Grid;
@@ -20,7 +21,13 @@ namespace Maze.Core.Validation
         private const ValidationSeverity Warning = ValidationSeverity.Warning;
         private const ValidationSeverity Info = ValidationSeverity.Info;
 
-        public static ValidationReport Validate(LevelData level)
+        public static ValidationReport Validate(LevelData level) => Validate(level, null);
+
+        /// <summary>
+        /// <paramref name="additionalChecks"/> lets editor-only code (e.g. asset existence checks) add issues
+        /// to the same report; it runs only when geometry is consistent.
+        /// </summary>
+        internal static ValidationReport Validate(LevelData level, Action<LevelData, ValidationReport> additionalChecks)
         {
             var report = new ValidationReport();
             var geometry = level.Geometry;
@@ -34,6 +41,7 @@ namespace Maze.Core.Validation
             ValidateStructure(level, report);
             ValidateVisuals(level, report);
             ValidateGameplay(level, report);
+            additionalChecks?.Invoke(level, report);
 
             report.AddTruncationNotes();
             return report;
@@ -41,13 +49,12 @@ namespace Maze.Core.Validation
 
         // ---------------------------------------------------------------- Structural
 
+        /// <remarks>
+        /// Size parity is not checked: odd size is a requirement of the generator only; a finished, manually
+        /// edited level may have any size.
+        /// </remarks>
         private static void ValidateStructure(LevelData level, ValidationReport report)
         {
-            var geometry = level.Geometry;
-
-            if (geometry.Width % 2 != 0 || geometry.Height % 2 != 0)
-                report.Add(Error, Structural, ValidationCodes.OddSize, $"Level size {geometry.Width}x{geometry.Height} must be even.");
-
             if (level.PlayerStarts.Count == 0)
                 report.Add(Error, Structural, ValidationCodes.NoPlayerStart, "Level has no player start.");
 
@@ -313,13 +320,18 @@ namespace Maze.Core.Validation
             var geometry = level.Geometry;
             var data = level.VisualData;
 
-            if (data.CellAssignmentCount != geometry.CellCount)
+            if (!data.HasCellAssignments(geometry.CellCount))
                 report.Add(Error, Visual, ValidationCodes.AssignmentsOutOfSync,
-                    $"Visual assignments cover {data.CellAssignmentCount} cells, level has {geometry.CellCount}. Run Regenerate Visuals.");
+                    $"Visual assignments do not match the level size {geometry.Width}x{geometry.Height}. Run Regenerate Visuals.");
 
             foreach (var entry in data.CellOverrides)
+            {
                 if (!geometry.IsInside(entry.Position))
                     report.Add(Error, Visual, ValidationCodes.OverrideOutOfBounds, $"Visual override at {entry.Position} is outside the level.", entry.Position);
+                else if (!CellLayers.Exists(geometry.GetCell(entry.Position), entry.Layer))
+                    report.Add(Warning, Visual, ValidationCodes.OverrideLayerMismatch,
+                        $"{entry.Layer} override at {entry.Position} is ignored: the cell is not a wall.", entry.Position);
+            }
 
             var staleWalls = 0;
             var wallCategoriesWithoutVariants = new Dictionary<VisualCategory, int>();
@@ -327,17 +339,21 @@ namespace Maze.Core.Validation
             var cellCounts = new Dictionary<VisualKind, int>();
 
             for (var i = 0; i < geometry.CellCount; i++)
+            foreach (var layer in CellLayers.All)
             {
                 var p = geometry.ToPosition(i);
-                var kind = VisualKinds.ForCell(geometry.GetCell(p));
+                if (!CellLayers.Exists(geometry.GetCell(p), layer))
+                    continue;
+
+                var kind = CellLayers.Kind(layer);
                 var set = theme.GetSet(kind);
                 if (set == null)
                     continue;
 
-                var choice = VisualResolver.ResolveCell(level, p, out var source);
+                var choice = VisualResolver.ResolveCell(level, p, layer, out var source);
 
                 // Root cause first: a wall category without variants explains the missing/default visuals below.
-                var checkWallShape = kind == VisualKind.Wall && source != VisualSource.Override;
+                var checkWallShape = layer == CellLayer.Wall && source != VisualSource.Override;
                 var category = VisualCategory.General;
                 var rotation = 0;
                 var categoryHasVariants = true;
@@ -354,14 +370,15 @@ namespace Maze.Core.Validation
 
                 if (choice.IsEmpty)
                 {
-                    report.Add(Error, Visual, ValidationCodes.MissingVisual, $"{kind} cell {p} has no visual.", p);
+                    report.Add(Error, Visual, ValidationCodes.MissingVisual, $"Cell {p} has no {kind.ToString().ToLowerInvariant()} visual.", p);
                     continue;
                 }
 
                 var variant = set.FindVariant(choice.VariantId);
                 if (variant == null)
                 {
-                    report.Add(Error, Visual, ValidationCodes.UnknownVariant, $"{kind} cell {p} uses unknown variant '{choice.VariantId}'.", p);
+                    report.Add(Error, Visual, ValidationCodes.UnknownVariant,
+                        $"Cell {p} uses unknown {kind.ToString().ToLowerInvariant()} variant '{choice.VariantId}'.", p);
                     continue;
                 }
 
@@ -397,7 +414,7 @@ namespace Maze.Core.Validation
                 var autoVariants = set.Variants.Count(v => v.Weight > 0 && v.Category != VisualCategory.Special);
                 if (autoVariants >= 2 && used.Count == 1 && cellCounts[kind] >= 20)
                     report.Add(Warning, Visual, ValidationCodes.UniformDistribution,
-                        $"All {cellCounts[kind]} {kind} cells use the same variant '{used.First()}'.");
+                        $"All {cellCounts[kind]} cells use the same {kind.ToString().ToLowerInvariant()} variant '{used.First()}'.");
             }
         }
 

@@ -9,27 +9,48 @@ namespace Maze.Tests.EditMode.Visual
 {
     public class VisualAssignmentTests
     {
+        /// <summary>Both layers of every cell, in a stable order.</summary>
         private static VisualChoice[] ResolveAllCells(LevelData level)
         {
             var geometry = level.Geometry;
             return Enumerable.Range(0, geometry.CellCount)
-                .Select(i => VisualResolver.ResolveCell(level, geometry.ToPosition(i)))
+                .SelectMany(i => CellLayers.All.Select(layer => VisualResolver.ResolveCell(level, geometry.ToPosition(i), layer)))
                 .ToArray();
         }
 
         [Test]
-        public void GenerateNew_AssignsEveryCell()
+        public void GenerateNew_AssignsFloorToEveryCell_AndWallOnTopOfWallCells()
         {
             using (var f = new VisualFixture())
             {
                 LevelAuthoring.GenerateNew(f.Level);
+                var geometry = f.Level.Geometry;
+                var data = f.Level.VisualData;
 
-                Assert.AreEqual(f.Level.Geometry.CellCount, f.Level.VisualData.CellAssignmentCount);
-                for (var i = 0; i < f.Level.Geometry.CellCount; i++)
-                    Assert.IsFalse(f.Level.VisualData.GetCellAssignment(i).IsEmpty, $"Cell {f.Level.Geometry.ToPosition(i)}");
+                Assert.IsTrue(data.HasCellAssignments(geometry.CellCount));
+                for (var i = 0; i < geometry.CellCount; i++)
+                {
+                    var isWall = geometry.GetCell(geometry.ToPosition(i)) == CellType.Wall;
+                    Assert.IsFalse(data.GetCellAssignment(CellLayer.Floor, i).IsEmpty, $"Floor under {geometry.ToPosition(i)}");
+                    Assert.AreEqual(isWall, !data.GetCellAssignment(CellLayer.Wall, i).IsEmpty, $"Wall layer of {geometry.ToPosition(i)}");
+                    Assert.IsNotNull(f.Floor.FindVariant(data.GetCellAssignment(CellLayer.Floor, i).VariantId));
+                }
 
                 foreach (var exit in f.Level.Exits)
                     Assert.AreEqual("exit_01", VisualResolver.ResolveObject(f.Level, exit).VariantId);
+            }
+        }
+
+        [Test]
+        public void WallLayer_OfNonWallCell_ResolvesToNothing()
+        {
+            using (var f = new VisualFixture())
+            {
+                LevelAuthoring.GenerateNew(f.Level);
+                var start = f.Level.PlayerStarts[0].Position;
+
+                Assert.IsTrue(VisualResolver.ResolveCell(f.Level, start, CellLayer.Wall, out var source).IsEmpty);
+                Assert.AreEqual(VisualSource.None, source);
             }
         }
 
@@ -78,13 +99,13 @@ namespace Maze.Tests.EditMode.Visual
         [Test]
         public void Weights_ApproximateDistribution_AndZeroOrSpecialNeverPicked()
         {
-            using (var f = new VisualFixture(width: 80, height: 80, loopDensity: 1f))
+            using (var f = new VisualFixture(width: 81, height: 81, loopDensity: 1f))
             {
                 LevelAuthoring.GenerateNew(f.Level);
-                var counts = VisualResolver.CountCellVariants(f.Level, VisualKind.Floor);
+                var counts = VisualResolver.CountCellVariants(f.Level, CellLayer.Floor);
                 var total = (double)counts.Values.Sum();
 
-                Assert.Greater(total, 3000);
+                Assert.AreEqual(f.Level.Geometry.CellCount, (int)total, "Floor layer covers every cell, including under walls.");
                 Assert.AreEqual(0.80, counts["floor_01"] / total, 0.03);
                 Assert.AreEqual(0.10, counts["floor_02"] / total, 0.03);
                 Assert.AreEqual(0.10, counts["floor_03"] / total, 0.03);
@@ -109,7 +130,7 @@ namespace Maze.Tests.EditMode.Visual
                         continue;
 
                     var (category, rotation) = WallShapes.Classify(new CellVisualContext(geometry, p).WallConnections);
-                    var choice = VisualResolver.ResolveCell(f.Level, p);
+                    var choice = VisualResolver.ResolveCell(f.Level, p, CellLayer.Wall);
                     var variant = f.Wall.FindVariant(choice.VariantId);
 
                     Assert.AreEqual(rotation, choice.Rotation, $"Rotation at {p}");
@@ -138,7 +159,7 @@ namespace Maze.Tests.EditMode.Visual
                 LevelAuthoring.GenerateNew(f.Level);
 
                 var floor = f.Level.PlayerStarts[0].Position;
-                Assert.IsTrue(VisualResolver.ResolveCell(f.Level, floor, out var source).IsEmpty);
+                Assert.IsTrue(VisualResolver.ResolveCell(f.Level, floor, CellLayer.Floor, out var source).IsEmpty);
                 Assert.AreEqual(VisualSource.None, source);
             }
         }
@@ -152,22 +173,22 @@ namespace Maze.Tests.EditMode.Visual
                 var cell = f.Level.PlayerStarts[0].Position;
                 var exit = f.Level.Exits[0];
 
-                f.Level.VisualData.SetCellOverride(cell, new VisualChoice("floor_special_blood"));
+                f.Level.VisualData.SetCellOverride(cell, CellLayer.Floor, new VisualChoice("floor_special_blood"));
                 f.Level.VisualData.SetObjectOverride(exit.Id, new VisualChoice("exit_01", 2));
 
-                Assert.AreEqual("floor_special_blood", VisualResolver.ResolveCell(f.Level, cell, out var source).VariantId);
+                Assert.AreEqual("floor_special_blood", VisualResolver.ResolveCell(f.Level, cell, CellLayer.Floor, out var source).VariantId);
                 Assert.AreEqual(VisualSource.Override, source);
 
                 f.Level.Generation.VisualSeed = 99;
                 LevelAuthoring.RegenerateVisuals(f.Level, clearOverrides: false);
-                Assert.AreEqual("floor_special_blood", VisualResolver.ResolveCell(f.Level, cell).VariantId);
+                Assert.AreEqual("floor_special_blood", VisualResolver.ResolveCell(f.Level, cell, CellLayer.Floor).VariantId);
                 Assert.AreEqual(2, VisualResolver.ResolveObject(f.Level, exit).Rotation);
 
                 LevelAuthoring.RegenerateVisuals(f.Level, clearOverrides: true);
                 Assert.AreNotEqual(VisualSource.Override, Resolve(f.Level, cell));
                 Assert.IsEmpty(f.Level.VisualData.ObjectOverrides);
 
-                f.Level.VisualData.SetCellOverride(cell, new VisualChoice("floor_special_blood"));
+                f.Level.VisualData.SetCellOverride(cell, CellLayer.Floor, new VisualChoice("floor_special_blood"));
                 LevelAuthoring.GenerateNew(f.Level);
                 Assert.IsEmpty(f.Level.VisualData.CellOverrides);
             }
@@ -180,12 +201,12 @@ namespace Maze.Tests.EditMode.Visual
             {
                 LevelAuthoring.GenerateNew(f.Level);
                 var cell = f.Level.PlayerStarts[0].Position;
-                var saved = VisualResolver.ResolveCell(f.Level, cell);
+                var saved = VisualResolver.ResolveCell(f.Level, cell, CellLayer.Floor);
 
-                f.Level.VisualData.SetCellOverride(cell, new VisualChoice("floor_03"));
-                Assert.IsTrue(f.Level.VisualData.ClearCellOverride(cell));
+                f.Level.VisualData.SetCellOverride(cell, CellLayer.Floor, new VisualChoice("floor_03"));
+                Assert.IsTrue(f.Level.VisualData.ClearCellOverride(cell, CellLayer.Floor));
 
-                Assert.AreEqual(saved, VisualResolver.ResolveCell(f.Level, cell, out var source));
+                Assert.AreEqual(saved, VisualResolver.ResolveCell(f.Level, cell, CellLayer.Floor, out var source));
                 Assert.AreEqual(VisualSource.Assignment, source);
             }
         }
@@ -199,7 +220,7 @@ namespace Maze.Tests.EditMode.Visual
                 f.Level.VisualData.ResetCellAssignments(f.Level.Geometry.CellCount);
 
                 var corner = new GridPosition(0, 0);
-                var choice = VisualResolver.ResolveCell(f.Level, corner, out var source);
+                var choice = VisualResolver.ResolveCell(f.Level, corner, CellLayer.Wall, out var source);
                 Assert.AreEqual(VisualSource.Default, source);
                 Assert.AreEqual("wall_default", choice.VariantId);
                 Assert.AreEqual(WallShapes.Classify(new CellVisualContext(f.Level.Geometry, corner).WallConnections).Rotation,
@@ -227,7 +248,7 @@ namespace Maze.Tests.EditMode.Visual
         [Test]
         public void Objects_RespectDefinitionFilter_DoorOrientation_AndRemoval()
         {
-            using (var f = new VisualFixture(width: 12, height: 12, loopDensity: 0f))
+            using (var f = new VisualFixture(width: 13, height: 13, loopDensity: 0f))
             {
                 LevelAuthoring.GenerateNew(f.Level);
                 var level = f.Level;
@@ -265,13 +286,14 @@ namespace Maze.Tests.EditMode.Visual
             {
                 f.Level.VisualTheme = null;
                 LevelAuthoring.GenerateNew(f.Level);
-                Assert.IsTrue(VisualResolver.ResolveCell(f.Level, new GridPosition(0, 0)).IsEmpty);
+                Assert.IsTrue(VisualResolver.ResolveCell(f.Level, new GridPosition(0, 0), CellLayer.Floor).IsEmpty);
+                Assert.IsTrue(VisualResolver.ResolveCell(f.Level, new GridPosition(0, 0), CellLayer.Wall).IsEmpty);
             }
         }
 
         private static VisualSource Resolve(LevelData level, GridPosition cell)
         {
-            VisualResolver.ResolveCell(level, cell, out var source);
+            VisualResolver.ResolveCell(level, cell, CellLayer.Floor, out var source);
             return source;
         }
     }

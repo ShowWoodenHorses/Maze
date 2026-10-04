@@ -89,13 +89,6 @@ namespace Maze.Tests.EditMode.Validation
         // ------------------------------------------------------------ Structural
 
         [Test]
-        public void OddSize_IsError()
-        {
-            Level.ReplaceGeometry(new LevelGeometry(11, 10));
-            AssertHasError(Validate(), ValidationCodes.OddSize);
-        }
-
-        [Test]
         public void MissingStartOrExit_IsError()
         {
             BuildCorridor();
@@ -361,7 +354,7 @@ namespace Maze.Tests.EditMode.Validation
         public void OverrideWithUnknownVariant_IsError_AndIsNotSilentlyReplaced()
         {
             BuildCorridor();
-            Level.VisualData.SetCellOverride(new GridPosition(2, 1), new VisualChoice("floor_does_not_exist"));
+            Level.VisualData.SetCellOverride(new GridPosition(2, 1), CellLayer.Floor, new VisualChoice("floor_does_not_exist"));
             Level.VisualData.SetObjectOverride("exit_1", new VisualChoice("exit_does_not_exist"));
             Level.VisualData.SetObjectOverride("ghost_1", new VisualChoice("exit_01"));
 
@@ -376,12 +369,25 @@ namespace Maze.Tests.EditMode.Validation
         {
             BuildCorridor();
             Level.Geometry.SetCell(new GridPosition(3, 2), CellType.Floor);
-            AssertHasWarning(Validate(), ValidationCodes.StaleWallVisual);
-            AssertHasError(Validate(), ValidationCodes.UnknownVariant);
+
+            // The floor under the removed wall already exists: only neighbouring wall shapes are out of date.
+            var stale = Validate();
+            AssertHasWarning(stale, ValidationCodes.StaleWallVisual);
+            Assert.IsTrue(stale.IsValid, Describe(stale));
 
             VisualAssigner.ReassignAround(Level, new GridPosition(3, 2));
             var report = Validate();
             Assert.IsFalse(report.Has(ValidationCodes.StaleWallVisual));
+            Assert.IsTrue(report.IsValid, Describe(report));
+        }
+
+        [Test]
+        public void WallOverrideOnNonWallCell_IsIgnoredWithWarning()
+        {
+            BuildCorridor();
+            Level.VisualData.SetCellOverride(new GridPosition(2, 1), CellLayer.Wall, new VisualChoice("wall_cross"));
+            var report = Validate();
+            AssertHasWarning(report, ValidationCodes.OverrideLayerMismatch);
             Assert.IsTrue(report.IsValid, Describe(report));
         }
 
@@ -440,8 +446,8 @@ namespace Maze.Tests.EditMode.Validation
             for (var seed = 0; seed < 1000; seed++)
             {
                 var g = Level.Generation;
-                g.Width = sizes.NextInt(3, 21) * 2;
-                g.Height = sizes.NextInt(3, 21) * 2;
+                g.Width = sizes.NextInt(2, 21) * 2 + 1;
+                g.Height = sizes.NextInt(2, 21) * 2 + 1;
                 g.MazeSeed = seed;
                 g.VisualSeed = seed * 31 + 7;
                 g.LoopDensity = (float)sizes.NextDouble() * 0.5f;

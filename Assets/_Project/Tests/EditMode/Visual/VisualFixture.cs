@@ -15,7 +15,7 @@ namespace Maze.Tests.EditMode.Visual
     {
         private readonly List<Object> _created = new List<Object>();
 
-        public VisualFixture(int width = 20, int height = 20, int mazeSeed = 1, int visualSeed = 1, float loopDensity = 0.2f)
+        public VisualFixture(int width = 21, int height = 21, int mazeSeed = 1, int visualSeed = 1, float loopDensity = 0.2f)
         {
             Level = Create<LevelData>();
             Level.Generation.Width = width;

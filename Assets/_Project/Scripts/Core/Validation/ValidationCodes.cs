@@ -4,7 +4,6 @@ namespace Maze.Core.Validation
     {
         // Structural
         public const string GeometryCorrupted = "GeometryCorrupted";
-        public const string OddSize = "OddSize";
         public const string NoPlayerStart = "NoPlayerStart";
         public const string NoExit = "NoExit";
         public const string EmptyId = "EmptyId";
@@ -40,6 +39,7 @@ namespace Maze.Core.Validation
         public const string WallCategoryWithoutVariants = "WallCategoryWithoutVariants";
         public const string StaleWallVisual = "StaleWallVisual";
         public const string OverrideOutOfBounds = "OverrideOutOfBounds";
+        public const string OverrideLayerMismatch = "OverrideLayerMismatch";
         public const string OverrideForMissingEntity = "OverrideForMissingEntity";
         public const string UniformDistribution = "UniformDistribution";
         public const string KeyDoorColorMismatch = "KeyDoorColorMismatch";

@@ -1,0 +1,318 @@
+using System.Collections.Generic;
+using System.Linq;
+using Maze.Core.Definitions;
+using Maze.Core.Grid;
+using Maze.Core.Level;
+using Maze.Core.Visual;
+
+namespace Maze.Core.Authoring
+{
+    /// <summary>
+    /// Manual level editing operations (ТЗ §15): every operation keeps the level consistent —
+    /// door cells and DoorData stay in sync, references follow renames, and visuals are updated locally
+    /// without re-randomizing anything else. Editor/level-creation only.
+    /// </summary>
+    internal static class LevelEditing
+    {
+        // ------------------------------------------------------------ Geometry
+
+        /// <summary>
+        /// Paints a cell. Painting Door creates a DoorData; painting over a door removes it.
+        /// The floor layer exists in every cell, so its manual override survives; a wall-layer override is
+        /// dropped when the cell stops being a wall.
+        /// </summary>
+        public static bool SetCellType(LevelData level, GridPosition position, CellType type)
+        {
+            var geometry = level.Geometry;
+            if (!geometry.IsInside(position))
+                return false;
+
+            var old = geometry.GetCell(position);
+            if (old == type)
+                return false;
+
+            geometry.SetCell(position, type);
+
+            if (old == CellType.Door)
+                foreach (var door in level.Doors.Where(d => d.Position == position).ToList())
+                    RemoveDoorData(level, door);
+
+            if (type != CellType.Wall)
+                level.VisualData.ClearCellOverride(position, CellLayer.Wall);
+
+            VisualAssigner.ReassignAround(level, position);
+
+            if (type == CellType.Door && level.Doors.All(d => d.Position != position))
+            {
+                var door = new DoorData(level.CreateUniqueId(DoorData.IdPrefix), position);
+                level.MutableDoors.Add(door);
+                VisualAssigner.AssignObject(level, door);
+            }
+
+            return true;
+        }
+
+        // ------------------------------------------------------------ Placement
+
+        public static PlayerStartData AddPlayerStart(LevelData level, GridPosition position) =>
+            Add(level, level.MutablePlayerStarts, new PlayerStartData(level.CreateUniqueId(PlayerStartData.IdPrefix), position));
+
+        public static ExitData AddExit(LevelData level, GridPosition position) =>
+            Add(level, level.MutableExits, new ExitData(level.CreateUniqueId(ExitData.IdPrefix), position));
+
+        public static MedkitData AddMedkit(LevelData level, GridPosition position) =>
+            Add(level, level.MutableMedkits, new MedkitData(level.CreateUniqueId(MedkitData.IdPrefix), position));
+
+        public static ZombieSpawnData AddZombie(LevelData level, GridPosition position, ZombieDefinition definition, Direction facing) =>
+            Add(level, level.MutableZombieSpawns,
+                new ZombieSpawnData(level.CreateUniqueId(ZombieSpawnData.IdPrefix), position, definition, facing));
+
+        public static WeaponPickupData AddWeapon(LevelData level, GridPosition position, WeaponDefinition definition) =>
+            Add(level, level.MutableWeapons, new WeaponPickupData(level.CreateUniqueId(WeaponPickupData.IdPrefix), position, definition));
+
+        public static MapFragmentData AddMapFragment(LevelData level, GridPosition position, GridRect region) =>
+            Add(level, level.MutableMapFragments, new MapFragmentData(level.CreateUniqueId(MapFragmentData.IdPrefix), position, region));
+
+        /// <summary>Adds a key; if <paramref name="door"/> is given, links it (one key = one door) and colours both.</summary>
+        public static KeyData AddKey(LevelData level, GridPosition position, DoorData door = null)
+        {
+            var key = Add(level, level.MutableKeys, new KeyData(level.CreateUniqueId(KeyData.IdPrefix), position));
+            if (door != null)
+                LinkKey(level, door, key);
+            return key;
+        }
+
+        private static T Add<T>(LevelData level, List<T> list, T entity) where T : LevelEntityData
+        {
+            list.Add(entity);
+            VisualAssigner.AssignObject(level, entity);
+            return entity;
+        }
+
+        // ------------------------------------------------------------ Remove / move / rename
+
+        public static void Remove(LevelData level, LevelEntityData entity)
+        {
+            switch (entity)
+            {
+                case DoorData door:
+                    // A door cell without a door is invalid: removing the door opens the passage.
+                    level.Geometry.SetCell(door.Position, CellType.Floor);
+                    RemoveDoorData(level, door);
+                    VisualAssigner.ReassignAround(level, door.Position);
+                    return;
+
+                case KeyData key:
+                    level.MutableKeys.Remove(key);
+                    foreach (var linked in level.Doors.Where(d => d.KeyId == key.Id).ToList())
+                    {
+                        linked.KeyId = null;
+                        VisualAssigner.AssignObject(level, linked);
+                    }
+                    break;
+
+                case ZombieSpawnData zombie:
+                    level.MutableZombieSpawns.Remove(zombie);
+                    if (zombie.HasPatrol && level.ZombieSpawns.All(z => z.PatrolId != zombie.PatrolId))
+                        level.MutablePatrols.RemoveAll(p => p.Id == zombie.PatrolId);
+                    break;
+
+                case PlayerStartData start: level.MutablePlayerStarts.Remove(start); break;
+                case ExitData exit: level.MutableExits.Remove(exit); break;
+                case MedkitData medkit: level.MutableMedkits.Remove(medkit); break;
+                case WeaponPickupData weapon: level.MutableWeapons.Remove(weapon); break;
+                case MapFragmentData fragment: level.MutableMapFragments.Remove(fragment); break;
+            }
+
+            level.VisualData.RemoveObject(entity.Id);
+        }
+
+        /// <summary>Moves an object. A door takes its cell type with it (old cell becomes Floor).</summary>
+        public static bool Move(LevelData level, LevelEntityData entity, GridPosition to)
+        {
+            var geometry = level.Geometry;
+            if (!geometry.IsInside(to) || entity.Position == to)
+                return false;
+
+            if (entity is DoorData && geometry.GetCell(to) == CellType.Door)
+                return false;
+
+            var from = entity.Position;
+            entity.Position = to;
+
+            if (entity is DoorData)
+            {
+                geometry.SetCell(from, CellType.Floor);
+                geometry.SetCell(to, CellType.Door);
+                level.VisualData.ClearCellOverride(to, CellLayer.Wall);
+                VisualAssigner.ReassignAround(level, from);
+                VisualAssigner.ReassignAround(level, to);
+            }
+
+            VisualAssigner.UpdateOrientation(level, entity);
+            return true;
+        }
+
+        /// <summary>Renames an object, updating door->key links and its visual design. False if the id is empty or taken.</summary>
+        public static bool Rename(LevelData level, LevelEntityData entity, string newId)
+        {
+            if (!IsFreeId(level, newId) || entity.Id == newId)
+                return false;
+
+            var oldId = entity.Id;
+            entity.Id = newId;
+            if (entity is KeyData)
+                foreach (var door in level.Doors.Where(d => d.KeyId == oldId))
+                    door.KeyId = newId;
+
+            level.VisualData.RenameObject(oldId, newId);
+            return true;
+        }
+
+        public static bool RenamePatrol(LevelData level, PatrolData patrol, string newId)
+        {
+            if (!IsFreeId(level, newId) || patrol.Id == newId)
+                return false;
+
+            foreach (var zombie in level.ZombieSpawns.Where(z => z.PatrolId == patrol.Id))
+                zombie.PatrolId = newId;
+
+            patrol.Id = newId;
+            return true;
+        }
+
+        public static bool IsFreeId(LevelData level, string id) =>
+            !string.IsNullOrWhiteSpace(id) && level.AllIds().All(existing => existing != id);
+
+        // ------------------------------------------------------------ Keys and doors
+
+        /// <summary>
+        /// Links <paramref name="key"/> to <paramref name="door"/> (null = door needs no key). One key opens one door:
+        /// the key is unlinked from any other door. Door colour is re-picked, the key takes the door's colour.
+        /// </summary>
+        public static void LinkKey(LevelData level, DoorData door, KeyData key)
+        {
+            var previousKeyId = door.KeyId;
+
+            if (key != null)
+                foreach (var other in level.Doors.Where(d => d != door && d.KeyId == key.Id).ToList())
+                {
+                    other.KeyId = null;
+                    VisualAssigner.AssignObject(level, other);
+                }
+
+            door.KeyId = key?.Id;
+            VisualAssigner.AssignObject(level, door);
+
+            if (key != null)
+                VisualAssigner.AssignObject(level, key);
+
+            var previousKey = level.Keys.FirstOrDefault(k => k.Id == previousKeyId);
+            if (previousKey != null && previousKey != key)
+                VisualAssigner.AssignObject(level, previousKey);
+        }
+
+        public static void SetDoorInitiallyOpen(DoorData door, bool open) => door.IsInitiallyOpen = open;
+
+        // ------------------------------------------------------------ Definitions
+
+        public static void SetZombie(LevelData level, ZombieSpawnData zombie, ZombieDefinition definition, Direction facing)
+        {
+            var definitionChanged = zombie.Definition != definition;
+            zombie.Definition = definition;
+            zombie.Facing = facing;
+            if (definitionChanged)
+                VisualAssigner.AssignObject(level, zombie);
+        }
+
+        public static void SetWeaponDefinition(LevelData level, WeaponPickupData weapon, WeaponDefinition definition)
+        {
+            if (weapon.Definition == definition)
+                return;
+
+            weapon.Definition = definition;
+            VisualAssigner.AssignObject(level, weapon);
+        }
+
+        // ------------------------------------------------------------ Patrols and map fragments
+
+        /// <summary>Appends a patrol point, creating the zombie's patrol on first use.</summary>
+        public static PatrolData AddPatrolPoint(LevelData level, ZombieSpawnData zombie, GridPosition point)
+        {
+            var patrol = level.Patrols.FirstOrDefault(p => zombie.HasPatrol && p.Id == zombie.PatrolId);
+            if (patrol == null)
+            {
+                patrol = new PatrolData(level.CreateUniqueId(PatrolData.IdPrefix));
+                level.MutablePatrols.Add(patrol);
+                zombie.PatrolId = patrol.Id;
+            }
+
+            patrol.MutablePoints.Add(point);
+            return patrol;
+        }
+
+        public static void RemoveLastPatrolPoint(LevelData level, ZombieSpawnData zombie)
+        {
+            var patrol = level.Patrols.FirstOrDefault(p => zombie.HasPatrol && p.Id == zombie.PatrolId);
+            if (patrol != null && patrol.Points.Count > 0)
+                patrol.MutablePoints.RemoveAt(patrol.Points.Count - 1);
+        }
+
+        /// <summary>Removes the zombie's patrol (and the patrol itself if no other zombie uses it).</summary>
+        public static void ClearPatrol(LevelData level, ZombieSpawnData zombie)
+        {
+            if (!zombie.HasPatrol)
+                return;
+
+            var patrolId = zombie.PatrolId;
+            zombie.PatrolId = null;
+            if (level.ZombieSpawns.All(z => z.PatrolId != patrolId))
+                level.MutablePatrols.RemoveAll(p => p.Id == patrolId);
+        }
+
+        public static void SetFragmentRegion(MapFragmentData fragment, GridRect region) => fragment.Region = region;
+
+        // ------------------------------------------------------------ Visual overrides
+
+        public static void SetCellOverride(LevelData level, GridPosition position, CellLayer layer, VisualChoice choice) =>
+            level.VisualData.SetCellOverride(position, layer, choice);
+
+        public static void ClearCellOverride(LevelData level, GridPosition position, CellLayer layer) =>
+            level.VisualData.ClearCellOverride(position, layer);
+
+        public static void SetObjectOverride(LevelData level, LevelEntityData entity, VisualChoice choice)
+        {
+            level.VisualData.SetObjectOverride(entity.Id, choice);
+            RefreshPairedKey(level, entity);
+        }
+
+        public static void ClearObjectOverride(LevelData level, LevelEntityData entity)
+        {
+            level.VisualData.ClearObjectOverride(entity.Id);
+            RefreshPairedKey(level, entity);
+        }
+
+        /// <summary>A key follows its door's colour, including the designer's manual door choice.</summary>
+        private static void RefreshPairedKey(LevelData level, LevelEntityData entity)
+        {
+            if (!(entity is DoorData door) || !door.RequiresKey)
+                return;
+
+            var key = level.Keys.FirstOrDefault(k => k.Id == door.KeyId);
+            if (key != null)
+                VisualAssigner.AssignObject(level, key);
+        }
+
+        // ------------------------------------------------------------ Helpers
+
+        private static void RemoveDoorData(LevelData level, DoorData door)
+        {
+            level.MutableDoors.Remove(door);
+            level.VisualData.RemoveObject(door.Id);
+
+            var key = level.Keys.FirstOrDefault(k => door.RequiresKey && k.Id == door.KeyId);
+            if (key != null)
+                VisualAssigner.AssignObject(level, key);
+        }
+    }
+}

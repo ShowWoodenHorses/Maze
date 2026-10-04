@@ -14,7 +14,7 @@ namespace Maze.Tests.EditMode.Generation
     {
         private readonly MazeGenerator _generator = new MazeGenerator();
 
-        private static LevelGenerationSettings Settings(int width = 20, int height = 20, int seed = 1,
+        private static LevelGenerationSettings Settings(int width = 21, int height = 21, int seed = 1,
             float loopDensity = 0f, int starts = 1, int exits = 1)
         {
             return new LevelGenerationSettings
@@ -50,7 +50,7 @@ namespace Maze.Tests.EditMode.Generation
         [Test]
         public void ZeroLoopDensity_ProducesPerfectMaze()
         {
-            var geometry = _generator.Generate(Settings(width: 30, height: 24)).Geometry;
+            var geometry = _generator.Generate(Settings(width: 31, height: 25)).Geometry;
             var floorCount = geometry.CopyCells().Count(c => c == CellType.Floor);
 
             Assert.AreEqual(floorCount - 1, CountFloorAdjacencies(geometry), "A perfect maze is a tree: edges = nodes - 1.");
@@ -68,11 +68,12 @@ namespace Maze.Tests.EditMode.Generation
         }
 
         [Test]
-        public void FullLoopDensity_OpensEveryWallBetweenRooms()
+        public void FullLoopDensity_OpensEveryWallBetweenRooms_UpToTheBorder()
         {
-            var geometry = _generator.Generate(Settings(width: 12, height: 10, loopDensity: 1f)).Geometry;
-            for (var y = 1; y <= geometry.Height - 3; y++)
-            for (var x = 1; x <= geometry.Width - 3; x++)
+            // The whole interior (up to Width-2 / Height-2) is used: no redundant wall row or column.
+            var geometry = _generator.Generate(Settings(width: 13, height: 11, loopDensity: 1f)).Geometry;
+            for (var y = 1; y <= geometry.Height - 2; y++)
+            for (var x = 1; x <= geometry.Width - 2; x++)
             {
                 var expected = x % 2 == 0 && y % 2 == 0 ? CellType.Wall : CellType.Floor;
                 Assert.AreEqual(expected, geometry.GetCell(new GridPosition(x, y)), $"Cell ({x}, {y})");
@@ -82,22 +83,22 @@ namespace Maze.Tests.EditMode.Generation
         [Test]
         public void SingleStartAndExit_ExitIsFarthestReachableCandidate()
         {
-            var result = _generator.Generate(Settings(width: 24, height: 24, seed: 9));
+            var result = _generator.Generate(Settings(width: 25, height: 25, seed: 9));
             var grid = new LevelGrid(result.Geometry);
             var distances = BfsDistances(grid, result.PlayerStarts[0]);
             var exitDistance = distances[grid.ToIndex(result.Exits[0])];
 
             var maxRoomDistance = 0;
-            for (var y = 1; y < grid.Height - 2; y += 2)
-            for (var x = 1; x < grid.Width - 2; x += 2)
+            for (var y = 1; y < grid.Height - 1; y += 2)
+            for (var x = 1; x < grid.Width - 1; x += 2)
                 maxRoomDistance = Math.Max(maxRoomDistance, distances[grid.ToIndex(new GridPosition(x, y))]);
 
             Assert.AreEqual(maxRoomDistance, exitDistance);
         }
 
+        [TestCase(20, 21)]
         [TestCase(21, 20)]
-        [TestCase(20, 19)]
-        public void OddSize_IsRejected(int width, int height)
+        public void EvenSize_IsRejected(int width, int height)
         {
             Assert.Throws<ArgumentException>(() => _generator.Generate(Settings(width, height)));
         }
@@ -105,15 +106,15 @@ namespace Maze.Tests.EditMode.Generation
         [Test]
         public void TooSmallSize_IsRejected()
         {
-            Assert.Throws<ArgumentException>(() => _generator.Generate(Settings(2, 20)));
+            Assert.Throws<ArgumentException>(() => _generator.Generate(Settings(3, 21)));
         }
 
         [Test]
         public void TooManyStartsAndExits_AreRejected()
         {
-            // 6x6 has 2x2 = 4 rooms.
-            Assert.DoesNotThrow(() => _generator.Generate(Settings(6, 6, starts: 2, exits: 2)));
-            Assert.Throws<ArgumentException>(() => _generator.Generate(Settings(6, 6, starts: 3, exits: 2)));
+            // 5x5 has 2x2 = 4 rooms.
+            Assert.DoesNotThrow(() => _generator.Generate(Settings(5, 5, starts: 2, exits: 2)));
+            Assert.Throws<ArgumentException>(() => _generator.Generate(Settings(5, 5, starts: 3, exits: 2)));
         }
 
         [Test]
@@ -150,8 +151,8 @@ namespace Maze.Tests.EditMode.Generation
             for (var seed = 0; seed < 1000; seed++)
             {
                 var settings = Settings(
-                    width: sizes.NextInt(3, 26) * 2,
-                    height: sizes.NextInt(3, 26) * 2,
+                    width: sizes.NextInt(2, 26) * 2 + 1,
+                    height: sizes.NextInt(2, 26) * 2 + 1,
                     seed: seed,
                     loopDensity: (float)sizes.NextDouble() * 0.5f,
                     starts: sizes.NextInt(1, 3),
@@ -189,6 +190,14 @@ namespace Maze.Tests.EditMode.Generation
                     yield return "Border is open";
                     break;
                 }
+
+            // Every room cell right up to the border is used: no redundant double-wall row or column.
+            var unusedRoom = false;
+            for (var y = 1; y <= grid.Height - 2; y += 2)
+            for (var x = 1; x <= grid.Width - 2; x += 2)
+                unusedRoom |= grid.GetCell(new GridPosition(x, y)) != CellType.Floor;
+            if (unusedRoom)
+                yield return "Unused room cell (double wall at the edge)";
 
             for (var y = 0; y < grid.Height - 1; y++)
             for (var x = 0; x < grid.Width - 1; x++)

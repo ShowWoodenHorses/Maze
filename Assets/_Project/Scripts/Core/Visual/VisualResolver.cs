@@ -18,26 +18,34 @@ namespace Maze.Core.Visual
     /// </summary>
     public static class VisualResolver
     {
-        public static VisualChoice ResolveCell(LevelData level, GridPosition position) => ResolveCell(level, position, out _);
+        public static VisualChoice ResolveCell(LevelData level, GridPosition position, CellLayer layer) =>
+            ResolveCell(level, position, layer, out _);
 
-        public static VisualChoice ResolveCell(LevelData level, GridPosition position, out VisualSource source)
+        /// <summary>None for a layer the cell does not have (Wall layer of a non-wall cell).</summary>
+        public static VisualChoice ResolveCell(LevelData level, GridPosition position, CellLayer layer, out VisualSource source)
         {
+            var geometry = level.Geometry;
+            if (!CellLayers.Exists(geometry.GetCell(position), layer))
+            {
+                source = VisualSource.None;
+                return VisualChoice.None;
+            }
+
             var data = level.VisualData;
-            if (data.TryGetCellOverride(position, out var choice) && !choice.IsEmpty)
+            if (data.TryGetCellOverride(position, layer, out var choice) && !choice.IsEmpty)
             {
                 source = VisualSource.Override;
                 return choice;
             }
 
-            var geometry = level.Geometry;
-            choice = data.GetCellAssignment(geometry.ToIndex(position));
+            choice = data.GetCellAssignment(layer, geometry.ToIndex(position));
             if (!choice.IsEmpty)
             {
                 source = VisualSource.Assignment;
                 return choice;
             }
 
-            var kind = VisualKinds.ForCell(geometry.GetCell(position));
+            var kind = CellLayers.Kind(layer);
             var defaultId = DefaultVariantId(level, kind);
             if (!string.IsNullOrEmpty(defaultId))
             {
@@ -95,18 +103,21 @@ namespace Maze.Core.Visual
             return set == null ? null : set.DefaultVariantId;
         }
 
-        /// <summary>Visual distribution diagnostics (ТЗ §93): resolved variant id -> number of cells of that kind.</summary>
-        public static Dictionary<string, int> CountCellVariants(LevelData level, VisualKind kind)
+        /// <summary>
+        /// Visual distribution diagnostics (ТЗ §93): resolved variant id -> number of cells using it in a layer.
+        /// The Floor layer covers every cell (including floor under walls), the Wall layer only wall cells.
+        /// </summary>
+        public static Dictionary<string, int> CountCellVariants(LevelData level, CellLayer layer)
         {
             var counts = new Dictionary<string, int>();
             var geometry = level.Geometry;
             for (var i = 0; i < geometry.CellCount; i++)
             {
                 var position = geometry.ToPosition(i);
-                if (VisualKinds.ForCell(geometry.GetCell(position)) != kind)
+                if (!CellLayers.Exists(geometry.GetCell(position), layer))
                     continue;
 
-                var id = ResolveCell(level, position).VariantId ?? string.Empty;
+                var id = ResolveCell(level, position, layer).VariantId ?? string.Empty;
                 counts.TryGetValue(id, out var count);
                 counts[id] = count + 1;
             }
