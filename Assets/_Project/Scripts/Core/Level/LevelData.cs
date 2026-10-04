@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Globalization;
+using Maze.Core.Generation;
 using Maze.Core.Grid;
+using Maze.Core.Visual;
 using UnityEngine;
 
 namespace Maze.Core.Level
@@ -24,8 +26,12 @@ namespace Maze.Core.Level
         [SerializeField] private List<KeyData> _keys = new List<KeyData>();
         [SerializeField] private List<MedkitData> _medkits = new List<MedkitData>();
         [SerializeField] private List<MapFragmentData> _mapFragments = new List<MapFragmentData>();
+        [SerializeField] private VisualTheme _visualTheme;
+        [SerializeField] private VisualData _visualData = new VisualData();
 
         public LevelSettings Settings => _settings;
+        public VisualTheme VisualTheme { get => _visualTheme; internal set => _visualTheme = value; }
+        public VisualData VisualData => _visualData;
         public LevelGenerationSettings Generation => _generation;
         public LevelGeometry Geometry => _geometry;
         public IReadOnlyList<DoorData> Doors => _doors;
@@ -69,6 +75,23 @@ namespace Maze.Core.Level
         }
 
         internal void ReplaceGeometry(LevelGeometry geometry) => _geometry = geometry;
+
+        /// <summary>
+        /// Destructive "Generate New": replaces geometry, removes every placed object and the whole
+        /// visual design (assignments and overrides), then adds the generated player starts and exits.
+        /// </summary>
+        internal void ApplyGeneratedMaze(MazeGenerationResult result)
+        {
+            _geometry = result.Geometry;
+            ClearObjects();
+            _visualData.Clear();
+
+            foreach (var position in result.PlayerStarts)
+                _playerStarts.Add(new PlayerStartData(CreateUniqueId(PlayerStartData.IdPrefix), position));
+
+            foreach (var position in result.Exits)
+                _exits.Add(new ExitData(CreateUniqueId(ExitData.IdPrefix), position));
+        }
 
         /// <summary>Removes every placed object and patrol. Geometry is left untouched.</summary>
         internal void ClearObjects()

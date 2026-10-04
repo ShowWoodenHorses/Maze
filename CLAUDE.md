@@ -43,6 +43,14 @@ Unity 6000.3.8f1 (6.3 LTS) · Built-in RP · VContainer 1.19 · UniTask 2.5 · A
 - В клетке может быть 1 игрок или 0..N зомби, но не игрок и зомби вместе. Pickup-ы не блокируют.
 - Движение игрока плавное. Во время атаки игрок стоит, cooldown блокирует только следующую атаку. Слоты оружия: Melee и Ranged. Патроны бесконечны, магазин ограничен, перезарядка автоматическая.
 
+## Принятые соглашения (уже в коде)
+- Клетка `(x, y)` ↔ мир `(x, 0, y)`; North = +Y сетки = +Z мира. За пределами сетки = Wall.
+- Мутация `LevelData` только `internal` (InternalsVisibleTo `Maze.Editor`, `Maze.Tests.EditMode`); команды тулзы — `LevelAuthoring` (GenerateNew, RegenerateVisuals).
+- ID объектов: `{prefix}_{N}` через `LevelData.CreateUniqueId`. Межобъектные ссылки — по ID; на Definitions — прямые SO-ссылки.
+- Случайность только `DeterministicRandom` / `StableHash` (не `System.Random`, не `string.GetHashCode`).
+- Визуал: выбор = хеш(VisualSeed, kind, cellIndex | entityId) → взвешенно; хранится `VisualChoice` (VariantId + Rotation). Rotation — четверти по часовой сверху. Префабы стен в канонической ориентации: End→N, Straight→N+S, Corner→N+E, TJunction→N+E+S; дверь rot 0 перекрывает проход С–Ю. Special-варианты только вручную. Нет варианта → явный DefaultVariantId → иначе пусто (не случайный другой).
+- Префабы визуала — `AssetReferenceGameObject` (Addressables).
+
 ## Структура папок (целевая)
 ```
 Assets/_Project/
