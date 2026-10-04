@@ -31,8 +31,14 @@
   - геометрия склеена в чанки 8×8 со Static Batching;
   - шейдер `Maze/Geometry` скрывает отдельные клетки по маске (основа для тумана войны);
   - вьюхи дверей, выходов и предметов; камера показывает весь уровень.
-- **Не начато:** игрок, зомби, бой, расчёт видимости, карта, сохранения.
-- **Тесты:** 158 EditMode-тестов (включая массовые прогоны на 1000 seed'ов, §111) и 5 PlayMode-тестов. Все проходят.
+- **Готово:** игрок и ввод (этап 7).
+  - полная абстракция ввода §64 (клавиатура/мышь, геймпад, экранные стик и кнопки на тач-устройствах);
+  - появление на случайном (или заданном) старте, плавное движение со скольжением вдоль стен и помощью на поворотах;
+  - Occupancy, минимальный `DoorSystem` (открыта/закрыта), `PlayerCellChanged`;
+  - выход: окно «Завершить уровень?» — уровень можно пройти от старта до конца;
+  - камера следует за игроком.
+- **Не начато:** расчёт видимости, двери с ключами и подбор, бой, зомби, карта, сохранения.
+- **Тесты:** 179 EditMode-тестов (включая массовые прогоны на 1000 seed'ов, §111, и фазз-тест движения) и 6 PlayMode-тестов. Все проходят.
 - **Руководство для дизайнера:** [Docs/LevelDesigner.md](LevelDesigner.md).
 
 ---
@@ -46,18 +52,19 @@
 | 1–2 | Концепция, платформы | 🟡 | Модули Android и WebGL Build Support установлены. Сборки под платформы ещё не проверялись |
 | 3 | Технологический стек | ✅ | Unity 6000.3.8f1, Built-in RP, VContainer 1.19, UniTask 2.5, Addressables 4.1, Input System 1.18, uGUI, Test Framework. Удалены Visual Scripting, Multiplayer Center, Collab Proxy |
 | 4–5 | Архитектура, слои | ✅ | Сборки `Maze.Core ← Maze.Gameplay ← Maze.Application ← Maze.Presentation`, `Maze.Composition` (видит все), `Maze.Editor`, `Maze.Tests.EditMode`, `Maze.Tests.PlayMode` |
-| 6–9 | Bootstrap, ProjectLifetimeScope, LevelLifetimeScope, GameFlow, загрузка уровня | ✅ | Сцены Bootstrap и Game (аддитивная). `GameFlow` — все операции §8. Пайплайн §9: шаги `ILevelLoadStep` по стадиям `LevelLoadStage`. Сейчас есть шаг `BuildVisuals`, остальные системы добавят свои шаги на своих этапах |
+| 6–9 | Bootstrap, ProjectLifetimeScope, LevelLifetimeScope, GameFlow, загрузка уровня | ✅ | Сцены Bootstrap и Game (аддитивная). `GameFlow` — все операции §8. Пайплайн §9: шаги `ILevelLoadStep` по стадиям `LevelLoadStage`. Сейчас есть шаги `BuildVisuals` и `SpawnPlayer` (игрок и его вьюха), остальные системы добавят свои на своих этапах |
 | 10 | LevelData | ✅ | `Core/Level/LevelData.cs` и данные объектов. Мутация только `internal` (доступна редактору и тестам) |
 | 11 | Разделение логики и визуала | ✅ | Тип клетки — логика; префаб — только вид |
 | 12–14 | Генерация (DFS + LoopDensity, seed'ы) | ✅ | `Core/Generation/MazeGenerator.cs`. **Отступление:** размер нечётный (см. раздел 3) |
-| 15–16 | Ручное редактирование, workflow | 🟡 | Всё, кроме **Test / Play** из Level Designer (уровень запускается из меню игры) |
+| 15–16 | Ручное редактирование, workflow | 🟡 | Всё, кроме кнопок **Test / Play** в Level Designer (уровень запускается из меню игры; runtime-поддержка заданного старта уже есть — `LevelLaunchOptions.StartIndex`) |
 | 17–46 | Визуальная система | ✅ | Создание и хранение визуала (темы, наборы, веса, VisualSeed, контекстные стены, overrides, приоритеты, Regenerate Visuals) и runtime-часть: `LevelVisualSystem`, `GeometryBuilder`, `EntityViewFactory`, загрузка только используемых префабов (§44). Визуальные состояния двери (открыта/закрыта) — с `DoorSystem` |
 | 47–49, 53–57, 104–107 | Visibility / Fog of War, чанки | 🟡 | Готово отображение: `VisibilityChunk` (8×8), `CellVisibilityMask` + шейдер `Maze/Geometry` скрывают любую клетку, чанки без видимых клеток выключаются, `EntityView.SetVisible`. Нет расчёта: `VisibilitySystem` (11×11 + LOS по `PlayerCellChanged`) и `VisibilityController` — после игрока |
-| 50–51 | Grid, Occupancy | 🟡 | `LevelGrid` есть; Occupancy нет |
+| 50–51 | Grid, Occupancy | ✅ | `LevelGrid`, `OccupancyMap` (1 игрок, 0..N зомби, не вместе; пикапы не занимают), `LevelPassability` |
 | 52 | Navigation + A* | 🟡 | `Core/Navigation/GridPathfinder.cs` (A*, 4 направления, без аллокаций). `NavigationSystem` с учётом дверей в runtime нет |
 | 58–60 | Map, фрагменты | 🟡 | Данные фрагментов и областей, редактор областей, проверки пересечений. `MapSystem` / `MapRenderer` нет |
-| 61–62 | Стартовые точки, выходы | 🟡 | Данные, генерация, валидация достижимости. Случайный выбор старта и окно «Завершить уровень?» нет. **Test from Start #N** нет |
-| 63–80 | Игрок, управление, оружие, бой, звук, аптечки, зомби, Animator | 🟡 | Только `WeaponDefinition`, `ZombieDefinition` (ScriptableObject с параметрами из ТЗ) и их размещение на уровне. Логики нет |
+| 61–62 | Стартовые точки, выходы | 🟡 | Случайный старт при каждом запуске (или заданный через `LevelLaunchOptions`), `ExitSystem` + окно «Завершить уровень?» (Нет — игра продолжается, повторный вход спрашивает снова). Нет кнопки **Test from Start #N** в Level Designer |
+| 63–66 | Игрок, управление, движение | ✅ | `PlayerSystem` (спавн, движение, взгляд по движению, `CellChanged`), `PlayerMovement` (без физики, скольжение, corner assist, без туннелирования), `InputService` (Move/Look/Attack/Interact/SwitchMelee/SwitchRanged/OpenMap/Pause), тач-контролы HUD, `PlayerViewPresenter`, камера следует за игроком. `PlayerDefinition` / `PlayerVisualDefinition`. Атака — в этапе боя |
+| 67–80 | Оружие, бой, звук, аптечки, зомби, Animator | 🟡 | `WeaponDefinition`, `ZombieDefinition` и их размещение на уровне. Animator игрока получает `Speed` из геймплея. Логики боя и зомби нет |
 | 81 | Spatial Query | ⬜ | — |
 | 82 | GeometryBuilder, Mesh Combine, Static Batching | ✅ | `GeometryBuilder`: меши префабов пола и стен склеиваются по чанкам (сабмеш на материал), затем `StaticBatchingUtility.Combine`. Ни одного GameObject на клетку. Редакторское превью `LevelPreviewBuilder` осталось для Level Designer |
 | 83 | Object Pooling | ⬜ | — |
@@ -70,7 +77,7 @@
 | 103 | Performance | 🟡 | Заложено: A* без аллокаций; геометрия — склеенные чанки + Static Batching; видимость меняет маленькую текстуру, а не GameObject'ы; жёсткие тени; грузятся только используемые префабы. Профилирование на устройствах не проводилось |
 | 108 | Structured logging | 🟡 | `GameLog` с каналами §108 (`[Maze][Channel]`), используется в Bootstrap, GameFlow, Addressables, загрузке и выгрузке. Остальные места подключатся вместе со своими системами |
 | 109 | Error handling | ✅ (для каркаса) | Любое исключение в переходе GameFlow → отмена, выгрузка уровня (Dispose LevelScope, выгрузка Game, Release Addressables) → экран ошибки. Уровень с ошибками валидации не запускается |
-| 110 | Тесты | 🟡 | EditMode: Grid, Generator, seeds, визуал, Validator, A*, Key/Door solver, правки уровня, **GameFlow** (на фейках: порядок, ошибки, отмена, утечки), **LevelRuntime**, **GeometryBuilder** (чанки, клетки в вершинах, повороты, маска видимости), `EntityViewFactory`, `LevelVisualUsage`. PlayMode: **Bootstrap, GameFlow, Addressables, LevelScope, Retry**, построение и уничтожение визуала. Нет Visibility, Save, Progress, Spatial Queries и PlayMode-тестов для игрока, дверей, ключей, оружия, зомби, смерти, завершения |
+| 110 | Тесты | 🟡 | EditMode: Grid, Generator, seeds, визуал, Validator, A*, Key/Door solver, правки уровня, **GameFlow** (на фейках: порядок, ошибки, отмена, утечки), **LevelRuntime**, **GeometryBuilder** (чанки, клетки в вершинах, повороты, маска видимости), `EntityViewFactory`, `LevelVisualUsage`, **движение игрока** (стены, скольжение, corner assist, зомби-клетки, фазз-тест 20 000 шагов без туннелирования), `PlayerSystem`, `ExitSystem`, `OccupancyMap`, `DoorSystem`, подтверждение выхода в `GameFlow`. PlayMode: **Bootstrap, GameFlow, Addressables, LevelScope, Retry**, визуал, **Player spawn** (старт, вьюха, камера). Нет Visibility, Save, Progress, Spatial Queries и PlayMode-тестов для дверей, ключей, оружия, зомби, смерти, завершения |
 | 111 | Массовый тест генератора | ✅ | 1000 seed'ов: Generate (инварианты) и Generate → Assign Visuals → Validate (0 ошибок) |
 
 ---
@@ -103,6 +110,12 @@
 | UI-заглушки | uGUI с legacy `Text` (встроенный шрифт), сцены собираются кодом (`RuntimeScenesBuilder`) | Не нужен импорт TMP Essentials; финальный UI будет позже |
 | Чанки и поклеточная видимость (§54 vs §82/§105) | Чанк 8×8 — один склеенный меш; клетка записана в UV3 каждой вершины; шейдер `Maze/Geometry` схлопывает вершины скрытых клеток по маске-текстуре. Чанки без видимых клеток выключаются целиком | Согласовано с пользователем: мало объектов и draw call'ов, при этом скрытие точно по клеткам. Цена — требования к префабам пола/стен (шейдер, Read/Write) |
 | Тени | Жёсткие (`LightShadows.Hard`) | §103: без тяжёлых realtime-теней |
+| Столкновения игрока (§65, §78) | Квадратный футпринт (`BodyHalfSize` = 0.3) против непроходимых клеток целиком, скольжение по осям, **corner assist** (подтягивает в боковой проход, если до его оси ≤ 0.35). Клетки с зомби блокируют только центр игрока | Без физики; в коридор шириной 1 клетка легко попасть с джойстика |
+| Параметры игрока | ТЗ их не задаёт: скорость 3.5 клетки/с, HP 100 (по умолчанию в `PlayerDefinition`, меняются в ассете) | — |
+| Look (§64) | Действие есть в `InputService`, но взгляд пока только по движению (§65). Прицеливание мышью/правым стиком — решить на этапе боя | Не противоречить §65 |
+| Подтверждение выхода (§62) | Пока окно открыто, геймплей на паузе (новое состояние `GameFlowState.ExitConfirmation`) | ТЗ не уточняет; так не получить урон, пока думаешь |
+| `DoorSystem` | Заведён на этапе игрока, но пока только состояние open/closed (`IsInitiallyOpen`). Ключи и взаимодействие — на этапе дверей | Проходимость для игрока нужна уже сейчас |
+| Общие ассеты игрока | `PlayerDefinition` + `PlayerVisualDefinition` (раздельно: геймплей и вид, как у оружия), Addressable "Player/Definition" / "Player/Visual", грузятся при старте приложения и остаются резидентными | §84: shared assets могут оставаться resident |
 | Сообщения валидатора | На английском; проверки идентифицируются кодами `ValidationCodes` | Единообразие с кодом |
 
 ---
@@ -115,38 +128,45 @@ Assets/_Project/
     Common/                DeterministicRandom, StableHash
     Grid/                  GridPosition, Direction, CellType, GridRect, LevelGeometry, LevelGrid
     Level/                 LevelData, данные объектов, PatrolData, LevelSettings, LevelGenerationSettings
-    Definitions/           WeaponDefinition, ZombieDefinition
+    Definitions/           WeaponDefinition, ZombieDefinition, PlayerDefinition
     Generation/            MazeGenerator, MazeGenerationResult
     Visual/                VisualTheme, VisualSet, VisualVariant, VisualData, CellLayer, CellVisualContext/WallShapes,
-                           VisualSelector, VisualAssigner, VisualResolver, LevelVisualUsage
+                           VisualSelector, VisualAssigner, VisualResolver, LevelVisualUsage, PlayerVisualDefinition
     Navigation/            GridPathfinder (A*), KeyDoorSolver, IGridPassability
     Validation/            LevelValidator, ValidationReport, ValidationCodes
     Authoring/             LevelAuthoring (Generate New, Regenerate Visuals), LevelEditing (все ручные правки)
     Common/GameLog         структурированные логи (§108)
     Level/LevelCatalog     список уровней для меню
-  Scripts/Gameplay/        Maze.Gameplay — Level/: LevelRuntime, ILevelLoadStep + LevelLoadStage, ILevelTickable, LevelOutcome
+  Scripts/Gameplay/        Maze.Gameplay
+    Level/                 LevelRuntime, ILevelLoadStep + LevelLoadStage, ILevelTickable/ILevelLateTickable, LevelOutcome,
+                           LevelLaunchOptions, ExitSystem
+    Grid/                  OccupancyMap, LevelPassability
+    Doors/                 DoorSystem (пока open/closed)
+    Player/                PlayerSystem (+ PlayerStartSelector), PlayerMovement, IPlayerInput
   Scripts/Application/     Maze.Application
     Assets/                AddressablesService, IAssetOwner
     Flow/                  GameFlow, ILevelSession(Factory), PauseController
     Levels/                LevelCatalogService
-    Services/              IApplicationService, InputService, заглушки Settings/Save/Audio
+    Services/              IApplicationService, InputService, SharedDefinitionsService, заглушки Settings/Save/Audio
   Scripts/Presentation/    Maze.Presentation
-    UI/                    UIRoot, ScreenRouter, экраны (меню, загрузка, HUD, пауза, результат, ошибка)
+    UI/                    UIRoot, ScreenRouter, экраны (меню, загрузка, HUD с тач-контролами, пауза, «Завершить уровень?»,
+                           результат, ошибка)
     Visual/                LevelVisualSystem, VisualPrefabLibrary, GeometryBuilder (+ PrefabMeshParts, MeshAccumulator),
                            VisibilityChunk, CellVisibilityMask, LevelGeometryView, EntityView(+Registry, Factory),
-                           TopDownCamera, LevelViewRoot, GeometryShader (константы шейдера)
+                           TopDownCamera, LevelViewRoot, GeometryShader (константы шейдера), PlayerViewPresenter
   Art/Shaders/             MazeGeometry.shader («Maze/Geometry»)
   Scripts/Composition/     Maze.Composition — ProjectLifetimeScope, LevelLifetimeScope (+ LevelTickDriver),
                            ApplicationEntryPoint, LevelSessionFactory
   Scripts/Editor/          Maze.Editor
     LevelDesigner/         окно, сетка, инструменты, инспектор, превью, Build/Sync, валидация с проверкой ассетов
-    Dev/                   PlaceholderThemeBuilder (Maze → Dev → Create Placeholder Theme),
+    Dev/                   PlaceholderThemeBuilder (Maze → Dev → Create Placeholder Theme / Create Placeholder Player),
                            RuntimeScenesBuilder (Maze → Dev → Build Runtime Scenes), GeometryShaderEditorGuard
   Scenes/                  Bootstrap.unity (первая в Build), Game.unity
-  Tests/EditMode/          Maze.Tests.EditMode — 158 тестов
-  Tests/PlayMode/          Maze.Tests.PlayMode — 5 тестов
+  Tests/EditMode/          Maze.Tests.EditMode — 179 тестов
+  Tests/PlayMode/          Maze.Tests.PlayMode — 6 тестов
   Data/Levels/             Level_Dev.asset (тестовый уровень), LevelCatalog.asset
   Data/Themes/             PlaceholderTheme и наборы
+  Data/Player/             PlayerDefinition, PlayerVisual (Addressable, группа Maze Shared)
   Art/Placeholders/        префабы-заглушки из примитивов (без коллайдеров)
 Assets/AddressableAssetsData/   настройки Addressables (созданы Build/Sync)
 Docs/                      LevelDesigner.md (руководство), Progress.md (этот файл)
@@ -160,12 +180,12 @@ CLAUDE.md                  правила проекта и соглашения
 ### Рекомендуемый порядок
 1. ~~**Каркас runtime (§4–9)**~~ — сделано (этап 5).
 2. ~~**Визуал уровня в игре (§31, §82, §105)**~~ — сделано (этап 6).
-3. **Игрок и ввод (§63–66):** `InputService` на Input System (джойстик для Android, WASD и мышь для десктопа), плавное движение, `GridPosition`, Occupancy, `PlayerCellChanged`, камера следует за игроком (`TopDownCamera`).
+3. ~~**Игрок и ввод (§63–66)**~~ — сделано (этап 7).
 4. **Видимость (§53–57, §104–106):** `VisibilitySystem` (11×11 + LOS) по событию `PlayerCellChanged`, `VisibilityController` — пишет в `LevelGeometryView` и `EntityView.SetVisible` (отображение уже готово).
-5. **Двери, ключи, подбор (§67, §72):** `DoorSystem` с правилом ключей (раздел 3), `PickupSystem`, инвентарь.
+5. **Двери, ключи, подбор (§67, §72):** расширить `DoorSystem` (ключи по правилу раздела 3, действие Interact, нельзя закрыть дверь на занятой клетке, визуальное состояние двери), `PickupSystem` (подбор по `CellChanged`), инвентарь.
 6. **Бой и Spatial Query (§68–70, §81)**, **зомби** (§73–77): state machine, обнаружение, патруль, `NavigationSystem` поверх `GridPathfinder`.
 7. **Карта, прогресс, звёзды, сохранения, смерть и завершение, UI (§58–60, §85–89).**
-8. **Test from Start #N** в Level Designer — как только уровень запускается в игре.
+8. **Test from Start #N** в Level Designer: runtime уже принимает `LevelLaunchOptions.StartIndex`; нужна кнопка в окне и запуск Play с Bootstrap.
 9. **PlayMode-тесты (§110), логирование (§108), обработка ошибок (§109), оптимизация (§103).**
 
 ### Открытые мелкие пункты
@@ -177,6 +197,16 @@ CLAUDE.md                  правила проекта и соглашения
 ---
 
 ## 6. История
+
+### 2026-10-04 — Этап 7: игрок и ввод (§50–51, §61–66)
+
+1. **Ввод:** `InputService` реализует `IPlayerInput` (Gameplay) — Move, Look, Attack, Interact, SwitchMelee, SwitchRanged, OpenMap, Pause для клавиатуры/мыши и геймпада; экранные стик и кнопки в HUD (видны только на тач-устройствах) эмулируют геймпад.
+2. **Gameplay:** `OccupancyMap`, `LevelPassability`, минимальный `DoorSystem`; `PlayerSystem` — старт (`PlayerStartSelector`, `LevelLaunchOptions`), плавное движение (`PlayerMovement`: футпринт, скольжение, corner assist, подшаги), взгляд по движению, `CellChanged`; `ExitSystem`; `ILevelLateTickable` для вьюх.
+3. **Application:** `SharedDefinitionsService` (определения игрока резидентны); `GameFlow` — `StartLevel(levelId, options)`, Retry с теми же опциями, состояние `ExitConfirmation` и `ConfirmExit`.
+4. **Presentation:** `PlayerViewPresenter` (позиция, поворот, Animator `Speed`), `TopDownCamera.Follow`, экран «Завершить уровень?», тач-контролы.
+5. **Editor:** Maze → Dev → Create Placeholder Player; Build/Sync держит общие ассеты Addressable (группа Maze Shared); сцены пересобраны.
+6. **Тесты:** +21 EditMode (движение, фазз-тест, игрок, выход, Occupancy, двери, подтверждение выхода и опции запуска), +1 PlayMode (спавн игрока, вьюха, камера).
+7. **Ручная проверка:** игрок появляется на старте, ходит (клавиатура и виртуальный геймпад), упирается в стены точно по границе клетки, камера следует.
 
 ### 2026-10-04 — Этап 6: визуал уровня в игре (§31, §44, §82, §105)
 

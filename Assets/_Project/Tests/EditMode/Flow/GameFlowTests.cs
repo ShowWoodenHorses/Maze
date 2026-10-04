@@ -305,6 +305,54 @@ namespace Maze.Tests.EditMode.Flow
             Assert.IsTrue(_flow.HasLevel, "The level stays loaded behind the result screen.");
         });
 
+        [UnityTest]
+        public IEnumerator ExitReached_PausesAndAsks_NoResumes_YesCompletes() => UniTask.ToCoroutine(async () =>
+        {
+            await BootToMenu();
+            await _flow.StartLevel(ValidId);
+            var session = _sessions.Created[0];
+
+            session.RaiseExitReached();
+            Assert.AreEqual(GameFlowState.ExitConfirmation, _flow.State);
+            Assert.IsTrue(session.Paused, "Gameplay waits for the answer.");
+
+            _flow.ConfirmExit(false);
+            Assert.AreEqual(GameFlowState.Playing, _flow.State);
+            Assert.IsFalse(session.Paused);
+
+            session.RaiseExitReached();
+            _flow.ConfirmExit(true);
+            Assert.AreEqual(GameFlowState.Completed, _flow.State);
+            Assert.IsTrue(session.Stopped);
+        });
+
+        [UnityTest]
+        public IEnumerator ExitReached_WhilePaused_IsIgnored() => UniTask.ToCoroutine(async () =>
+        {
+            await BootToMenu();
+            await _flow.StartLevel(ValidId);
+            _flow.PauseGameplay();
+
+            _sessions.Created[0].RaiseExitReached();
+            Assert.AreEqual(GameFlowState.Paused, _flow.State);
+        });
+
+        [UnityTest]
+        public IEnumerator LaunchOptions_ArePassedToLevel_AndKeptOnRetry() => UniTask.ToCoroutine(async () =>
+        {
+            await BootToMenu();
+            var options = new LevelLaunchOptions(startIndex: 1);
+            await _flow.StartLevel(ValidId, options);
+            Assert.AreSame(options, _sessions.LastOptions);
+
+            _flow.FailLevel();
+            await _flow.RetryLevel();
+            Assert.AreSame(options, _sessions.LastOptions, "Test from Start #N restarts at the same start.");
+
+            await _flow.StartLevel(OtherId);
+            Assert.AreSame(LevelLaunchOptions.Default, _sessions.LastOptions);
+        });
+
         // ------------------------------------------------------------ Fakes
 
         private sealed class RecordingService : IApplicationService
@@ -403,9 +451,13 @@ namespace Maze.Tests.EditMode.Flow
             public Func<CancellationToken, UniTask> LoadBehaviour;
             public Action OnCreate;
 
-            public UniTask<ILevelSession> CreateAsync(LevelData level, IAssetOwner levelAssets, CancellationToken cancellation)
+            public LevelLaunchOptions LastOptions;
+
+            public UniTask<ILevelSession> CreateAsync(LevelData level, IAssetOwner levelAssets, LevelLaunchOptions options,
+                CancellationToken cancellation)
             {
                 OnCreate?.Invoke();
+                LastOptions = options;
                 var session = new FakeSession(level, levelAssets, LoadBehaviour);
                 Created.Add(session);
                 return UniTask.FromResult<ILevelSession>(session);
@@ -432,8 +484,11 @@ namespace Maze.Tests.EditMode.Flow
             public bool Unloaded { get; private set; }
 
             public event Action<LevelOutcome> Finished;
+            public event Action ExitReached;
 
             public void RaiseFinished(LevelOutcome outcome) => Finished?.Invoke(outcome);
+
+            public void RaiseExitReached() => ExitReached?.Invoke();
 
             public async UniTask LoadAsync(CancellationToken cancellation)
             {

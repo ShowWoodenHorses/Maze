@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Maze.Core.Definitions;
 using Maze.Core.Visual;
 using Maze.Presentation.Visual;
 using UnityEditor;
@@ -85,6 +86,36 @@ namespace Maze.Editor.Dev
             Selection.activeObject = theme;
             EditorGUIUtility.PingObject(theme);
             Debug.Log($"[Maze] Placeholder theme created at {AssetDatabase.GetAssetPath(theme)}");
+        }
+
+        private const string PlayerDataPath = "Assets/_Project/Data/Player";
+
+        /// <summary>
+        /// Placeholder player: capsule with a "nose" showing the facing (+Z), plus PlayerDefinition and PlayerVisual
+        /// assets made Addressable at their fixed addresses. Existing definition values are kept.
+        /// </summary>
+        [MenuItem("Maze/Dev/Create Placeholder Player")]
+        public static void CreatePlayer()
+        {
+            EnsureFolder(Root);
+            EnsureFolder(Root + "/Materials");
+            EnsureFolder(PlayerDataPath);
+            Materials.Clear();
+
+            var root = new GameObject("player_placeholder");
+            AddPart(root, PrimitiveType.Capsule, new Color(0.95f, 0.75f, 0.2f), new Vector3(0f, 0.6f, 0f), new Vector3(0.55f, 0.6f, 0.55f));
+            AddPart(root, PrimitiveType.Cube, new Color(0.2f, 0.2f, 0.25f), new Vector3(0f, 0.95f, 0.28f), new Vector3(0.3f, 0.12f, 0.12f));
+            var prefab = SavePrefab(root);
+
+            CreateAsset<PlayerDefinition>($"{PlayerDataPath}/PlayerDefinition.asset");
+            var visual = CreateAsset<PlayerVisualDefinition>($"{PlayerDataPath}/PlayerVisual.asset");
+            visual.Prefab = new AssetReferenceGameObject(AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(prefab)));
+            EditorUtility.SetDirty(visual);
+
+            var problem = LevelDesigner.LevelSync.SyncShared(UnityEditor.AddressableAssets.AddressableAssetSettingsDefaultObject.GetSettings(true));
+            AssetDatabase.SaveAssets();
+            if (problem != null) Debug.LogWarning("[Maze] " + problem);
+            Debug.Log($"[Maze] Placeholder player created in {PlayerDataPath} and made Addressable.");
         }
 
         private enum Direction { N, E, S, W }

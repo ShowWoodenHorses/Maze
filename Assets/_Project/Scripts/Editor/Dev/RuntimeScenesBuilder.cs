@@ -8,6 +8,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem.OnScreen;
 using UnityEngine.InputSystem.UI;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -160,6 +161,7 @@ namespace Maze.Editor.Dev
             SetReference(root, "_loading", BuildLoading(parent));
             SetReference(root, "_hud", BuildHud(parent));
             SetReference(root, "_pause", BuildPause(parent));
+            SetReference(root, "_confirmExit", BuildConfirmExit(parent));
             SetReference(root, "_result", BuildResult(parent));
             SetReference(root, "_error", BuildError(parent));
             return root;
@@ -220,6 +222,74 @@ namespace Maze.Editor.Dev
 
             SetReference(screen, "_levelName", levelName);
             SetReference(screen, "_pauseButton", pause);
+            SetReference(screen, "_touchControls", BuildTouchControls(screen.transform));
+            return screen;
+        }
+
+        /// <summary>
+        /// ТЗ §64 Android: stick bottom-left, attack bottom-right, plus melee, ranged, map and door buttons.
+        /// They emulate gamepad controls, which InputService already binds.
+        /// </summary>
+        private static GameObject BuildTouchControls(Transform parent)
+        {
+            var root = new GameObject("TouchControls", typeof(RectTransform));
+            root.transform.SetParent(parent, false);
+            Stretch(root.GetComponent<RectTransform>());
+            var knob = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd");
+
+            var stickArea = Rect(root.transform, "StickArea", new Vector2(0f, 0f), new Vector2(240f, 240f), new Vector2(320f, 320f));
+            var area = stickArea.gameObject.AddComponent<Image>();
+            area.sprite = knob;
+            area.color = new Color(1f, 1f, 1f, 0.12f);
+            var handle = Rect(stickArea, "Stick", new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(150f, 150f));
+            var handleImage = handle.gameObject.AddComponent<Image>();
+            handleImage.sprite = knob;
+            handleImage.color = new Color(1f, 1f, 1f, 0.45f);
+            var stick = handle.gameObject.AddComponent<OnScreenStick>();
+            stick.controlPath = "<Gamepad>/leftStick";
+            stick.movementRange = 110f;
+
+            TouchButton(root.transform, "Attack", "<Gamepad>/buttonSouth", new Vector2(-230f, 230f), 220f, knob);
+            TouchButton(root.transform, "Melee", "<Gamepad>/leftShoulder", new Vector2(-470f, 150f), 120f, knob);
+            TouchButton(root.transform, "Ranged", "<Gamepad>/rightShoulder", new Vector2(-470f, 310f), 120f, knob);
+            TouchButton(root.transform, "Door", "<Gamepad>/buttonWest", new Vector2(-230f, 470f), 130f, knob);
+            TouchButton(root.transform, "Map", "<Gamepad>/select", new Vector2(-150f, 650f), 110f, knob);
+            return root;
+        }
+
+        private static void TouchButton(Transform parent, string label, string controlPath, Vector2 fromBottomRight, float size, Sprite sprite)
+        {
+            var rect = Rect(parent, label + "Button", new Vector2(1f, 0f), fromBottomRight, new Vector2(size, size));
+            var image = rect.gameObject.AddComponent<Image>();
+            image.sprite = sprite;
+            image.color = new Color(1f, 1f, 1f, 0.3f);
+            rect.gameObject.AddComponent<OnScreenButton>().controlPath = controlPath;
+
+            var text = Label(rect, "Text", label, 26, FontStyle.Bold, size);
+            Stretch(text.rectTransform);
+        }
+
+        private static RectTransform Rect(Transform parent, string name, Vector2 anchor, Vector2 position, Vector2 size)
+        {
+            var rect = new GameObject(name, typeof(RectTransform)).GetComponent<RectTransform>();
+            rect.SetParent(parent, false);
+            rect.anchorMin = rect.anchorMax = anchor;
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = position;
+            rect.sizeDelta = size;
+            return rect;
+        }
+
+        private static ConfirmExitScreen BuildConfirmExit(Transform parent)
+        {
+            var screen = Screen<ConfirmExitScreen>(parent, "ConfirmExitScreen", Dim);
+            var column = Column(screen.transform, 520f, 16f, Panel);
+            Label(column, "Title", "Finish level?", 44, FontStyle.Bold, 90f);
+            var yes = Button(column, "YesButton", "Yes");
+            var no = Button(column, "NoButton", "No");
+
+            SetReference(screen, "_yesButton", yes);
+            SetReference(screen, "_noButton", no);
             return screen;
         }
 

@@ -24,6 +24,9 @@ namespace Maze.Application.Flow
         Completed = 6,
         Failed = 7,
         Error = 8,
+
+        /// <summary>The player entered an exit: gameplay is paused until "Finish level?" is answered (ТЗ §62).</summary>
+        ExitConfirmation = 9,
     }
 
     /// <summary>
@@ -44,6 +47,7 @@ namespace Maze.Application.Flow
         private CancellationTokenSource _transition;
         private UniTask _transitionDone = UniTask.CompletedTask;
         private ILevelSession _session;
+        private LevelLaunchOptions _launchOptions = LevelLaunchOptions.Default;
         private bool _disposed;
 
         public GameFlow(IReadOnlyList<IApplicationService> services, ILevelCatalog catalog,
@@ -94,11 +98,14 @@ namespace Maze.Application.Flow
             SetState(GameFlowState.MainMenu);
         });
 
-        public UniTask StartLevel(string levelId) =>
-            RunTransition($"StartLevel({levelId})", cancellation => StartLevelAsync(levelId, cancellation));
+        /// <param name="options">Start point and seed; default = random start (ТЗ §61).</param>
+        public UniTask StartLevel(string levelId, LevelLaunchOptions options = null) =>
+            RunTransition($"StartLevel({levelId})",
+                cancellation => StartLevelAsync(levelId, options ?? LevelLaunchOptions.Default, cancellation));
 
+        /// <summary>Restarts the current level with the same launch options (a forced start stays forced).</summary>
         public UniTask RetryLevel() =>
-            CurrentLevelId != null ? StartLevel(CurrentLevelId) : UniTask.CompletedTask;
+            CurrentLevelId != null ? StartLevel(CurrentLevelId, _launchOptions) : UniTask.CompletedTask;
 
         public UniTask ExitToMenu() => OpenMainMenu();
 
@@ -126,6 +133,21 @@ namespace Maze.Application.Flow
             SetState(GameFlowState.Playing);
         }
 
+        /// <summary>Answer to "Finish level?": yes completes the level, no resumes gameplay.</summary>
+        public void ConfirmExit(bool finishLevel)
+        {
+            if (State != GameFlowState.ExitConfirmation) return;
+
+            if (finishLevel)
+            {
+                EndLevel(GameFlowState.Completed);
+                return;
+            }
+
+            _session.SetPaused(false);
+            SetState(GameFlowState.Playing);
+        }
+
         public void CompleteLevel() => EndLevel(GameFlowState.Completed);
 
         public void FailLevel() => EndLevel(GameFlowState.Failed);
@@ -140,6 +162,7 @@ namespace Maze.Application.Flow
             if (_session != null)
             {
                 _session.Finished -= OnLevelFinished;
+                _session.ExitReached -= OnExitReached;
                 _session.Dispose();
                 _session = null;
             }
@@ -148,10 +171,11 @@ namespace Maze.Application.Flow
             StateChanged = null;
         }
 
-        private async UniTask StartLevelAsync(string levelId, CancellationToken cancellation)
+        private async UniTask StartLevelAsync(string levelId, LevelLaunchOptions options, CancellationToken cancellation)
         {
             SetState(GameFlowState.Loading);
             CurrentLevelId = levelId;
+            _launchOptions = options;
             GameLog.Info(LogChannel.LevelLoading, $"Loading level '{levelId}'.");
 
             // Stop current gameplay, dispose the old LevelScope, release its Addressables.
@@ -175,8 +199,9 @@ namespace Maze.Application.Flow
                     throw;
                 }
 
-                _session = await _sessionFactory.CreateAsync(level, levelAssets, cancellation);
+                _session = await _sessionFactory.CreateAsync(level, levelAssets, options, cancellation);
                 _session.Finished += OnLevelFinished;
+                _session.ExitReached += OnExitReached;
                 await _session.LoadAsync(cancellation);
                 cancellation.ThrowIfCancellationRequested();
             }
@@ -220,6 +245,7 @@ namespace Maze.Application.Flow
             _session = null;
 
             session.Finished -= OnLevelFinished;
+            session.ExitReached -= OnExitReached;
             try
             {
                 session.StopGameplay();
@@ -238,9 +264,17 @@ namespace Maze.Application.Flow
             else FailLevel();
         }
 
+        private void OnExitReached()
+        {
+            if (State != GameFlowState.Playing) return;
+            _session.SetPaused(true);
+            SetState(GameFlowState.ExitConfirmation);
+        }
+
         private void EndLevel(GameFlowState result)
         {
-            if (State != GameFlowState.Playing && State != GameFlowState.Paused) return;
+            if (State != GameFlowState.Playing && State != GameFlowState.Paused && State != GameFlowState.ExitConfirmation)
+                return;
 
             _session.StopGameplay();
             GameLog.Info(LogChannel.GameFlow, $"Level '{CurrentLevelId}' ended: {result}.");

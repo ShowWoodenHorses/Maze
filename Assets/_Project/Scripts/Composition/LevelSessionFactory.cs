@@ -28,7 +28,8 @@ namespace Maze.Composition
             _sceneName = sceneName;
         }
 
-        public async UniTask<ILevelSession> CreateAsync(LevelData level, IAssetOwner levelAssets, CancellationToken cancellation)
+        public async UniTask<ILevelSession> CreateAsync(LevelData level, IAssetOwner levelAssets, LevelLaunchOptions options,
+            CancellationToken cancellation)
         {
             var scene = default(Scene);
             LevelLifetimeScope scope = null;
@@ -52,14 +53,16 @@ namespace Maze.Composition
                        {
                            builder.RegisterInstance(level);
                            builder.RegisterInstance(levelAssets);
+                           builder.RegisterInstance(options ?? LevelLaunchOptions.Default);
                        }))
                 {
                     scope.Build();
                 }
 
                 var runtime = scope.Container.Resolve<LevelRuntime>();
+                var exits = scope.Container.Resolve<ExitSystem>();
                 GameLog.Info(LogChannel.LevelLoading, $"LevelScope for '{level.name}' created.");
-                return new LevelSession(scope, scene, levelAssets, runtime);
+                return new LevelSession(scope, scene, levelAssets, runtime, exits);
             }
             catch
             {
@@ -84,19 +87,23 @@ namespace Maze.Composition
             private readonly Scene _scene;
             private readonly IAssetOwner _assets;
             private readonly LevelRuntime _runtime;
+            private readonly ExitSystem _exits;
             private LevelLifetimeScope _scope;
             private bool _released;
 
-            public LevelSession(LevelLifetimeScope scope, Scene scene, IAssetOwner assets, LevelRuntime runtime)
+            public LevelSession(LevelLifetimeScope scope, Scene scene, IAssetOwner assets, LevelRuntime runtime, ExitSystem exits)
             {
                 _scope = scope;
                 _scene = scene;
                 _assets = assets;
                 _runtime = runtime;
+                _exits = exits;
                 _runtime.Finished += OnFinished;
+                _exits.ExitReached += OnExitReached;
             }
 
             public event Action<LevelOutcome> Finished;
+            public event Action ExitReached;
 
             public UniTask LoadAsync(CancellationToken cancellation) => _runtime.LoadAsync(cancellation);
 
@@ -129,7 +136,9 @@ namespace Maze.Composition
             {
                 _released = true;
                 _runtime.Finished -= OnFinished;
+                _exits.ExitReached -= OnExitReached;
                 Finished = null;
+                ExitReached = null;
                 if (_scope != null) _scope.Dispose();
                 _scope = null;
             }
@@ -137,6 +146,8 @@ namespace Maze.Composition
             private void ReleaseAssets() => _assets.Dispose();
 
             private void OnFinished(LevelOutcome outcome) => Finished?.Invoke(outcome);
+
+            private void OnExitReached(ExitData exit) => ExitReached?.Invoke();
         }
     }
 }

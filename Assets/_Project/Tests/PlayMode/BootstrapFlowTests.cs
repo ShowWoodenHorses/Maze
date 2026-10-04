@@ -36,9 +36,12 @@ namespace Maze.Tests.PlayMode
         [UnitySetUp]
         public IEnumerator SetUp() => UniTask.ToCoroutine(async () =>
         {
-            await SceneManager.LoadSceneAsync(BootstrapScene, LoadSceneMode.Single).ToUniTask();
+            var loading = SceneManager.LoadSceneAsync(BootstrapScene, LoadSceneMode.Single);
+            Assert.IsNotNull(loading, $"Scene '{BootstrapScene}' could not be loaded: is it in Build Settings?");
+            await loading.ToUniTask();
             var scope = FindRoot<ProjectLifetimeScope>(SceneManager.GetSceneByName(BootstrapScene));
             Assert.IsNotNull(scope, "Bootstrap scene has no ProjectLifetimeScope.");
+            Assert.IsNotNull(scope.Container, "ProjectLifetimeScope was not built (see the console for its exception).");
 
             _container = scope.Container;
             _flow = _container.Resolve<GameFlow>();
@@ -55,8 +58,11 @@ namespace Maze.Tests.PlayMode
             for (var i = SceneManager.sceneCount - 1; i >= 0; i--)
             {
                 var scene = SceneManager.GetSceneAt(i);
-                if (scene != empty && scene.isLoaded)
-                    await SceneManager.UnloadSceneAsync(scene).ToUniTask();
+                if (scene == empty || !scene.isLoaded)
+                    continue;
+                var unloading = SceneManager.UnloadSceneAsync(scene);
+                if (unloading != null)
+                    await unloading.ToUniTask();
             }
         });
 
@@ -65,7 +71,8 @@ namespace Maze.Tests.PlayMode
         {
             var catalog = _container.Resolve<ILevelCatalog>();
             Assert.Greater(catalog.Levels.Count, 0, "Run Build / Sync for at least one level.");
-            Assert.AreEqual(1, _addressables.ActiveHandleCount, "Only the level catalog is resident in the menu.");
+            Assert.AreEqual(3, _addressables.ActiveHandleCount,
+                "Only application-wide assets are resident in the menu: level catalog, player definition, player visual.");
         }
 
         [UnityTest]
@@ -118,6 +125,32 @@ namespace Maze.Tests.PlayMode
 
             Assert.IsTrue(meshes.All(m => m == null), "Chunk meshes are runtime assets and must be destroyed.");
             Assert.IsFalse(Shader.IsKeywordEnabled(GeometryShader.VisibilityKeyword));
+        });
+
+        [UnityTest]
+        public IEnumerator StartLevel_SpawnsPlayerAtStart_WithViewAndCamera() => UniTask.ToCoroutine(async () =>
+        {
+            await _flow.StartLevel(FirstLevelId(), new LevelLaunchOptions(startIndex: 0));
+            Assert.AreEqual(GameFlowState.Playing, _flow.State, _flow.ErrorMessage);
+
+            var container = FindRoot<LevelLifetimeScope>(SceneManager.GetSceneByName(GameScene)).Container;
+            var level = container.Resolve<LevelData>();
+            var player = container.Resolve<Maze.Gameplay.Player.PlayerSystem>();
+            Assert.IsTrue(player.IsSpawned);
+            Assert.AreEqual(level.PlayerStarts[0].Position, player.Cell);
+            Assert.AreEqual(player.Cell, container.Resolve<Maze.Gameplay.Grid.OccupancyMap>().PlayerCell);
+
+            var view = container.Resolve<PlayerViewPresenter>().View;
+            Assert.IsNotNull(view, "Player view instantiated.");
+            Assert.AreEqual(new Vector3(player.Position.x, 0f, player.Position.y), view.transform.position);
+
+            await UniTask.Yield(PlayerLoopTiming.PostLateUpdate);
+            var camera = container.Resolve<TopDownCamera>().transform;
+            var toPlayer = view.transform.position - camera.position;
+            Assert.Greater(Vector3.Dot(camera.forward, toPlayer.normalized), 0.99f, "Camera looks at the player.");
+
+            await _flow.ExitToMenu();
+            Assert.IsTrue(view == null, "Player view destroyed with the level.");
         });
 
         [UnityTest]

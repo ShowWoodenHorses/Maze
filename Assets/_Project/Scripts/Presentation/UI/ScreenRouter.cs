@@ -40,6 +40,8 @@ namespace Maze.Presentation.UI
             _ui.Pause.DebugFailClicked += _flow.FailLevel;
             _ui.Result.RetryClicked += OnRetryRequested;
             _ui.Result.MenuClicked += OnMenuRequested;
+            _ui.ConfirmExit.YesClicked += OnFinishLevelConfirmed;
+            _ui.ConfirmExit.NoClicked += OnFinishLevelDeclined;
 
             Show(_flow.State);
         }
@@ -62,13 +64,16 @@ namespace Maze.Presentation.UI
             _ui.Pause.DebugFailClicked -= _flow.FailLevel;
             _ui.Result.RetryClicked -= OnRetryRequested;
             _ui.Result.MenuClicked -= OnMenuRequested;
+            _ui.ConfirmExit.YesClicked -= OnFinishLevelConfirmed;
+            _ui.ConfirmExit.NoClicked -= OnFinishLevelDeclined;
         }
 
         private void Show(GameFlowState state)
         {
             var menu = state == GameFlowState.MainMenu;
             var loading = state == GameFlowState.None || state == GameFlowState.Initializing || state == GameFlowState.Loading;
-            var inLevel = state == GameFlowState.Playing || state == GameFlowState.Paused;
+            var inLevel = state == GameFlowState.Playing || state == GameFlowState.Paused ||
+                          state == GameFlowState.ExitConfirmation;
             var result = state == GameFlowState.Completed || state == GameFlowState.Failed;
             var error = state == GameFlowState.Error;
 
@@ -83,6 +88,7 @@ namespace Maze.Presentation.UI
             _ui.Pause.SetVisible(state == GameFlowState.Paused);
             _ui.Result.SetVisible(result);
             _ui.Error.SetVisible(error);
+            _ui.ConfirmExit.SetVisible(state == GameFlowState.ExitConfirmation);
         }
 
         private List<KeyValuePair<string, string>> BuildLevelList()
@@ -105,5 +111,9 @@ namespace Maze.Presentation.UI
         private void OnRetryRequested() => _flow.RetryLevel().Forget();
 
         private void OnMenuRequested() => _flow.ExitToMenu().Forget();
+
+        private void OnFinishLevelConfirmed() => _flow.ConfirmExit(true);
+
+        private void OnFinishLevelDeclined() => _flow.ConfirmExit(false);
     }
 }

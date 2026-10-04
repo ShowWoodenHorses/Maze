@@ -16,6 +16,9 @@ namespace Maze.Application.Flow
         /// <summary>Raised when gameplay ends by a game rule.</summary>
         event Action<LevelOutcome> Finished;
 
+        /// <summary>The player entered an exit cell; GameFlow asks "Finish level?" (ТЗ §62).</summary>
+        event Action ExitReached;
+
         /// <summary>Runs the level load steps (ТЗ §9: build runtime … spawn zombies).</summary>
         UniTask LoadAsync(CancellationToken cancellation);
 
@@ -37,7 +40,8 @@ namespace Maze.Application.Flow
         /// Creates the LevelScope for <paramref name="level"/>. Takes ownership of <paramref name="levelAssets"/>
         /// (the owner that loaded the level): the session releases it, and so does the factory on failure.
         /// </summary>
-        UniTask<ILevelSession> CreateAsync(LevelData level, IAssetOwner levelAssets, CancellationToken cancellation);
+        UniTask<ILevelSession> CreateAsync(LevelData level, IAssetOwner levelAssets, LevelLaunchOptions options,
+            CancellationToken cancellation);
     }
 
     public sealed class LevelLoadException : Exception

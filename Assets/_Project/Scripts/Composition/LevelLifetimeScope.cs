@@ -1,6 +1,10 @@
+using Maze.Application.Services;
 using Maze.Core.Grid;
 using Maze.Core.Level;
+using Maze.Gameplay.Doors;
+using Maze.Gameplay.Grid;
 using Maze.Gameplay.Level;
+using Maze.Gameplay.Player;
 using Maze.Presentation.Visual;
 using UnityEngine;
 using VContainer;
@@ -11,7 +15,9 @@ namespace Maze.Composition
     /// <summary>
     /// Scope of the active level (ТЗ §7), placed in the Game scene with Auto Run off. Built by
     /// <see cref="LevelSessionFactory"/> as a child of the ProjectLifetimeScope, which also registers
-    /// <see cref="LevelData"/> and the level's <c>IAssetOwner</c>. Disposing it disposes every level system.
+    /// <see cref="LevelData"/>, the level's <c>IAssetOwner</c> and <see cref="LevelLaunchOptions"/>.
+    /// Disposing it disposes every level system.
+    /// Registration order matters within a load stage and for ticking: gameplay before its views.
     /// </summary>
     public sealed class LevelLifetimeScope : LifetimeScope
     {
@@ -31,7 +37,17 @@ namespace Maze.Composition
 
         protected override void Configure(IContainerBuilder builder)
         {
+            // Shared definitions live in the project scope.
+            builder.Register(resolver => resolver.Resolve<SharedDefinitionsService>().Player, Lifetime.Singleton);
+            builder.Register(resolver => resolver.Resolve<SharedDefinitionsService>().PlayerVisual, Lifetime.Singleton);
+
+            // Gameplay
             builder.Register(resolver => new LevelGrid(resolver.Resolve<LevelData>().Geometry), Lifetime.Singleton);
+            builder.Register<DoorSystem>(Lifetime.Singleton);
+            builder.Register<LevelPassability>(Lifetime.Singleton);
+            builder.Register<OccupancyMap>(Lifetime.Singleton);
+            builder.Register<PlayerSystem>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep, ILevelTickable>();
+            builder.Register<ExitSystem>(Lifetime.Singleton);
             builder.Register<LevelRuntime>(Lifetime.Singleton);
             builder.RegisterEntryPoint<LevelTickDriver>();
 
@@ -40,11 +56,15 @@ namespace Maze.Composition
             builder.RegisterComponent(_camera);
             builder.Register<EntityViewRegistry>(Lifetime.Singleton);
             builder.Register<LevelVisualSystem>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep>();
+            builder.Register<PlayerViewPresenter>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep, ILevelLateTickable>();
         }
     }
 
-    /// <summary>Drives <see cref="LevelRuntime.Tick"/> from the player loop; the runtime decides whether to tick.</summary>
-    public sealed class LevelTickDriver : ITickable
+    /// <summary>
+    /// Drives <see cref="LevelRuntime"/> from the player loop: simulation in Update, view sync in LateUpdate.
+    /// The runtime decides whether to tick (not while loading, paused or stopped).
+    /// </summary>
+    public sealed class LevelTickDriver : ITickable, ILateTickable
     {
         private readonly LevelRuntime _runtime;
 
@@ -54,5 +74,7 @@ namespace Maze.Composition
         }
 
         public void Tick() => _runtime.Tick(Time.deltaTime);
+
+        public void LateTick() => _runtime.LateTick(Time.deltaTime);
     }
 }

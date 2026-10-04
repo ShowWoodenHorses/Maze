@@ -34,6 +34,33 @@ namespace Maze.Gameplay.Level
         void Tick(float deltaTime);
     }
 
+    /// <summary>
+    /// Per-frame sync of views with simulation state (transforms, animators, camera). Runs after every
+    /// <see cref="ILevelTickable"/> of the frame, also while paused (nothing moves then, but views stay consistent).
+    /// </summary>
+    public interface ILevelLateTickable
+    {
+        void LateTick(float deltaTime);
+    }
+
+    /// <summary>How a level is started. Default: random player start (ТЗ §61).</summary>
+    public sealed class LevelLaunchOptions
+    {
+        public static readonly LevelLaunchOptions Default = new LevelLaunchOptions();
+
+        public LevelLaunchOptions(int? startIndex = null, int? seed = null)
+        {
+            StartIndex = startIndex;
+            Seed = seed;
+        }
+
+        /// <summary>Forced player start (Test from Start #N). Null = random start.</summary>
+        public int? StartIndex { get; }
+
+        /// <summary>Seed for gameplay randomness of this run. Null = new seed every run.</summary>
+        public int? Seed { get; }
+    }
+
     public enum LevelOutcome
     {
         Completed = 0,

@@ -2,6 +2,7 @@ using Maze.Application.Assets;
 using Maze.Application.Flow;
 using Maze.Application.Levels;
 using Maze.Application.Services;
+using Maze.Gameplay.Player;
 using Maze.Presentation.UI;
 using UnityEngine;
 using VContainer;
@@ -27,7 +28,8 @@ namespace Maze.Composition
             builder.Register<SettingsService>(Lifetime.Singleton).AsSelf().As<IApplicationService>();
             builder.Register<SaveService>(Lifetime.Singleton).AsSelf().As<IApplicationService>();
             builder.Register<AudioService>(Lifetime.Singleton).AsSelf().As<IApplicationService>();
-            builder.Register<InputService>(Lifetime.Singleton).As<IInputService, IApplicationService>();
+            builder.Register<InputService>(Lifetime.Singleton).As<IInputService, IPlayerInput, IApplicationService>();
+            builder.Register<SharedDefinitionsService>(Lifetime.Singleton).AsSelf().As<IApplicationService>();
             builder.Register<LevelCatalogService>(Lifetime.Singleton).As<ILevelCatalog, IApplicationService>();
 
             builder.Register<ILevelSessionFactory>(_ => new LevelSessionFactory(this, _levelSceneName), Lifetime.Singleton);

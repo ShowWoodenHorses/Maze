@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using Maze.Core.Definitions;
 using Maze.Core.Level;
 using Maze.Core.Visual;
 using UnityEditor;
@@ -19,6 +20,7 @@ namespace Maze.Editor.LevelDesigner
     {
         public const string LevelsGroup = "Maze Levels";
         public const string VisualsGroup = "Maze Visuals";
+        public const string SharedGroup = "Maze Shared";
         public const string LevelAddressPrefix = "Levels/";
         public const string CatalogPath = "Assets/_Project/Data/Levels/LevelCatalog.asset";
 
@@ -63,12 +65,52 @@ namespace Maze.Editor.LevelDesigner
                     }
             }
 
+            var sharedProblem = SyncShared(settings);
+            if (sharedProblem != null)
+                Debug.LogWarning("[Maze] Build/Sync: " + sharedProblem);
+
             EditorUtility.SetDirty(settings);
             EditorUtility.SetDirty(level);
             AssetDatabase.SaveAssets();
             Debug.Log($"[Maze] Build/Sync '{level.name}': address '{levelEntry.address}', {added} visual prefab(s) made Addressable, " +
                       $"{report.ErrorCount} error(s), {report.WarningCount} warning(s).");
             return true;
+        }
+
+        /// <summary>
+        /// Keeps the definitions shared by all levels Addressable at their fixed addresses: <see cref="PlayerDefinition"/>,
+        /// <see cref="PlayerVisualDefinition"/> and its prefab. Returns a problem description or null.
+        /// </summary>
+        public static string SyncShared(AddressableAssetSettings settings)
+        {
+            var sharedGroup = GetOrCreateGroup(settings, SharedGroup);
+            var player = EnsureSingleAddressable<PlayerDefinition>(settings, sharedGroup, PlayerDefinition.Address);
+            var visual = EnsureSingleAddressable<PlayerVisualDefinition>(settings, sharedGroup, PlayerVisualDefinition.Address);
+            if (player == null || visual == null)
+                return "Player definition or player visual is missing: run Maze → Dev → Create Placeholder Player or create them " +
+                       "(Create → Maze → Definitions → Player, Create → Maze → Visual → Player Visual). The game cannot start a level without them.";
+
+            if (visual.Prefab == null || !visual.Prefab.RuntimeKeyIsValid())
+                return $"'{visual.name}' has no prefab.";
+
+            if (settings.FindAssetEntry(visual.Prefab.AssetGUID) == null)
+                settings.CreateOrMoveEntry(visual.Prefab.AssetGUID, sharedGroup);
+            EditorUtility.SetDirty(settings);
+            return null;
+        }
+
+        private static T EnsureSingleAddressable<T>(AddressableAssetSettings settings, AddressableAssetGroup group, string address)
+            where T : ScriptableObject
+        {
+            var guids = AssetDatabase.FindAssets("t:" + typeof(T).Name);
+            if (guids.Length == 0)
+                return null;
+            if (guids.Length > 1)
+                Debug.LogWarning($"[Maze] {guids.Length} {typeof(T).Name} assets found; '{AssetDatabase.GUIDToAssetPath(guids[0])}' is used.");
+
+            var entry = settings.FindAssetEntry(guids[0]) ?? settings.CreateOrMoveEntry(guids[0], group);
+            entry.address = address;
+            return AssetDatabase.LoadAssetAtPath<T>(AssetDatabase.GUIDToAssetPath(guids[0]));
         }
 
         /// <summary>The project's single <see cref="LevelCatalog"/>, created on first sync and kept Addressable.</summary>

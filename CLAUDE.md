@@ -77,7 +77,16 @@ Unity 6000.3.8f1 (6.3 LTS) · Built-in RP · VContainer 1.19 · UniTask 2.5 · A
 - Поклеточное скрытие (§54) — шейдер **`Maze/Geometry`** (`Art/Shaders/MazeGeometry.shader`): при глобальном keyword `MAZE_VISIBILITY` вершины клеток, скрытых в `_MazeVisibility` (R8-текстура W×H, `CellVisibilityMask`), схлопываются; тени тоже. API: `LevelGeometryView.SetCellVisible/SetAllVisible` + `ApplyVisibility()` (заливает маску, выключает чанки без видимых клеток). Без keyword всё видно (редактор; `GeometryShaderEditorGuard` сбрасывает keyword после Play).
 - Требования к префабам пола/стен: материалы на `Maze/Geometry`, меши Read/Write, только MeshRenderer — проверяет `EditorLevelValidator`.
 - Объекты (двери, выходы, пикапы) — `EntityView` в `EntityViewRegistry` по id; зомби и игрока создают их системы. Runtime-меши/текстуры — уничтожать явно (`UnityObjects.Destroy`), после выгрузки уровня `Resources.UnloadUnusedAssets`.
-- Камера уровня — `TopDownCamera` (сцена Game), пока `Frame(bounds)` на весь уровень.
+- Камера уровня — `TopDownCamera` (сцена Game): `Frame(bounds)` при загрузке, затем `Follow` за игроком. Камера **не вращается по Y** — вверх экрана всегда North; ввод на это опирается.
+
+### Игрок, ввод, тики
+- Тики уровня: `ILevelTickable` (симуляция, только в Running) → `ILevelLateTickable` (синхронизация вьюх, также в Paused). Порядок шагов внутри одной стадии и тиков = порядок регистрации в `LevelLifetimeScope` (геймплей раньше своих вьюх).
+- Ввод: `IPlayerInput` (Gameplay) реализует `InputService` (Application) — карта действий в коде: Move, Look, Attack, Interact, SwitchMelee, SwitchRanged, OpenMap, Pause. Тач-контролы HUD (`OnScreenStick/Button`) эмулируют геймпад — новые экранные кнопки биндить на `<Gamepad>/...`.
+- Позиции игрока — `Vector2` в единицах сетки (x = East, y = North), клетка = `PlayerMovement.CellOf`. Движение `PlayerMovement` (без физики): квадратный футпринт `BodyHalfSize` против непроходимых клеток, по осям (скольжение), подшаги ≤ 0.2, corner assist. Центр не входит в клетку с зомби (`OccupancyMap`).
+- Проходимость: `LevelPassability` (Floor; Door — если открыта в `DoorSystem`). `DoorSystem` пока только open/closed из `IsInitiallyOpen`.
+- `PlayerSystem.CellChanged(from, to)` = PlayerCellChanged из ТЗ; `Spawned` — после появления. Старт: `LevelLaunchOptions` (StartIndex для Test from Start #N, Seed), иначе случайный через `DeterministicRandom`.
+- Общие определения (`PlayerDefinition` "Player/Definition", `PlayerVisualDefinition` "Player/Visual") грузит `SharedDefinitionsService` при старте приложения; в LevelScope прокинуты из проектного. Build/Sync держит их Addressable (группа Maze Shared).
+- Выход (§62): `ExitSystem.ExitReached` → `GameFlowState.ExitConfirmation` (геймплей на паузе) → `GameFlow.ConfirmExit(bool)`.
 
 ## Структура папок (целевая)
 ```

@@ -26,13 +26,16 @@ namespace Maze.Gameplay.Level
     {
         private readonly ILevelLoadStep[] _steps;
         private readonly ILevelTickable[] _tickables;
+        private readonly ILevelLateTickable[] _lateTickables;
 
-        public LevelRuntime(LevelData level, IReadOnlyList<ILevelLoadStep> steps, IReadOnlyList<ILevelTickable> tickables)
+        public LevelRuntime(LevelData level, IReadOnlyList<ILevelLoadStep> steps, IReadOnlyList<ILevelTickable> tickables,
+            IReadOnlyList<ILevelLateTickable> lateTickables = null)
         {
             Level = level != null ? level : throw new ArgumentNullException(nameof(level));
             // OrderBy is stable: steps of one stage keep their registration order.
             _steps = (steps ?? Array.Empty<ILevelLoadStep>()).OrderBy(s => s.Stage).ToArray();
             _tickables = (tickables ?? Array.Empty<ILevelTickable>()).ToArray();
+            _lateTickables = (lateTickables ?? Array.Empty<ILevelLateTickable>()).ToArray();
         }
 
         public LevelData Level { get; }
@@ -85,6 +88,16 @@ namespace Maze.Gameplay.Level
 
             for (var i = 0; i < _tickables.Length; i++)
                 _tickables[i].Tick(deltaTime);
+        }
+
+        /// <summary>View sync after simulation; runs while running or paused.</summary>
+        public void LateTick(float deltaTime)
+        {
+            if (State != LevelRunState.Running && State != LevelRunState.Paused)
+                return;
+
+            for (var i = 0; i < _lateTickables.Length; i++)
+                _lateTickables[i].LateTick(deltaTime);
         }
 
         /// <summary>Ends gameplay with an outcome. Ignored unless gameplay is running.</summary>
