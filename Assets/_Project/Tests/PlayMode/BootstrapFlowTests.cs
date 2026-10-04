@@ -174,7 +174,7 @@ namespace Maze.Tests.PlayMode
             for (var x = 0; x < grid.Width; x++)
             {
                 var cell = new GridPosition(x, y);
-                Assert.AreEqual(visibility.IsVisible(cell), geometry.Mask.IsVisible(cell), $"Geometry mask at {cell}.");
+                Assert.AreEqual(visibility.IsRevealed(cell), geometry.Mask.IsVisible(cell), $"Geometry mask at {cell}.");
             }
 
             foreach (var chunk in geometry.Chunks)

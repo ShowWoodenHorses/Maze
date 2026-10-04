@@ -64,12 +64,13 @@ namespace Maze.Presentation.Visual
             if (_geometry == null) return;
 
             // Only cells whose state changed are touched; the mask uploads once in ApplyVisibility.
+            // Geometry follows revealed cells (no one-cell holes), objects follow strict visibility.
             foreach (var cell in _shown)
-                if (!_visibility.IsVisible(cell))
+                if (!_visibility.IsRevealed(cell))
                     _geometry.SetCellVisible(cell, false);
 
             _shown.Clear();
-            var visible = _visibility.VisibleCells;
+            var visible = _visibility.RevealedCells;
             for (var i = 0; i < visible.Count; i++)
             {
                 _geometry.SetCellVisible(visible[i], true);

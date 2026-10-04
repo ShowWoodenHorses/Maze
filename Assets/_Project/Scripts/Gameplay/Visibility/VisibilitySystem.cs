@@ -71,7 +71,14 @@ namespace Maze.Gameplay.Visibility
         /// <summary>Raised after every recalculation; <see cref="VisibleCells"/> holds the new result.</summary>
         public event Action Changed;
 
+        /// <summary>Strict visibility (11×11 + LOS): objects — zombies, pickups, doors — follow it (ТЗ §54).</summary>
         public bool IsVisible(GridPosition cell) => _fieldOfView.IsVisible(cell);
+
+        /// <summary>Cells whose static geometry is shown: visible cells plus one-cell gaps between them, so the fog
+        /// has no single-cell holes. Never used for objects.</summary>
+        public IReadOnlyList<GridPosition> RevealedCells => _fieldOfView.RevealedCells;
+
+        public bool IsRevealed(GridPosition cell) => _fieldOfView.IsRevealed(cell);
 
         public UniTask ExecuteAsync(CancellationToken cancellation)
         {

@@ -12,6 +12,12 @@ namespace Maze.Core.Visibility
         bool IsOpaque(GridPosition position);
     }
 
+    /// <summary>Receives cells crossed by a line (<see cref="GridLineOfSight.Trace{TOpacity,TVisitor}"/>). Use a struct.</summary>
+    public interface IGridCellVisitor
+    {
+        void Visit(GridPosition cell);
+    }
+
     /// <summary>Opacity backed by a per-cell mask (row-major, same indexing as the grid). Outside is opaque.</summary>
     public readonly struct CellMaskOpacity : IGridOpacity
     {
@@ -48,6 +54,20 @@ namespace Maze.Core.Visibility
         /// blocked only when both cells beside that corner are opaque (no seeing through diagonal gaps).
         /// </summary>
         public static bool IsClear<T>(float fromX, float fromY, float toX, float toY, in T opacity) where T : IGridOpacity
+        {
+            var none = default(NoVisitor);
+            return Trace(fromX, fromY, toX, toY, opacity, ref none);
+        }
+
+        /// <summary>
+        /// Same as <see cref="IsClear{T}"/>, and reports to <paramref name="visitor"/> every cell the segment enters
+        /// after the start cell, in order, up to and including the end cell or the opaque cell that blocks it
+        /// (a wall the line runs into is seen). Cells only touched at a corner are not reported.
+        /// </summary>
+        public static bool Trace<TOpacity, TVisitor>(float fromX, float fromY, float toX, float toY, in TOpacity opacity,
+            ref TVisitor visitor)
+            where TOpacity : IGridOpacity
+            where TVisitor : IGridCellVisitor
         {
             var cell = CellOf(fromX, fromY);
             var end = CellOf(toX, toY);
@@ -87,13 +107,20 @@ namespace Maze.Core.Visibility
                     tMaxY += tDeltaY;
                 }
 
+                var entered = new GridPosition(x, y);
+                visitor.Visit(entered);
                 if (x == end.X && y == end.Y)
                     return true;
-                if (opacity.IsOpaque(new GridPosition(x, y)))
+                if (opacity.IsOpaque(entered))
                     return false;
             }
 
             return false;
+        }
+
+        private struct NoVisitor : IGridCellVisitor
+        {
+            public void Visit(GridPosition cell) { }
         }
     }
 }
