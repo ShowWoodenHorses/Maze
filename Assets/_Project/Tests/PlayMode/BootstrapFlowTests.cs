@@ -10,6 +10,7 @@ using Maze.Composition;
 using Maze.Core.Grid;
 using Maze.Core.Level;
 using Maze.Gameplay.Level;
+using Maze.Gameplay.Visibility;
 using Maze.Presentation.Visual;
 using NUnit.Framework;
 using UnityEngine;
@@ -34,7 +35,7 @@ namespace Maze.Tests.PlayMode
         private IAddressablesService _addressables;
 
         [UnitySetUp]
-        public IEnumerator SetUp() => UniTask.ToCoroutine(async () =>
+        public IEnumerator SetUp() => Async(async () =>
         {
             var loading = SceneManager.LoadSceneAsync(BootstrapScene, LoadSceneMode.Single);
             Assert.IsNotNull(loading, $"Scene '{BootstrapScene}' could not be loaded: is it in Build Settings?");
@@ -51,7 +52,7 @@ namespace Maze.Tests.PlayMode
         });
 
         [UnityTearDown]
-        public IEnumerator TearDown() => UniTask.ToCoroutine(async () =>
+        public IEnumerator TearDown() => Async(async () =>
         {
             var empty = SceneManager.CreateScene("Empty " + Guid.NewGuid().ToString("N"));
             SceneManager.SetActiveScene(empty);
@@ -76,7 +77,7 @@ namespace Maze.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator StartLevel_BuildsLevelScope_ThenExit_ReleasesEverything() => UniTask.ToCoroutine(async () =>
+        public IEnumerator StartLevel_BuildsLevelScope_ThenExit_ReleasesEverything() => Async(async () =>
         {
             var levelId = FirstLevelId();
             var handlesInMenu = _addressables.ActiveHandleCount;
@@ -104,7 +105,7 @@ namespace Maze.Tests.PlayMode
         });
 
         [UnityTest]
-        public IEnumerator StartLevel_BuildsVisuals_AndExit_DestroysThem() => UniTask.ToCoroutine(async () =>
+        public IEnumerator StartLevel_BuildsVisuals_AndExit_DestroysThem() => Async(async () =>
         {
             await _flow.StartLevel(FirstLevelId());
             Assert.AreEqual(GameFlowState.Playing, _flow.State, _flow.ErrorMessage);
@@ -128,7 +129,7 @@ namespace Maze.Tests.PlayMode
         });
 
         [UnityTest]
-        public IEnumerator StartLevel_SpawnsPlayerAtStart_WithViewAndCamera() => UniTask.ToCoroutine(async () =>
+        public IEnumerator StartLevel_SpawnsPlayerAtStart_WithViewAndCamera() => Async(async () =>
         {
             await _flow.StartLevel(FirstLevelId(), new LevelLaunchOptions(startIndex: 0));
             Assert.AreEqual(GameFlowState.Playing, _flow.State, _flow.ErrorMessage);
@@ -154,7 +155,38 @@ namespace Maze.Tests.PlayMode
         });
 
         [UnityTest]
-        public IEnumerator Retry_AfterFail_ReloadsLevel_WithSingleLevelScope() => UniTask.ToCoroutine(async () =>
+        public IEnumerator StartLevel_AppliesVisibility_ToGeometryAndObjects() => Async(async () =>
+        {
+            await _flow.StartLevel(FirstLevelId(), new LevelLaunchOptions(startIndex: 0));
+            Assert.AreEqual(GameFlowState.Playing, _flow.State, _flow.ErrorMessage);
+
+            var container = FindRoot<LevelLifetimeScope>(SceneManager.GetSceneByName(GameScene)).Container;
+            var visibility = container.Resolve<VisibilitySystem>();
+            var player = container.Resolve<Maze.Gameplay.Player.PlayerSystem>();
+            var grid = container.Resolve<LevelGrid>();
+            var geometry = container.Resolve<LevelVisualSystem>().Geometry;
+
+            Assert.IsTrue(visibility.HasResult, "Calculated when the player spawned.");
+            Assert.IsTrue(visibility.IsVisible(player.Cell));
+            Assert.LessOrEqual(visibility.VisibleCells.Count, 121, "At most 11x11 cells (ТЗ §53).");
+
+            for (var y = 0; y < grid.Height; y++)
+            for (var x = 0; x < grid.Width; x++)
+            {
+                var cell = new GridPosition(x, y);
+                Assert.AreEqual(visibility.IsVisible(cell), geometry.Mask.IsVisible(cell), $"Geometry mask at {cell}.");
+            }
+
+            foreach (var chunk in geometry.Chunks)
+                Assert.AreEqual(geometry.Mask.AnyVisible(chunk.Cells), chunk.IsVisible, $"Chunk {chunk.Cells}.");
+            foreach (var view in container.Resolve<EntityViewRegistry>().All)
+                Assert.AreEqual(visibility.IsVisible(view.Cell), view.IsVisible, $"View '{view.EntityId}' at {view.Cell}.");
+
+            await _flow.ExitToMenu();
+        });
+
+        [UnityTest]
+        public IEnumerator Retry_AfterFail_ReloadsLevel_WithSingleLevelScope() => Async(async () =>
         {
             var levelId = FirstLevelId();
             var handlesInMenu = _addressables.ActiveHandleCount;
@@ -177,7 +209,7 @@ namespace Maze.Tests.PlayMode
         });
 
         [UnityTest]
-        public IEnumerator ExitToMenu_DuringLoading_LeavesNoLevelBehind() => UniTask.ToCoroutine(async () =>
+        public IEnumerator ExitToMenu_DuringLoading_LeavesNoLevelBehind() => Async(async () =>
         {
             var handlesInMenu = _addressables.ActiveHandleCount;
             var loading = _flow.StartLevel(FirstLevelId());
@@ -206,6 +238,17 @@ namespace Maze.Tests.PlayMode
             return null;
         }
 
+        /// <summary>
+        /// Runs an async test body as a coroutine. Must stay a compiler-generated iterator: when play mode is entered
+        /// without a domain reload (MCP for Unity runs PlayMode tests that way) right after an EditMode run, the Test
+        /// Framework keeps its EditMode helper and reads the iterator state field ("&lt;&gt;1__state") of every
+        /// [UnitySetUp]/[UnityTest] enumerator. UniTask's own enumerator has no such field → NullReferenceException.
+        /// </summary>
+        private static IEnumerator Async(Func<UniTask> body)
+        {
+            yield return UniTask.ToCoroutine(body);
+        }
+
         private static async UniTask WaitFor(Func<bool> condition)
         {
             using var timeout = new CancellationTokenSource(Timeout);
@@ -213,3 +256,4 @@ namespace Maze.Tests.PlayMode
         }
     }
 }
+

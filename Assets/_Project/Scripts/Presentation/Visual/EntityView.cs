@@ -24,8 +24,8 @@ namespace Maze.Presentation.Visual
         public string EntityId { get; }
         public VisualKind Kind { get; }
 
-        /// <summary>Cell used by visibility. Moving entities update it.</summary>
-        public GridPosition Cell { get; set; }
+        /// <summary>Cell used by visibility. Moving entities change it via <see cref="EntityViewRegistry.Move"/>.</summary>
+        public GridPosition Cell { get; internal set; }
 
         public GameObject GameObject { get; }
         public bool IsVisible => GameObject != null && GameObject.activeSelf;
@@ -46,6 +46,12 @@ namespace Maze.Presentation.Visual
         public int Count => _ordered.Count;
         public IReadOnlyList<EntityView> All => _ordered;
 
+        /// <summary>A view was added (e.g. a zombie spawned after the level loaded).</summary>
+        public event Action<EntityView> Added;
+
+        /// <summary>A view moved to another cell.</summary>
+        public event Action<EntityView> Moved;
+
         public void Add(EntityView view)
         {
             if (_views.ContainsKey(view.EntityId))
@@ -53,9 +59,18 @@ namespace Maze.Presentation.Visual
 
             _views.Add(view.EntityId, view);
             _ordered.Add(view);
+            Added?.Invoke(view);
         }
 
         public bool TryGet(string entityId, out EntityView view) => _views.TryGetValue(entityId, out view);
+
+        /// <summary>Updates the cell of a moving entity's view, so visibility follows it.</summary>
+        public void Move(EntityView view, GridPosition cell)
+        {
+            if (view.Cell == cell) return;
+            view.Cell = cell;
+            Moved?.Invoke(view);
+        }
 
         /// <summary>Removes and destroys the view (e.g. a collected pickup).</summary>
         public bool Remove(string entityId)

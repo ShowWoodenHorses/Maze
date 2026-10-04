@@ -5,6 +5,7 @@ using Maze.Gameplay.Doors;
 using Maze.Gameplay.Grid;
 using Maze.Gameplay.Level;
 using Maze.Gameplay.Player;
+using Maze.Gameplay.Visibility;
 using Maze.Presentation.Visual;
 using UnityEngine;
 using VContainer;
@@ -48,6 +49,7 @@ namespace Maze.Composition
             builder.Register<OccupancyMap>(Lifetime.Singleton);
             builder.Register<PlayerSystem>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep, ILevelTickable>();
             builder.Register<ExitSystem>(Lifetime.Singleton);
+            builder.Register<VisibilitySystem>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep>();
             builder.Register<LevelRuntime>(Lifetime.Singleton);
             builder.RegisterEntryPoint<LevelTickDriver>();
 
@@ -56,6 +58,7 @@ namespace Maze.Composition
             builder.RegisterComponent(_camera);
             builder.Register<EntityViewRegistry>(Lifetime.Singleton);
             builder.Register<LevelVisualSystem>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep>();
+            builder.Register<VisibilityController>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep>();
             builder.Register<PlayerViewPresenter>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep, ILevelLateTickable>();
         }
     }

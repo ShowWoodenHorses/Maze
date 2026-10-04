@@ -5,7 +5,7 @@
 
 **Как вести файл:** по завершении каждого этапа обновить таблицу статуса (раздел 2), при необходимости — решения (раздел 3), и добавить запись в историю (раздел 6).
 
-**Последнее обновление:** 2026-10-04
+**Последнее обновление:** 2026-10-05
 
 ---
 
@@ -37,8 +37,12 @@
   - Occupancy, минимальный `DoorSystem` (открыта/закрыта), `PlayerCellChanged`;
   - выход: окно «Завершить уровень?» — уровень можно пройти от старта до конца;
   - камера следует за игроком.
-- **Не начато:** расчёт видимости, двери с ключами и подбор, бой, зомби, карта, сохранения.
-- **Тесты:** 179 EditMode-тестов (включая массовые прогоны на 1000 seed'ов, §111, и фазз-тест движения) и 6 PlayMode-тестов. Все проходят.
+- **Готово:** видимость / туман войны (этап 8).
+  - окно 11×11 вокруг клетки игрока + линия видимости (стены и закрытые двери блокируют);
+  - пересчёт только по событиям: появление игрока, смена клетки, дверь в окне открылась/закрылась;
+  - скрываются пол, стены и все вьюхи объектов вне видимости; объекты, созданные или сдвинутые позже, получают видимость сразу.
+- **Не начато:** двери с ключами и подбор, бой, зомби, карта, сохранения.
+- **Тесты:** 191 EditMode-тест (включая массовые прогоны на 1000 seed'ов, §111, и фазз-тест движения) и 7 PlayMode-тестов. Все проходят.
 - **Руководство для дизайнера:** [Docs/LevelDesigner.md](LevelDesigner.md).
 
 ---
@@ -58,7 +62,7 @@
 | 12–14 | Генерация (DFS + LoopDensity, seed'ы) | ✅ | `Core/Generation/MazeGenerator.cs`. **Отступление:** размер нечётный (см. раздел 3) |
 | 15–16 | Ручное редактирование, workflow | 🟡 | Всё, кроме кнопок **Test / Play** в Level Designer (уровень запускается из меню игры; runtime-поддержка заданного старта уже есть — `LevelLaunchOptions.StartIndex`) |
 | 17–46 | Визуальная система | ✅ | Создание и хранение визуала (темы, наборы, веса, VisualSeed, контекстные стены, overrides, приоритеты, Regenerate Visuals) и runtime-часть: `LevelVisualSystem`, `GeometryBuilder`, `EntityViewFactory`, загрузка только используемых префабов (§44). Визуальные состояния двери (открыта/закрыта) — с `DoorSystem` |
-| 47–49, 53–57, 104–107 | Visibility / Fog of War, чанки | 🟡 | Готово отображение: `VisibilityChunk` (8×8), `CellVisibilityMask` + шейдер `Maze/Geometry` скрывают любую клетку, чанки без видимых клеток выключаются, `EntityView.SetVisible`. Нет расчёта: `VisibilitySystem` (11×11 + LOS по `PlayerCellChanged`) и `VisibilityController` — после игрока |
+| 47–49, 53–57, 104–107 | Visibility / Fog of War, чанки | ✅ | Расчёт: `FieldOfView` + `GridLineOfSight` (Core, без аллокаций), `VisibilitySystem` (Gameplay; пересчёт по `Spawned`, `PlayerCellChanged`, `DoorChanged` в окне). Отображение: `VisibilityController` → маска `CellVisibilityMask` + шейдер `Maze/Geometry`, чанки 8×8 без видимых клеток выключаются, `EntityView.SetVisible` (в т.ч. для вьюх, добавленных/сдвинутых позже через `EntityViewRegistry`). AI видимость не учитывает (§57). Detection (§107) — отдельно, на этапе зомби |
 | 50–51 | Grid, Occupancy | ✅ | `LevelGrid`, `OccupancyMap` (1 игрок, 0..N зомби, не вместе; пикапы не занимают), `LevelPassability` |
 | 52 | Navigation + A* | 🟡 | `Core/Navigation/GridPathfinder.cs` (A*, 4 направления, без аллокаций). `NavigationSystem` с учётом дверей в runtime нет |
 | 58–60 | Map, фрагменты | 🟡 | Данные фрагментов и областей, редактор областей, проверки пересечений. `MapSystem` / `MapRenderer` нет |
@@ -77,7 +81,7 @@
 | 103 | Performance | 🟡 | Заложено: A* без аллокаций; геометрия — склеенные чанки + Static Batching; видимость меняет маленькую текстуру, а не GameObject'ы; жёсткие тени; грузятся только используемые префабы. Профилирование на устройствах не проводилось |
 | 108 | Structured logging | 🟡 | `GameLog` с каналами §108 (`[Maze][Channel]`), используется в Bootstrap, GameFlow, Addressables, загрузке и выгрузке. Остальные места подключатся вместе со своими системами |
 | 109 | Error handling | ✅ (для каркаса) | Любое исключение в переходе GameFlow → отмена, выгрузка уровня (Dispose LevelScope, выгрузка Game, Release Addressables) → экран ошибки. Уровень с ошибками валидации не запускается |
-| 110 | Тесты | 🟡 | EditMode: Grid, Generator, seeds, визуал, Validator, A*, Key/Door solver, правки уровня, **GameFlow** (на фейках: порядок, ошибки, отмена, утечки), **LevelRuntime**, **GeometryBuilder** (чанки, клетки в вершинах, повороты, маска видимости), `EntityViewFactory`, `LevelVisualUsage`, **движение игрока** (стены, скольжение, corner assist, зомби-клетки, фазз-тест 20 000 шагов без туннелирования), `PlayerSystem`, `ExitSystem`, `OccupancyMap`, `DoorSystem`, подтверждение выхода в `GameFlow`. PlayMode: **Bootstrap, GameFlow, Addressables, LevelScope, Retry**, визуал, **Player spawn** (старт, вьюха, камера). Нет Visibility, Save, Progress, Spatial Queries и PlayMode-тестов для дверей, ключей, оружия, зомби, смерти, завершения |
+| 110 | Тесты | 🟡 | EditMode: Grid, Generator, seeds, визуал, Validator, A*, Key/Door solver, правки уровня, **GameFlow** (на фейках: порядок, ошибки, отмена, утечки), **LevelRuntime**, **GeometryBuilder** (чанки, клетки в вершинах, повороты, маска видимости), `EntityViewFactory`, `LevelVisualUsage`, **движение игрока** (стены, скольжение, corner assist, зомби-клетки, фазз-тест 20 000 шагов без туннелирования), `PlayerSystem`, `ExitSystem`, `OccupancyMap`, `DoorSystem`, подтверждение выхода в `GameFlow`, **Visibility** (окно, LOS, двери, диагональные щели, боковые проходы, пересчёт по событиям). PlayMode: **Bootstrap, GameFlow, Addressables, LevelScope, Retry**, визуал, **Player spawn** (старт, вьюха, камера), **Visibility** (маска, чанки и вьюхи совпадают с `VisibilitySystem`). Нет Save, Progress, Spatial Queries и PlayMode-тестов для дверей, ключей, оружия, зомби, смерти, завершения |
 | 111 | Массовый тест генератора | ✅ | 1000 seed'ов: Generate (инварианты) и Generate → Assign Visuals → Validate (0 ошибок) |
 
 ---
@@ -116,6 +120,8 @@
 | Подтверждение выхода (§62) | Пока окно открыто, геймплей на паузе (новое состояние `GameFlowState.ExitConfirmation`) | ТЗ не уточняет; так не получить урон, пока думаешь |
 | `DoorSystem` | Заведён на этапе игрока, но пока только состояние open/closed (`IsInitiallyOpen`). Ключи и взаимодействие — на этапе дверей | Проходимость для игрока нужна уже сейчас |
 | Общие ассеты игрока | `PlayerDefinition` + `PlayerVisualDefinition` (раздельно: геймплей и вид, как у оружия), Addressable "Player/Definition" / "Player/Visual", грузятся при старте приложения и остаются резидентными | §84: shared assets могут оставаться resident |
+| Правила LOS (§55) | Игрок может стоять в любой точке своей клетки, поэтому клетка видна, если **хоть одна** линия из точки клетки игрока в точку целевой клетки свободна (центр и 4 угла с отступом 0.05 с обеих сторон). Стена или закрытая дверь видна, если линия до неё дошла **или** она касается (8 направлений) видимой прозрачной клетки. Через угловой стык двух стен не видно. Вход в боковой проход виден заранее, глубже — нет | Без «дыр» в стенах вокруг видимого пола и без подглядывания за углы |
+| Видимость до появления игрока | Всё скрыто (идёт экран загрузки) | — |
 | Сообщения валидатора | На английском; проверки идентифицируются кодами `ValidationCodes` | Единообразие с кодом |
 
 ---
@@ -133,6 +139,7 @@ Assets/_Project/
     Visual/                VisualTheme, VisualSet, VisualVariant, VisualData, CellLayer, CellVisualContext/WallShapes,
                            VisualSelector, VisualAssigner, VisualResolver, LevelVisualUsage, PlayerVisualDefinition
     Navigation/            GridPathfinder (A*), KeyDoorSolver, IGridPassability
+    Visibility/            FieldOfView (11×11 + LOS), GridLineOfSight (луч по клеткам, IGridOpacity)
     Validation/            LevelValidator, ValidationReport, ValidationCodes
     Authoring/             LevelAuthoring (Generate New, Regenerate Visuals), LevelEditing (все ручные правки)
     Common/GameLog         структурированные логи (§108)
@@ -143,6 +150,7 @@ Assets/_Project/
     Grid/                  OccupancyMap, LevelPassability
     Doors/                 DoorSystem (пока open/closed)
     Player/                PlayerSystem (+ PlayerStartSelector), PlayerMovement, IPlayerInput
+    Visibility/            VisibilitySystem, LevelOpacity
   Scripts/Application/     Maze.Application
     Assets/                AddressablesService, IAssetOwner
     Flow/                  GameFlow, ILevelSession(Factory), PauseController
@@ -153,7 +161,8 @@ Assets/_Project/
                            результат, ошибка)
     Visual/                LevelVisualSystem, VisualPrefabLibrary, GeometryBuilder (+ PrefabMeshParts, MeshAccumulator),
                            VisibilityChunk, CellVisibilityMask, LevelGeometryView, EntityView(+Registry, Factory),
-                           TopDownCamera, LevelViewRoot, GeometryShader (константы шейдера), PlayerViewPresenter
+                           TopDownCamera, LevelViewRoot, GeometryShader (константы шейдера), PlayerViewPresenter,
+                           VisibilityController
   Art/Shaders/             MazeGeometry.shader («Maze/Geometry»)
   Scripts/Composition/     Maze.Composition — ProjectLifetimeScope, LevelLifetimeScope (+ LevelTickDriver),
                            ApplicationEntryPoint, LevelSessionFactory
@@ -162,8 +171,8 @@ Assets/_Project/
     Dev/                   PlaceholderThemeBuilder (Maze → Dev → Create Placeholder Theme / Create Placeholder Player),
                            RuntimeScenesBuilder (Maze → Dev → Build Runtime Scenes), GeometryShaderEditorGuard
   Scenes/                  Bootstrap.unity (первая в Build), Game.unity
-  Tests/EditMode/          Maze.Tests.EditMode — 179 тестов
-  Tests/PlayMode/          Maze.Tests.PlayMode — 6 тестов
+  Tests/EditMode/          Maze.Tests.EditMode — 191 тест
+  Tests/PlayMode/          Maze.Tests.PlayMode — 7 тестов
   Data/Levels/             Level_Dev.asset (тестовый уровень), LevelCatalog.asset
   Data/Themes/             PlaceholderTheme и наборы
   Data/Player/             PlayerDefinition, PlayerVisual (Addressable, группа Maze Shared)
@@ -181,8 +190,8 @@ CLAUDE.md                  правила проекта и соглашения
 1. ~~**Каркас runtime (§4–9)**~~ — сделано (этап 5).
 2. ~~**Визуал уровня в игре (§31, §82, §105)**~~ — сделано (этап 6).
 3. ~~**Игрок и ввод (§63–66)**~~ — сделано (этап 7).
-4. **Видимость (§53–57, §104–106):** `VisibilitySystem` (11×11 + LOS) по событию `PlayerCellChanged`, `VisibilityController` — пишет в `LevelGeometryView` и `EntityView.SetVisible` (отображение уже готово).
-5. **Двери, ключи, подбор (§67, §72):** расширить `DoorSystem` (ключи по правилу раздела 3, действие Interact, нельзя закрыть дверь на занятой клетке, визуальное состояние двери), `PickupSystem` (подбор по `CellChanged`), инвентарь.
+4. ~~**Видимость (§53–57, §104–106)**~~ — сделано (этап 8).
+5. **Двери, ключи, подбор (§67, §72):** расширить `DoorSystem` (ключи по правилу раздела 3, действие Interact, нельзя закрыть дверь на занятой клетке, визуальное состояние двери), `PickupSystem` (подбор по `CellChanged`; вьюху убрать `EntityViewRegistry.Remove`), инвентарь. Видимость уже пересчитывается при `DoorChanged`.
 6. **Бой и Spatial Query (§68–70, §81)**, **зомби** (§73–77): state machine, обнаружение, патруль, `NavigationSystem` поверх `GridPathfinder`.
 7. **Карта, прогресс, звёзды, сохранения, смерть и завершение, UI (§58–60, §85–89).**
 8. **Test from Start #N** в Level Designer: runtime уже принимает `LevelLaunchOptions.StartIndex`; нужна кнопка в окне и запуск Play с Bootstrap.
@@ -193,10 +202,20 @@ CLAUDE.md                  правила проекта и соглашения
 - `Level_Dev` и `PlaceholderTheme` — тестовые ассеты, не финальный контент. У `Level_Dev` Display Name пока «New Level».
 - `Assets/Scenes/SampleScene.unity` — шаблонная сцена, не в Build Settings; её можно удалить.
 - Чтобы запустить игру из редактора, откройте сцену Bootstrap и нажмите Play. Из сцены Game ничего не запустится.
+- **Enter Play Mode Options:** перезагрузка домена при входе в Play включена (`m_EnterPlayModeOptions: 0`, решение пользователя 2026-10-05). MCP на время своих PlayMode-прогонов временно её выключает и обычно возвращает обратно; если после прерванного прогона в `EditorSettings.asset` снова окажется `1` — вернуть 0.
 
 ---
 
 ## 6. История
+
+### 2026-10-05 — Этап 8: видимость (§46–49, §53–57, §104–107)
+
+1. **Core/Visibility:** `GridLineOfSight` (обход клеток по лучу, Amanatides–Woo; блокирует непрозрачная клетка между концами или угловой стык двух непрозрачных; пригодится и для пуль), `IGridOpacity` / `CellMaskOpacity`, `FieldOfView` (окно 11×11, permissive LOS по 5×5 точкам, стены вокруг видимого пола; переиспользует буферы).
+2. **Gameplay/Visibility:** `LevelOpacity` (Wall и закрытая Door), `VisibilitySystem` — шаг загрузки `InitializeVisibility`, пересчёт по `PlayerSystem.Spawned`, `CellChanged`, `DoorSystem.DoorChanged` (если дверь в окне), событие `Changed`.
+3. **Presentation:** `VisibilityController` (шаг `BuildVisuals` после `LevelVisualSystem`): обновляет только изменившиеся клетки маски, `ApplyVisibility`, видимость вьюх объектов; `EntityViewRegistry` получил события `Added` / `Moved` и метод `Move` для движущихся объектов (зомби).
+4. **Тесты:** +12 EditMode (`FieldOfView`, `GridLineOfSight`, `VisibilitySystem`), +1 PlayMode (маска, чанки и вьюхи совпадают с расчётом).
+5. **Нестабильные PlayMode-прогоны — причина найдена и устранена.** MCP запускает PlayMode без перезагрузки домена; если перед этим шёл EditMode-прогон, Test Framework оставляет свой `EditModePcHelper` и читает поле состояния итератора у енумератора `[UnitySetUp]`/`[UnityTest]`. У енумератора `UniTask.ToCoroutine` такого поля нет → NRE во всех SetUp/TearDown. Тела PlayMode-тестов теперь оборачиваются в обычный итератор (`Async(...)` в `BootstrapFlowTests`).
+6. **Ручная проверка:** в игре видна только область вокруг игрока (коридор до поворота и стены вокруг), остальное скрыто; совпадает с картой видимости.
 
 ### 2026-10-04 — Этап 7: игрок и ввод (§50–51, §61–66)
 

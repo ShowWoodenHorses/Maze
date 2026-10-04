@@ -88,6 +88,13 @@ Unity 6000.3.8f1 (6.3 LTS) · Built-in RP · VContainer 1.19 · UniTask 2.5 · A
 - Общие определения (`PlayerDefinition` "Player/Definition", `PlayerVisualDefinition` "Player/Visual") грузит `SharedDefinitionsService` при старте приложения; в LevelScope прокинуты из проектного. Build/Sync держит их Addressable (группа Maze Shared).
 - Выход (§62): `ExitSystem.ExitReached` → `GameFlowState.ExitConfirmation` (геймплей на паузе) → `GameFlow.ConfirmExit(bool)`.
 
+### Видимость
+- Расчёт — `FieldOfView` (Core/Visibility): окно 11×11 вокруг клетки игрока + permissive LOS (клетка видна, если свободна хоть одна линия между точками клетки игрока и целевой клетки; центр + 4 угла с отступом). Непрозрачная клетка видна, если до неё дошла линия или она касается (8 направлений) видимой прозрачной. Луч — `GridLineOfSight.IsClear` (угловой стык двух непрозрачных клеток блокирует), прозрачность — `IGridOpacity` (struct, generic, без аллокаций); в игре `LevelOpacity` (Wall, закрытая Door, вне сетки).
+- `VisibilitySystem` (Gameplay) пересчитывает только по `PlayerSystem.Spawned`, `CellChanged` и `DoorChanged` (дверь в окне) → `Changed`. `VisibilityController` (Presentation) пишет в маску геометрии и `EntityView.SetVisible`. Новые вьюхи — через `EntityViewRegistry.Add`, движущиеся меняют клетку только `EntityViewRegistry.Move` — тогда видимость применяется сразу. AI видимость не использует (§57).
+
+### Тесты
+- **Ловушка:** `[UnitySetUp]`/`[UnityTest]` в PlayMode не должны возвращать `UniTask.ToCoroutine(...)` напрямую — только через итератор-обёртку (`yield return UniTask.ToCoroutine(...)`, см. `BootstrapFlowTests.Async`). MCP гоняет PlayMode без перезагрузки домена, и после EditMode-прогона Test Framework читает поле состояния итератора → NRE во всех SetUp/TearDown.
+
 ## Структура папок (целевая)
 ```
 Assets/_Project/
