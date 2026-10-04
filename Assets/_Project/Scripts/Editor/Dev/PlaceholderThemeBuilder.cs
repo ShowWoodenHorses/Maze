@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Maze.Core.Visual;
+using Maze.Presentation.Visual;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -109,7 +110,7 @@ namespace Maze.Editor.Dev
         private static GameObject Floor(string name, Color color)
         {
             var root = new GameObject(name);
-            AddPart(root, PrimitiveType.Cube, color, new Vector3(0f, -0.05f, 0f), new Vector3(1f, 0.1f, 1f));
+            AddPart(root, PrimitiveType.Cube, color, new Vector3(0f, -0.05f, 0f), new Vector3(1f, 0.1f, 1f), geometry: true);
             return SavePrefab(root);
         }
 
@@ -118,7 +119,7 @@ namespace Maze.Editor.Dev
         {
             var root = new GameObject(name);
             var y = WallHeight * 0.5f;
-            AddPart(root, PrimitiveType.Cube, color, new Vector3(0f, y, 0f), new Vector3(WallThickness, WallHeight, WallThickness));
+            AddPart(root, PrimitiveType.Cube, color, new Vector3(0f, y, 0f), new Vector3(WallThickness, WallHeight, WallThickness), geometry: true);
 
             const float armLength = 0.5f - WallThickness * 0.5f;
             const float armCenter = WallThickness * 0.5f + armLength * 0.5f;
@@ -128,7 +129,7 @@ namespace Maze.Editor.Dev
                 var sign = arm == Direction.N || arm == Direction.E ? 1f : -1f;
                 var position = alongZ ? new Vector3(0f, y, sign * armCenter) : new Vector3(sign * armCenter, y, 0f);
                 var scale = alongZ ? new Vector3(WallThickness, WallHeight, armLength) : new Vector3(armLength, WallHeight, WallThickness);
-                AddPart(root, PrimitiveType.Cube, color, position, scale);
+                AddPart(root, PrimitiveType.Cube, color, position, scale, geometry: true);
             }
 
             return SavePrefab(root);
@@ -159,27 +160,29 @@ namespace Maze.Editor.Dev
             return SavePrefab(root);
         }
 
-        private static void AddPart(GameObject root, PrimitiveType type, Color color, Vector3 position, Vector3 scale)
+        /// <param name="geometry">Floor/wall part: uses the Maze/Geometry shader so single cells can be hidden.</param>
+        private static void AddPart(GameObject root, PrimitiveType type, Color color, Vector3 position, Vector3 scale,
+            bool geometry = false)
         {
             var part = GameObject.CreatePrimitive(type);
             Object.DestroyImmediate(part.GetComponent<Collider>());
             part.transform.SetParent(root.transform, false);
             part.transform.localPosition = position;
             part.transform.localScale = scale;
-            part.GetComponent<MeshRenderer>().sharedMaterial = MaterialFor(color);
+            part.GetComponent<MeshRenderer>().sharedMaterial = MaterialFor(color, geometry);
         }
 
-        private static Material MaterialFor(Color color)
+        private static Material MaterialFor(Color color, bool geometry)
         {
-            var key = ColorUtility.ToHtmlStringRGB(color);
+            var key = (geometry ? "G_" : "M_") + ColorUtility.ToHtmlStringRGB(color);
             if (Materials.TryGetValue(key, out var material))
                 return material;
 
-            var path = $"{Root}/Materials/M_{key}.mat";
+            var path = $"{Root}/Materials/{key}.mat";
             material = AssetDatabase.LoadAssetAtPath<Material>(path);
             if (material == null)
             {
-                material = new Material(Shader.Find("Standard")) { color = color };
+                material = new Material(Shader.Find(geometry ? GeometryShader.Name : "Standard")) { color = color };
                 AssetDatabase.CreateAsset(material, path);
             }
 

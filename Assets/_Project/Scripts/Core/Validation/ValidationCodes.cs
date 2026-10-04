@@ -31,6 +31,11 @@ namespace Maze.Core.Validation
         public const string VisualSetKindMismatch = "VisualSetKindMismatch";
         public const string DuplicateVariantId = "DuplicateVariantId";
         public const string BrokenPrefabReference = "BrokenPrefabReference";
+
+        // Geometry prefabs (floor, wall): checked by the editor validator, which can inspect prefab assets.
+        public const string GeometryMeshNotReadable = "GeometryMeshNotReadable";
+        public const string GeometryShaderUnsupported = "GeometryShaderUnsupported";
+        public const string GeometryUnsupportedRenderer = "GeometryUnsupportedRenderer";
         public const string InvalidDefaultVariant = "InvalidDefaultVariant";
         public const string AssignmentsOutOfSync = "AssignmentsOutOfSync";
         public const string MissingVisual = "MissingVisual";

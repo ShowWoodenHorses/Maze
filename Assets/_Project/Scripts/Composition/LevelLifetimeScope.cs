@@ -1,6 +1,7 @@
 using Maze.Core.Grid;
 using Maze.Core.Level;
 using Maze.Gameplay.Level;
+using Maze.Presentation.Visual;
 using UnityEngine;
 using VContainer;
 using VContainer.Unity;
@@ -14,6 +15,9 @@ namespace Maze.Composition
     /// </summary>
     public sealed class LevelLifetimeScope : LifetimeScope
     {
+        [SerializeField] private LevelViewRoot _viewRoot;
+        [SerializeField] private TopDownCamera _camera;
+
         protected override void Awake()
         {
             if (autoRun)
@@ -30,6 +34,12 @@ namespace Maze.Composition
             builder.Register(resolver => new LevelGrid(resolver.Resolve<LevelData>().Geometry), Lifetime.Singleton);
             builder.Register<LevelRuntime>(Lifetime.Singleton);
             builder.RegisterEntryPoint<LevelTickDriver>();
+
+            // Presentation
+            builder.RegisterComponent(_viewRoot);
+            builder.RegisterComponent(_camera);
+            builder.Register<EntityViewRegistry>(Lifetime.Singleton);
+            builder.Register<LevelVisualSystem>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep>();
         }
     }
 

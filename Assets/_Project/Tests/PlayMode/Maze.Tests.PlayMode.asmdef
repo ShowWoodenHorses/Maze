@@ -5,6 +5,7 @@
         "Maze.Core",
         "Maze.Gameplay",
         "Maze.Application",
+        "Maze.Presentation",
         "Maze.Composition",
         "VContainer",
         "UniTask",

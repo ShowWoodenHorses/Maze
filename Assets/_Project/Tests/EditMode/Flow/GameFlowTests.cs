@@ -383,6 +383,10 @@ namespace Maze.Tests.EditMode.Flow
                     return UniTask.FromResult(typed);
                 }
 
+                public UniTask<T> LoadAsync<T>(UnityEngine.AddressableAssets.AssetReference reference,
+                    CancellationToken cancellation) where T : Object =>
+                    LoadAsync<T>(reference.AssetGUID, cancellation);
+
                 public void Dispose()
                 {
                     if (IsDisposed) return;

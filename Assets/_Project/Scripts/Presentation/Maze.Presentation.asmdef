@@ -6,7 +6,9 @@
         "Maze.Gameplay",
         "Maze.Application",
         "UniTask",
-        "UnityEngine.UI"
+        "UnityEngine.UI",
+        "Unity.Addressables",
+        "Unity.ResourceManager"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

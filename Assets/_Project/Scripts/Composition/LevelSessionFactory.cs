@@ -6,6 +6,7 @@ using Maze.Application.Flow;
 using Maze.Core.Common;
 using Maze.Core.Level;
 using Maze.Gameplay.Level;
+using UnityEngine;
 using UnityEngine.SceneManagement;
 using VContainer;
 using VContainer.Unity;
@@ -112,6 +113,8 @@ namespace Maze.Composition
                 if (_scene.IsValid() && _scene.isLoaded)
                     await SceneManager.UnloadSceneAsync(_scene).ToUniTask();
                 ReleaseAssets();
+                // Frees what has no owner handle: static batching meshes, released prefabs' dependencies.
+                await Resources.UnloadUnusedAssets().ToUniTask();
             }
 
             public void Dispose()

@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using Maze.Composition;
 using Maze.Presentation.UI;
+using Maze.Presentation.Visual;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -15,7 +16,8 @@ namespace Maze.Editor.Dev
 {
     /// <summary>
     /// Creates the runtime scenes (ТЗ §6–7) with placeholder uGUI screens and puts them into Build Settings:
-    /// Bootstrap (first; ProjectLifetimeScope, application UI) and Game (additive; LevelLifetimeScope, camera, light).
+    /// Bootstrap (first; ProjectLifetimeScope, application UI) and Game (additive; LevelLifetimeScope, level view root,
+    /// top-down camera, light).
     /// Re-running overwrites both scenes.
     /// </summary>
     internal static class RuntimeScenesBuilder
@@ -39,20 +41,22 @@ namespace Maze.Editor.Dev
             if (existing && !EditorUtility.DisplayDialog("Build Runtime Scenes",
                     "Bootstrap and Game scenes already exist and will be overwritten.", "Overwrite", "Cancel"))
                 return;
+
+            var problem = Rebuild();
+            if (problem != null)
+                EditorUtility.DisplayDialog("Build Runtime Scenes", problem, "OK");
+        }
+
+        /// <summary>Builds both scenes without asking (tools, automation). Returns why it could not, or null.</summary>
+        public static string Rebuild()
+        {
             // Scenes are created additively and closed after saving, so the open scenes stay as they are.
             // Unity cannot add a new scene next to an untitled one.
             var openPaths = Enumerable.Range(0, SceneManager.sceneCount).Select(i => SceneManager.GetSceneAt(i).path).ToList();
             if (openPaths.Any(string.IsNullOrEmpty))
-            {
-                EditorUtility.DisplayDialog("Build Runtime Scenes", "Save or close the untitled scene first.", "OK");
-                return;
-            }
-
+                return "Save or close the untitled scene first.";
             if (openPaths.Contains(BootstrapPath) || openPaths.Contains(GamePath))
-            {
-                EditorUtility.DisplayDialog("Build Runtime Scenes", "Close the Bootstrap and Game scenes first.", "OK");
-                return;
-            }
+                return "Close the Bootstrap and Game scenes first.";
 
             if (!AssetDatabase.IsValidFolder(ScenesFolder))
                 AssetDatabase.CreateFolder("Assets/_Project", "Scenes");
@@ -64,31 +68,38 @@ namespace Maze.Editor.Dev
             RegisterInBuildSettings();
 
             Debug.Log($"[Maze] Runtime scenes built: {BootstrapPath} (first in Build Settings), {GamePath}.");
+            return null;
         }
 
         private static void BuildGameScene()
         {
             var scene = NewScene();
 
-            var scopeObject = new GameObject("LevelLifetimeScope");
-            var scope = scopeObject.AddComponent<LevelLifetimeScope>();
-            var serializedScope = new SerializedObject(scope);
-            serializedScope.FindProperty("autoRun").boolValue = false;
-            serializedScope.ApplyModifiedPropertiesWithoutUndo();
-
-            // Placeholder top-down camera; a camera controller comes with the player stage.
+            // Top-down camera: frames the level when it is built, follows the player later.
             var cameraObject = new GameObject("Main Camera") { tag = "MainCamera" };
             var camera = cameraObject.AddComponent<Camera>();
             camera.clearFlags = CameraClearFlags.SolidColor;
             camera.backgroundColor = Background;
             camera.depth = 0;
-            cameraObject.transform.SetPositionAndRotation(new Vector3(10f, 22f, 4f), Quaternion.Euler(70f, 0f, 0f));
+            cameraObject.transform.SetPositionAndRotation(new Vector3(10f, 22f, 4f), Quaternion.Euler(60f, 0f, 0f));
+            var topDown = cameraObject.AddComponent<TopDownCamera>();
+            SetReference(topDown, "_camera", camera);
 
             var lightObject = new GameObject("Directional Light");
             var light = lightObject.AddComponent<Light>();
             light.type = LightType.Directional;
-            light.shadows = LightShadows.Soft;
+            light.shadows = LightShadows.Hard; // ТЗ §103: no heavy realtime shadows.
             lightObject.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
+
+            var viewRoot = new GameObject("Level View").AddComponent<LevelViewRoot>();
+
+            var scopeObject = new GameObject("LevelLifetimeScope");
+            var scope = scopeObject.AddComponent<LevelLifetimeScope>();
+            var serializedScope = new SerializedObject(scope);
+            serializedScope.FindProperty("autoRun").boolValue = false;
+            serializedScope.ApplyModifiedPropertiesWithoutUndo();
+            SetReference(scope, "_viewRoot", viewRoot);
+            SetReference(scope, "_camera", topDown);
 
             SaveAndClose(scene, GamePath);
         }

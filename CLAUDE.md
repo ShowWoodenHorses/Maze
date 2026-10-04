@@ -71,6 +71,14 @@ Unity 6000.3.8f1 (6.3 LTS) · Built-in RP · VContainer 1.19 · UniTask 2.5 · A
 - **Ловушка:** VContainer (`ScriptTemplateProcessor`) перезаписывает шаблоном любой **новый** `*LifetimeScope.cs` при создании его `.meta`. Создав такой файл снаружи Unity: refresh → записать содержимое ещё раз.
 - UniTask в Unity 6: `AsyncOperation` ожидать через `.ToUniTask()` (прямой `await` не компилируется).
 
+### Визуал уровня в игре
+- `LevelVisualSystem` (Presentation, шаг `BuildVisuals`): `VisualPrefabLibrary` грузит через `IAssetOwner` уровня **только используемые** варианты (`LevelVisualUsage`) → `GeometryBuilder` → `EntityViewFactory`. Варианты берутся только через `VisualResolver` (сохранённые id), никакого выбора в runtime.
+- Геометрия (пол, стены) — без GameObject на клетку: меши префабов склеиваются вручную (`MeshAccumulator`) в `VisibilityChunk` 8×8, сабмеш на материал, затем `StaticBatchingUtility.Combine`. В **UV3** каждой вершины — её клетка.
+- Поклеточное скрытие (§54) — шейдер **`Maze/Geometry`** (`Art/Shaders/MazeGeometry.shader`): при глобальном keyword `MAZE_VISIBILITY` вершины клеток, скрытых в `_MazeVisibility` (R8-текстура W×H, `CellVisibilityMask`), схлопываются; тени тоже. API: `LevelGeometryView.SetCellVisible/SetAllVisible` + `ApplyVisibility()` (заливает маску, выключает чанки без видимых клеток). Без keyword всё видно (редактор; `GeometryShaderEditorGuard` сбрасывает keyword после Play).
+- Требования к префабам пола/стен: материалы на `Maze/Geometry`, меши Read/Write, только MeshRenderer — проверяет `EditorLevelValidator`.
+- Объекты (двери, выходы, пикапы) — `EntityView` в `EntityViewRegistry` по id; зомби и игрока создают их системы. Runtime-меши/текстуры — уничтожать явно (`UnityObjects.Destroy`), после выгрузки уровня `Resources.UnloadUnusedAssets`.
+- Камера уровня — `TopDownCamera` (сцена Game), пока `Frame(bounds)` на весь уровень.
+
 ## Структура папок (целевая)
 ```
 Assets/_Project/

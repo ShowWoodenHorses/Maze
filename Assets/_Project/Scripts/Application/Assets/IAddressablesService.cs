@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using UnityEngine.AddressableAssets;
 
 namespace Maze.Application.Assets
 {
@@ -15,6 +16,8 @@ namespace Maze.Application.Assets
         bool IsDisposed { get; }
 
         UniTask<T> LoadAsync<T>(string address, CancellationToken cancellation) where T : UnityEngine.Object;
+
+        UniTask<T> LoadAsync<T>(AssetReference reference, CancellationToken cancellation) where T : UnityEngine.Object;
     }
 
     public interface IAddressablesService

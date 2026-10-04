@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Linq;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using Maze.Application.Assets;
@@ -9,7 +10,9 @@ using Maze.Composition;
 using Maze.Core.Grid;
 using Maze.Core.Level;
 using Maze.Gameplay.Level;
+using Maze.Presentation.Visual;
 using NUnit.Framework;
+using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using VContainer;
@@ -91,6 +94,30 @@ namespace Maze.Tests.PlayMode
             Assert.AreEqual(GameFlowState.MainMenu, _flow.State);
             Assert.IsFalse(SceneManager.GetSceneByName(GameScene).isLoaded, "Game scene must be unloaded.");
             Assert.AreEqual(handlesInMenu, _addressables.ActiveHandleCount, "Level Addressables must be released.");
+        });
+
+        [UnityTest]
+        public IEnumerator StartLevel_BuildsVisuals_AndExit_DestroysThem() => UniTask.ToCoroutine(async () =>
+        {
+            await _flow.StartLevel(FirstLevelId());
+            Assert.AreEqual(GameFlowState.Playing, _flow.State, _flow.ErrorMessage);
+
+            var container = FindRoot<LevelLifetimeScope>(SceneManager.GetSceneByName(GameScene)).Container;
+            var level = container.Resolve<LevelData>();
+            var visuals = container.Resolve<LevelVisualSystem>();
+            var geometry = visuals.Geometry;
+            Assert.Greater(geometry.Chunks.Count, 0);
+            Assert.AreEqual(0, geometry.MissingVisuals, "Every cell layer of a synced level has a prefab.");
+            Assert.IsTrue(Shader.IsKeywordEnabled(GeometryShader.VisibilityKeyword));
+
+            var expectedViews = level.AllEntities().Count(e => !(e is PlayerStartData) && !(e is ZombieSpawnData));
+            Assert.AreEqual(expectedViews, container.Resolve<EntityViewRegistry>().Count);
+
+            var meshes = geometry.Chunks.Select(c => c.Mesh).ToList();
+            await _flow.ExitToMenu();
+
+            Assert.IsTrue(meshes.All(m => m == null), "Chunk meshes are runtime assets and must be destroyed.");
+            Assert.IsFalse(Shader.IsKeywordEnabled(GeometryShader.VisibilityKeyword));
         });
 
         [UnityTest]

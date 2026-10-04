@@ -65,12 +65,22 @@ namespace Maze.Application.Assets
             public int HandleCount => _handles.Count;
             public bool IsDisposed { get; private set; }
 
-            public async UniTask<T> LoadAsync<T>(string address, CancellationToken cancellation) where T : UnityEngine.Object
+            public UniTask<T> LoadAsync<T>(string address, CancellationToken cancellation) where T : UnityEngine.Object =>
+                LoadAsync<T>(address, address, cancellation);
+
+            public UniTask<T> LoadAsync<T>(AssetReference reference, CancellationToken cancellation) where T : UnityEngine.Object
+            {
+                if (reference == null || !reference.RuntimeKeyIsValid())
+                    throw new AssetLoadException(reference?.AssetGUID ?? "<null>", null);
+                return LoadAsync<T>(reference.RuntimeKey, reference.AssetGUID, cancellation);
+            }
+
+            private async UniTask<T> LoadAsync<T>(object key, string address, CancellationToken cancellation) where T : UnityEngine.Object
             {
                 if (IsDisposed) throw new ObjectDisposedException($"Asset owner '{Name}'");
                 cancellation.ThrowIfCancellationRequested();
 
-                var handle = Addressables.LoadAssetAsync<T>(address);
+                var handle = Addressables.LoadAssetAsync<T>(key);
                 _handles.Add(handle);
 
                 try
