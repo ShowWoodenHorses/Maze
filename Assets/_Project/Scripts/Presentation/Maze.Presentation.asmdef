@@ -1,0 +1,20 @@
+{
+    "name": "Maze.Presentation",
+    "rootNamespace": "Maze.Presentation",
+    "references": [
+        "Maze.Core",
+        "Maze.Gameplay",
+        "Maze.Application",
+        "UniTask",
+        "UnityEngine.UI"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

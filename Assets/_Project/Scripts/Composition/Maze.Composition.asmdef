@@ -1,0 +1,21 @@
+{
+    "name": "Maze.Composition",
+    "rootNamespace": "Maze.Composition",
+    "references": [
+        "Maze.Core",
+        "Maze.Gameplay",
+        "Maze.Application",
+        "Maze.Presentation",
+        "VContainer",
+        "UniTask"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

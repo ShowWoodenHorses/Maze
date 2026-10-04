@@ -19,11 +19,16 @@
   - решатель ключей и дверей;
   - валидатор;
   - окно **Maze → Level Designer** с полным циклом: генерация → ручное редактирование → визуал → валидация → превью → Build/Sync.
-- **Не начато:** весь игровой runtime.
-  - Bootstrap и VContainer-скоупы, GameFlow, загрузка уровня;
-  - игрок, зомби, бой, видимость, карта, UI, сохранения;
-  - сборка геометрии для игры.
-- **Тесты:** 127 EditMode-тестов, все проходят, включая массовые прогоны на 1000 seed'ов (§111). PlayMode-тестов пока нет.
+- **Готово:** каркас runtime (этап 5).
+  - сборки Gameplay / Application / Presentation / Composition;
+  - сцены Bootstrap и Game, `ProjectLifetimeScope`, `LevelLifetimeScope`;
+  - `GameFlow` со всеми операциями §8, загрузка уровня по §9 с отменой и обработкой ошибок §109;
+  - `AddressablesService` с владельцами handle'ов, каталог уровней;
+  - экраны-заглушки: меню, загрузка, HUD, пауза, результат, ошибка.
+  - Цикл «меню → уровень → пауза → повтор / выход в меню» работает, утечек handle'ов нет. На экране уровня пока пусто — геометрия строится на следующем этапе.
+- **Не начато:** игровое содержимое уровня.
+  - сборка геометрии, игрок, зомби, бой, видимость, карта, сохранения.
+- **Тесты:** 148 EditMode-тестов (включая массовые прогоны на 1000 seed'ов, §111) и 4 PlayMode-теста. Все проходят.
 - **Руководство для дизайнера:** [Docs/LevelDesigner.md](LevelDesigner.md).
 
 ---
@@ -34,14 +39,14 @@
 
 | § ТЗ | Тема | Статус | Что есть / чего нет |
 |---|---|---|---|
-| 1–2 | Концепция, платформы | 🟡 | Модуль Android установлен. Модуль **WebGL Build Support** должен поставить пользователь через Unity Hub — проверить, что он стоит |
-| 3 | Технологический стек | ✅ | Unity 6000.3.8f1, Built-in RP, VContainer 1.19, UniTask 2.5, Addressables 4.1, Input System 1.18, uGUI, Test Framework. Visual Scripting удалён |
-| 4–5 | Архитектура, слои | 🟡 | Есть сборки `Maze.Core`, `Maze.Editor`, `Maze.Tests.EditMode`. Сборок Gameplay / Application / Presentation / Composition ещё нет |
-| 6–9 | Bootstrap, ProjectLifetimeScope, LevelLifetimeScope, GameFlow, загрузка уровня | ⬜ | — |
+| 1–2 | Концепция, платформы | 🟡 | Модули Android и WebGL Build Support установлены. Сборки под платформы ещё не проверялись |
+| 3 | Технологический стек | ✅ | Unity 6000.3.8f1, Built-in RP, VContainer 1.19, UniTask 2.5, Addressables 4.1, Input System 1.18, uGUI, Test Framework. Удалены Visual Scripting, Multiplayer Center, Collab Proxy |
+| 4–5 | Архитектура, слои | ✅ | Сборки `Maze.Core ← Maze.Gameplay ← Maze.Application ← Maze.Presentation`, `Maze.Composition` (видит все), `Maze.Editor`, `Maze.Tests.EditMode`, `Maze.Tests.PlayMode` |
+| 6–9 | Bootstrap, ProjectLifetimeScope, LevelLifetimeScope, GameFlow, загрузка уровня | ✅ | Сцены Bootstrap и Game (аддитивная). `GameFlow` — все операции §8. Пайплайн §9: шаги `ILevelLoadStep` по стадиям `LevelLoadStage`. Пока зарегистрирован только `LevelGrid`, остальные системы добавят свои шаги на своих этапах |
 | 10 | LevelData | ✅ | `Core/Level/LevelData.cs` и данные объектов. Мутация только `internal` (доступна редактору и тестам) |
 | 11 | Разделение логики и визуала | ✅ | Тип клетки — логика; префаб — только вид |
 | 12–14 | Генерация (DFS + LoopDensity, seed'ы) | ✅ | `Core/Generation/MazeGenerator.cs`. **Отступление:** размер нечётный (см. раздел 3) |
-| 15–16 | Ручное редактирование, workflow | 🟡 | Всё, кроме **Test / Play** (нет игрового runtime) |
+| 15–16 | Ручное редактирование, workflow | 🟡 | Всё, кроме **Test / Play** из Level Designer (уровень уже запускается из меню игры, но на экране пока пусто) |
 | 17–46 | Визуальная система | 🟡 | Создание и хранение визуала готово: темы, наборы, веса, VisualSeed, контекстные стены, overrides, приоритеты, Regenerate Visuals. Нет runtime-части: `LevelVisualSystem`, `GeometryBuilder`, `EntityViewFactory` |
 | 47–49, 53–57, 104–107 | Visibility / Fog of War, чанки | ⬜ | Есть `LevelGrid` и LOS-правила в документации; систем нет |
 | 50–51 | Grid, Occupancy | 🟡 | `LevelGrid` есть; Occupancy нет |
@@ -52,16 +57,16 @@
 | 81 | Spatial Query | ⬜ | — |
 | 82 | GeometryBuilder, Mesh Combine, Static Batching | ⬜ | Есть только редакторское превью `LevelPreviewBuilder` (отдельные префабы, не для игры). Static Batching для WebGL включён в настройках |
 | 83 | Object Pooling | ⬜ | — |
-| 84 | Addressables | 🟡 | Build/Sync делает уровень (`Levels/<имя>`, группа *Maze Levels*) и префабы темы (группа *Maze Visuals*) Addressable. Runtime-загрузки и владения handle нет |
-| 85–89 | SaveData, прогресс, звёзды, смерть, завершение | ⬜ | — |
+| 84 | Addressables | 🟡 | Build/Sync делает уровень (`Levels/<имя>`, группа *Maze Levels*), каталог уровней (`LevelCatalog`) и префабы темы (группа *Maze Visuals*) Addressable. Runtime: `AddressablesService` + `IAssetOwner`: у каждого handle есть владелец, owner уровня освобождается вместе с LevelScope. Загрузки визуальных префабов пока нет |
+| 85–89 | SaveData, прогресс, звёзды, смерть, завершение | 🟡 | Есть только состояния `Completed` / `Failed` в `GameFlow` и экран результата. `SaveService` — заглушка |
 | 90–92 | Валидатор | ✅ | `Core/Validation/LevelValidator.cs`: структура, визуал, геймплей, уровни Error/Warning/Info, ~50 кодов. В редакторе дополнительно проверяется существование ассетов префабов |
 | 93–97 | Диагностика распределения, управление визуалом, Regenerate Visuals, overrides | ✅ | Вкладка Visuals в Level Designer |
 | 98 | Детерминизм | ✅ | Свой `DeterministicRandom` (SplitMix64) и `StableHash`; результат сохраняется в уровень. В runtime случайности нет |
 | 99–102 | Финальные пайплайны | 🟡 | Редакторская часть готова; runtime — нет |
 | 103 | Performance | ⬜ | Заложено: A* без аллокаций, правки уровня локальные. Остального нет |
-| 108 | Structured logging | ⬜ | — |
-| 109 | Error handling | ⬜ | — |
-| 110 | Тесты | 🟡 | EditMode: Grid, Generator, seeds, взвешенный и детерминированный выбор визуала, назначения, overrides, Validator, A*, Key/Door solver, правки уровня. Нет Visibility, Save, Progress, Spatial Queries и всех PlayMode |
+| 108 | Structured logging | 🟡 | `GameLog` с каналами §108 (`[Maze][Channel]`), используется в Bootstrap, GameFlow, Addressables, загрузке и выгрузке. Остальные места подключатся вместе со своими системами |
+| 109 | Error handling | ✅ (для каркаса) | Любое исключение в переходе GameFlow → отмена, выгрузка уровня (Dispose LevelScope, выгрузка Game, Release Addressables) → экран ошибки. Уровень с ошибками валидации не запускается |
+| 110 | Тесты | 🟡 | EditMode: Grid, Generator, seeds, визуал, Validator, A*, Key/Door solver, правки уровня, **GameFlow** (на фейках: порядок, ошибки, отмена, утечки) и **LevelRuntime**. PlayMode: **Bootstrap, GameFlow, Addressables, LevelScope, Retry**. Нет Visibility, Save, Progress, Spatial Queries и PlayMode-тестов для игрока, дверей, ключей, оружия, зомби, смерти, завершения |
 | 111 | Массовый тест генератора | ✅ | 1000 seed'ов: Generate (инварианты) и Generate → Assign Visuals → Validate (0 ошибок) |
 
 ---
@@ -85,7 +90,13 @@
 | Выбор визуала | Хеш (VisualSeed, вид, клетка или ID) → взвешенный выбор; в уровень сохраняется `VariantId` + поворот | Независимость от порядка, локальное переназначение |
 | A* | 4 направления | Простота; можно расширить |
 | Тулза | 2D-сетка в окне редактора (не Scene View); превью в сцене по кнопке | Решение пользователя |
-| Composition root | Планируется отдельная сборка `Maze.Composition` для LifetimeScope'ов | Скоупам нужны все слои |
+| Composition root | Отдельная сборка `Maze.Composition` для LifetimeScope'ов, точки входа и фабрики сессии уровня | Скоупам нужны все слои; остальные слои не зависят от VContainer |
+| Сцены (§6–7) | Bootstrap всегда загружена; сцена **Game** грузится аддитивно на каждый уровень, в ней `LevelLifetimeScope` (autoRun выключен), который строится дочерним к проектному | Простая очистка: выгрузка Game убирает всё, что создал уровень |
+| Список уровней | `LevelCatalog` (ScriptableObject, Addressable), заполняется Build/Sync; порядок задаётся в инспекторе | Меню не грузит все уровни ради их названий |
+| Сервисы Save / Audio / Settings | Пока заглушки, реализуются на своих этапах | Хранить пока нечего |
+| Пауза | Не через `Time.timeScale`: `LevelRuntime` перестаёт тикать `ILevelTickable` | Явное управление симуляцией; UI и загрузки не замирают |
+| Запуск невалидного уровня | Перед созданием LevelScope уровень проверяется `LevelValidator`; при ошибках — экран ошибки | §109: не оставлять повреждённый уровень |
+| UI-заглушки | uGUI с legacy `Text` (встроенный шрифт), сцены собираются кодом (`RuntimeScenesBuilder`) | Не нужен импорт TMP Essentials; финальный UI будет позже |
 | Сообщения валидатора | На английском; проверки идентифицируются кодами `ValidationCodes` | Единообразие с кодом |
 
 ---
@@ -105,11 +116,25 @@ Assets/_Project/
     Navigation/            GridPathfinder (A*), KeyDoorSolver, IGridPassability
     Validation/            LevelValidator, ValidationReport, ValidationCodes
     Authoring/             LevelAuthoring (Generate New, Regenerate Visuals), LevelEditing (все ручные правки)
+    Common/GameLog         структурированные логи (§108)
+    Level/LevelCatalog     список уровней для меню
+  Scripts/Gameplay/        Maze.Gameplay — Level/: LevelRuntime, ILevelLoadStep + LevelLoadStage, ILevelTickable, LevelOutcome
+  Scripts/Application/     Maze.Application
+    Assets/                AddressablesService, IAssetOwner
+    Flow/                  GameFlow, ILevelSession(Factory), PauseController
+    Levels/                LevelCatalogService
+    Services/              IApplicationService, InputService, заглушки Settings/Save/Audio
+  Scripts/Presentation/    Maze.Presentation — UI/: UIRoot, ScreenRouter, экраны (меню, загрузка, HUD, пауза, результат, ошибка)
+  Scripts/Composition/     Maze.Composition — ProjectLifetimeScope, LevelLifetimeScope (+ LevelTickDriver),
+                           ApplicationEntryPoint, LevelSessionFactory
   Scripts/Editor/          Maze.Editor
     LevelDesigner/         окно, сетка, инструменты, инспектор, превью, Build/Sync, валидация с проверкой ассетов
-    Dev/                   PlaceholderThemeBuilder (Maze → Dev → Create Placeholder Theme)
-  Tests/EditMode/          Maze.Tests.EditMode — 127 тестов
-  Data/Levels/             Level_Dev.asset (тестовый уровень)
+    Dev/                   PlaceholderThemeBuilder (Maze → Dev → Create Placeholder Theme),
+                           RuntimeScenesBuilder (Maze → Dev → Build Runtime Scenes)
+  Scenes/                  Bootstrap.unity (первая в Build), Game.unity
+  Tests/EditMode/          Maze.Tests.EditMode — 148 тестов
+  Tests/PlayMode/          Maze.Tests.PlayMode — 4 теста
+  Data/Levels/             Level_Dev.asset (тестовый уровень), LevelCatalog.asset
   Data/Themes/             PlaceholderTheme и наборы
   Art/Placeholders/        префабы-заглушки из примитивов (без коллайдеров)
 Assets/AddressableAssetsData/   настройки Addressables (созданы Build/Sync)
@@ -122,15 +147,12 @@ CLAUDE.md                  правила проекта и соглашения
 ## 5. Что дальше
 
 ### Рекомендуемый порядок
-1. **Каркас runtime (§4–9):**
-   - сборки `Maze.Gameplay`, `Maze.Application`, `Maze.Presentation`, `Maze.Composition`;
-   - Bootstrap-сцена, `ProjectLifetimeScope` (VContainer), `GameFlow`;
-   - `AddressablesService` с владением handle'ами;
-   - `LevelLifetimeScope` и загрузка уровня по §9 с отменой через UniTask.
+1. ~~**Каркас runtime (§4–9)**~~ — сделано (этап 5).
 2. **Визуал уровня в игре (§31, §82, §105):**
-   - `LevelVisualSystem`, `GeometryBuilder`;
+   - `LevelVisualSystem`, `GeometryBuilder` — как `ILevelLoadStep` стадии `BuildVisuals`; префабы грузятся через `IAssetOwner` уровня;
    - склейка мешей по чанкам видимости, Static Batching;
-   - `EntityViewFactory`.
+   - `EntityViewFactory`;
+   - камера, показывающая уровень (пока без игрока).
 3. **Игрок и ввод (§63–66):** `InputService` на Input System (джойстик для Android, WASD и мышь для десктопа), плавное движение, `GridPosition`, Occupancy.
 4. **Видимость (§53–57, §104–106):** `VisibilitySystem` (11×11 + LOS) по событию `PlayerCellChanged`, `VisibilityController`.
 5. **Двери, ключи, подбор (§67, §72):** `DoorSystem` с правилом ключей (раздел 3), `PickupSystem`, инвентарь.
@@ -141,13 +163,33 @@ CLAUDE.md                  правила проекта и соглашения
 
 ### Открытые мелкие пункты
 - **Live Preview** в Level Designer (автоматически перестраивать превью после правок) — предложено, ждёт решения пользователя.
-- Не удалены пакеты Multiplayer Center и Collab Proxy (пользователь разрешил удалить только Visual Scripting).
-- `Level_Dev` и `PlaceholderTheme` — тестовые ассеты, не финальный контент.
-- Проверить, что установлен модуль WebGL Build Support.
+- `Level_Dev` и `PlaceholderTheme` — тестовые ассеты, не финальный контент. У `Level_Dev` Display Name пока «New Level».
+- `Assets/Scenes/SampleScene.unity` — шаблонная сцена, не в Build Settings; её можно удалить.
+- Чтобы запустить игру из редактора, откройте сцену Bootstrap и нажмите Play. Из сцены Game ничего не запустится.
 
 ---
 
 ## 6. История
+
+### 2026-10-04 — Этап 5: каркас runtime (§4–9)
+
+1. Удалены пакеты Multiplayer Center и Collab Proxy.
+2. **Сборки слоёв:** `Maze.Gameplay`, `Maze.Application`, `Maze.Presentation`, `Maze.Composition`, `Maze.Tests.PlayMode`.
+3. **Application:**
+   - `AddressablesService` и `IAssetOwner`: handle регистрируется в owner сразу, поэтому не теряется при отмене или ошибке;
+   - `GameFlow` — все операции §8; переходы выполняются по одному, новый отменяет текущий;
+   - заглушки Settings / Save / Audio, `InputService` с действием Pause (Escape, Start, Back);
+   - `LevelCatalogService`.
+4. **Gameplay:** `LevelRuntime` — шаги загрузки §9 по стадиям, старт, пауза без `timeScale`, остановка, результат уровня.
+5. **Composition:**
+   - `ProjectLifetimeScope`, `LevelLifetimeScope`, `ApplicationEntryPoint`;
+   - `LevelSessionFactory`: аддитивная сцена Game, дочерний scope, выгрузка в порядке §9.
+6. **Presentation:** экраны-заглушки на uGUI и `ScreenRouter`.
+7. **Editor:**
+   - `RuntimeScenesBuilder` (Maze → Dev → Build Runtime Scenes) собирает Bootstrap и Game и прописывает их в Build Settings;
+   - Build/Sync добавляет уровень в `LevelCatalog`.
+8. **Логи и ошибки:** `GameLog` (§108); обработка критической ошибки (§109); проверка уровня валидатором перед запуском.
+9. **Тесты:** 21 EditMode-тест (`GameFlow` на фейках, `LevelRuntime`), 4 PlayMode-теста (реальный Bootstrap: загрузка, выход без утечек, Retry, выход во время загрузки).
 
 ### 2026-10-04 — Подготовка проекта и инструмент дизайнера уровней
 

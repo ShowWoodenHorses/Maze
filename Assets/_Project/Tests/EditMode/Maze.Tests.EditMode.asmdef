@@ -3,6 +3,9 @@
     "rootNamespace": "Maze.Tests.EditMode",
     "references": [
         "Maze.Core",
+        "Maze.Gameplay",
+        "Maze.Application",
+        "UniTask",
         "Unity.Addressables",
         "Unity.ResourceManager",
         "UnityEngine.TestRunner",

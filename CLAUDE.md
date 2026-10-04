@@ -48,7 +48,7 @@ Unity 6000.3.8f1 (6.3 LTS) · Built-in RP · VContainer 1.19 · UniTask 2.5 · A
 
 ## Принятые соглашения (уже в коде)
 - Клетка `(x, y)` ↔ мир `(x, 0, y)`; North = +Y сетки = +Z мира. За пределами сетки = Wall.
-- Мутация `LevelData` только `internal` (InternalsVisibleTo `Maze.Editor`, `Maze.Tests.EditMode`); команды тулзы — `LevelAuthoring` (GenerateNew, RegenerateVisuals).
+- Мутация `LevelData` (и `LevelCatalog`) только `internal` (InternalsVisibleTo `Maze.Editor`, `Maze.Tests.EditMode`); команды тулзы — `LevelAuthoring` (GenerateNew, RegenerateVisuals).
 - ID объектов: `{prefix}_{N}` через `LevelData.CreateUniqueId`. Межобъектные ссылки — по ID; на Definitions — прямые SO-ссылки.
 - Случайность только `DeterministicRandom` / `StableHash` (не `System.Random`, не `string.GetHashCode`).
 - Визуал клетки — 2 слоя (`CellLayer`): **Floor у каждой клетки** (сплошной пол под тонкими стенами), **Wall** только у клеток-стен поверх. Префабы стен — без пола. Overrides — по (клетка, слой).
@@ -58,6 +58,18 @@ Unity 6000.3.8f1 (6.3 LTS) · Built-in RP · VContainer 1.19 · UniTask 2.5 · A
 - Зомби не открывают двери (закрытая дверь — blocker для их маршрутов). A* — 4 направления, `GridPathfinder` без аллокаций.
 - Тулза: окно **Maze → Level Designer** (`Scripts/Editor/LevelDesigner`), правки уровня — через `LevelEditing` (Core, покрыт тестами). Руководство для людей: [Docs/LevelDesigner.md](Docs/LevelDesigner.md) — **обновлять при изменении тулзы/визуальной системы**.
 - Валидатор: `LevelValidator.Validate(level)` → `ValidationReport`; проверки идентифицируются `ValidationCodes`, сообщения на английском.
+
+### Runtime-каркас
+- Сцены: **Bootstrap** (всегда загружена; `ProjectLifetimeScope` + UI-экраны) и **Game** (грузится аддитивно на каждый уровень; `LevelLifetimeScope` с `autoRun = false`, камера, свет). Пересоздаются меню **Maze → Dev → Build Runtime Scenes** (`RuntimeScenesBuilder`) — правки UI вносить в билдер, а не только в сцену.
+- Точка входа — `ApplicationEntryPoint` (VContainer `IAsyncStartable`). Сервисы приложения реализуют `IApplicationService`, инициализируются `GameFlow.InitializeApplication` в порядке регистрации.
+- `GameFlow` (Application) не знает VContainer: уровень создаёт `ILevelSessionFactory` → `LevelSessionFactory` (Composition) грузит Game, строит `LevelLifetimeScope` дочерним к проектному и регистрирует в нём `LevelData` и `IAssetOwner` уровня. Переходы GameFlow идут по одному, новый отменяет текущий; любое исключение → полная выгрузка уровня → `GameFlowState.Error`.
+- Шаги загрузки уровня (§9) — `ILevelLoadStep` со `Stage` (`LevelLoadStage`), регистрируются в `LevelLifetimeScope` из любого слоя; `LevelRuntime` выполняет их по порядку. Per-frame логика уровня — `ILevelTickable`: тикается только в `Running` (пауза = нет тиков, `Time.timeScale` не трогаем).
+- Addressables: только через `IAddressablesService.CreateOwner(name)` → `IAssetOwner.LoadAsync`; handle регистрируется в owner сразу. Owner уровня освобождается после Dispose LevelScope и выгрузки Game. `AddressablesService.ActiveHandleCount` — для проверки утечек в тестах.
+- Логи — `GameLog` (`[Maze][Channel]`, каналы из §108), не голый `Debug.Log`.
+- Каталог уровней — `LevelCatalog` (Addressable `"LevelCatalog"`, `Data/Levels/LevelCatalog.asset`); Build/Sync добавляет уровень. `LevelId` = имя ассета уровня.
+- **Ловушка:** пространство имён `Maze.Application` перекрывает `UnityEngine.Application` — в коде `Maze.*` писать `UnityEngine.Application.xxx` полностью.
+- **Ловушка:** VContainer (`ScriptTemplateProcessor`) перезаписывает шаблоном любой **новый** `*LifetimeScope.cs` при создании его `.meta`. Создав такой файл снаружи Unity: refresh → записать содержимое ещё раз.
+- UniTask в Unity 6: `AsyncOperation` ожидать через `.ToUniTask()` (прямой `await` не компилируется).
 
 ## Структура папок (целевая)
 ```

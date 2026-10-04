@@ -12,13 +12,15 @@ namespace Maze.Editor.LevelDesigner
 {
     /// <summary>
     /// Build / Sync (ТЗ §30, §84): fixes the current state of the level for runtime. Validates, makes the level
-    /// and its visual prefabs Addressable, saves. Never re-randomizes anything.
+    /// and its visual prefabs Addressable, adds the level to the <see cref="LevelCatalog"/> (main menu), saves.
+    /// Never re-randomizes anything.
     /// </summary>
     internal static class LevelSync
     {
         public const string LevelsGroup = "Maze Levels";
         public const string VisualsGroup = "Maze Visuals";
         public const string LevelAddressPrefix = "Levels/";
+        public const string CatalogPath = "Assets/_Project/Data/Levels/LevelCatalog.asset";
 
         public static bool Sync(LevelData level)
         {
@@ -35,6 +37,10 @@ namespace Maze.Editor.LevelDesigner
             var levelGuid = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(level));
             var levelEntry = settings.CreateOrMoveEntry(levelGuid, levelsGroup);
             levelEntry.address = LevelAddressPrefix + level.name;
+
+            var catalog = GetOrCreateCatalog(settings, levelsGroup);
+            if (catalog.AddOrUpdate(level.name, levelEntry.address, level.Settings.DisplayName))
+                EditorUtility.SetDirty(catalog);
 
             var added = 0;
             var theme = level.VisualTheme;
@@ -63,6 +69,33 @@ namespace Maze.Editor.LevelDesigner
             Debug.Log($"[Maze] Build/Sync '{level.name}': address '{levelEntry.address}', {added} visual prefab(s) made Addressable, " +
                       $"{report.ErrorCount} error(s), {report.WarningCount} warning(s).");
             return true;
+        }
+
+        /// <summary>The project's single <see cref="LevelCatalog"/>, created on first sync and kept Addressable.</summary>
+        public static LevelCatalog GetOrCreateCatalog(AddressableAssetSettings settings, AddressableAssetGroup levelsGroup)
+        {
+            var guid = AssetDatabase.FindAssets("t:" + nameof(LevelCatalog)).FirstOrDefault();
+            LevelCatalog catalog;
+            if (guid != null)
+            {
+                catalog = AssetDatabase.LoadAssetAtPath<LevelCatalog>(AssetDatabase.GUIDToAssetPath(guid));
+            }
+            else
+            {
+                catalog = ScriptableObject.CreateInstance<LevelCatalog>();
+                AssetDatabase.CreateAsset(catalog, CatalogPath);
+                guid = AssetDatabase.AssetPathToGUID(CatalogPath);
+                Debug.Log($"[Maze] Created level catalog at {CatalogPath}.");
+            }
+
+            var entry = settings.FindAssetEntry(guid) ?? settings.CreateOrMoveEntry(guid, levelsGroup);
+            if (entry.address != LevelCatalog.Address)
+            {
+                entry.address = LevelCatalog.Address;
+                EditorUtility.SetDirty(settings);
+            }
+
+            return catalog;
         }
 
         private static AddressableAssetGroup GetOrCreateGroup(AddressableAssetSettings settings, string name)
