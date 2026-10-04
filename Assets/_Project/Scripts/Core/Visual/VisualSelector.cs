@@ -1,3 +1,4 @@
+using System;
 using Maze.Core.Common;
 using Maze.Core.Grid;
 using Maze.Core.Level;
@@ -18,15 +19,19 @@ namespace Maze.Core.Visual
         public static ulong ObjectKey(int visualSeed, VisualKind kind, string entityId) =>
             StableHash.Combine(StableHash.Combine((ulong)(uint)visualSeed, (ulong)kind), StableHash.Of(entityId));
 
-        /// <summary>Weighted pick among variants matching category/definition with weight > 0. Null if none.</summary>
-        public static VisualVariant Pick(VisualSet set, VisualCategory category, ScriptableObject definition, ulong key)
+        /// <summary>
+        /// Weighted pick among variants matching category/definition (and <paramref name="filter"/>, if given)
+        /// with weight > 0. Null if none.
+        /// </summary>
+        public static VisualVariant Pick(VisualSet set, VisualCategory category, ScriptableObject definition, ulong key,
+            Predicate<VisualVariant> filter = null)
         {
             if (set == null || category == VisualCategory.Special)
                 return null;
 
             ulong total = 0;
             foreach (var variant in set.Variants)
-                if (variant.Weight > 0 && variant.Matches(category, definition))
+                if (IsCandidate(variant, category, definition, filter))
                     total += (ulong)variant.Weight;
 
             if (total == 0)
@@ -35,7 +40,7 @@ namespace Maze.Core.Visual
             var target = ((StableHash.Mix(key) >> 32) * total) >> 32;
             foreach (var variant in set.Variants)
             {
-                if (variant.Weight <= 0 || !variant.Matches(category, definition))
+                if (!IsCandidate(variant, category, definition, filter))
                     continue;
 
                 if (target < (ulong)variant.Weight)
@@ -47,13 +52,18 @@ namespace Maze.Core.Visual
             return null;
         }
 
+        private static bool IsCandidate(VisualVariant variant, VisualCategory category, ScriptableObject definition,
+            Predicate<VisualVariant> filter) =>
+            variant.Weight > 0 && variant.Matches(category, definition) && (filter == null || filter(variant));
+
         /// <summary>Pick, falling back to the set's explicit default variant. Never picks anything else silently.</summary>
-        public static VisualVariant PickOrDefault(VisualSet set, VisualCategory category, ScriptableObject definition, ulong key)
+        public static VisualVariant PickOrDefault(VisualSet set, VisualCategory category, ScriptableObject definition, ulong key,
+            Predicate<VisualVariant> filter = null)
         {
             if (set == null)
                 return null;
 
-            return Pick(set, category, definition, key) ?? set.FindVariant(set.DefaultVariantId);
+            return Pick(set, category, definition, key, filter) ?? set.FindVariant(set.DefaultVariantId);
         }
     }
 

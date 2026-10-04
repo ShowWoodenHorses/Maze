@@ -19,15 +19,23 @@ namespace Maze.Core.Visual
         [Tooltip("Optional. Restricts this variant to entities with this gameplay definition (e.g. a specific weapon or zombie type).")]
         [SerializeField] private ScriptableObject _definition;
 
+        [Tooltip("Key/door pair colour (e.g. 'red'). Locked doors use coloured variants, unlocked doors uncoloured; " +
+                 "a key always uses the colour of its door.")]
+        [SerializeField] private string _colorTag;
+
         public VisualVariant(string id, int weight = 1, VisualCategory category = VisualCategory.General,
-            ScriptableObject definition = null, AssetReferenceGameObject prefab = null)
+            ScriptableObject definition = null, AssetReferenceGameObject prefab = null, string colorTag = null)
         {
             _id = id;
             _weight = weight;
             _category = category;
             _definition = definition;
             _prefab = prefab;
+            _colorTag = colorTag;
         }
+
+        public string ColorTag => _colorTag;
+        public bool HasColor => !string.IsNullOrEmpty(_colorTag);
 
         public string Id => _id;
         public AssetReferenceGameObject Prefab => _prefab;

@@ -28,11 +28,35 @@ namespace Maze.Core.Visual
                 level.VisualData.SetCellAssignment(i, ChooseCell(level, geometry.ToPosition(i)));
         }
 
+        /// <summary>
+        /// Doors first (locked doors get distinct colours while colours last), then keys (each takes its door's
+        /// colour), then every other object.
+        /// </summary>
         public static void AssignAllObjects(LevelData level)
         {
             var ids = new HashSet<string>();
+            var usedColors = new HashSet<string>();
+
+            foreach (var door in level.Doors)
+            {
+                ids.Add(door.Id);
+                level.VisualData.SetObjectAssignment(door.Id, ChooseDoor(level, door, usedColors));
+                var color = ResolvedColor(level, door);
+                if (door.RequiresKey && color != null)
+                    usedColors.Add(color);
+            }
+
+            foreach (var key in level.Keys)
+            {
+                ids.Add(key.Id);
+                level.VisualData.SetObjectAssignment(key.Id, ChooseKey(level, key));
+            }
+
             foreach (var entity in level.AllEntities())
             {
+                if (entity is DoorData || entity is KeyData)
+                    continue;
+
                 ids.Add(entity.Id);
                 AssignObject(level, entity);
             }
@@ -42,7 +66,8 @@ namespace Maze.Core.Visual
 
         /// <summary>
         /// Re-assigns a cell whose geometry changed, plus everything whose shape depends on it:
-        /// the 8 surrounding cells and objects standing on them (door/exit orientation).
+        /// the 8 surrounding cells, and the orientation of objects standing on them.
+        /// Object variants are kept: editing walls must not recolour a door or swap a model.
         /// </summary>
         public static void ReassignAround(LevelData level, GridPosition center)
         {
@@ -63,14 +88,124 @@ namespace Maze.Core.Visual
                 level.VisualData.SetCellAssignment(geometry.ToIndex(p), ChooseCell(level, p));
                 foreach (var entity in level.AllEntities())
                     if (entity.Position == p)
-                        AssignObject(level, entity);
+                        UpdateOrientation(level, entity);
             }
         }
 
+        /// <summary>Keeps the assigned variant, recomputes rotation from current geometry.</summary>
+        public static void UpdateOrientation(LevelData level, LevelEntityData entity)
+        {
+            if (!VisualKinds.TryGetForEntity(entity, out var kind, out _))
+                return;
+
+            var current = level.VisualData.GetObjectAssignment(entity.Id);
+            if (current.IsEmpty)
+            {
+                AssignObject(level, entity);
+                return;
+            }
+
+            var rotation = ObjectOrientation.For(kind, level.Geometry, entity.Position);
+            level.VisualData.SetObjectAssignment(entity.Id, new VisualChoice(current.VariantId, rotation));
+        }
+
+        /// <summary>Assigns one object. Doors avoid colours of other locked doors; keys follow their door.</summary>
         public static void AssignObject(LevelData level, LevelEntityData entity)
         {
-            if (VisualKinds.TryGetForEntity(entity, out _, out _))
-                level.VisualData.SetObjectAssignment(entity.Id, ChooseObject(level, entity));
+            if (!VisualKinds.TryGetForEntity(entity, out _, out _))
+                return;
+
+            VisualChoice choice;
+            switch (entity)
+            {
+                case DoorData door:
+                    var usedColors = new HashSet<string>();
+                    foreach (var other in level.Doors)
+                    {
+                        var color = other != door && other.RequiresKey ? ResolvedColor(level, other) : null;
+                        if (color != null)
+                            usedColors.Add(color);
+                    }
+
+                    choice = ChooseDoor(level, door, usedColors);
+                    break;
+                case KeyData key:
+                    choice = ChooseKey(level, key);
+                    break;
+                default:
+                    choice = ChooseObject(level, entity);
+                    break;
+            }
+
+            level.VisualData.SetObjectAssignment(entity.Id, choice);
+        }
+
+        /// <summary>
+        /// Locked doors take a coloured variant, preferring colours not used by other locked doors;
+        /// unlocked doors take an uncoloured one so they do not look locked.
+        /// </summary>
+        private static VisualChoice ChooseDoor(LevelData level, DoorData door, HashSet<string> usedColors)
+        {
+            var theme = level.VisualTheme;
+            if (theme == null)
+                return VisualChoice.None;
+
+            var set = theme.GetSet(VisualKind.Door);
+            var key = VisualSelector.ObjectKey(level.Generation.VisualSeed, VisualKind.Door, door.Id);
+            VisualVariant variant;
+            if (door.RequiresKey)
+            {
+                variant = VisualSelector.Pick(set, VisualCategory.General, null, key, v => v.HasColor && !usedColors.Contains(v.ColorTag))
+                          ?? VisualSelector.PickOrDefault(set, VisualCategory.General, null, key, v => v.HasColor);
+            }
+            else
+            {
+                variant = VisualSelector.PickOrDefault(set, VisualCategory.General, null, key, v => !v.HasColor);
+            }
+
+            return variant == null
+                ? VisualChoice.None
+                : new VisualChoice(variant.Id, ObjectOrientation.For(VisualKind.Door, level.Geometry, door.Position));
+        }
+
+        /// <summary>A key always takes the colour of the (single) door it opens.</summary>
+        private static VisualChoice ChooseKey(LevelData level, KeyData keyData)
+        {
+            var theme = level.VisualTheme;
+            if (theme == null)
+                return VisualChoice.None;
+
+            DoorData door = null;
+            foreach (var candidate in level.Doors)
+                if (candidate.KeyId == keyData.Id)
+                {
+                    door = candidate;
+                    break;
+                }
+
+            var doorColor = door != null ? ResolvedColor(level, door) : null;
+            var key = VisualSelector.ObjectKey(level.Generation.VisualSeed, VisualKind.Key, keyData.Id);
+            var variant = door != null
+                ? VisualSelector.PickOrDefault(theme.GetSet(VisualKind.Key), VisualCategory.General, null, key,
+                    v => v.HasColor && v.ColorTag == doorColor)
+                : VisualSelector.PickOrDefault(theme.GetSet(VisualKind.Key), VisualCategory.General, null, key, v => v.HasColor);
+
+            return variant == null ? VisualChoice.None : new VisualChoice(variant.Id);
+        }
+
+        /// <summary>Colour of the door's final visual (override included), or null.</summary>
+        public static string ResolvedColor(LevelData level, DoorData door)
+        {
+            var theme = level.VisualTheme;
+            if (theme == null)
+                return null;
+
+            var set = theme.GetSet(VisualKind.Door);
+            if (set == null)
+                return null;
+
+            var variant = set.FindVariant(VisualResolver.ResolveObject(level, door).VariantId);
+            return variant != null && variant.HasColor ? variant.ColorTag : null;
         }
 
         public static VisualChoice ChooseCell(LevelData level, GridPosition position)

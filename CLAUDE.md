@@ -50,6 +50,9 @@ Unity 6000.3.8f1 (6.3 LTS) · Built-in RP · VContainer 1.19 · UniTask 2.5 · A
 - Случайность только `DeterministicRandom` / `StableHash` (не `System.Random`, не `string.GetHashCode`).
 - Визуал: выбор = хеш(VisualSeed, kind, cellIndex | entityId) → взвешенно; хранится `VisualChoice` (VariantId + Rotation). Rotation — четверти по часовой сверху. Префабы стен в канонической ориентации: End→N, Straight→N+S, Corner→N+E, TJunction→N+E+S; дверь rot 0 перекрывает проход С–Ю. Special-варианты только вручную. Нет варианта → явный DefaultVariantId → иначе пусто (не случайный другой).
 - Префабы визуала — `AssetReferenceGameObject` (Addressables).
+- **Строгое правило ключей: 1 ключ = 1 дверь.** Ключ того же цвета, что дверь; после открытия удаляется из инвентаря; отпертая дверь остаётся отпертой. Связь — `Door.KeyId`, цвет — `VisualVariant.ColorTag` (запертая дверь — цветной вариант, разные пары по возможности разных цветов; ключ берёт цвет итогового визуала своей двери; дверь без ключа — без цвета).
+- Зомби не открывают двери (закрытая дверь — blocker для их маршрутов). A* — 4 направления, `GridPathfinder` без аллокаций.
+- Валидатор: `LevelValidator.Validate(level)` → `ValidationReport`; проверки идентифицируются `ValidationCodes`, сообщения на английском.
 
 ## Структура папок (целевая)
 ```
