@@ -3,11 +3,13 @@ using System.Text;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using Maze.Core.Definitions;
+using Maze.Core.Grid;
 using Maze.Core.Level;
 using Maze.Core.Visual;
 using Maze.Gameplay.Combat;
 using Maze.Gameplay.Level;
 using Maze.Gameplay.Map;
+using Maze.Gameplay.Pickups;
 using Maze.Gameplay.Player;
 using Maze.Gameplay.Weapons;
 using Maze.Presentation.Visual;
@@ -28,12 +30,17 @@ namespace Maze.Presentation.UI
         private readonly PlayerInteraction _interaction;
         private readonly PlayerCombat _combat;
         private readonly MapSystem _map;
+        private readonly PlayerSystem _player;
+        private readonly PickupSystem _pickups;
         private readonly StringBuilder _text = new StringBuilder();
         private bool _bound;
 
         public HudPresenter(UIRoot ui, LevelData level, PlayerHealth health, PlayerInventory inventory,
-            WeaponSystem weapons, PlayerInteraction interaction, PlayerCombat combat, MapSystem map)
+            WeaponSystem weapons, PlayerInteraction interaction, PlayerCombat combat, MapSystem map, PlayerSystem player,
+            PickupSystem pickups)
         {
+            _player = player;
+            _pickups = pickups;
             _map = map;
             _combat = combat;
             _ui = ui;
@@ -57,6 +64,7 @@ namespace Maze.Presentation.UI
                 _combat.Attacked += OnAttacked;
                 _combat.ReloadChanged += OnReloadChanged;
                 _map.FragmentCollected += OnFragmentCollected;
+                _player.CellChanged += OnPlayerCellChanged;
                 _bound = true;
             }
 
@@ -75,6 +83,7 @@ namespace Maze.Presentation.UI
             _combat.Attacked -= OnAttacked;
             _combat.ReloadChanged -= OnReloadChanged;
             _map.FragmentCollected -= OnFragmentCollected;
+            _player.CellChanged -= OnPlayerCellChanged;
             _bound = false;
             if (_ui != null && _ui.Hud != null)
                 _ui.Hud.ClearLevelInfo();
@@ -88,6 +97,17 @@ namespace Maze.Presentation.UI
         }
 
         private void OnReloadChanged(WeaponRuntime weapon) => Refresh();
+
+        /// <summary>Weapons are picked up by Interact, not on entering: tell the player how.</summary>
+        private void OnPlayerCellChanged(GridPosition from, GridPosition to)
+        {
+            foreach (var pickup in _pickups.At(to))
+                if (pickup.Kind == PickupKind.Weapon)
+                {
+                    _ui.Hud.ShowMessage($"{WeaponName(pickup.Weapon)}: press Use (E) to pick up");
+                    return;
+                }
+        }
 
         private void OnFragmentCollected(MapFragmentData fragment)
         {
@@ -104,7 +124,7 @@ namespace Maze.Presentation.UI
             AppendSlot("Ranged", WeaponSlot.Ranged);
             _text.Append('\n').Append("Keys: ");
             if (_inventory.Keys.Count == 0)
-                _text.Append('—');
+                _text.Append('-');
             for (var i = 0; i < _inventory.Keys.Count; i++)
             {
                 if (i > 0) _text.Append(", ");
@@ -124,7 +144,7 @@ namespace Maze.Presentation.UI
             _text.Append(label).Append(": ");
             if (weapon == null)
             {
-                _text.Append('—');
+                _text.Append('-');
                 return;
             }
 
@@ -132,7 +152,7 @@ namespace Maze.Presentation.UI
             _text.Append(WeaponName(weapon));
             if (slot == WeaponSlot.Ranged)
             {
-                if (weapon.IsReloading) _text.Append(" reloading…");
+                if (weapon.IsReloading) _text.Append(" reloading...");
                 else _text.Append(' ').Append(weapon.Ammo).Append('/').Append(weapon.Definition.MagazineSize);
             }
             if (active) _text.Append(']');

@@ -256,7 +256,7 @@ namespace Maze.Application.Flow
             foreach (var issue in report.Issues)
             {
                 if (issue.Severity != ValidationSeverity.Error) continue;
-                message.Append("\n• ").Append(issue.Message);
+                message.Append("\n- ").Append(issue.Message);
                 if (++listed == MaxReportedValidationErrors) break;
             }
 

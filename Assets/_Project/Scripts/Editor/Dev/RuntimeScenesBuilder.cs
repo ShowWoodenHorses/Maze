@@ -186,7 +186,7 @@ namespace Maze.Editor.Dev
 
             var template = Button(list.transform, "LevelButtonTemplate", "Level");
             template.gameObject.SetActive(false);
-            var empty = Label(column, "EmptyLabel", "No levels yet: run Build / Sync in Maze → Level Designer.", 24,
+            var empty = Label(column, "EmptyLabel", "No levels yet: run Build / Sync in Maze > Level Designer.", 24,
                 FontStyle.Italic, 60f);
             var summary = Label(column, "Summary", "", 24, FontStyle.Normal, 40f);
             var reset = Button(column, "DebugResetProgressButton", "Debug: reset progress");
@@ -203,7 +203,7 @@ namespace Maze.Editor.Dev
         {
             var screen = Screen<LoadingScreen>(parent, "LoadingScreen", Background);
             var column = Column(screen.transform, 600f, 0f);
-            Label(column, "Label", "Loading…", 40, FontStyle.Normal, 80f);
+            Label(column, "Label", "Loading...", 40, FontStyle.Normal, 80f);
             return screen;
         }
 
@@ -254,7 +254,7 @@ namespace Maze.Editor.Dev
         }
 
         /// <summary>
-        /// ТЗ §64 Android: stick bottom-left, attack bottom-right, plus melee, ranged and door buttons (map: HUD button).
+        /// ТЗ §64 Android: stick bottom-left, attack bottom-right, plus melee, ranged and use (pick up a weapon, doors) buttons; map is a HUD button.
         /// They emulate gamepad controls, which InputService already binds.
         /// </summary>
         private static GameObject BuildTouchControls(Transform parent)
@@ -279,7 +279,7 @@ namespace Maze.Editor.Dev
             TouchButton(root.transform, "Attack", "<Gamepad>/buttonSouth", new Vector2(-230f, 230f), 220f, knob);
             TouchButton(root.transform, "Melee", "<Gamepad>/leftShoulder", new Vector2(-470f, 150f), 120f, knob);
             TouchButton(root.transform, "Ranged", "<Gamepad>/rightShoulder", new Vector2(-470f, 310f), 120f, knob);
-            TouchButton(root.transform, "Door", "<Gamepad>/buttonWest", new Vector2(-230f, 470f), 130f, knob);
+            TouchButton(root.transform, "Use", "<Gamepad>/buttonWest", new Vector2(-230f, 470f), 130f, knob);
             return root;
         }
 

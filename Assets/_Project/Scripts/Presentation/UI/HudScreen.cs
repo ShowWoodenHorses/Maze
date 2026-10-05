@@ -23,8 +23,11 @@ namespace Maze.Presentation.UI
         public event Action PauseClicked;
         public event Action MapClicked;
 
-        /// <summary>Touch controls are shown on mobile and on any device with a touchscreen.</summary>
-        public static bool IsTouchAvailable => UnityEngine.Application.isMobilePlatform || Touchscreen.current != null;
+        /// <summary>
+        /// Touch controls are shown at once on mobile (including mobile browsers). Elsewhere a touchscreen device may be
+        /// reported without one (desktop browsers expose touch support), so they appear only after a real touch.
+        /// </summary>
+        public static bool IsTouchAvailable => UnityEngine.Application.isMobilePlatform;
 
         private void Awake()
         {
@@ -36,6 +39,13 @@ namespace Maze.Presentation.UI
 
         private void Update()
         {
+            if (_touchControls != null && !_touchControls.activeSelf)
+            {
+                var touch = Touchscreen.current;
+                if (touch != null && touch.primaryTouch.press.wasPressedThisFrame)
+                    _touchControls.SetActive(true);
+            }
+
             if (_message != null && _message.text.Length > 0 && Time.unscaledTime >= _messageHideTime)
                 _message.text = string.Empty;
         }

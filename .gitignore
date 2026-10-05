@@ -2,6 +2,8 @@
 [Tt]emp/
 [Bb]uild/
 [Bb]uilds/
+# Android native build intermediates (Unity 6 Gradle/CMake/Ninja, recreated on every APK build)
+.utmp/
 [Ll]ogs/
 [Mm]emoryCaptures/
 [Pp]rojectSettings/EditorBuildSettings.asset
