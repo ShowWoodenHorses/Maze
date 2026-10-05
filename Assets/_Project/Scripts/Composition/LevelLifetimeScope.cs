@@ -4,8 +4,11 @@ using Maze.Core.Level;
 using Maze.Gameplay.Doors;
 using Maze.Gameplay.Grid;
 using Maze.Gameplay.Level;
+using Maze.Gameplay.Pickups;
 using Maze.Gameplay.Player;
 using Maze.Gameplay.Visibility;
+using Maze.Gameplay.Weapons;
+using Maze.Presentation.UI;
 using Maze.Presentation.Visual;
 using UnityEngine;
 using VContainer;
@@ -47,7 +50,12 @@ namespace Maze.Composition
             builder.Register<DoorSystem>(Lifetime.Singleton);
             builder.Register<LevelPassability>(Lifetime.Singleton);
             builder.Register<OccupancyMap>(Lifetime.Singleton);
+            builder.Register<PlayerHealth>(Lifetime.Singleton);
+            builder.Register<PlayerInventory>(Lifetime.Singleton);
+            builder.Register<WeaponSystem>(Lifetime.Singleton).AsSelf().As<ILevelTickable>();
             builder.Register<PlayerSystem>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep, ILevelTickable>();
+            builder.Register<PickupSystem>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep>();
+            builder.Register<PlayerInteraction>(Lifetime.Singleton).AsSelf().As<ILevelTickable>();
             builder.Register<ExitSystem>(Lifetime.Singleton);
             builder.Register<VisibilitySystem>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep>();
             builder.Register<LevelRuntime>(Lifetime.Singleton);
@@ -59,6 +67,9 @@ namespace Maze.Composition
             builder.Register<EntityViewRegistry>(Lifetime.Singleton);
             builder.Register<LevelVisualSystem>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep>();
             builder.Register<VisibilityController>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep>();
+            builder.Register<DoorViewPresenter>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep>();
+            builder.Register<PickupViewPresenter>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep>();
+            builder.Register<HudPresenter>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep>();
             builder.Register<PlayerViewPresenter>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep, ILevelLateTickable>();
         }
     }

@@ -20,7 +20,7 @@ namespace Maze.Tests.EditMode.Player
 
         private LevelData _level;
         private PlayerDefinition _definition;
-        private FakeInput _input;
+        private FakePlayerInput _input;
         private LevelGrid _grid;
         private DoorSystem _doors;
         private OccupancyMap _occupancy;
@@ -44,7 +44,7 @@ namespace Maze.Tests.EditMode.Player
 
             _definition = ScriptableObject.CreateInstance<PlayerDefinition>();
             _definition.Configure(moveSpeed: 3f, bodyHalfSize: 0.3f, cornerAssist: 0.35f);
-            _input = new FakeInput();
+            _input = new FakePlayerInput();
             _grid = new LevelGrid(_level.Geometry);
             _doors = new DoorSystem(_level);
             _occupancy = new OccupancyMap(_grid);
@@ -216,19 +216,5 @@ namespace Maze.Tests.EditMode.Player
             CollectionAssert.AreEqual(new[] { true, false }, changes, "No event when nothing changes.");
         }
 
-        private sealed class FakeInput : IPlayerInput
-        {
-            public Vector2 Move { get; set; }
-            public Vector2 Look => Vector2.zero;
-            public bool LookIsPointer => false;
-            public bool AttackHeld => false;
-#pragma warning disable 67
-            public event Action AttackPressed;
-            public event Action InteractPressed;
-            public event Action SwitchMeleePressed;
-            public event Action SwitchRangedPressed;
-            public event Action OpenMapPressed;
-#pragma warning restore 67
-        }
     }
 }

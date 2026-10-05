@@ -15,6 +15,11 @@ MonoBehaviour:
   m_GroupName: Maze Levels
   m_GUID: efafa3a577e5e9e459ba23312871367b
   m_SerializeEntries:
+  - m_GUID: 83b5aa64504d7ca429fec1144bdb53fd
+    m_Address: Levels/Level_Items
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 957fbfe3b8576bd40a38125e4b1f48c7
     m_Address: Levels/Level_Dev
     m_ReadOnly: 0

@@ -7,9 +7,12 @@ using Maze.Application.Assets;
 using Maze.Application.Flow;
 using Maze.Application.Levels;
 using Maze.Composition;
+using Maze.Core.Definitions;
 using Maze.Core.Grid;
 using Maze.Core.Level;
+using Maze.Gameplay.Doors;
 using Maze.Gameplay.Level;
+using Maze.Gameplay.Pickups;
 using Maze.Gameplay.Visibility;
 using Maze.Presentation.Visual;
 using NUnit.Framework;
@@ -184,6 +187,54 @@ namespace Maze.Tests.PlayMode
 
             await _flow.ExitToMenu();
         });
+
+        [UnityTest]
+        public IEnumerator DoorsAndPickups_ViewsFollowGameplay() => Async(async () =>
+        {
+            const string itemsLevel = "Level_Items";
+            var catalog = _container.Resolve<ILevelCatalog>();
+            if (!catalog.Levels.Any(l => l.LevelId == itemsLevel))
+                Assert.Ignore($"Dev level '{itemsLevel}' (doors, key, weapons) is not in the catalog.");
+
+            await _flow.StartLevel(itemsLevel, new LevelLaunchOptions(startIndex: 0));
+            Assert.AreEqual(GameFlowState.Playing, _flow.State, _flow.ErrorMessage);
+            var container = FindRoot<LevelLifetimeScope>(SceneManager.GetSceneByName(GameScene)).Container;
+            var level = container.Resolve<LevelData>();
+            var doors = container.Resolve<DoorSystem>();
+            var pickups = container.Resolve<PickupSystem>();
+            var views = container.Resolve<EntityViewRegistry>();
+
+            var plain = level.Doors.First(d => !d.RequiresKey);
+            var locked = level.Doors.First(d => d.RequiresKey);
+            Assert.IsTrue(doors.IsLocked(locked.Id));
+            Assert.IsTrue(Child(views, locked.Id, "Lock").activeSelf, "Padlock shown on a locked door.");
+
+            doors.SetOpen(plain.Id, true);
+            Assert.IsFalse(Child(views, plain.Id, "Closed").activeSelf);
+            Assert.IsTrue(Child(views, plain.Id, "Open").activeSelf);
+            doors.Unlock(locked.Id);
+            Assert.IsFalse(Child(views, locked.Id, "Lock").activeSelf, "Padlock gone after unlocking.");
+
+            var melee = level.Weapons.Where(w => w.Definition.Slot == WeaponSlot.Melee).ToList();
+            Assert.GreaterOrEqual(melee.Count, 2, "Needs two melee weapons to test dropping.");
+            Assert.IsTrue(pickups.TryTakeWeapon(melee[0].Position));
+            Assert.IsFalse(views.TryGet(melee[0].Id, out _), "Taken weapon's view is removed.");
+
+            Assert.IsTrue(pickups.TryTakeWeapon(melee[1].Position));
+            Assert.IsTrue(views.TryGet(melee[0].Id, out var dropped), "Dropped weapon gets a view again.");
+            Assert.AreEqual(melee[1].Position, dropped.Cell);
+            Assert.IsNotNull(dropped.GameObject);
+
+            await _flow.ExitToMenu();
+        });
+
+        private static GameObject Child(EntityViewRegistry views, string entityId, string child)
+        {
+            Assert.IsTrue(views.TryGet(entityId, out var view), $"No view for '{entityId}'.");
+            var found = view.GameObject.transform.Find(child);
+            Assert.IsNotNull(found, $"'{entityId}' has no '{child}' (placeholder doors: Maze → Dev → Rebuild Placeholder Doors).");
+            return found.gameObject;
+        }
 
         [UnityTest]
         public IEnumerator Retry_AfterFail_ReloadsLevel_WithSingleLevelScope() => Async(async () =>

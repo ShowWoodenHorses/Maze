@@ -45,5 +45,13 @@ namespace Maze.Core.Definitions
         public int MagazineSize => _magazineSize;
         public float ReloadTime => _reloadTime;
         public FireMode FireMode => _fireMode;
+
+        /// <summary>For tests and tools.</summary>
+        internal void Configure(string id, WeaponSlot slot, int magazineSize = 10)
+        {
+            _id = id;
+            _slot = slot;
+            _magazineSize = magazineSize;
+        }
     }
 }

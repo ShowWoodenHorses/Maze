@@ -28,7 +28,23 @@ namespace Maze.Editor.Dev
             ("yellow", new Color(0.95f, 0.85f, 0.1f)),
         };
 
+        private static readonly Color WoodColor = new Color(0.45f, 0.28f, 0.12f);
         private static readonly Dictionary<string, Material> Materials = new Dictionary<string, Material>();
+
+        /// <summary>
+        /// Rebuilds only the door prefabs in place (same paths and GUIDs, so the theme keeps its references):
+        /// closed panel, open panel against the West side and a padlock on coloured (lockable) doors.
+        /// </summary>
+        [MenuItem("Maze/Dev/Rebuild Placeholder Doors")]
+        public static void RebuildDoors()
+        {
+            Materials.Clear();
+            Door("door_wood", WoodColor, lockable: false);
+            foreach (var (tag, color) in PairColors)
+                Door($"door_{tag}", color, lockable: true);
+            AssetDatabase.SaveAssets();
+            Debug.Log("[Maze] Placeholder door prefabs rebuilt.");
+        }
 
         [MenuItem("Maze/Dev/Create Placeholder Theme")]
         public static void Create()
@@ -59,12 +75,12 @@ namespace Maze.Editor.Dev
 
             var doors = new List<VisualVariant>
             {
-                Variant("door_wood", 1, Door("door_wood", new Color(0.45f, 0.28f, 0.12f))),
+                Variant("door_wood", 1, Door("door_wood", WoodColor, lockable: false)),
             };
             var keys = new List<VisualVariant>();
             foreach (var (tag, color) in PairColors)
             {
-                doors.Add(Variant($"door_{tag}", 1, Door($"door_{tag}", color), colorTag: tag));
+                doors.Add(Variant($"door_{tag}", 1, Door($"door_{tag}", color, lockable: true), colorTag: tag));
                 keys.Add(Variant($"key_{tag}", 1, Small($"key_{tag}", PrimitiveType.Cube, color, new Vector3(0.25f, 0.1f, 0.4f)), colorTag: tag));
             }
 
@@ -89,6 +105,7 @@ namespace Maze.Editor.Dev
         }
 
         private const string PlayerDataPath = "Assets/_Project/Data/Player";
+        private const string WeaponDataPath = "Assets/_Project/Data/Weapons";
 
         /// <summary>
         /// Placeholder player: capsule with a "nose" showing the facing (+Z), plus PlayerDefinition and PlayerVisual
@@ -116,6 +133,32 @@ namespace Maze.Editor.Dev
             AssetDatabase.SaveAssets();
             if (problem != null) Debug.LogWarning("[Maze] " + problem);
             Debug.Log($"[Maze] Placeholder player created in {PlayerDataPath} and made Addressable.");
+        }
+
+        /// <summary>
+        /// Placeholder weapon definitions in Data/Weapons: Knife and Bat (Melee), Pistol (Ranged). Existing assets are
+        /// kept with their values; only new ones get defaults.
+        /// </summary>
+        [MenuItem("Maze/Dev/Create Placeholder Weapons")]
+        public static void CreateWeapons()
+        {
+            EnsureFolder(WeaponDataPath);
+            Weapon("Knife", "knife", WeaponSlot.Melee, 6);
+            Weapon("Bat", "bat", WeaponSlot.Melee, 6);
+            Weapon("Pistol", "pistol", WeaponSlot.Ranged, 8);
+            AssetDatabase.SaveAssets();
+            Debug.Log($"[Maze] Placeholder weapons created in {WeaponDataPath}.");
+        }
+
+        private static void Weapon(string assetName, string id, WeaponSlot slot, int magazineSize)
+        {
+            var path = $"{WeaponDataPath}/{assetName}.asset";
+            if (AssetDatabase.LoadAssetAtPath<WeaponDefinition>(path) != null)
+                return;
+
+            var weapon = ScriptableObject.CreateInstance<WeaponDefinition>();
+            weapon.Configure(id, slot, magazineSize);
+            AssetDatabase.CreateAsset(weapon, path);
         }
 
         private enum Direction { N, E, S, W }
@@ -166,12 +209,40 @@ namespace Maze.Editor.Dev
             return SavePrefab(root);
         }
 
-        /// <summary>Door panel spanning East-West: at rotation 0 it blocks a North-South passage.</summary>
-        private static GameObject Door(string name, Color color)
+        /// <summary>
+        /// Door panel spanning East-West: at rotation 0 it blocks a North-South passage. States for
+        /// <see cref="DoorVisual"/>: "Closed" panel, "Open" panel swung against the West side, "Lock" padlock.
+        /// </summary>
+        private static GameObject Door(string name, Color color, bool lockable)
         {
             var root = new GameObject(name);
-            AddPart(root, PrimitiveType.Cube, color, new Vector3(0f, 0.7f, 0f), new Vector3(1f, 1.4f, 0.15f));
+            var closed = Child(root, "Closed");
+            AddPart(closed, PrimitiveType.Cube, color, new Vector3(0f, 0.7f, 0f), new Vector3(1f, 1.4f, 0.15f));
+            var open = Child(root, "Open");
+            AddPart(open, PrimitiveType.Cube, color, new Vector3(-0.42f, 0.7f, 0.45f), new Vector3(0.15f, 1.4f, 0.9f));
+
+            GameObject padlock = null;
+            if (lockable)
+            {
+                padlock = Child(root, "Lock");
+                var lockColor = new Color(0.12f, 0.12f, 0.12f);
+                AddPart(padlock, PrimitiveType.Cube, lockColor, new Vector3(0f, 0.75f, 0f), new Vector3(0.22f, 0.26f, 0.3f));
+            }
+
+            var visual = new SerializedObject(root.AddComponent<DoorVisual>());
+            visual.FindProperty("_closed").objectReferenceValue = closed;
+            visual.FindProperty("_open").objectReferenceValue = open;
+            visual.FindProperty("_locked").objectReferenceValue = padlock;
+            visual.ApplyModifiedPropertiesWithoutUndo();
+            open.SetActive(false);
             return SavePrefab(root);
+        }
+
+        private static GameObject Child(GameObject parent, string name)
+        {
+            var child = new GameObject(name);
+            child.transform.SetParent(parent.transform, false);
+            return child;
         }
 
         private static GameObject Exit(string name)

@@ -1,0 +1,89 @@
+using System;
+using Maze.Core.Definitions;
+using Maze.Core.Level;
+using Maze.Gameplay.Level;
+using Maze.Gameplay.Player;
+
+namespace Maze.Gameplay.Weapons
+{
+    /// <summary>
+    /// One concrete weapon of the level (ТЗ §39: WeaponData → WeaponRuntime → WeaponView). Keeps the id and saved
+    /// visual of the pickup it came from, so it looks the same when dropped again.
+    /// </summary>
+    public sealed class WeaponRuntime
+    {
+        public WeaponRuntime(WeaponPickupData source)
+        {
+            Source = source ?? throw new ArgumentNullException(nameof(source));
+            if (source.Definition == null)
+                throw new ArgumentException($"Weapon pickup '{source.Id}' has no definition.", nameof(source));
+            Reset();
+        }
+
+        public string Id => Source.Id;
+        public WeaponPickupData Source { get; }
+        public WeaponDefinition Definition => Source.Definition;
+        public WeaponSlot Slot => Definition.Slot;
+
+        /// <summary>Rounds in the magazine (ranged). Reserve is infinite (ТЗ §68).</summary>
+        public int Ammo { get; internal set; }
+
+        /// <summary>Fully ready: a lying weapon is always ready when picked up (ТЗ §67).</summary>
+        public void Reset() => Ammo = Definition.Slot == WeaponSlot.Ranged ? Definition.MagazineSize : 0;
+    }
+
+    /// <summary>
+    /// The player's two weapon slots, Melee and Ranged (ТЗ §67). A picked weapon becomes active at once; a weapon of
+    /// the same slot is returned to be dropped, reset. SwitchMelee / SwitchRanged choose the active slot.
+    /// Attacks come with the combat stage.
+    /// </summary>
+    public sealed class WeaponSystem : ILevelTickable
+    {
+        private readonly IPlayerInput _input;
+        private readonly WeaponRuntime[] _slots = new WeaponRuntime[2];
+
+        public WeaponSystem(IPlayerInput input)
+        {
+            _input = input;
+        }
+
+        /// <summary>Null while the player has no weapon.</summary>
+        public WeaponSlot? ActiveSlot { get; private set; }
+
+        public WeaponRuntime Active => ActiveSlot.HasValue ? _slots[(int)ActiveSlot.Value] : null;
+
+        /// <summary>Raised after slots or the active slot changed.</summary>
+        public event Action Changed;
+
+        public WeaponRuntime Get(WeaponSlot slot) => _slots[(int)slot];
+
+        /// <summary>Puts the weapon into its slot and makes it active. Returns the replaced weapon (reset) or null.</summary>
+        public WeaponRuntime Equip(WeaponRuntime weapon)
+        {
+            var index = (int)weapon.Slot;
+            var replaced = _slots[index];
+            replaced?.Reset();
+            _slots[index] = weapon;
+            ActiveSlot = weapon.Slot;
+            Changed?.Invoke();
+            return replaced;
+        }
+
+        /// <summary>Makes the slot active if it holds a weapon.</summary>
+        public bool Activate(WeaponSlot slot)
+        {
+            if (_slots[(int)slot] == null || ActiveSlot == slot)
+                return false;
+
+            ActiveSlot = slot;
+            Changed?.Invoke();
+            return true;
+        }
+
+        public void Tick(float deltaTime)
+        {
+            if (_input.WasPressed(PlayerAction.SwitchMelee)) Activate(WeaponSlot.Melee);
+            if (_input.WasPressed(PlayerAction.SwitchRanged)) Activate(WeaponSlot.Ranged);
+        }
+    }
+}

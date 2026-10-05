@@ -24,20 +24,22 @@ namespace Maze.Application.Services
         private InputAction _move;
         private InputAction _look;
         private InputAction _attack;
+        private readonly InputAction[] _buttons = new InputAction[5];
 
         public string Name => "Input";
 
         public event Action PauseRequested;
-        public event Action AttackPressed;
-        public event Action InteractPressed;
-        public event Action SwitchMeleePressed;
-        public event Action SwitchRangedPressed;
-        public event Action OpenMapPressed;
 
         public Vector2 Move => _move != null ? _move.ReadValue<Vector2>() : Vector2.zero;
         public Vector2 Look => _look != null ? _look.ReadValue<Vector2>() : Vector2.zero;
         public bool LookIsPointer => _look?.activeControl?.device is Pointer;
         public bool AttackHeld => _attack != null && _attack.IsPressed();
+
+        public bool WasPressed(PlayerAction action)
+        {
+            var button = _buttons[(int)action];
+            return button != null && button.WasPerformedThisFrame();
+        }
 
         public UniTask InitializeAsync(CancellationToken cancellation)
         {
@@ -56,13 +58,17 @@ namespace Maze.Application.Services
             _look.AddBinding("<Pointer>/position");
             _look.AddBinding("<Gamepad>/rightStick");
 
-            _attack = Button("Attack", () => AttackPressed?.Invoke(), "<Mouse>/leftButton", "<Keyboard>/space", "<Gamepad>/buttonSouth");
-            Button("Interact", () => InteractPressed?.Invoke(), "<Keyboard>/e", "<Gamepad>/buttonWest");
-            Button("SwitchMelee", () => SwitchMeleePressed?.Invoke(), "<Keyboard>/1", "<Gamepad>/leftShoulder");
-            Button("SwitchRanged", () => SwitchRangedPressed?.Invoke(), "<Keyboard>/2", "<Gamepad>/rightShoulder");
-            Button("OpenMap", () => OpenMapPressed?.Invoke(), "<Keyboard>/m", "<Keyboard>/tab", "<Gamepad>/select");
-            // Android Back arrives as Escape.
-            Button("Pause", () => PauseRequested?.Invoke(), "<Keyboard>/escape", "<Gamepad>/start");
+            _attack = Button(PlayerAction.Attack, "<Mouse>/leftButton", "<Keyboard>/space", "<Gamepad>/buttonSouth");
+            Button(PlayerAction.Interact, "<Keyboard>/e", "<Gamepad>/buttonWest");
+            Button(PlayerAction.SwitchMelee, "<Keyboard>/1", "<Gamepad>/leftShoulder");
+            Button(PlayerAction.SwitchRanged, "<Keyboard>/2", "<Gamepad>/rightShoulder");
+            Button(PlayerAction.OpenMap, "<Keyboard>/m", "<Keyboard>/tab", "<Gamepad>/select");
+
+            // Pause works in any state, so it is an event rather than polled by level ticks. Android Back arrives as Escape.
+            var pause = _actions.AddAction("Pause", InputActionType.Button);
+            pause.AddBinding("<Keyboard>/escape");
+            pause.AddBinding("<Gamepad>/start");
+            pause.performed += _ => PauseRequested?.Invoke();
 
             _actions.Enable();
             return UniTask.CompletedTask;
@@ -75,14 +81,15 @@ namespace Maze.Application.Services
             _actions.Dispose();
             _actions = null;
             _move = _look = _attack = null;
+            Array.Clear(_buttons, 0, _buttons.Length);
         }
 
-        private InputAction Button(string name, Action onPerformed, params string[] bindings)
+        private InputAction Button(PlayerAction playerAction, params string[] bindings)
         {
-            var action = _actions.AddAction(name, InputActionType.Button);
+            var action = _actions.AddAction(playerAction.ToString(), InputActionType.Button);
             foreach (var binding in bindings)
                 action.AddBinding(binding);
-            action.performed += _ => onPerformed();
+            _buttons[(int)playerAction] = action;
             return action;
         }
     }

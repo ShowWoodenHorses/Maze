@@ -220,7 +220,22 @@ namespace Maze.Editor.Dev
             pauseRect.anchoredPosition = new Vector2(-32f, -24f);
             pauseRect.sizeDelta = new Vector2(90f, 90f);
 
+            var status = Label(screen.transform, "Status", "", 24, FontStyle.Normal, 120f);
+            status.alignment = TextAnchor.UpperLeft;
+            var statusRect = status.rectTransform;
+            statusRect.anchorMin = statusRect.anchorMax = statusRect.pivot = new Vector2(0f, 1f);
+            statusRect.anchoredPosition = new Vector2(32f, -90f);
+            statusRect.sizeDelta = new Vector2(800f, 120f);
+
+            var message = Label(screen.transform, "Message", "", 30, FontStyle.Bold, 60f);
+            var messageRect = message.rectTransform;
+            messageRect.anchorMin = messageRect.anchorMax = messageRect.pivot = new Vector2(0.5f, 0.5f);
+            messageRect.anchoredPosition = new Vector2(0f, -160f);
+            messageRect.sizeDelta = new Vector2(900f, 60f);
+
             SetReference(screen, "_levelName", levelName);
+            SetReference(screen, "_status", status);
+            SetReference(screen, "_message", message);
             SetReference(screen, "_pauseButton", pause);
             SetReference(screen, "_touchControls", BuildTouchControls(screen.transform));
             return screen;

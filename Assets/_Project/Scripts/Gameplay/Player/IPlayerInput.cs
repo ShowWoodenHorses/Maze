@@ -1,11 +1,22 @@
-using System;
 using UnityEngine;
 
 namespace Maze.Gameplay.Player
 {
+    /// <summary>Button actions of the input abstraction (ТЗ §64).</summary>
+    public enum PlayerAction
+    {
+        Attack = 0,
+        Interact = 1,
+        SwitchMelee = 2,
+        SwitchRanged = 3,
+        OpenMap = 4,
+    }
+
     /// <summary>
     /// Gameplay input abstraction (ТЗ §64). Implemented by the application's input service; gameplay never reads
     /// devices directly. The camera does not rotate, so screen up is always grid North.
+    /// Buttons are polled from level ticks (<see cref="WasPressed"/>), so presses made while the level is paused
+    /// are never applied later.
     /// </summary>
     public interface IPlayerInput
     {
@@ -20,10 +31,7 @@ namespace Maze.Gameplay.Player
         /// <summary>True while the attack control is held (automatic weapons).</summary>
         bool AttackHeld { get; }
 
-        event Action AttackPressed;
-        event Action InteractPressed;
-        event Action SwitchMeleePressed;
-        event Action SwitchRangedPressed;
-        event Action OpenMapPressed;
+        /// <summary>True during the frame the button was pressed.</summary>
+        bool WasPressed(PlayerAction action);
     }
 }

@@ -8,6 +8,7 @@ using Maze.Gameplay.Grid;
 using Maze.Gameplay.Level;
 using Maze.Gameplay.Player;
 using Maze.Gameplay.Visibility;
+using Maze.Tests.EditMode.Player;
 using NUnit.Framework;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -20,7 +21,7 @@ namespace Maze.Tests.EditMode.Visibility
 
         private LevelData _level;
         private PlayerDefinition _definition;
-        private FakeInput _input;
+        private FakePlayerInput _input;
         private LevelGrid _grid;
         private DoorSystem _doors;
         private PlayerSystem _player;
@@ -43,7 +44,7 @@ namespace Maze.Tests.EditMode.Visibility
 
             _definition = ScriptableObject.CreateInstance<PlayerDefinition>();
             _definition.Configure(moveSpeed: 3f, bodyHalfSize: 0.3f, cornerAssist: 0.35f);
-            _input = new FakeInput();
+            _input = new FakePlayerInput();
             _grid = new LevelGrid(_level.Geometry);
             _doors = new DoorSystem(_level);
             var occupancy = new OccupancyMap(_grid);
@@ -120,19 +121,5 @@ namespace Maze.Tests.EditMode.Visibility
             Assert.AreEqual(1, _visibility.RecalculationCount);
         }
 
-        private sealed class FakeInput : IPlayerInput
-        {
-            public Vector2 Move { get; set; }
-            public Vector2 Look => Vector2.zero;
-            public bool LookIsPointer => false;
-            public bool AttackHeld => false;
-#pragma warning disable 67
-            public event Action AttackPressed;
-            public event Action InteractPressed;
-            public event Action SwitchMeleePressed;
-            public event Action SwitchRangedPressed;
-            public event Action OpenMapPressed;
-#pragma warning restore 67
-        }
     }
 }
