@@ -5,6 +5,7 @@ using Cysharp.Threading.Tasks;
 using Maze.Core.Definitions;
 using Maze.Core.Level;
 using Maze.Core.Visual;
+using Maze.Gameplay.Combat;
 using Maze.Gameplay.Level;
 using Maze.Gameplay.Player;
 using Maze.Gameplay.Weapons;
@@ -23,12 +24,14 @@ namespace Maze.Presentation.UI
         private readonly PlayerInventory _inventory;
         private readonly WeaponSystem _weapons;
         private readonly PlayerInteraction _interaction;
+        private readonly PlayerCombat _combat;
         private readonly StringBuilder _text = new StringBuilder();
         private bool _bound;
 
         public HudPresenter(UIRoot ui, LevelData level, PlayerHealth health, PlayerInventory inventory,
-            WeaponSystem weapons, PlayerInteraction interaction)
+            WeaponSystem weapons, PlayerInteraction interaction, PlayerCombat combat)
         {
+            _combat = combat;
             _ui = ui;
             _level = level;
             _health = health;
@@ -47,6 +50,8 @@ namespace Maze.Presentation.UI
                 _inventory.KeysChanged += Refresh;
                 _weapons.Changed += Refresh;
                 _interaction.Interacted += OnInteracted;
+                _combat.Attacked += OnAttacked;
+                _combat.ReloadChanged += OnReloadChanged;
                 _bound = true;
             }
 
@@ -62,12 +67,21 @@ namespace Maze.Presentation.UI
             _inventory.KeysChanged -= Refresh;
             _weapons.Changed -= Refresh;
             _interaction.Interacted -= OnInteracted;
+            _combat.Attacked -= OnAttacked;
+            _combat.ReloadChanged -= OnReloadChanged;
             _bound = false;
             if (_ui != null && _ui.Hud != null)
                 _ui.Hud.ClearLevelInfo();
         }
 
         private void OnHealthChanged(int current, int max) => Refresh();
+
+        private void OnAttacked(WeaponRuntime weapon, UnityEngine.Vector2 direction)
+        {
+            if (weapon.Slot == WeaponSlot.Ranged) Refresh();
+        }
+
+        private void OnReloadChanged(WeaponRuntime weapon) => Refresh();
 
         private void Refresh()
         {
@@ -102,7 +116,10 @@ namespace Maze.Presentation.UI
             if (active) _text.Append('[');
             _text.Append(WeaponName(weapon));
             if (slot == WeaponSlot.Ranged)
-                _text.Append(' ').Append(weapon.Ammo).Append('/').Append(weapon.Definition.MagazineSize);
+            {
+                if (weapon.IsReloading) _text.Append(" reloading…");
+                else _text.Append(' ').Append(weapon.Ammo).Append('/').Append(weapon.Definition.MagazineSize);
+            }
             if (active) _text.Append(']');
         }
 

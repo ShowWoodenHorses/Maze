@@ -12,7 +12,7 @@ namespace Maze.Tests.EditMode.Player
         public Vector2 Move { get; set; }
         public Vector2 Look => Vector2.zero;
         public bool LookIsPointer => false;
-        public bool AttackHeld => false;
+        public bool AttackHeld { get; set; }
 
         public bool WasPressed(PlayerAction action) => _pressed.Contains(action);
 

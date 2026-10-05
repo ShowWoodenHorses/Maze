@@ -5,6 +5,7 @@ using Maze.Gameplay.Doors;
 using Maze.Gameplay.Grid;
 using Maze.Gameplay.Level;
 using Maze.Gameplay.Pickups;
+using Maze.Gameplay.Sound;
 using UnityEngine;
 
 namespace Maze.Gameplay.Player
@@ -38,10 +39,12 @@ namespace Maze.Gameplay.Player
         private readonly DoorSystem _doors;
         private readonly PlayerInventory _inventory;
         private readonly OccupancyMap _occupancy;
+        private readonly SoundEventBus _sounds;
 
         public PlayerInteraction(IPlayerInput input, PlayerSystem player, PickupSystem pickups, DoorSystem doors,
-            PlayerInventory inventory, OccupancyMap occupancy)
+            PlayerInventory inventory, OccupancyMap occupancy, SoundEventBus sounds)
         {
+            _sounds = sounds;
             _input = input;
             _player = player;
             _pickups = pickups;
@@ -72,7 +75,10 @@ namespace Maze.Gameplay.Player
             if (door == null)
                 return false;
 
-            Interacted?.Invoke(UseDoor(door), door);
+            var result = UseDoor(door);
+            if (result == InteractionResult.DoorOpened || result == InteractionResult.DoorClosed || result == InteractionResult.DoorUnlocked)
+                _sounds.Emit(SoundType.Door, new Vector2(door.Position.X, door.Position.Y), _player.Definition.InteractionSoundRadius);
+            Interacted?.Invoke(result, door);
             return true;
         }
 

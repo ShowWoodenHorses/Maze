@@ -46,6 +46,8 @@ namespace Maze.Gameplay.Player
         private readonly LevelPassability _passability;
         private readonly OccupancyMap _occupancy;
         private readonly LevelLaunchOptions _options;
+        private bool _holdStill;
+        private Vector2 _holdFacing;
 
         public PlayerSystem(LevelData level, PlayerDefinition definition, IPlayerInput input, LevelPassability passability,
             OccupancyMap occupancy, LevelLaunchOptions options)
@@ -87,10 +89,29 @@ namespace Maze.Gameplay.Player
             return UniTask.CompletedTask;
         }
 
+        /// <summary>
+        /// The player attacks this tick (ТЗ §66): no movement during this tick, facing turns to
+        /// <paramref name="facing"/>. Movement is allowed again on the next tick.
+        /// </summary>
+        public void HoldStill(Vector2 facing)
+        {
+            _holdStill = true;
+            _holdFacing = facing;
+        }
+
         public void Tick(float deltaTime)
         {
             if (!IsSpawned)
                 return;
+
+            if (_holdStill)
+            {
+                _holdStill = false;
+                if (_holdFacing.sqrMagnitude > 0f)
+                    Facing = _holdFacing.normalized;
+                SpeedFactor = 0f;
+                return;
+            }
 
             var move = Vector2.ClampMagnitude(_input.Move, 1f);
             if (move.sqrMagnitude < DeadZone * DeadZone || deltaTime <= 0f)

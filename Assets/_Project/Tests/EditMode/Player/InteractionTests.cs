@@ -8,6 +8,7 @@ using Maze.Gameplay.Grid;
 using Maze.Gameplay.Level;
 using Maze.Gameplay.Pickups;
 using Maze.Gameplay.Player;
+using Maze.Gameplay.Sound;
 using Maze.Gameplay.Weapons;
 using NUnit.Framework;
 using UnityEngine;
@@ -33,6 +34,7 @@ namespace Maze.Tests.EditMode.Player
         private PlayerSystem _player;
         private PickupSystem _pickups;
         private PlayerInteraction _interaction;
+        private SoundEventBus _sounds;
         private readonly List<InteractionResult> _results = new List<InteractionResult>();
 
         /// <summary>
@@ -74,9 +76,10 @@ namespace Maze.Tests.EditMode.Player
             _health = new PlayerHealth(_definition);
             _inventory = new PlayerInventory();
             _weapons = new WeaponSystem(_input);
+            _sounds = new SoundEventBus();
             _player = new PlayerSystem(_level, _definition, _input, _passability, _occupancy, new LevelLaunchOptions(startIndex: 0));
-            _pickups = new PickupSystem(_level, _player, _health, _inventory, _weapons);
-            _interaction = new PlayerInteraction(_input, _player, _pickups, _doors, _inventory, _occupancy);
+            _pickups = new PickupSystem(_level, _player, _health, _inventory, _weapons, _sounds);
+            _interaction = new PlayerInteraction(_input, _player, _pickups, _doors, _inventory, _occupancy, _sounds);
             _interaction.Interacted += (result, door) => _results.Add(result);
             _results.Clear();
 

@@ -8,6 +8,7 @@ using UnityEditor.AddressableAssets;
 using UnityEditor.AddressableAssets.Settings;
 using UnityEditor.AddressableAssets.Settings.GroupSchemas;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 
 namespace Maze.Editor.LevelDesigner
 {
@@ -79,7 +80,8 @@ namespace Maze.Editor.LevelDesigner
 
         /// <summary>
         /// Keeps the definitions shared by all levels Addressable at their fixed addresses: <see cref="PlayerDefinition"/>,
-        /// <see cref="PlayerVisualDefinition"/> and its prefab. Returns a problem description or null.
+        /// <see cref="PlayerVisualDefinition"/> and its prefab, <see cref="CombatVisualDefinition"/> and its prefabs.
+        /// Returns a problem description or null.
         /// </summary>
         public static string SyncShared(AddressableAssetSettings settings)
         {
@@ -93,10 +95,24 @@ namespace Maze.Editor.LevelDesigner
             if (visual.Prefab == null || !visual.Prefab.RuntimeKeyIsValid())
                 return $"'{visual.name}' has no prefab.";
 
-            if (settings.FindAssetEntry(visual.Prefab.AssetGUID) == null)
-                settings.CreateOrMoveEntry(visual.Prefab.AssetGUID, sharedGroup);
+            EnsurePrefabAddressable(settings, sharedGroup, visual.Prefab);
+
+            var combat = EnsureSingleAddressable<CombatVisualDefinition>(settings, sharedGroup, CombatVisualDefinition.Address);
+            if (combat == null)
+                return "Combat visual is missing: run Maze → Dev → Create Placeholder Combat Visuals or create one " +
+                       "(Create → Maze → Visual → Combat Visual). The game cannot start without it.";
+            EnsurePrefabAddressable(settings, sharedGroup, combat.Bullet);
+            EnsurePrefabAddressable(settings, sharedGroup, combat.Impact);
+            EnsurePrefabAddressable(settings, sharedGroup, combat.MeleeSwing);
+
             EditorUtility.SetDirty(settings);
             return null;
+        }
+
+        private static void EnsurePrefabAddressable(AddressableAssetSettings settings, AddressableAssetGroup group, AssetReference prefab)
+        {
+            if (prefab != null && prefab.RuntimeKeyIsValid() && settings.FindAssetEntry(prefab.AssetGUID) == null)
+                settings.CreateOrMoveEntry(prefab.AssetGUID, group);
         }
 
         private static T EnsureSingleAddressable<T>(AddressableAssetSettings settings, AddressableAssetGroup group, string address)

@@ -23,10 +23,20 @@ namespace Maze.Core.Definitions
 
         [SerializeField, Min(1)] private int _maxHealth = 100;
 
+        [Header("Sounds (ТЗ §71), radii in cells")]
+        [Tooltip("A step sound is emitted every this many cells walked.")]
+        [SerializeField, Min(0.1f)] private float _stepDistance = 0.8f;
+        [SerializeField, Min(0f)] private float _stepSoundRadius = 2f;
+        [Tooltip("Doors and pickups.")]
+        [SerializeField, Min(0f)] private float _interactionSoundRadius = 3f;
+
         public float MoveSpeed => _moveSpeed;
         public float BodyHalfSize => _bodyHalfSize;
         public float CornerAssist => _cornerAssist;
         public int MaxHealth => _maxHealth;
+        public float StepDistance => _stepDistance;
+        public float StepSoundRadius => _stepSoundRadius;
+        public float InteractionSoundRadius => _interactionSoundRadius;
 
         /// <summary>For tests and tools.</summary>
         internal void Configure(float moveSpeed, float bodyHalfSize, float cornerAssist)

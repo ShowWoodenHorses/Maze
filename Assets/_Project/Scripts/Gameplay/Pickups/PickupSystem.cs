@@ -7,6 +7,7 @@ using Maze.Core.Grid;
 using Maze.Core.Level;
 using Maze.Gameplay.Level;
 using Maze.Gameplay.Player;
+using Maze.Gameplay.Sound;
 using Maze.Gameplay.Weapons;
 
 namespace Maze.Gameplay.Pickups
@@ -57,11 +58,14 @@ namespace Maze.Gameplay.Pickups
         private readonly PlayerHealth _health;
         private readonly PlayerInventory _inventory;
         private readonly WeaponSystem _weapons;
+        private readonly SoundEventBus _sounds;
         private readonly Dictionary<GridPosition, List<Pickup>> _byCell = new Dictionary<GridPosition, List<Pickup>>();
         private bool _subscribed;
 
-        public PickupSystem(LevelData level, PlayerSystem player, PlayerHealth health, PlayerInventory inventory, WeaponSystem weapons)
+        public PickupSystem(LevelData level, PlayerSystem player, PlayerHealth health, PlayerInventory inventory, WeaponSystem weapons,
+            SoundEventBus sounds)
         {
+            _sounds = sounds;
             _level = level;
             _player = player;
             _health = health;
@@ -188,6 +192,7 @@ namespace Maze.Gameplay.Pickups
             list.Remove(pickup);
             if (list.Count == 0)
                 _byCell.Remove(pickup.Cell);
+            _sounds.Emit(SoundType.Pickup, new UnityEngine.Vector2(pickup.Cell.X, pickup.Cell.Y), _player.Definition.InteractionSoundRadius);
             Removed?.Invoke(pickup);
         }
     }

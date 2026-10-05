@@ -75,8 +75,8 @@ namespace Maze.Tests.PlayMode
         {
             var catalog = _container.Resolve<ILevelCatalog>();
             Assert.Greater(catalog.Levels.Count, 0, "Run Build / Sync for at least one level.");
-            Assert.AreEqual(3, _addressables.ActiveHandleCount,
-                "Only application-wide assets are resident in the menu: level catalog, player definition, player visual.");
+            Assert.AreEqual(4, _addressables.ActiveHandleCount,
+                "Only application-wide assets are resident in the menu: level catalog, player definition, player visual, combat visual.");
         }
 
         [UnityTest]
@@ -226,6 +226,37 @@ namespace Maze.Tests.PlayMode
             Assert.IsNotNull(dropped.GameObject);
 
             await _flow.ExitToMenu();
+        });
+
+        [UnityTest]
+        public IEnumerator Shooting_BulletViewsArePooled_AndReleased() => Async(async () =>
+        {
+            const string itemsLevel = "Level_Items";
+            var catalog = _container.Resolve<ILevelCatalog>();
+            if (!catalog.Levels.Any(l => l.LevelId == itemsLevel))
+                Assert.Ignore($"Dev level '{itemsLevel}' (with a ranged weapon) is not in the catalog.");
+
+            var handlesInMenu = _addressables.ActiveHandleCount;
+            await _flow.StartLevel(itemsLevel, new LevelLaunchOptions(startIndex: 0));
+            Assert.AreEqual(GameFlowState.Playing, _flow.State, _flow.ErrorMessage);
+            var container = FindRoot<LevelLifetimeScope>(SceneManager.GetSceneByName(GameScene)).Container;
+            var level = container.Resolve<LevelData>();
+            var bullets = container.Resolve<Maze.Gameplay.Combat.BulletSystem>();
+            var combat = container.Resolve<Maze.Gameplay.Combat.PlayerCombat>();
+            var views = container.Resolve<CombatViewPresenter>();
+
+            var gun = level.Weapons.First(w => w.Definition.Slot == WeaponSlot.Ranged);
+            Assert.IsTrue(container.Resolve<PickupSystem>().TryTakeWeapon(gun.Position));
+            Assert.IsTrue(combat.TryAttack(Vector2.down));
+            Assert.AreEqual(1, bullets.Active.Count);
+            Assert.AreEqual(1, views.ActiveBulletViews, "A bullet view taken from the pool.");
+
+            await WaitFor(() => bullets.Active.Count == 0);
+            await UniTask.Yield(PlayerLoopTiming.PostLateUpdate);
+            Assert.AreEqual(0, views.ActiveBulletViews, "Returned to the pool when the bullet ended.");
+
+            await _flow.ExitToMenu();
+            Assert.AreEqual(handlesInMenu, _addressables.ActiveHandleCount, "Combat prefabs released with the level.");
         });
 
         private static GameObject Child(EntityViewRegistry views, string entityId, string child)

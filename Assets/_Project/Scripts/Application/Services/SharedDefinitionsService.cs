@@ -8,7 +8,7 @@ using Maze.Core.Visual;
 namespace Maze.Application.Services
 {
     /// <summary>
-    /// Definitions shared by every level (player parameters and look), loaded once and kept resident
+    /// Definitions shared by every level (player parameters and look, combat visuals), loaded once and kept resident
     /// for the application lifetime (ТЗ §84: shared assets may stay resident).
     /// </summary>
     public sealed class SharedDefinitionsService : IApplicationService, IDisposable
@@ -25,13 +25,15 @@ namespace Maze.Application.Services
 
         public PlayerDefinition Player { get; private set; }
         public PlayerVisualDefinition PlayerVisual { get; private set; }
+        public CombatVisualDefinition CombatVisual { get; private set; }
 
         public async UniTask InitializeAsync(CancellationToken cancellation)
         {
             _assets = _addressables.CreateOwner("Application: Shared Definitions");
-            (Player, PlayerVisual) = await UniTask.WhenAll(
+            (Player, PlayerVisual, CombatVisual) = await UniTask.WhenAll(
                 _assets.LoadAsync<PlayerDefinition>(PlayerDefinition.Address, cancellation),
-                _assets.LoadAsync<PlayerVisualDefinition>(PlayerVisualDefinition.Address, cancellation));
+                _assets.LoadAsync<PlayerVisualDefinition>(PlayerVisualDefinition.Address, cancellation),
+                _assets.LoadAsync<CombatVisualDefinition>(CombatVisualDefinition.Address, cancellation));
         }
 
         public void Dispose()
@@ -40,6 +42,7 @@ namespace Maze.Application.Services
             _assets = null;
             Player = null;
             PlayerVisual = null;
+            CombatVisual = null;
         }
     }
 }

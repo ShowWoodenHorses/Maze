@@ -28,8 +28,21 @@ namespace Maze.Gameplay.Weapons
         /// <summary>Rounds in the magazine (ranged). Reserve is infinite (ТЗ §68).</summary>
         public int Ammo { get; internal set; }
 
+        /// <summary>Seconds until the next attack is allowed (ТЗ §66: blocks only the next attack).</summary>
+        public float Cooldown { get; internal set; }
+
+        /// <summary>Seconds left of the automatic reload; 0 when not reloading (ТЗ §68: no manual reload).</summary>
+        public float ReloadRemaining { get; internal set; }
+
+        public bool IsReloading => ReloadRemaining > 0f;
+
         /// <summary>Fully ready: a lying weapon is always ready when picked up (ТЗ §67).</summary>
-        public void Reset() => Ammo = Definition.Slot == WeaponSlot.Ranged ? Definition.MagazineSize : 0;
+        public void Reset()
+        {
+            Ammo = Definition.Slot == WeaponSlot.Ranged ? Definition.MagazineSize : 0;
+            Cooldown = 0f;
+            ReloadRemaining = 0f;
+        }
     }
 
     /// <summary>

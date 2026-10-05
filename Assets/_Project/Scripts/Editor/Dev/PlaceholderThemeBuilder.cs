@@ -106,6 +106,7 @@ namespace Maze.Editor.Dev
 
         private const string PlayerDataPath = "Assets/_Project/Data/Player";
         private const string WeaponDataPath = "Assets/_Project/Data/Weapons";
+        private const string CombatDataPath = "Assets/_Project/Data/Combat";
 
         /// <summary>
         /// Placeholder player: capsule with a "nose" showing the facing (+Z), plus PlayerDefinition and PlayerVisual
@@ -160,6 +161,40 @@ namespace Maze.Editor.Dev
             weapon.Configure(id, slot, magazineSize);
             AssetDatabase.CreateAsset(weapon, path);
         }
+
+        /// <summary>
+        /// Placeholder combat visuals: bullet, impact and melee swing prefabs plus Data/Combat/CombatVisual made
+        /// Addressable ("Combat/Visual"). Existing definition references are replaced by the placeholders.
+        /// </summary>
+        [MenuItem("Maze/Dev/Create Placeholder Combat Visuals")]
+        public static void CreateCombatVisuals()
+        {
+            EnsureFolder(Root);
+            EnsureFolder(Root + "/Materials");
+            EnsureFolder(CombatDataPath);
+            Materials.Clear();
+
+            var bullet = new GameObject("fx_bullet");
+            AddPart(bullet, PrimitiveType.Cube, new Color(1f, 0.85f, 0.3f), Vector3.zero, new Vector3(0.07f, 0.07f, 0.3f));
+            var impact = new GameObject("fx_impact");
+            AddPart(impact, PrimitiveType.Sphere, new Color(1f, 0.6f, 0.2f), Vector3.zero, new Vector3(0.22f, 0.22f, 0.22f));
+            var swing = new GameObject("fx_melee_swing");
+            AddPart(swing, PrimitiveType.Cube, new Color(0.9f, 0.9f, 0.95f), Vector3.zero, new Vector3(0.9f, 0.05f, 0.12f));
+
+            var visual = CreateAsset<CombatVisualDefinition>($"{CombatDataPath}/CombatVisual.asset");
+            visual.Bullet = Reference(SavePrefab(bullet));
+            visual.Impact = Reference(SavePrefab(impact));
+            visual.MeleeSwing = Reference(SavePrefab(swing));
+            EditorUtility.SetDirty(visual);
+
+            var problem = LevelDesigner.LevelSync.SyncShared(UnityEditor.AddressableAssets.AddressableAssetSettingsDefaultObject.GetSettings(true));
+            AssetDatabase.SaveAssets();
+            if (problem != null) Debug.LogWarning("[Maze] " + problem);
+            Debug.Log($"[Maze] Placeholder combat visuals created in {CombatDataPath} and made Addressable.");
+        }
+
+        private static AssetReferenceGameObject Reference(GameObject prefab) =>
+            new AssetReferenceGameObject(AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(prefab)));
 
         private enum Direction { N, E, S, W }
 

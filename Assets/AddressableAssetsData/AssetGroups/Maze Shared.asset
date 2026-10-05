@@ -15,13 +15,33 @@ MonoBehaviour:
   m_GroupName: Maze Shared
   m_GUID: 3103d1cbfedb1f14f8c9d647de458c62
   m_SerializeEntries:
+  - m_GUID: 246a1e70096affb4292fac6aabc958d3
+    m_Address: Assets/_Project/Art/Placeholders/fx_melee_swing.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 2494f8572c21c1b4fbf7e875c5fe795a
     m_Address: Player/Definition
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 704945209d9b5ef4c9458c18ff7c7e99
+    m_Address: Combat/Visual
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 723eebf207321ba4dade271de22cf09c
     m_Address: Assets/_Project/Art/Placeholders/player_placeholder.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7e5f64916d59165419367b89450f6a52
+    m_Address: Assets/_Project/Art/Placeholders/fx_bullet.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a913449684e4a7b4e874749abe209a0e
+    m_Address: Assets/_Project/Art/Placeholders/fx_impact.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b8a267a04b317234d8b24440aafce228, type: 3}
+  m_Name: CombatVisual
+  m_EditorClassIdentifier: Maze.Core::Maze.Core.Visual.CombatVisualDefinition
+  _bullet:
+    m_AssetGUID: 7e5f64916d59165419367b89450f6a52
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_SubObjectGUID: 
+    m_EditorAssetChanged: 0
+  _impact:
+    m_AssetGUID: a913449684e4a7b4e874749abe209a0e
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_SubObjectGUID: 
+    m_EditorAssetChanged: 0
+  _meleeSwing:
+    m_AssetGUID: 246a1e70096affb4292fac6aabc958d3
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_SubObjectGUID: 
+    m_EditorAssetChanged: 0
+  _effectDuration: 0.15
