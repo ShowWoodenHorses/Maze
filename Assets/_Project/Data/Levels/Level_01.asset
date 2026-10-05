@@ -1,0 +1,466 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a3456ec49ae625e43bc2e11dfbf2db27, type: 3}
+  m_Name: Level_01
+  m_EditorClassIdentifier: Maze.Core::Maze.Core.Level.LevelData
+  _settings:
+    _displayName: New Level
+  _generation:
+    _width: 9
+    _height: 11
+    _mazeSeed: 0
+    _visualSeed: 0
+    _mazeAlgorithm: 0
+    _loopDensity: 0.41
+    _initialPlayerStartCount: 1
+    _initialExitCount: 1
+  _geometry:
+    _width: 9
+    _height: 11
+    _cells: 000000000000000000000101010101010100000100010001000000000101010001010100000000010000000100000101010101010100000100000001000100000100010101010100000100010000000100000101010101010100000000000000000000
+  _doors: []
+  _playerStarts:
+  - _id: start_1
+    _position:
+      _x: 7
+      _y: 5
+  _exits:
+  - _id: exit_1
+    _position:
+      _x: 1
+      _y: 1
+  _zombieSpawns: []
+  _patrols: []
+  _weapons: []
+  _keys: []
+  _medkits: []
+  _mapFragments:
+  - _id: fragment_1
+    _position:
+      _x: 7
+      _y: 7
+    _region:
+      _x: 0
+      _y: 0
+      _width: 9
+      _height: 11
+  _visualTheme: {fileID: 11400000, guid: e7b38e2ce65ec8b4c9afc1c7f463e1f9, type: 2}
+  _visualData:
+    _floorAssignments:
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_02
+      _rotation: 0
+    - _variantId: floor_03
+      _rotation: 0
+    - _variantId: floor_03
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_02
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_02
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_03
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_02
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_02
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_03
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_03
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_02
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_03
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_03
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_03
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_02
+      _rotation: 0
+    - _variantId: floor_03
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_02
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_02
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_03
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_03
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_03
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    - _variantId: floor_01
+      _rotation: 0
+    _wallAssignments:
+    - _variantId: wall_corner
+      _rotation: 0
+    - _variantId: wall_straight_01
+      _rotation: 1
+    - _variantId: wall_straight_02
+      _rotation: 1
+    - _variantId: wall_straight_02
+      _rotation: 1
+    - _variantId: wall_straight_01
+      _rotation: 1
+    - _variantId: wall_straight_01
+      _rotation: 1
+    - _variantId: wall_straight_02
+      _rotation: 1
+    - _variantId: wall_straight_01
+      _rotation: 1
+    - _variantId: wall_corner
+      _rotation: 3
+    - _variantId: wall_straight_01
+      _rotation: 0
+    - _variantId: 
+      _rotation: 0
+    - _variantId: 
+      _rotation: 0
+    - _variantId: 
+      _rotation: 0
+    - _variantId: 
+      _rotation: 0
+    - _variantId: 
+      _rotation: 0
+    - _variantId: 
+      _rotation: 0
+    - _variantId: 
+      _rotation: 0
+    - _variantId: wall_straight_01
+      _rotation: 0
+    - _variantId: wall_straight_01
+      _rotation: 0
+    - _variantId: 
+      _rotation: 0
+    - _variantId: wall_isolated
+      _rotation: 0
+    - _variantId: 
+      _rotation: 0
+    - _variantId: wall_end
+      _rotation: 0
+    - _variantId: 
+      _rotation: 0
+    - _variantId: wall_end
+      _rotation: 1
+    - _variantId: wall_straight_01
+      _rotation: 1
+    - _variantId: wall_t
+      _rotation: 2
+    - _variantId: wall_straight_01
+      _rotation: 0
+    - _variantId: 
+      _rotation: 0
+    - _variantId: 
+      _rotation: 0
+    - _variantId: 
+      _rotation: 0
+    - _variantId: wall_straight_01
+      _rotation: 0
+    - _variantId: 
+      _rotation: 0
+    - _variantId: 
+      _rotation: 0
+    - _variantId: 
+      _rotation: 0
+    - _variantId: wall_straight_01
+      _rotation: 0
+    - _variantId: wall_t
+      _rotation: 0
+    - _variantId: wall_straight_01
+      _rotation: 1
+    - _variantId: wall_end
+      _rotation: 3
+    - _variantId: 
+      _rotation: 0
+    - _variantId: wall_corner
+      _rotation: 1
+    - _variantId: wall_straight_01
+      _rotation: 1
+    - _variantId: wall_end
+      _rotation: 3
+    - _variantId: 
+      _rotation: 0
+    - _variantId: wall_straight_02
+      _rotation: 0
+    - _variantId: wall_straight_01
+      _rotation: 0
+    - _variantId: 
+      _rotation: 0
+    - _variantId: 
+      _rotation: 0
+    - _variantId: 
+      _rotation: 0
+    - _variantId: 
+      _rotation: 0
+    - _variantId: 
+      _rotation: 0
+    - _variantId: 
+      _rotation: 0
+    - _variantId: 
+      _rotation: 0
+    - _variantId: wall_straight_01
+      _rotation: 0
+    - _variantId: wall_straight_01
+      _rotation: 0
+    - _variantId: 
+      _rotation: 0
+    - _variantId: wall_corner
+      _rotation: 0
+    - _variantId: wall_straight_01
+      _rotation: 1
+    - _variantId: wall_end
+      _rotation: 3
+    - _variantId: 
+      _rotation: 0
+    - _variantId: wall_isolated
+      _rotation: 0
+    - _variantId: 
+      _rotation: 0
+    - _variantId: wall_straight_01
+      _rotation: 0
+    - _variantId: wall_straight_01
+      _rotation: 0
+    - _variantId: 
+      _rotation: 0
+    - _variantId: wall_straight_01
+      _rotation: 0
+    - _variantId: 
+      _rotation: 0
+    - _variantId: 
+      _rotation: 0
+    - _variantId: 
+      _rotation: 0
+    - _variantId: 
+      _rotation: 0
+    - _variantId: 
+      _rotation: 0
+    - _variantId: wall_straight_01
+      _rotation: 0
+    - _variantId: wall_straight_02
+      _rotation: 0
+    - _variantId: 
+      _rotation: 0
+    - _variantId: wall_end
+      _rotation: 2
+    - _variantId: 
+      _rotation: 0
+    - _variantId: wall_end
+      _rotation: 1
+    - _variantId: wall_straight_01
+      _rotation: 1
+    - _variantId: wall_end
+      _rotation: 3
+    - _variantId: 
+      _rotation: 0
+    - _variantId: wall_straight_01
+      _rotation: 0
+    - _variantId: wall_straight_01
+      _rotation: 0
+    - _variantId: 
+      _rotation: 0
+    - _variantId: 
+      _rotation: 0
+    - _variantId: 
+      _rotation: 0
+    - _variantId: 
+      _rotation: 0
+    - _variantId: 
+      _rotation: 0
+    - _variantId: 
+      _rotation: 0
+    - _variantId: 
+      _rotation: 0
+    - _variantId: wall_straight_02
+      _rotation: 0
+    - _variantId: wall_corner
+      _rotation: 1
+    - _variantId: wall_straight_01
+      _rotation: 1
+    - _variantId: wall_straight_01
+      _rotation: 1
+    - _variantId: wall_straight_02
+      _rotation: 1
+    - _variantId: wall_straight_02
+      _rotation: 1
+    - _variantId: wall_straight_01
+      _rotation: 1
+    - _variantId: wall_straight_01
+      _rotation: 1
+    - _variantId: wall_straight_01
+      _rotation: 1
+    - _variantId: wall_corner
+      _rotation: 2
+    _cellOverrides: []
+    _objectAssignments:
+    - _entityId: exit_1
+      _choice:
+        _variantId: exit_01
+        _rotation: 0
+    - _entityId: fragment_1
+      _choice:
+        _variantId: fragment_01
+        _rotation: 0
+    _objectOverrides: []

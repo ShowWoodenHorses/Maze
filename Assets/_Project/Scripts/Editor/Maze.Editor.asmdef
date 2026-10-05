@@ -3,6 +3,8 @@
     "rootNamespace": "Maze.Editor",
     "references": [
         "Maze.Core",
+        "Maze.Gameplay",
+        "Maze.Application",
         "Maze.Presentation",
         "Maze.Composition",
         "Unity.Addressables",
@@ -10,7 +12,8 @@
         "Unity.ResourceManager",
         "Unity.InputSystem",
         "UnityEngine.UI",
-        "VContainer"
+        "VContainer",
+        "UniTask"
     ],
     "includePlatforms": [
         "Editor"

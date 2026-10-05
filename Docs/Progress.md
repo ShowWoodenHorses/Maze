@@ -64,7 +64,8 @@
   - звёзды: выход + все зомби + все фрагменты; окно результата показывает звёзды и счётчики;
   - `SaveData` (открытые уровни, лучшие звёзды, всего убийств, настройки) в `PlayerPrefs`, сохраняется после завершения и при смене настроек; смерть ничего не сохраняет;
   - меню: звёзды у уровней, закрытые уровни (в редакторе и dev-сборках всё равно запускаются), кнопка «Debug: reset progress».
-- **Не начато:** Test from Start в Level Designer.
+- **Готово:** Test / Play из Level Designer (этап 13): кнопки **Play** (случайный старт) и **Test from Start ▾** на панели, **Test from Start #N** в инспекторе старта — проверка, Build / Sync, Play Mode со сцены Bootstrap и сразу уровень, минуя меню.
+- **Список нужных префабов** для замены заглушек: [Docs/Prefabs.md](Prefabs.md).
 - **Тесты:** 241 EditMode-тест (включая массовые прогоны на 1000 seed'ов, §111, и фазз-тест движения) и 11 PlayMode-тестов. Все проходят.
 - **Руководство для дизайнера:** [Docs/LevelDesigner.md](LevelDesigner.md).
 
@@ -83,13 +84,13 @@
 | 10 | LevelData | ✅ | `Core/Level/LevelData.cs` и данные объектов. Мутация только `internal` (доступна редактору и тестам) |
 | 11 | Разделение логики и визуала | ✅ | Тип клетки — логика; префаб — только вид |
 | 12–14 | Генерация (DFS + LoopDensity, seed'ы) | ✅ | `Core/Generation/MazeGenerator.cs`. **Отступление:** размер нечётный (см. раздел 3) |
-| 15–16 | Ручное редактирование, workflow | 🟡 | Всё, кроме кнопок **Test / Play** в Level Designer (уровень запускается из меню игры; runtime-поддержка заданного старта уже есть — `LevelLaunchOptions.StartIndex`) |
+| 15–16 | Ручное редактирование, workflow | ✅ | Весь workflow §16, включая **Test / Play**: `LevelPlayLauncher` (Editor) — валидация, Build / Sync, Play Mode со сцены Bootstrap, `GameFlow.StartLevel` с `LevelLaunchOptions.StartIndex` |
 | 17–46 | Визуальная система | ✅ | Создание и хранение визуала (темы, наборы, веса, VisualSeed, контекстные стены, overrides, приоритеты, Regenerate Visuals) и runtime-часть: `LevelVisualSystem`, `GeometryBuilder`, `EntityViewFactory`, загрузка только используемых префабов (§44). Визуальные состояния двери (закрыта/открыта/заперта) — `DoorVisual` на префабе, `DoorViewPresenter` |
 | 47–49, 53–57, 104–107 | Visibility / Fog of War, чанки | ✅ | Расчёт: `FieldOfView` + `GridLineOfSight` (Core, без аллокаций), `VisibilitySystem` (Gameplay; пересчёт по `Spawned`, `PlayerCellChanged`, `DoorChanged` в окне). Отображение: `VisibilityController` → маска `CellVisibilityMask` + шейдер `Maze/Geometry`, чанки 8×8 без видимых клеток выключаются, `EntityView.SetVisible` (в т.ч. для вьюх, добавленных/сдвинутых позже через `EntityViewRegistry`). AI видимость не учитывает (§57). Detection (§107) — отдельно, на этапе зомби |
 | 50–51 | Grid, Occupancy | ✅ | `LevelGrid`, `OccupancyMap` (1 игрок, 0..N зомби, не вместе; пикапы не занимают), `LevelPassability` |
 | 52 | Navigation + A* | ✅ | `GridPathfinder` (A*, 4 направления, без аллокаций) + `NavigationSystem` (Gameplay): проходимы пол и открытые двери, `Version` растёт при смене двери (пути устаревают), `SearchCount` для проверки «не каждый кадр» |
 | 58–60 | Map, фрагменты | ✅ | Данные фрагментов и областей, редактор областей, проверки пересечений. `MapSystem` (Gameplay: собранные фрагменты, подбор — `PickupSystem`), `MapRenderer` (пиксель на клетку из `LevelGrid`, только собранные области, без игрока/зомби/предметов, не зависит от видимости), `MapPresenter` (текстура уровня, перерисовка только при сборе) → `MapScreen`. `GameFlowState.Map` — пауза |
-| 61–62 | Стартовые точки, выходы | 🟡 | Случайный старт при каждом запуске (или заданный через `LevelLaunchOptions`), `ExitSystem` + окно «Завершить уровень?» (Нет — игра продолжается, повторный вход спрашивает снова). Нет кнопки **Test from Start #N** в Level Designer |
+| 61–62 | Стартовые точки, выходы | ✅ | Случайный старт при каждом запуске (или заданный через `LevelLaunchOptions`), `ExitSystem` + окно «Завершить уровень?» (Нет — игра продолжается, повторный вход спрашивает снова). **Test from Start #N** — в Level Designer |
 | 63–66 | Игрок, управление, движение, взаимодействие | ✅ | `PlayerSystem` (спавн, движение, взгляд по движению, `CellChanged`), `PlayerMovement` (без физики, скольжение, corner assist, без туннелирования), `InputService` (Move/Look/Attack/Interact/SwitchMelee/SwitchRanged/OpenMap/Pause), тач-контролы HUD, `PlayerViewPresenter`, камера следует за игроком. `PlayerDefinition` / `PlayerVisualDefinition`. Inventory (ключи) и Interaction (`PlayerInteraction`) — этап 9. Атака — в этапе боя |
 | 66–72 | Атака, оружие, бой, звук, аптечки | ✅ | `PlayerCombat` (ближний/дальний, cooldown, остановка на кадр атаки, авто-перезарядка, Single/Automatic), `BulletSystem` (сегментные запросы, пул), `WeaponSystem`, `PickupSystem`, `PlayerHealth`, `SoundEventBus` + `PlayerFootsteps`. Вид: `CombatViewPresenter` (пулы), HUD. Воспроизведение аудио — заглушка `AudioService` |
 | 73–80 | Зомби, Animator | ✅ | `ZombieSystem` (спавн, тики, слух, смерть), `ZombieController` (машина состояний, движение по A*), `ZombieDetection`, `ZombieRuntime` (`IDamageable`). Вид: `ZombieViewPresenter` (позиция, поворот, видимость по клетке; Animator `Speed`, `Attack`, `Hit`). Animator игрока: `Speed`, `Attack`/`Shoot` |
@@ -266,7 +267,8 @@ CLAUDE.md                  правила проекта и соглашения
 6. ~~**Бой и Spatial Query (§66, §68–71, §81)**~~ — сделано (этап 10).
 6a. ~~**Зомби (§73–77)**~~ — сделано (этап 11).
 7. ~~**Карта, прогресс, звёзды, сохранения, смерть и завершение, UI (§58–60, §85–89)**~~ — сделано (этап 12).
-8. **Test from Start #N** в Level Designer: runtime уже принимает `LevelLaunchOptions.StartIndex`; нужна кнопка в окне и запуск Play с Bootstrap.
+8. ~~**Test from Start #N** в Level Designer~~ — сделано (этап 13).
+8a. **Пробные сборки WebGL и Android** (§1–2): собрать, запустить, найти платформенные проблемы (сейв, ввод, шейдер `Maze/Geometry`, производительность).
 9. **PlayMode-тесты (§110), логирование (§108), обработка ошибок (§109), оптимизация (§103).**
 
 ### Визуализация (запланировано, по запросу пользователя)
@@ -301,6 +303,14 @@ CLAUDE.md                  правила проекта и соглашения
 ---
 
 ## 6. История
+
+### 2026-10-05 — Этап 13: Test / Play из Level Designer (§16, §61)
+
+1. **Editor:** `LevelPlayLauncher` — проверяет уровень (`EditorLevelValidator`), делает Build / Sync, ставит `EditorSceneManager.playModeStartScene` = Bootstrap, входит в Play Mode; запрос (уровень, старт) переживает перезагрузку домена в `SessionState`; когда приложение дошло до меню, вызывает `GameFlow.StartLevel(level, LevelLaunchOptions(startIndex))`. После выхода из Play стартовая сцена сбрасывается.
+2. **UI тулзы:** на панели **Play** (случайный старт) и **Test from Start ▾** (список стартов), в инспекторе старта — **Test from Start #N**.
+3. `Maze.Editor` теперь ссылается на `Maze.Gameplay`, `Maze.Application`, `UniTask`.
+4. **Docs:** [Prefabs.md](Prefabs.md) — список префабов (виды, минимум, требования).
+5. **Ручная проверка:** Test from Start #0 на `Level_Items` → уровень сразу в игре, игрок на старте (1, 15); после Stop стартовая сцена Play сброшена.
 
 ### 2026-10-05 — Этап 12: карта, звёзды, прогресс, сохранения (§58–60, §85–89)
 

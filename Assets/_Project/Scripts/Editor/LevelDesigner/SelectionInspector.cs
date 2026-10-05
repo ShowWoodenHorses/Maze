@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Maze.Core.Authoring;
 using Maze.Core.Definitions;
@@ -103,6 +104,7 @@ namespace Maze.Editor.LevelDesigner
                 case ZombieSpawnData zombie: DrawZombie(zombie); break;
                 case WeaponPickupData weapon: DrawWeapon(weapon); break;
                 case MapFragmentData fragment: DrawFragment(fragment); break;
+                case PlayerStartData start: DrawStart(start); break;
             }
 
             if (VisualKinds.TryGetForEntity(entity, out var kind, out _) && Level.VisualTheme != null)
@@ -192,6 +194,22 @@ namespace Maze.Editor.LevelDesigner
             var definition = (WeaponDefinition)EditorGUILayout.ObjectField("Definition", weapon.Definition, typeof(WeaponDefinition), false);
             if (definition != weapon.Definition)
                 Apply("Change Weapon", () => LevelEditing.SetWeaponDefinition(Level, weapon, definition));
+        }
+
+        private void DrawStart(PlayerStartData start)
+        {
+            var index = IndexOf(Level.PlayerStarts, start);
+            using (new EditorGUI.DisabledScope(EditorApplication.isPlayingOrWillChangePlaymode))
+                if (GUILayout.Button($"Test from Start #{index}") &&
+                    !LevelPlayLauncher.Launch(Level, index, out var problem))
+                    _notify(problem);
+        }
+
+        private static int IndexOf(IReadOnlyList<PlayerStartData> starts, PlayerStartData start)
+        {
+            for (var i = 0; i < starts.Count; i++)
+                if (starts[i] == start) return i;
+            return -1;
         }
 
         private void DrawFragment(MapFragmentData fragment)

@@ -126,9 +126,45 @@ namespace Maze.Editor.LevelDesigner
 
                 if (GUILayout.Button("Build / Sync", EditorStyles.toolbarButton, GUILayout.Width(80f)) && LevelSync.Sync(_state.Level))
                     Notify("Level synced.");
+
+                using (new EditorGUI.DisabledScope(EditorApplication.isPlayingOrWillChangePlaymode))
+                {
+                    if (GUILayout.Button(new GUIContent("Play", "Validate, Build / Sync and play the level from a random start, as in the game."),
+                            EditorStyles.toolbarButton, GUILayout.Width(40f)))
+                        Play(null);
+
+                    if (GUILayout.Button(new GUIContent("Test from Start ▾", "Play the level from a chosen player start (ТЗ §61)."),
+                            EditorStyles.toolbarDropDown, GUILayout.Width(110f)))
+                        ShowStartMenu();
+                }
             }
 
             EditorGUILayout.EndHorizontal();
+        }
+
+        private void ShowStartMenu()
+        {
+            var menu = new GenericMenu();
+            var starts = _state.Level.PlayerStarts;
+            if (starts.Count == 0)
+                menu.AddDisabledItem(new GUIContent("The level has no player start"));
+            for (var i = 0; i < starts.Count; i++)
+            {
+                var index = i;
+                menu.AddItem(new GUIContent($"Start #{i}  {starts[i].Id} {starts[i].Position}"), false, () => Play(index));
+            }
+
+            menu.ShowAsContext();
+        }
+
+        /// <param name="startIndex">Null = random start.</param>
+        private void Play(int? startIndex)
+        {
+            if (!LevelPlayLauncher.Launch(_state.Level, startIndex, out var problem))
+            {
+                Notify(problem);
+                Debug.LogWarning("[Maze] Test level: " + problem);
+            }
         }
 
         private void HandleShortcuts()
