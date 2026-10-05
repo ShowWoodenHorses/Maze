@@ -50,8 +50,35 @@ MonoBehaviour:
     _position:
       _x: 19
       _y: 9
-  _zombieSpawns: []
-  _patrols: []
+  _zombieSpawns:
+  - _id: zombie_1
+    _position:
+      _x: 5
+      _y: 11
+    _facing: 3
+    _definition: {fileID: 11400000, guid: 64ec30b356044824083cab89bfdd3cdc, type: 2}
+    _patrolId: 
+  - _id: zombie_2
+    _position:
+      _x: 3
+      _y: 9
+    _facing: 3
+    _definition: {fileID: 11400000, guid: c9e4824799a23154dae897c7fde15723, type: 2}
+    _patrolId: patrol_1
+  - _id: zombie_3
+    _position:
+      _x: 3
+      _y: 7
+    _facing: 0
+    _definition: {fileID: 11400000, guid: ac0c610bbc54b95459ad02ba82f4340b, type: 2}
+    _patrolId: 
+  _patrols:
+  - _id: patrol_1
+    _points:
+    - _x: 1
+      _y: 9
+    - _x: 5
+      _y: 9
   _weapons:
   - _id: weapon_1
     _position:
@@ -1544,5 +1571,17 @@ MonoBehaviour:
     - _entityId: medkit_1
       _choice:
         _variantId: medkit_01
+        _rotation: 0
+    - _entityId: zombie_1
+      _choice:
+        _variantId: zombie_01
+        _rotation: 0
+    - _entityId: zombie_2
+      _choice:
+        _variantId: zombie_01
+        _rotation: 0
+    - _entityId: zombie_3
+      _choice:
+        _variantId: zombie_02
         _rotation: 0
     _objectOverrides: []

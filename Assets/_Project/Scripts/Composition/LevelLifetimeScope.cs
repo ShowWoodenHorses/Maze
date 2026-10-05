@@ -4,6 +4,7 @@ using Maze.Core.Level;
 using Maze.Gameplay.Combat;
 using Maze.Gameplay.Doors;
 using Maze.Gameplay.Grid;
+using Maze.Gameplay.Navigation;
 using Maze.Gameplay.Level;
 using Maze.Gameplay.Pickups;
 using Maze.Gameplay.Player;
@@ -11,6 +12,7 @@ using Maze.Gameplay.Sound;
 using Maze.Gameplay.Spatial;
 using Maze.Gameplay.Visibility;
 using Maze.Gameplay.Weapons;
+using Maze.Gameplay.Zombies;
 using Maze.Presentation.UI;
 using Maze.Presentation.Visual;
 using UnityEngine;
@@ -67,8 +69,11 @@ namespace Maze.Composition
             builder.Register<PlayerInteraction>(Lifetime.Singleton).AsSelf().As<ILevelTickable>();
             builder.Register<BulletSystem>(Lifetime.Singleton).AsSelf().As<ILevelTickable>();
             builder.Register<ExitSystem>(Lifetime.Singleton);
+            builder.Register<NavigationSystem>(Lifetime.Singleton);
+            builder.Register<ZombieSystem>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep, ILevelTickable>();
             builder.Register<VisibilitySystem>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep>();
             builder.Register<LevelRuntime>(Lifetime.Singleton);
+            builder.Register<PlayerDeathRule>(Lifetime.Singleton);
             builder.RegisterEntryPoint<LevelTickDriver>();
 
             // Presentation
@@ -82,6 +87,7 @@ namespace Maze.Composition
             builder.Register<HudPresenter>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep>();
             builder.Register<CombatViewPresenter>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep, ILevelLateTickable>();
             builder.Register<PlayerViewPresenter>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep, ILevelLateTickable>();
+            builder.Register<ZombieViewPresenter>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep, ILevelLateTickable>();
         }
     }
 

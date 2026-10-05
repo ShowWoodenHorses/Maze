@@ -61,6 +61,7 @@ namespace Maze.Composition
 
                 var runtime = scope.Container.Resolve<LevelRuntime>();
                 var exits = scope.Container.Resolve<ExitSystem>();
+                scope.Container.Resolve<PlayerDeathRule>(); // subscribes on creation; disposed with the scope
                 GameLog.Info(LogChannel.LevelLoading, $"LevelScope for '{level.name}' created.");
                 return new LevelSession(scope, scene, levelAssets, runtime, exits);
             }

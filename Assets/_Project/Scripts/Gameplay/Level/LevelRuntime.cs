@@ -86,7 +86,8 @@ namespace Maze.Gameplay.Level
             if (State != LevelRunState.Running)
                 return;
 
-            for (var i = 0; i < _tickables.Length; i++)
+            // Stops mid-frame when a tickable ended the level (e.g. the player died).
+            for (var i = 0; i < _tickables.Length && State == LevelRunState.Running; i++)
                 _tickables[i].Tick(deltaTime);
         }
 

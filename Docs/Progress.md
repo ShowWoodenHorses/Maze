@@ -53,8 +53,14 @@
   - дальний: пули с полётом (отрезок прошлая → текущая позиция), гибнут о стену, закрытую дверь и цель; магазин, авто-перезарядка, Single/Automatic;
   - `ISpatialQueryService` (§81), звуковые события §71 (шаги, подбор, дверь, удар, выстрел) — их будут слышать зомби;
   - вид: пули и эффекты из пулов, скрыты вне видимости; HUD: патроны и перезарядка; триггеры Animator `Attack`/`Shoot`.
-- **Не начато:** зомби, смерть игрока, карта, сохранения.
-- **Тесты:** 215 EditMode-тестов (включая массовые прогоны на 1000 seed'ов, §111, и фазз-тест движения) и 9 PlayMode-тестов. Все проходят.
+- **Готово:** зомби (этап 11).
+  - три типа обнаружения §73: зрение (сектор + дальность + LOS), слух (звуковые события), зрение + слух (общий радиус);
+  - Idle / Patrol / Chase / Attack / Return: погоня к последней известной клетке игрока, потеряв — к ближайшей точке патруля (или на спавн) и дальше по патрулю;
+  - A* только при смене цели или двери; закрытые двери — препятствие; в клетку игрока не заходят, друг через друга проходят;
+  - атака из соседней клетки с интервалом; урон без обнаружения не вызывает реакции (§76);
+  - зомби — цели ближнего боя и пуль, убитые исчезают; смерть игрока → «Level failed».
+- **Не начато:** карта, звёзды и прогресс, сохранения, Test from Start в Level Designer.
+- **Тесты:** 227 EditMode-тестов (включая массовые прогоны на 1000 seed'ов, §111, и фазз-тест движения) и 10 PlayMode-тестов. Все проходят.
 - **Руководство для дизайнера:** [Docs/LevelDesigner.md](LevelDesigner.md).
 
 ---
@@ -76,17 +82,17 @@
 | 17–46 | Визуальная система | ✅ | Создание и хранение визуала (темы, наборы, веса, VisualSeed, контекстные стены, overrides, приоритеты, Regenerate Visuals) и runtime-часть: `LevelVisualSystem`, `GeometryBuilder`, `EntityViewFactory`, загрузка только используемых префабов (§44). Визуальные состояния двери (закрыта/открыта/заперта) — `DoorVisual` на префабе, `DoorViewPresenter` |
 | 47–49, 53–57, 104–107 | Visibility / Fog of War, чанки | ✅ | Расчёт: `FieldOfView` + `GridLineOfSight` (Core, без аллокаций), `VisibilitySystem` (Gameplay; пересчёт по `Spawned`, `PlayerCellChanged`, `DoorChanged` в окне). Отображение: `VisibilityController` → маска `CellVisibilityMask` + шейдер `Maze/Geometry`, чанки 8×8 без видимых клеток выключаются, `EntityView.SetVisible` (в т.ч. для вьюх, добавленных/сдвинутых позже через `EntityViewRegistry`). AI видимость не учитывает (§57). Detection (§107) — отдельно, на этапе зомби |
 | 50–51 | Grid, Occupancy | ✅ | `LevelGrid`, `OccupancyMap` (1 игрок, 0..N зомби, не вместе; пикапы не занимают), `LevelPassability` |
-| 52 | Navigation + A* | 🟡 | `Core/Navigation/GridPathfinder.cs` (A*, 4 направления, без аллокаций). `NavigationSystem` с учётом дверей в runtime нет |
+| 52 | Navigation + A* | ✅ | `GridPathfinder` (A*, 4 направления, без аллокаций) + `NavigationSystem` (Gameplay): проходимы пол и открытые двери, `Version` растёт при смене двери (пути устаревают), `SearchCount` для проверки «не каждый кадр» |
 | 58–60 | Map, фрагменты | 🟡 | Данные фрагментов и областей, редактор областей, проверки пересечений. `MapSystem` / `MapRenderer` нет |
 | 61–62 | Стартовые точки, выходы | 🟡 | Случайный старт при каждом запуске (или заданный через `LevelLaunchOptions`), `ExitSystem` + окно «Завершить уровень?» (Нет — игра продолжается, повторный вход спрашивает снова). Нет кнопки **Test from Start #N** в Level Designer |
 | 63–66 | Игрок, управление, движение, взаимодействие | ✅ | `PlayerSystem` (спавн, движение, взгляд по движению, `CellChanged`), `PlayerMovement` (без физики, скольжение, corner assist, без туннелирования), `InputService` (Move/Look/Attack/Interact/SwitchMelee/SwitchRanged/OpenMap/Pause), тач-контролы HUD, `PlayerViewPresenter`, камера следует за игроком. `PlayerDefinition` / `PlayerVisualDefinition`. Inventory (ключи) и Interaction (`PlayerInteraction`) — этап 9. Атака — в этапе боя |
 | 66–72 | Атака, оружие, бой, звук, аптечки | ✅ | `PlayerCombat` (ближний/дальний, cooldown, остановка на кадр атаки, авто-перезарядка, Single/Automatic), `BulletSystem` (сегментные запросы, пул), `WeaponSystem`, `PickupSystem`, `PlayerHealth`, `SoundEventBus` + `PlayerFootsteps`. Вид: `CombatViewPresenter` (пулы), HUD. Воспроизведение аудио — заглушка `AudioService` |
-| 73–80 | Зомби, Animator | 🟡 | `ZombieDefinition` и размещение на уровне. Animator игрока: `Speed`, триггеры `Attack`/`Shoot`. Логики зомби нет (следующий этап) |
+| 73–80 | Зомби, Animator | ✅ | `ZombieSystem` (спавн, тики, слух, смерть), `ZombieController` (машина состояний, движение по A*), `ZombieDetection`, `ZombieRuntime` (`IDamageable`). Вид: `ZombieViewPresenter` (позиция, поворот, видимость по клетке; Animator `Speed`, `Attack`, `Hit`). Animator игрока: `Speed`, `Attack`/`Shoot` |
 | 81 | Spatial Query | ✅ | `ISpatialQueryService` / `SpatialQueryService`: GetObjectsInCell/AroundCell, QueryRadius, QuerySegment (первая стена/закрытая дверь или объект), QueryDirection, IsClear. Объектов мало (зомби) — перебор, стены по сетке (`GridRaycast`) |
 | 82 | GeometryBuilder, Mesh Combine, Static Batching | ✅ | `GeometryBuilder`: меши префабов пола и стен склеиваются по чанкам (сабмеш на материал), затем `StaticBatchingUtility.Combine`. Ни одного GameObject на клетку. Редакторское превью `LevelPreviewBuilder` осталось для Level Designer |
 | 83 | Object Pooling | 🟡 | Пули (рантайм-объекты и вьюхи) и эффекты (`UnityEngine.Pool.ObjectPool`). Зомби — на их этапе |
 | 84 | Addressables | 🟡 | Build/Sync делает уровень (`Levels/<имя>`, группа *Maze Levels*), каталог уровней (`LevelCatalog`) и префабы темы (группа *Maze Visuals*) Addressable. Runtime: `AddressablesService` + `IAssetOwner`: у каждого handle есть владелец, owner уровня освобождается вместе с LevelScope. Визуальные префабы грузятся через owner уровня — только используемые варианты. После выгрузки уровня — `Resources.UnloadUnusedAssets` |
-| 85–89 | SaveData, прогресс, звёзды, смерть, завершение | 🟡 | Есть только состояния `Completed` / `Failed` в `GameFlow` и экран результата. `SaveService` — заглушка |
+| 85–89 | SaveData, прогресс, звёзды, смерть, завершение | 🟡 | Смерть игрока (HP 0) → `PlayerDeathRule` → `LevelRuntime.Finish(Failed)` → экран «Level failed», Retry. Состояния `Completed` / `Failed` в `GameFlow`. `ZombieSystem.KilledCount/AllKilled` готовы для звёзд. Звёзд, прогресса и `SaveService` (заглушка) нет |
 | 90–92 | Валидатор | ✅ | `Core/Validation/LevelValidator.cs`: структура, визуал, геймплей, уровни Error/Warning/Info, ~50 кодов. В редакторе дополнительно проверяются существование ассетов префабов и требования к префабам пола и стен (шейдер, Read/Write, только MeshRenderer) |
 | 93–97 | Диагностика распределения, управление визуалом, Regenerate Visuals, overrides | ✅ | Вкладка Visuals в Level Designer |
 | 98 | Детерминизм | ✅ | Свой `DeterministicRandom` (SplitMix64) и `StableHash`; результат сохраняется в уровень. В runtime случайности нет |
@@ -144,6 +150,13 @@
 | Перезарядка | Начинается, когда магазин пуст; идёт, только пока оружие в руках; при выпадении сбрасывается | §68: ручной перезарядки нет |
 | Звуки (§71) | Радиусы: оружие `SoundRadius` в `WeaponDefinition`; шаг раз в 0.8 клетки, радиус 2; дверь/подбор — 3 (`PlayerDefinition`) | ТЗ не задаёт числа |
 | Визуал боя | `CombatVisualDefinition` (Addressable "Combat/Visual", группа Maze Shared): префабы пули, попадания, взмаха; любой может быть пуст | Общий для всех уровней, как визуал игрока |
+| Потеря цели зомби (§73, §75) | Зомби идёт к **последней клетке, где заметил** игрока (обновляется, пока замечает); дойдя и не заметив снова — Return. Мгновенный Return при потере сделал бы погоню бессмысленной (любой угол) | Минимум «памяти», без поиска/investigation (§76) |
+| Слух | Звук слышен, если расстояние ≤ min(радиус звука, `HearingRadius` зомби). Цель — клетка источника звука | В ТЗ есть оба радиуса |
+| Зрение + слух | Только `DetectionRadius` от игрока, стены не мешают (как звук) | ТЗ: «общий detection radius» |
+| Обнаружение | Опрашивается раз в 0.1 с (фазы разнесены между зомби), не каждый кадр | §103: без тяжёлого AI в каждом кадре |
+| Атака зомби | Игрок в соседней по стороне клетке → первый удар через половину `AttackInterval`, дальше раз в интервал; урон округляется до целого HP. Во время атаки зомби встаёт в центр своей клетки | Время среагировать |
+| Return | К ближайшей (по прямой) точке патруля и дальше по кругу; без патруля — на спавн и Idle с исходным направлением | §75 |
+| Смерть игрока | HP 0 → проигрыш сразу, тики этого кадра прерываются (`LevelRuntime.Tick` останавливается после `Finish`) | §88 |
 | Вид двери | `DoorVisual` на префабе: объекты Closed / Open / Lock и/или Animator с bool `Open`, `Locked`. Без компонента — при открытой двери прячутся рендереры. Активность корня не трогается (её ведёт видимость) | §37: префаб только показывает состояние |
 | Общие ассеты игрока | `PlayerDefinition` + `PlayerVisualDefinition` (раздельно: геймплей и вид, как у оружия), Addressable "Player/Definition" / "Player/Visual", грузятся при старте приложения и остаются резидентными | §84: shared assets могут оставаться resident |
 | Правила LOS (§55) | Игрок может стоять в любой точке своей клетки: лучи идут из центра и 4 углов (с отступом 0.05) клетки игрока в те же точки каждой клетки окна. **Видима каждая клетка, через которую прошёл луч**, плюс непрозрачная клетка, в которую он упёрся. Стена или закрытая дверь видна также, если **примыкает стороной** к видимой прозрачной клетке, или если это **угол** видимого пола (касается его по диагонали, и обе клетки между ними — видимые стены). Стена, касающаяся видимого пола только по диагонали через скрытый пол, скрыта (дальняя стена комнаты за дверью). Через угловой стык двух стен не видно | Без дыр вдоль лучей и на углах; за закрытой дверью ничего не видно, в т.ч. дальних стен комнаты |
@@ -175,7 +188,7 @@ Assets/_Project/
     Level/LevelCatalog     список уровней для меню
   Scripts/Gameplay/        Maze.Gameplay
     Level/                 LevelRuntime, ILevelLoadStep + LevelLoadStage, ILevelTickable/ILevelLateTickable, LevelOutcome,
-                           LevelLaunchOptions, ExitSystem
+                           LevelLaunchOptions, ExitSystem, PlayerDeathRule
     Grid/                  OccupancyMap, LevelPassability
     Doors/                 DoorSystem (open/closed, locked/unlocked)
     Player/                PlayerSystem (+ PlayerStartSelector), PlayerMovement, IPlayerInput (+ PlayerAction), PlayerHealth,
@@ -183,6 +196,8 @@ Assets/_Project/
     Weapons/               WeaponSystem (слоты Melee/Ranged), WeaponRuntime
     Pickups/               PickupSystem (ключи, аптечки, оружие на земле), Pickup
     Combat/                PlayerCombat (атаки), BulletSystem (пули)
+    Navigation/            NavigationSystem (A* для AI, двери), LevelWalkability
+    Zombies/               ZombieSystem, ZombieController (+ ZombieDetection), ZombieRuntime (+ ZombieState)
     Spatial/               ISpatialQueryService, SpatialQueryService, ISpatialObject, IDamageable, SegmentHit
     Sound/                 SoundEventBus (SoundEvent, SoundType), PlayerFootsteps
     Visibility/            VisibilitySystem, LevelOpacity
@@ -197,22 +212,24 @@ Assets/_Project/
     Visual/                LevelVisualSystem, VisualPrefabLibrary, GeometryBuilder (+ PrefabMeshParts, MeshAccumulator),
                            VisibilityChunk, CellVisibilityMask, LevelGeometryView, EntityView(+Registry, Factory),
                            TopDownCamera, LevelViewRoot, GeometryShader (константы шейдера), PlayerViewPresenter,
-                           VisibilityController, DoorVisual, DoorViewPresenter, PickupViewPresenter, CombatViewPresenter
+                           VisibilityController, DoorVisual, DoorViewPresenter, PickupViewPresenter, CombatViewPresenter,
+                           ZombieViewPresenter
   Art/Shaders/             MazeGeometry.shader («Maze/Geometry»)
   Scripts/Composition/     Maze.Composition — ProjectLifetimeScope, LevelLifetimeScope (+ LevelTickDriver),
                            ApplicationEntryPoint, LevelSessionFactory
   Scripts/Editor/          Maze.Editor
     LevelDesigner/         окно, сетка, инструменты, инспектор, превью, Build/Sync, валидация с проверкой ассетов
-    Dev/                   PlaceholderThemeBuilder (Maze → Dev → Create Placeholder Theme / Player / Weapons / Combat Visuals,
+    Dev/                   PlaceholderThemeBuilder (Maze → Dev → Create Placeholder Theme / Player / Weapons / Combat Visuals / Zombies,
                            Rebuild Placeholder Doors),
                            RuntimeScenesBuilder (Maze → Dev → Build Runtime Scenes), GeometryShaderEditorGuard
   Scenes/                  Bootstrap.unity (первая в Build), Game.unity
-  Tests/EditMode/          Maze.Tests.EditMode — 215 тестов
-  Tests/PlayMode/          Maze.Tests.PlayMode — 9 тестов
+  Tests/EditMode/          Maze.Tests.EditMode — 227 тестов
+  Tests/PlayMode/          Maze.Tests.PlayMode — 10 тестов
   Data/Levels/             Level_Dev.asset (тестовый уровень), Level_Items.asset (дев-уровень: копия Level_Dev с дверями,
-                           ключом, аптечкой, оружием), LevelCatalog.asset
+                           ключом, аптечкой, оружием и тремя зомби), LevelCatalog.asset
   Data/Weapons/            Knife, Bat (Melee), Pistol (Ranged) — заглушки
   Data/Combat/             CombatVisual (Addressable "Combat/Visual") — заглушки fx_bullet, fx_impact, fx_melee_swing
+  Data/Zombies/            ZombieWalker (зрение), ZombieListener (слух), ZombieHunter (зрение + слух) — заглушки
   Data/Themes/             PlaceholderTheme и наборы
   Data/Player/             PlayerDefinition, PlayerVisual (Addressable, группа Maze Shared)
   Art/Placeholders/        префабы-заглушки из примитивов (без коллайдеров)
@@ -232,7 +249,7 @@ CLAUDE.md                  правила проекта и соглашения
 4. ~~**Видимость (§53–57, §104–106)**~~ — сделано (этап 8).
 5. ~~**Двери, ключи, подбор (§67, §72)**~~ — сделано (этап 9).
 6. ~~**Бой и Spatial Query (§66, §68–71, §81)**~~ — сделано (этап 10).
-6a. **Зомби (§73–77):** `ZombieSystem` (спавн, `IDamageable` в `SpatialQueryService`, вьюхи через `EntityViewRegistry.Add/Move`), state machine Idle/Patrol/Chase/Attack/Return, Detection (зрение — сектор + LOS, слух — `SoundEventBus`), `NavigationSystem` поверх `GridPathfinder` (закрытые двери — препятствие), атака соседней клетки, урон игроку → смерть → `FailLevel`.
+6a. ~~**Зомби (§73–77)**~~ — сделано (этап 11).
 7. **Карта, прогресс, звёзды, сохранения, смерть и завершение, UI (§58–60, §85–89).**
 8. **Test from Start #N** в Level Designer: runtime уже принимает `LevelLaunchOptions.StartIndex`; нужна кнопка в окне и запуск Play с Bootstrap.
 9. **PlayMode-тесты (§110), логирование (§108), обработка ошибок (§109), оптимизация (§103).**
@@ -245,6 +262,12 @@ CLAUDE.md                  правила проекта и соглашения
   - плавное рассеивание и сгущение (доли секунды) при смене видимых клеток вместо мгновенного переключения;
   - производительность (WebGL 2, Android): шум из маленькой текстуры, без многослойного fBm в шейдере; проверить overdraw на устройстве;
   - скорость, плотность, цвет, мягкость границы — параметры материала, чтобы настраивать в инспекторе.
+- **Полоска здоровья над зомби** (по запросу пользователя):
+  - появляется при получении урона; если урона нет 3 секунды — пропадает; новый урон сбрасывает таймер;
+  - не видна, если не виден сам зомби (его клетка вне видимости), даже если 3 секунды ещё не прошли; убитый — полоска сразу исчезает;
+  - производительность: **одна общая система** (`HealthBarPresenter`) без Canvas и без GameObject на зомби — все видимые полоски рисуются одним вызовом (`Graphics.RenderMeshInstanced`: quad + простой шейдер, заполнение/цвет массивами на экземпляр; либо один динамический меш с квадами активных полосок). Камера не вращается — полоска плоская, без билборда;
+  - события: `ZombieRuntime.Damaged` → показать и сбросить таймер, `Died` → убрать; каждый кадр обновляются только позиции активных полосок (обычно 0–3);
+  - можно сделать общей для любого `IDamageable` с HP (сейчас — зомби).
 - **Анимации игрока и зомби** (например, Mixamo), подключать на этапах, где появляются действия (атаки — бой, зомби — этап зомби), или отдельной визуальной полировкой:
   - от пользователя: модели в FBX «With Skin» с Humanoid-ригом (или прогнать через авториг Mixamo); анимации «Without Skin», FBX for Unity, 30 fps, ходьба/бег — **In Place** (движение в коде, root motion не используется); оценка в движении (MCP даёт только скриншоты);
   - игрок: idle, ходьба, бег, удар ближнего боя, выстрел, урон, смерть (опц. перезарядка); зомби: idle, патруль, преследование, атака, урон, смерть. Нет клипа — можно обойтись (например, вспышка при уроне);
@@ -263,6 +286,17 @@ CLAUDE.md                  правила проекта и соглашения
 ---
 
 ## 6. История
+
+### 2026-10-05 — Этап 11: зомби (§52, §73–77, §88)
+
+1. **Gameplay:**
+   - `NavigationSystem` (A* для AI: пол и открытые двери, `Version` при смене двери, `SearchCount`);
+   - `ZombieRuntime` (`IDamageable`: HP, состояние, позиция, `Damaged`/`Died`), `ZombieDetection` (зрение, слух, радиус), `ZombieController` (Idle/Patrol/Chase/Attack/Return, движение по пути, не в клетку игрока, атака соседней клетки), `ZombieSystem` (шаг `SpawnZombies`, тики, слух через `SoundEventBus`, occupancy и spatial, `KilledCount`);
+   - `PlayerDeathRule` (HP 0 → `Finish(Failed)`), `LevelRuntime.Tick` прерывает кадр после завершения.
+2. **Presentation:** `ZombieViewPresenter` (сохранённый визуал, позиция/поворот, `EntityViewRegistry.Move` для видимости, Animator `Speed`/`Attack`/`Hit`, удаление убитых).
+3. **Editor и контент:** Maze → Dev → Create Placeholder Zombies (`Data/Zombies`), в `Level_Items` три зомби: охотник у ключа, патрульный за красной дверью, слушающий дальше.
+4. **Тесты:** +12 EditMode (навигация и двери, конус зрения, зрение сквозь закрытую дверь, слух по двум радиусам, общий радиус, отсутствие реакции на урон, погоня → атака, общие клетки зомби, A* не каждый кадр, возврат к патрулю, возврат на спавн, смерть зомби, смерть игрока → проигрыш), +1 PlayMode (вьюхи зомби следуют геймплею, убитый исчезает).
+5. **Ручная проверка на `Level_Items`:** охотник замечает игрока, подходит к соседней клетке и бьёт; пуля снимает ему HP; при HP 0 у игрока — «Level failed», Retry перезапускает уровень.
 
 ### 2026-10-05 — Этап 10: бой игрока (§66, §68–71, §78, §81, §83)
 

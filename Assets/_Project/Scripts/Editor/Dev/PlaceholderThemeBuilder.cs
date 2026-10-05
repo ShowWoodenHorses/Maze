@@ -107,6 +107,7 @@ namespace Maze.Editor.Dev
         private const string PlayerDataPath = "Assets/_Project/Data/Player";
         private const string WeaponDataPath = "Assets/_Project/Data/Weapons";
         private const string CombatDataPath = "Assets/_Project/Data/Combat";
+        private const string ZombieDataPath = "Assets/_Project/Data/Zombies";
 
         /// <summary>
         /// Placeholder player: capsule with a "nose" showing the facing (+Z), plus PlayerDefinition and PlayerVisual
@@ -191,6 +192,32 @@ namespace Maze.Editor.Dev
             AssetDatabase.SaveAssets();
             if (problem != null) Debug.LogWarning("[Maze] " + problem);
             Debug.Log($"[Maze] Placeholder combat visuals created in {CombatDataPath} and made Addressable.");
+        }
+
+        /// <summary>
+        /// Placeholder zombie types in Data/Zombies, one per detection type (ТЗ §73): Walker (vision), Listener
+        /// (hearing), Hunter (vision + hearing radius). Existing assets are kept with their values.
+        /// </summary>
+        [MenuItem("Maze/Dev/Create Placeholder Zombies")]
+        public static void CreateZombies()
+        {
+            EnsureFolder(ZombieDataPath);
+            Zombie("ZombieWalker", "walker", ZombieDetectionType.VisionOnly);
+            Zombie("ZombieListener", "listener", ZombieDetectionType.HearingOnly);
+            Zombie("ZombieHunter", "hunter", ZombieDetectionType.VisionAndHearing);
+            AssetDatabase.SaveAssets();
+            Debug.Log($"[Maze] Placeholder zombies created in {ZombieDataPath}.");
+        }
+
+        private static void Zombie(string assetName, string id, ZombieDetectionType detection)
+        {
+            var path = $"{ZombieDataPath}/{assetName}.asset";
+            if (AssetDatabase.LoadAssetAtPath<ZombieDefinition>(path) != null)
+                return;
+
+            var zombie = ScriptableObject.CreateInstance<ZombieDefinition>();
+            zombie.Configure(id, detection);
+            AssetDatabase.CreateAsset(zombie, path);
         }
 
         private static AssetReferenceGameObject Reference(GameObject prefab) =>

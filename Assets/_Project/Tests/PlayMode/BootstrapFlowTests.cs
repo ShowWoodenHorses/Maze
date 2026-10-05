@@ -259,6 +259,46 @@ namespace Maze.Tests.PlayMode
             Assert.AreEqual(handlesInMenu, _addressables.ActiveHandleCount, "Combat prefabs released with the level.");
         });
 
+        [UnityTest]
+        public IEnumerator Zombies_HaveViews_FollowGameplay_AndDisappearWhenKilled() => Async(async () =>
+        {
+            const string itemsLevel = "Level_Items";
+            var catalog = _container.Resolve<ILevelCatalog>();
+            if (!catalog.Levels.Any(l => l.LevelId == itemsLevel))
+                Assert.Ignore($"Dev level '{itemsLevel}' (with zombies) is not in the catalog.");
+
+            await _flow.StartLevel(itemsLevel, new LevelLaunchOptions(startIndex: 0));
+            Assert.AreEqual(GameFlowState.Playing, _flow.State, _flow.ErrorMessage);
+            var container = FindRoot<LevelLifetimeScope>(SceneManager.GetSceneByName(GameScene)).Container;
+            var zombies = container.Resolve<Maze.Gameplay.Zombies.ZombieSystem>();
+            var views = container.Resolve<EntityViewRegistry>();
+            Assert.Greater(zombies.TotalCount, 0, "Level_Items has zombies.");
+
+            foreach (var zombie in zombies.Zombies)
+            {
+                Assert.IsTrue(views.TryGet(zombie.Id, out var view), $"View of '{zombie.Id}'.");
+                Assert.AreEqual(zombie.Cell, view.Cell);
+            }
+
+            // Let the AI run (patrols move) and check views follow.
+            await UniTask.Delay(TimeSpan.FromSeconds(1.5));
+            foreach (var zombie in zombies.Zombies)
+            {
+                views.TryGet(zombie.Id, out var view);
+                var position = view.GameObject.transform.localPosition;
+                Assert.AreEqual(zombie.Position.x, position.x, 1e-3f);
+                Assert.AreEqual(zombie.Position.y, position.z, 1e-3f);
+                Assert.AreEqual(zombie.Cell, view.Cell, "Visibility uses the zombie's current cell.");
+            }
+
+            var victim = zombies.Zombies[0];
+            victim.ApplyDamage(10000f, Vector2.right);
+            Assert.IsFalse(views.TryGet(victim.Id, out _), "Killed zombie's view is removed.");
+            Assert.AreEqual(1, zombies.KilledCount);
+
+            await _flow.ExitToMenu();
+        });
+
         private static GameObject Child(EntityViewRegistry views, string entityId, string child)
         {
             Assert.IsTrue(views.TryGet(entityId, out var view), $"No view for '{entityId}'.");

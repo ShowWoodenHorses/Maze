@@ -44,5 +44,22 @@ namespace Maze.Core.Definitions
         public float Damage => _damage;
         public float AttackInterval => _attackInterval;
         public float MoveSpeed => _moveSpeed;
+
+        /// <summary>For tests and tools.</summary>
+        internal void Configure(string id, ZombieDetectionType detection, float visionAngle = 45f, float visionRange = 5f,
+            float hearingRadius = 5f, float detectionRadius = 4f, float maxHp = 30f, float damage = 10f,
+            float attackInterval = 1f, float moveSpeed = 1.5f)
+        {
+            _id = id;
+            _detectionType = detection;
+            _visionAngle = visionAngle;
+            _visionRange = visionRange;
+            _hearingRadius = hearingRadius;
+            _detectionRadius = detectionRadius;
+            _maxHp = maxHp;
+            _damage = damage;
+            _attackInterval = attackInterval;
+            _moveSpeed = moveSpeed;
+        }
     }
 }
