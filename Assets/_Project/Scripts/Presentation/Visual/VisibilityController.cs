@@ -19,12 +19,15 @@ namespace Maze.Presentation.Visual
         private readonly VisibilitySystem _visibility;
         private readonly LevelVisualSystem _visuals;
         private readonly EntityViewRegistry _entities;
+        private readonly FogOfWarView _fog;
         private readonly List<GridPosition> _shown = new List<GridPosition>();
 
         private LevelGeometryView _geometry;
 
-        public VisibilityController(VisibilitySystem visibility, LevelVisualSystem visuals, EntityViewRegistry entities)
+        public VisibilityController(VisibilitySystem visibility, LevelVisualSystem visuals, EntityViewRegistry entities,
+            FogOfWarView fog = null)
         {
+            _fog = fog;
             _visibility = visibility;
             _visuals = visuals;
             _entities = entities;
@@ -65,9 +68,12 @@ namespace Maze.Presentation.Visual
 
             // Only cells whose state changed are touched; the mask uploads once in ApplyVisibility.
             // Geometry follows revealed cells (no one-cell holes), objects follow strict visibility.
-            foreach (var cell in _shown)
-                if (!_visibility.IsRevealed(cell))
-                    _geometry.SetCellVisible(cell, false);
+            // With fog, cells leaving the view stay until the fog covers them (FogOfWarView hides them then).
+            var fogHides = _fog != null && _fog.HidesGeometry && _visibility.HasResult;
+            if (!fogHides)
+                foreach (var cell in _shown)
+                    if (!_visibility.IsRevealed(cell))
+                        _geometry.SetCellVisible(cell, false);
 
             _shown.Clear();
             var visible = _visibility.RevealedCells;

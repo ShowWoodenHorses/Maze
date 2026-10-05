@@ -18,7 +18,12 @@ namespace Maze.Core.Visual
         [SerializeField] private VisualSet _zombie;
         [SerializeField] private VisualSet _mapFragment;
 
+        [Tooltip("Animated fog over hidden cells (shader Maze/Fog). Empty = no fog: hidden cells are simply not drawn.")]
+        [SerializeField] private Material _fogMaterial;
+
         public string Id => _id;
+
+        public Material FogMaterial { get => _fogMaterial; internal set => _fogMaterial = value; }
 
         public VisualSet GetSet(VisualKind kind)
         {

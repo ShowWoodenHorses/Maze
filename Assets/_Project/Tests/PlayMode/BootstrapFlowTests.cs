@@ -187,6 +187,18 @@ namespace Maze.Tests.PlayMode
 
             foreach (var chunk in geometry.Chunks)
                 Assert.AreEqual(geometry.Mask.AnyVisible(chunk.Cells), chunk.IsVisible, $"Chunk {chunk.Cells}.");
+
+            // Fog of war (the level's theme has a fog material): the first reveal is instant and matches geometry.
+            var fog = container.Resolve<FogOfWarView>();
+            if (fog.IsActive)
+            {
+                for (var y = 0; y < grid.Height; y++)
+                for (var x = 0; x < grid.Width; x++)
+                {
+                    var cell = new GridPosition(x, y);
+                    Assert.AreEqual(visibility.IsRevealed(cell) ? 1f : 0f, fog.Mask.ValueOf(cell), $"Fog at {cell}.");
+                }
+            }
             foreach (var view in container.Resolve<EntityViewRegistry>().All)
                 Assert.AreEqual(visibility.IsVisible(view.Cell), view.IsVisible, $"View '{view.EntityId}' at {view.Cell}.");
 
