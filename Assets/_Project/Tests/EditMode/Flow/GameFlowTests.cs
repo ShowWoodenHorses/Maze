@@ -6,6 +6,7 @@ using Cysharp.Threading.Tasks;
 using Maze.Application.Assets;
 using Maze.Application.Flow;
 using Maze.Application.Levels;
+using Maze.Application.Save;
 using Maze.Application.Services;
 using Maze.Core.Authoring;
 using Maze.Core.Level;
@@ -30,6 +31,7 @@ namespace Maze.Tests.EditMode.Flow
         private LevelCatalog _catalogAsset;
         private FakeAddressables _addressables;
         private FakeSessionFactory _sessions;
+        private FakeProgress _progress;
         private List<string> _initialized;
         private GameFlow _flow;
         private List<GameFlowState> _states;
@@ -53,6 +55,7 @@ namespace Maze.Tests.EditMode.Flow
             _addressables.Assets["Levels/invalid"] = _invalidLevel;
 
             _sessions = new FakeSessionFactory();
+            _progress = new FakeProgress();
             _initialized = new List<string>();
             _flow = CreateFlow(new RecordingService("A", _initialized), new RecordingService("B", _initialized));
         }
@@ -68,7 +71,7 @@ namespace Maze.Tests.EditMode.Flow
 
         private GameFlow CreateFlow(params IApplicationService[] services)
         {
-            var flow = new GameFlow(services, new FakeCatalog(_catalogAsset), _addressables, _sessions);
+            var flow = new GameFlow(services, new FakeCatalog(_catalogAsset), _addressables, _sessions, _progress);
             _states = new List<GameFlowState>();
             flow.StateChanged += _states.Add;
             return flow;
@@ -327,6 +330,75 @@ namespace Maze.Tests.EditMode.Flow
         });
 
         [UnityTest]
+        public IEnumerator Completion_CalculatesStars_SavesProgress_BeforeResultWindow() => UniTask.ToCoroutine(async () =>
+        {
+            await BootToMenu();
+            await _flow.StartLevel(ValidId);
+            var session = _sessions.Created[0];
+            session.Kills = 2;
+            session.TotalZombies = 2;
+            session.Fragments = 1;
+            session.TotalFragments = 3;
+            var savedBeforeResult = false;
+            _flow.StateChanged += state =>
+            {
+                if (state == GameFlowState.Completed) savedBeforeResult = _progress.Recorded.Count == 1;
+            };
+
+            session.RaiseExitReached();
+            _flow.ConfirmExit(true);
+
+            Assert.IsTrue(savedBeforeResult, "ТЗ §89: Calculate Stars → Save → Result Window.");
+            Assert.AreEqual(ValidId, _progress.Recorded[0].Key);
+            var result = _flow.LastResult.Value;
+            Assert.IsTrue(result.Completed);
+            Assert.AreEqual(2, result.Stars, "Exit + all zombies; fragments 1/3.");
+            Assert.AreEqual(result.Stars, _progress.Recorded[0].Value.Stars);
+        });
+
+        [UnityTest]
+        public IEnumerator Death_ShowsResult_SavesNothing_RetryClearsResult() => UniTask.ToCoroutine(async () =>
+        {
+            await BootToMenu();
+            await _flow.StartLevel(ValidId);
+            _sessions.Created[0].Kills = 1;
+
+            _sessions.Created[0].RaiseFinished(LevelOutcome.Failed);
+
+            Assert.AreEqual(GameFlowState.Failed, _flow.State);
+            Assert.AreEqual(0, _progress.Recorded.Count, "ТЗ §85: an unfinished run is not saved.");
+            Assert.AreEqual(0, _flow.LastResult.Value.Stars);
+
+            await _flow.RetryLevel();
+            Assert.IsNull(_flow.LastResult);
+        });
+
+        [UnityTest]
+        public IEnumerator Map_PausesGameplay_OnlyFromPlaying() => UniTask.ToCoroutine(async () =>
+        {
+            await BootToMenu();
+            _flow.OpenMap();
+            Assert.AreEqual(GameFlowState.MainMenu, _flow.State, "No level.");
+
+            await _flow.StartLevel(ValidId);
+            var session = _sessions.Created[0];
+            _flow.OpenMap();
+            Assert.AreEqual(GameFlowState.Map, _flow.State);
+            Assert.IsTrue(session.Paused, "ТЗ §60: the map pauses gameplay.");
+
+            session.RaiseExitReached();
+            Assert.AreEqual(GameFlowState.Map, _flow.State, "Nothing happens while paused.");
+
+            _flow.CloseMap();
+            Assert.AreEqual(GameFlowState.Playing, _flow.State);
+            Assert.IsFalse(session.Paused);
+
+            _flow.PauseGameplay();
+            _flow.OpenMap();
+            Assert.AreEqual(GameFlowState.Paused, _flow.State, "Not from the pause menu.");
+        });
+
+        [UnityTest]
         public IEnumerator ExitReached_WhilePaused_IsIgnored() => UniTask.ToCoroutine(async () =>
         {
             await BootToMenu();
@@ -445,6 +517,18 @@ namespace Maze.Tests.EditMode.Flow
             }
         }
 
+        private sealed class FakeProgress : IProgressService
+        {
+            public readonly List<KeyValuePair<string, LevelResult>> Recorded = new List<KeyValuePair<string, LevelResult>>();
+
+            public int TotalKills => 0;
+            public bool IsUnlocked(string levelId) => true;
+            public int GetStars(string levelId) => 0;
+            public void RecordCompletion(string levelId, LevelResult result) =>
+                Recorded.Add(new KeyValuePair<string, LevelResult>(levelId, result));
+            public void ResetProgress() => Recorded.Clear();
+        }
+
         private sealed class FakeSessionFactory : ILevelSessionFactory
         {
             public readonly List<FakeSession> Created = new List<FakeSession>();
@@ -499,6 +583,11 @@ namespace Maze.Tests.EditMode.Flow
             public void StartGameplay() => Started = true;
             public void SetPaused(bool paused) => Paused = paused;
             public void StopGameplay() => Stopped = true;
+
+            public int Kills, TotalZombies, Fragments, TotalFragments;
+
+            public LevelResult GetResult(LevelOutcome outcome) =>
+                new LevelResult(outcome == LevelOutcome.Completed, Kills, TotalZombies, Fragments, TotalFragments);
 
             public UniTask UnloadAsync()
             {

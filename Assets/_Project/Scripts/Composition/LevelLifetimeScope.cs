@@ -6,6 +6,7 @@ using Maze.Gameplay.Doors;
 using Maze.Gameplay.Grid;
 using Maze.Gameplay.Navigation;
 using Maze.Gameplay.Level;
+using Maze.Gameplay.Map;
 using Maze.Gameplay.Pickups;
 using Maze.Gameplay.Player;
 using Maze.Gameplay.Sound;
@@ -13,6 +14,7 @@ using Maze.Gameplay.Spatial;
 using Maze.Gameplay.Visibility;
 using Maze.Gameplay.Weapons;
 using Maze.Gameplay.Zombies;
+using Maze.Presentation.Map;
 using Maze.Presentation.UI;
 using Maze.Presentation.Visual;
 using UnityEngine;
@@ -60,6 +62,7 @@ namespace Maze.Composition
             builder.Register<SpatialQueryService>(Lifetime.Singleton).AsSelf().As<ISpatialQueryService>();
             builder.Register<PlayerHealth>(Lifetime.Singleton);
             builder.Register<PlayerInventory>(Lifetime.Singleton);
+            builder.Register<MapSystem>(Lifetime.Singleton);
             // Tick order: weapon switching → attack (stops this tick's movement) → movement → steps → interaction → bullets.
             builder.Register<WeaponSystem>(Lifetime.Singleton).AsSelf().As<ILevelTickable>();
             builder.Register<PlayerCombat>(Lifetime.Singleton).AsSelf().As<ILevelTickable>();
@@ -72,6 +75,7 @@ namespace Maze.Composition
             builder.Register<NavigationSystem>(Lifetime.Singleton);
             builder.Register<ZombieSystem>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep, ILevelTickable>();
             builder.Register<VisibilitySystem>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep>();
+            builder.Register<LevelProgress>(Lifetime.Singleton);
             builder.Register<LevelRuntime>(Lifetime.Singleton);
             builder.Register<PlayerDeathRule>(Lifetime.Singleton);
             builder.RegisterEntryPoint<LevelTickDriver>();
@@ -85,6 +89,7 @@ namespace Maze.Composition
             builder.Register<DoorViewPresenter>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep>();
             builder.Register<PickupViewPresenter>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep>();
             builder.Register<HudPresenter>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep>();
+            builder.Register<MapPresenter>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep>();
             builder.Register<CombatViewPresenter>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep, ILevelLateTickable>();
             builder.Register<PlayerViewPresenter>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep, ILevelLateTickable>();
             builder.Register<ZombieViewPresenter>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep, ILevelLateTickable>();

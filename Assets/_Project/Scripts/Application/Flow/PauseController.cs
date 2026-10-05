@@ -3,7 +3,10 @@ using Maze.Application.Services;
 
 namespace Maze.Application.Flow
 {
-    /// <summary>Toggles pause from the Pause input action (Escape / Start / Android Back).</summary>
+    /// <summary>
+    /// Toggles pause from the Pause input action (Escape / Start / Android Back) and the map from the OpenMap action.
+    /// Pause while the map is open closes the map.
+    /// </summary>
     public sealed class PauseController : IDisposable
     {
         private readonly IInputService _input;
@@ -21,6 +24,7 @@ namespace Maze.Application.Flow
             if (_initialized) return;
             _initialized = true;
             _input.PauseRequested += OnPauseRequested;
+            _input.MapRequested += OnMapRequested;
         }
 
         public void Dispose()
@@ -28,12 +32,20 @@ namespace Maze.Application.Flow
             if (!_initialized) return;
             _initialized = false;
             _input.PauseRequested -= OnPauseRequested;
+            _input.MapRequested -= OnMapRequested;
         }
 
         private void OnPauseRequested()
         {
             if (_flow.State == GameFlowState.Playing) _flow.PauseGameplay();
             else if (_flow.State == GameFlowState.Paused) _flow.ResumeGameplay();
+            else if (_flow.State == GameFlowState.Map) _flow.CloseMap();
+        }
+
+        private void OnMapRequested()
+        {
+            if (_flow.State == GameFlowState.Playing) _flow.OpenMap();
+            else if (_flow.State == GameFlowState.Map) _flow.CloseMap();
         }
     }
 }

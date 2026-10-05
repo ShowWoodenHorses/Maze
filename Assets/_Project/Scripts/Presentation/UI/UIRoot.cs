@@ -12,6 +12,7 @@ namespace Maze.Presentation.UI
         [SerializeField] private PauseScreen _pause;
         [SerializeField] private ResultScreen _result;
         [SerializeField] private ConfirmExitScreen _confirmExit;
+        [SerializeField] private MapScreen _map;
 
         public MainMenuScreen MainMenu => _mainMenu;
         public LoadingScreen Loading => _loading;
@@ -20,5 +21,6 @@ namespace Maze.Presentation.UI
         public PauseScreen Pause => _pause;
         public ResultScreen Result => _result;
         public ConfirmExitScreen ConfirmExit => _confirmExit;
+        public MapScreen Map => _map;
     }
 }

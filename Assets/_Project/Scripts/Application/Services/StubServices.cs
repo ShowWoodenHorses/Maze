@@ -1,32 +1,51 @@
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using Maze.Core.Common;
+using Maze.Application.Save;
+using UnityEngine;
 
 namespace Maze.Application.Services
 {
     /// <summary>
-    /// Player settings (ТЗ §85: part of SaveData). Stub: values live in memory only;
-    /// persistence comes with <see cref="SaveService"/>.
+    /// Player settings (ТЗ §85: part of SaveData). Every change is saved at once (a persistent event).
+    /// Must be initialized after <see cref="SaveService"/>.
     /// </summary>
     public sealed class SettingsService : IApplicationService
     {
+        private readonly SaveService _save;
+
+        public SettingsService(SaveService save)
+        {
+            _save = save;
+        }
+
         public string Name => "Settings";
 
-        public float MusicVolume { get; set; } = 1f;
-        public float SfxVolume { get; set; } = 1f;
+        public float MusicVolume
+        {
+            get => _save.Data.Settings.MusicVolume;
+            set => Set(ref _save.Data.Settings.MusicVolume, value);
+        }
 
-        public UniTask InitializeAsync(CancellationToken cancellation) => UniTask.CompletedTask;
-    }
-
-    /// <summary>SaveData persistence (ТЗ §85). Stub until progress, stars and death/completion exist.</summary>
-    public sealed class SaveService : IApplicationService
-    {
-        public string Name => "Save";
+        public float SfxVolume
+        {
+            get => _save.Data.Settings.SfxVolume;
+            set => Set(ref _save.Data.Settings.SfxVolume, value);
+        }
 
         public UniTask InitializeAsync(CancellationToken cancellation)
         {
-            GameLog.Info(LogChannel.Save, "Save service is a stub: nothing is loaded or stored yet.");
+            var settings = _save.Data.Settings;
+            settings.MusicVolume = Mathf.Clamp01(settings.MusicVolume);
+            settings.SfxVolume = Mathf.Clamp01(settings.SfxVolume);
             return UniTask.CompletedTask;
+        }
+
+        private void Set(ref float field, float value)
+        {
+            value = Mathf.Clamp01(value);
+            if (Mathf.Approximately(field, value)) return;
+            field = value;
+            _save.Save();
         }
     }
 

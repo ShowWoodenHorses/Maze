@@ -13,6 +13,7 @@ namespace Maze.Presentation.UI
         [SerializeField] private Text _status;
         [SerializeField] private Text _message;
         [SerializeField] private Button _pauseButton;
+        [SerializeField] private Button _mapButton;
 
         [Tooltip("On-screen stick and buttons (ТЗ §64, Android). They drive gamepad controls through the Input System.")]
         [SerializeField] private GameObject _touchControls;
@@ -20,6 +21,7 @@ namespace Maze.Presentation.UI
         private float _messageHideTime;
 
         public event Action PauseClicked;
+        public event Action MapClicked;
 
         /// <summary>Touch controls are shown on mobile and on any device with a touchscreen.</summary>
         public static bool IsTouchAvailable => UnityEngine.Application.isMobilePlatform || Touchscreen.current != null;
@@ -27,6 +29,7 @@ namespace Maze.Presentation.UI
         private void Awake()
         {
             Bind(_pauseButton, () => PauseClicked?.Invoke());
+            Bind(_mapButton, () => MapClicked?.Invoke());
             if (_touchControls != null)
                 _touchControls.SetActive(IsTouchAvailable);
         }

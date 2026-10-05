@@ -105,7 +105,25 @@ MonoBehaviour:
     _position:
       _x: 4
       _y: 11
-  _mapFragments: []
+  _mapFragments:
+  - _id: fragment_1
+    _position:
+      _x: 1
+      _y: 11
+    _region:
+      _x: 0
+      _y: 0
+      _width: 11
+      _height: 17
+  - _id: fragment_2
+    _position:
+      _x: 7
+      _y: 13
+    _region:
+      _x: 11
+      _y: 0
+      _width: 10
+      _height: 17
   _visualTheme: {fileID: 11400000, guid: e7b38e2ce65ec8b4c9afc1c7f463e1f9, type: 2}
   _visualData:
     _floorAssignments:
@@ -1583,5 +1601,13 @@ MonoBehaviour:
     - _entityId: zombie_3
       _choice:
         _variantId: zombie_02
+        _rotation: 0
+    - _entityId: fragment_1
+      _choice:
+        _variantId: fragment_01
+        _rotation: 0
+    - _entityId: fragment_2
+      _choice:
+        _variantId: fragment_01
         _rotation: 0
     _objectOverrides: []

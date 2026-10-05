@@ -162,6 +162,7 @@ namespace Maze.Editor.Dev
             SetReference(root, "_hud", BuildHud(parent));
             SetReference(root, "_pause", BuildPause(parent));
             SetReference(root, "_confirmExit", BuildConfirmExit(parent));
+            SetReference(root, "_map", BuildMap(parent));
             SetReference(root, "_result", BuildResult(parent));
             SetReference(root, "_error", BuildError(parent));
             return root;
@@ -187,10 +188,14 @@ namespace Maze.Editor.Dev
             template.gameObject.SetActive(false);
             var empty = Label(column, "EmptyLabel", "No levels yet: run Build / Sync in Maze → Level Designer.", 24,
                 FontStyle.Italic, 60f);
+            var summary = Label(column, "Summary", "", 24, FontStyle.Normal, 40f);
+            var reset = Button(column, "DebugResetProgressButton", "Debug: reset progress");
 
             SetReference(screen, "_levelList", list.GetComponent<RectTransform>());
             SetReference(screen, "_levelButtonTemplate", template);
             SetReference(screen, "_emptyLabel", empty);
+            SetReference(screen, "_summary", summary);
+            SetReference(screen, "_debugResetProgressButton", reset);
             return screen;
         }
 
@@ -220,6 +225,12 @@ namespace Maze.Editor.Dev
             pauseRect.anchoredPosition = new Vector2(-32f, -24f);
             pauseRect.sizeDelta = new Vector2(90f, 90f);
 
+            var map = Button(screen.transform, "MapButton", "Map");
+            var mapRect = map.GetComponent<RectTransform>();
+            mapRect.anchorMin = mapRect.anchorMax = mapRect.pivot = new Vector2(1f, 1f);
+            mapRect.anchoredPosition = new Vector2(-138f, -24f);
+            mapRect.sizeDelta = new Vector2(120f, 90f);
+
             var status = Label(screen.transform, "Status", "", 24, FontStyle.Normal, 120f);
             status.alignment = TextAnchor.UpperLeft;
             var statusRect = status.rectTransform;
@@ -237,12 +248,13 @@ namespace Maze.Editor.Dev
             SetReference(screen, "_status", status);
             SetReference(screen, "_message", message);
             SetReference(screen, "_pauseButton", pause);
+            SetReference(screen, "_mapButton", map);
             SetReference(screen, "_touchControls", BuildTouchControls(screen.transform));
             return screen;
         }
 
         /// <summary>
-        /// ТЗ §64 Android: stick bottom-left, attack bottom-right, plus melee, ranged, map and door buttons.
+        /// ТЗ §64 Android: stick bottom-left, attack bottom-right, plus melee, ranged and door buttons (map: HUD button).
         /// They emulate gamepad controls, which InputService already binds.
         /// </summary>
         private static GameObject BuildTouchControls(Transform parent)
@@ -268,7 +280,6 @@ namespace Maze.Editor.Dev
             TouchButton(root.transform, "Melee", "<Gamepad>/leftShoulder", new Vector2(-470f, 150f), 120f, knob);
             TouchButton(root.transform, "Ranged", "<Gamepad>/rightShoulder", new Vector2(-470f, 310f), 120f, knob);
             TouchButton(root.transform, "Door", "<Gamepad>/buttonWest", new Vector2(-230f, 470f), 130f, knob);
-            TouchButton(root.transform, "Map", "<Gamepad>/select", new Vector2(-150f, 650f), 110f, knob);
             return root;
         }
 
@@ -341,12 +352,57 @@ namespace Maze.Editor.Dev
             var screen = Screen<ResultScreen>(parent, "ResultScreen", Dim);
             var column = Column(screen.transform, 480f, 16f, Panel);
             var title = Label(column, "Title", "Level complete", 48, FontStyle.Bold, 90f);
+            var details = Label(column, "Details", "", 28, FontStyle.Normal, 170f);
+            details.alignment = TextAnchor.UpperLeft;
             var retry = Button(column, "RetryButton", "Play again");
             var menu = Button(column, "MenuButton", "Main menu");
 
             SetReference(screen, "_title", title);
+            SetReference(screen, "_details", details);
             SetReference(screen, "_retryButton", retry);
             SetReference(screen, "_menuButton", menu);
+            return screen;
+        }
+
+        /// <summary>ТЗ §60: fullscreen map; the texture (one pixel per cell) is set by the level's MapPresenter.</summary>
+        private static MapScreen BuildMap(Transform parent)
+        {
+            var screen = Screen<MapScreen>(parent, "MapScreen", Background);
+
+            var caption = Label(screen.transform, "Caption", "Map", 30, FontStyle.Bold, 60f);
+            var captionRect = caption.rectTransform;
+            captionRect.anchorMin = new Vector2(0f, 1f);
+            captionRect.anchorMax = new Vector2(1f, 1f);
+            captionRect.pivot = new Vector2(0.5f, 1f);
+            captionRect.anchoredPosition = new Vector2(0f, -24f);
+            captionRect.sizeDelta = new Vector2(-300f, 60f);
+
+            var close = Button(screen.transform, "CloseButton", "Close");
+            var closeRect = close.GetComponent<RectTransform>();
+            closeRect.anchorMin = closeRect.anchorMax = closeRect.pivot = new Vector2(1f, 1f);
+            closeRect.anchoredPosition = new Vector2(-32f, -24f);
+            closeRect.sizeDelta = new Vector2(180f, 90f);
+
+            // Area below the caption; the image keeps the level's aspect ratio inside it.
+            var area = new GameObject("MapArea", typeof(RectTransform));
+            area.transform.SetParent(screen.transform, false);
+            var areaRect = area.GetComponent<RectTransform>();
+            Stretch(areaRect);
+            areaRect.offsetMin = new Vector2(32f, 32f);
+            areaRect.offsetMax = new Vector2(-32f, -130f);
+
+            var imageObject = new GameObject("MapImage", typeof(RectTransform));
+            imageObject.transform.SetParent(area.transform, false);
+            var image = imageObject.AddComponent<RawImage>();
+            image.raycastTarget = false;
+            var fitter = imageObject.AddComponent<AspectRatioFitter>();
+            fitter.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
+            fitter.aspectRatio = 1f;
+
+            SetReference(screen, "_image", image);
+            SetReference(screen, "_fitter", fitter);
+            SetReference(screen, "_caption", caption);
+            SetReference(screen, "_closeButton", close);
             return screen;
         }
 

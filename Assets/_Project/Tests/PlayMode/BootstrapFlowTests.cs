@@ -6,14 +6,18 @@ using Cysharp.Threading.Tasks;
 using Maze.Application.Assets;
 using Maze.Application.Flow;
 using Maze.Application.Levels;
+using Maze.Application.Save;
 using Maze.Composition;
 using Maze.Core.Definitions;
 using Maze.Core.Grid;
 using Maze.Core.Level;
 using Maze.Gameplay.Doors;
 using Maze.Gameplay.Level;
+using Maze.Gameplay.Map;
 using Maze.Gameplay.Pickups;
 using Maze.Gameplay.Visibility;
+using Maze.Presentation.Map;
+using Maze.Presentation.UI;
 using Maze.Presentation.Visual;
 using NUnit.Framework;
 using UnityEngine;
@@ -121,7 +125,8 @@ namespace Maze.Tests.PlayMode
             Assert.AreEqual(0, geometry.MissingVisuals, "Every cell layer of a synced level has a prefab.");
             Assert.IsTrue(Shader.IsKeywordEnabled(GeometryShader.VisibilityKeyword));
 
-            var expectedViews = level.AllEntities().Count(e => !(e is PlayerStartData) && !(e is ZombieSpawnData));
+            // Every placed object has a view (zombies' come from ZombieViewPresenter), except player starts.
+            var expectedViews = level.AllEntities().Count(e => !(e is PlayerStartData));
             Assert.AreEqual(expectedViews, container.Resolve<EntityViewRegistry>().Count);
 
             var meshes = geometry.Chunks.Select(c => c.Mesh).ToList();
@@ -297,6 +302,66 @@ namespace Maze.Tests.PlayMode
             Assert.AreEqual(1, zombies.KilledCount);
 
             await _flow.ExitToMenu();
+        });
+
+        [UnityTest]
+        public IEnumerator MapFragments_Map_AndCompletion_SavesStars() => Async(async () =>
+        {
+            const string itemsLevel = "Level_Items";
+            var catalog = _container.Resolve<ILevelCatalog>();
+            if (!catalog.Levels.Any(l => l.LevelId == itemsLevel))
+                Assert.Ignore($"Dev level '{itemsLevel}' is not in the catalog.");
+
+            // Completion writes the real save (PlayerPrefs): keep the developer's progress intact.
+            var savedJson = PlayerPrefs.HasKey(PlayerPrefsSaveStorage.Key) ? PlayerPrefs.GetString(PlayerPrefsSaveStorage.Key) : null;
+            var save = _container.Resolve<SaveService>();
+            try
+            {
+                await _flow.StartLevel(itemsLevel, new LevelLaunchOptions(startIndex: 0));
+                Assert.AreEqual(GameFlowState.Playing, _flow.State, _flow.ErrorMessage);
+                var container = FindRoot<LevelLifetimeScope>(SceneManager.GetSceneByName(GameScene)).Container;
+                var level = container.Resolve<LevelData>();
+                var grid = container.Resolve<LevelGrid>();
+                var map = container.Resolve<MapSystem>();
+                var presenter = container.Resolve<MapPresenter>();
+                var ui = _container.Resolve<UIRoot>();
+                Assert.GreaterOrEqual(map.TotalCount, 2, "Level_Items has two map fragments.");
+
+                var fragment = level.MapFragments[0];
+                var probe = fragment.Region.Min;
+                Assert.AreEqual(MapRenderer.Unknown, (Color32)presenter.Texture.GetPixel(probe.X, probe.Y));
+                Assert.IsTrue(map.Collect(fragment));
+                Assert.AreEqual(MapRenderer.ColorOf(grid.GetCell(probe)), (Color32)presenter.Texture.GetPixel(probe.X, probe.Y),
+                    "Map texture redrawn on collection.");
+
+                var runtime = container.Resolve<LevelRuntime>();
+                _flow.OpenMap();
+                Assert.AreEqual(GameFlowState.Map, _flow.State);
+                Assert.AreEqual(LevelRunState.Paused, runtime.State, "ТЗ §60: the map pauses gameplay.");
+                Assert.IsTrue(ui.Map.IsVisible);
+                Assert.IsFalse(ui.Hud.IsVisible);
+                _flow.CloseMap();
+                Assert.AreEqual(LevelRunState.Running, runtime.State);
+
+                _flow.CompleteLevel();
+                Assert.AreEqual(GameFlowState.Completed, _flow.State);
+                var result = _flow.LastResult.Value;
+                Assert.AreEqual(1, result.Fragments);
+                Assert.IsFalse(result.AllZombiesKilled);
+                Assert.AreEqual(1, result.Stars, "Exit only: zombies alive, one fragment missing.");
+                Assert.GreaterOrEqual(_container.Resolve<IProgressService>().GetStars(itemsLevel), 1);
+                Assert.IsTrue(ui.Result.IsVisible);
+
+                await _flow.ExitToMenu();
+                Assert.IsNull(presenter.Texture, "Map texture destroyed with the level.");
+            }
+            finally
+            {
+                if (savedJson != null) PlayerPrefs.SetString(PlayerPrefsSaveStorage.Key, savedJson);
+                else PlayerPrefs.DeleteKey(PlayerPrefsSaveStorage.Key);
+                PlayerPrefs.Save();
+                save.Load();
+            }
         });
 
         private static GameObject Child(EntityViewRegistry views, string entityId, string child)

@@ -5,6 +5,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using Maze.Application.Assets;
 using Maze.Application.Levels;
+using Maze.Application.Save;
 using Maze.Application.Services;
 using Maze.Core.Common;
 using Maze.Core.Level;
@@ -27,6 +28,9 @@ namespace Maze.Application.Flow
 
         /// <summary>The player entered an exit: gameplay is paused until "Finish level?" is answered (ТЗ §62).</summary>
         ExitConfirmation = 9,
+
+        /// <summary>The fullscreen map is open: gameplay is paused (ТЗ §60).</summary>
+        Map = 10,
     }
 
     /// <summary>
@@ -42,6 +46,7 @@ namespace Maze.Application.Flow
         private readonly ILevelCatalog _catalog;
         private readonly IAddressablesService _addressables;
         private readonly ILevelSessionFactory _sessionFactory;
+        private readonly IProgressService _progress;
         private readonly CancellationTokenSource _lifetime = new CancellationTokenSource();
 
         private CancellationTokenSource _transition;
@@ -51,8 +56,9 @@ namespace Maze.Application.Flow
         private bool _disposed;
 
         public GameFlow(IReadOnlyList<IApplicationService> services, ILevelCatalog catalog,
-            IAddressablesService addressables, ILevelSessionFactory sessionFactory)
+            IAddressablesService addressables, ILevelSessionFactory sessionFactory, IProgressService progress)
         {
+            _progress = progress;
             _services = services;
             _catalog = catalog;
             _addressables = addressables;
@@ -68,6 +74,9 @@ namespace Maze.Application.Flow
         public string ErrorMessage { get; private set; }
 
         public bool HasLevel => _session != null;
+
+        /// <summary>Result of the last ended run (stars, kills, fragments); null until a level ends.</summary>
+        public LevelResult? LastResult { get; private set; }
 
         public event Action<GameFlowState> StateChanged;
 
@@ -133,6 +142,21 @@ namespace Maze.Application.Flow
             SetState(GameFlowState.Playing);
         }
 
+        /// <summary>Opens the fullscreen map; gameplay is paused while it is open (ТЗ §60).</summary>
+        public void OpenMap()
+        {
+            if (State != GameFlowState.Playing) return;
+            _session.SetPaused(true);
+            SetState(GameFlowState.Map);
+        }
+
+        public void CloseMap()
+        {
+            if (State != GameFlowState.Map) return;
+            _session.SetPaused(false);
+            SetState(GameFlowState.Playing);
+        }
+
         /// <summary>Answer to "Finish level?": yes completes the level, no resumes gameplay.</summary>
         public void ConfirmExit(bool finishLevel)
         {
@@ -176,6 +200,7 @@ namespace Maze.Application.Flow
             SetState(GameFlowState.Loading);
             CurrentLevelId = levelId;
             _launchOptions = options;
+            LastResult = null;
             GameLog.Info(LogChannel.LevelLoading, $"Loading level '{levelId}'.");
 
             // Stop current gameplay, dispose the old LevelScope, release its Addressables.
@@ -271,13 +296,32 @@ namespace Maze.Application.Flow
             SetState(GameFlowState.ExitConfirmation);
         }
 
+        /// <summary>ТЗ §88–89: stop gameplay → calculate stars → save (completion only) → result window.</summary>
         private void EndLevel(GameFlowState result)
         {
-            if (State != GameFlowState.Playing && State != GameFlowState.Paused && State != GameFlowState.ExitConfirmation)
+            if (State != GameFlowState.Playing && State != GameFlowState.Paused && State != GameFlowState.ExitConfirmation &&
+                State != GameFlowState.Map)
                 return;
 
             _session.StopGameplay();
-            GameLog.Info(LogChannel.GameFlow, $"Level '{CurrentLevelId}' ended: {result}.");
+            var outcome = result == GameFlowState.Completed ? LevelOutcome.Completed : LevelOutcome.Failed;
+            var levelResult = _session.GetResult(outcome);
+            LastResult = levelResult;
+            GameLog.Info(LogChannel.GameFlow, $"Level '{CurrentLevelId}' ended: {levelResult}.");
+
+            if (outcome == LevelOutcome.Completed)
+            {
+                try
+                {
+                    _progress.RecordCompletion(CurrentLevelId, levelResult);
+                }
+                catch (Exception e)
+                {
+                    // Losing a save must not take the result screen away.
+                    GameLog.Exception(LogChannel.Save, e, $"Recording progress of '{CurrentLevelId}' failed");
+                }
+            }
+
             SetState(result);
         }
 

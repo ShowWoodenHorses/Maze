@@ -7,13 +7,15 @@ using Maze.Core.Level;
 using Maze.Core.Visual;
 using Maze.Gameplay.Combat;
 using Maze.Gameplay.Level;
+using Maze.Gameplay.Map;
 using Maze.Gameplay.Player;
 using Maze.Gameplay.Weapons;
+using Maze.Presentation.Visual;
 
 namespace Maze.Presentation.UI
 {
     /// <summary>
-    /// Shows the level's player state on the HUD (load stage InitializeUI): HP, weapon slots, keys, and short
+    /// Shows the level's player state on the HUD (load stage InitializeUI): HP, weapon slots, keys, map fragments, and short
     /// messages about interactions. The HUD lives in the Bootstrap scene; this presenter lives with the level.
     /// </summary>
     public sealed class HudPresenter : ILevelLoadStep, IDisposable
@@ -25,12 +27,14 @@ namespace Maze.Presentation.UI
         private readonly WeaponSystem _weapons;
         private readonly PlayerInteraction _interaction;
         private readonly PlayerCombat _combat;
+        private readonly MapSystem _map;
         private readonly StringBuilder _text = new StringBuilder();
         private bool _bound;
 
         public HudPresenter(UIRoot ui, LevelData level, PlayerHealth health, PlayerInventory inventory,
-            WeaponSystem weapons, PlayerInteraction interaction, PlayerCombat combat)
+            WeaponSystem weapons, PlayerInteraction interaction, PlayerCombat combat, MapSystem map)
         {
+            _map = map;
             _combat = combat;
             _ui = ui;
             _level = level;
@@ -52,6 +56,7 @@ namespace Maze.Presentation.UI
                 _interaction.Interacted += OnInteracted;
                 _combat.Attacked += OnAttacked;
                 _combat.ReloadChanged += OnReloadChanged;
+                _map.FragmentCollected += OnFragmentCollected;
                 _bound = true;
             }
 
@@ -69,6 +74,7 @@ namespace Maze.Presentation.UI
             _interaction.Interacted -= OnInteracted;
             _combat.Attacked -= OnAttacked;
             _combat.ReloadChanged -= OnReloadChanged;
+            _map.FragmentCollected -= OnFragmentCollected;
             _bound = false;
             if (_ui != null && _ui.Hud != null)
                 _ui.Hud.ClearLevelInfo();
@@ -82,6 +88,12 @@ namespace Maze.Presentation.UI
         }
 
         private void OnReloadChanged(WeaponRuntime weapon) => Refresh();
+
+        private void OnFragmentCollected(MapFragmentData fragment)
+        {
+            Refresh();
+            _ui.Hud.ShowMessage($"Map fragment {_map.CollectedCount}/{_map.TotalCount} found");
+        }
 
         private void Refresh()
         {
@@ -98,6 +110,9 @@ namespace Maze.Presentation.UI
                 if (i > 0) _text.Append(", ");
                 _text.Append(ColorOf(VisualKind.Key, _inventory.Keys[i]) ?? _inventory.Keys[i].Id);
             }
+
+            if (_map.TotalCount > 0)
+                _text.Append("   Map: ").Append(_map.CollectedCount).Append('/').Append(_map.TotalCount);
 
             _ui.Hud.SetStatus(_text.ToString());
         }
@@ -147,12 +162,6 @@ namespace Maze.Presentation.UI
         private static string WeaponName(WeaponRuntime weapon) =>
             string.IsNullOrEmpty(weapon.Definition.Id) ? weapon.Definition.name : weapon.Definition.Id;
 
-        /// <summary>Colour tag of the object's saved visual (key/door pair colour), or null.</summary>
-        private string ColorOf(VisualKind kind, LevelEntityData entity)
-        {
-            var set = _level.VisualTheme != null ? _level.VisualTheme.GetSet(kind) : null;
-            var variant = set?.FindVariant(VisualResolver.ResolveObject(_level, entity).VariantId);
-            return variant != null && variant.HasColor ? variant.ColorTag : null;
-        }
+        private string ColorOf(VisualKind kind, LevelEntityData entity) => VisualColorTags.TagOf(_level, kind, entity);
     }
 }

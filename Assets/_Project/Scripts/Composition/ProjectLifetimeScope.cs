@@ -1,6 +1,7 @@
 using Maze.Application.Assets;
 using Maze.Application.Flow;
 using Maze.Application.Levels;
+using Maze.Application.Save;
 using Maze.Application.Services;
 using Maze.Gameplay.Player;
 using Maze.Presentation.UI;
@@ -24,13 +25,15 @@ namespace Maze.Composition
         {
             builder.Register<AddressablesService>(Lifetime.Singleton).As<IAddressablesService>();
 
-            // IApplicationService initialization order = registration order.
-            builder.Register<SettingsService>(Lifetime.Singleton).AsSelf().As<IApplicationService>();
+            // IApplicationService initialization order = registration order. Settings are read from the save.
+            builder.Register<PlayerPrefsSaveStorage>(Lifetime.Singleton).As<ISaveStorage>();
             builder.Register<SaveService>(Lifetime.Singleton).AsSelf().As<IApplicationService>();
+            builder.Register<SettingsService>(Lifetime.Singleton).AsSelf().As<IApplicationService>();
             builder.Register<AudioService>(Lifetime.Singleton).AsSelf().As<IApplicationService>();
             builder.Register<InputService>(Lifetime.Singleton).As<IInputService, IPlayerInput, IApplicationService>();
             builder.Register<SharedDefinitionsService>(Lifetime.Singleton).AsSelf().As<IApplicationService>();
             builder.Register<LevelCatalogService>(Lifetime.Singleton).As<ILevelCatalog, IApplicationService>();
+            builder.Register<ProgressService>(Lifetime.Singleton).As<IProgressService>();
 
             builder.Register<ILevelSessionFactory>(_ => new LevelSessionFactory(this, _levelSceneName), Lifetime.Singleton);
             builder.Register<GameFlow>(Lifetime.Singleton);

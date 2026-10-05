@@ -7,6 +7,7 @@ namespace Maze.Presentation.UI
     public sealed class ResultScreen : UIScreen
     {
         [SerializeField] private Text _title;
+        [SerializeField] private Text _details;
         [SerializeField] private Button _retryButton;
         [SerializeField] private Button _menuButton;
 
@@ -20,5 +21,11 @@ namespace Maze.Presentation.UI
         }
 
         public void SetTitle(string title) => _title.text = title;
+
+        /// <summary>Stars and counters of the run.</summary>
+        public void SetDetails(string details)
+        {
+            if (_details != null) _details.text = details;
+        }
     }
 }

@@ -26,6 +26,9 @@ namespace Maze.Application.Flow
         void SetPaused(bool paused);
         void StopGameplay();
 
+        /// <summary>Stars and counters of the current run (ТЗ §87), for the given outcome.</summary>
+        LevelResult GetResult(LevelOutcome outcome);
+
         /// <summary>
         /// Full unload: dispose the LevelScope, unload its scene, release level Addressables.
         /// Not cancellable: cleanup always completes. <see cref="IDisposable.Dispose"/> is the synchronous

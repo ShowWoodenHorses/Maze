@@ -61,9 +61,10 @@ namespace Maze.Composition
 
                 var runtime = scope.Container.Resolve<LevelRuntime>();
                 var exits = scope.Container.Resolve<ExitSystem>();
+                var progress = scope.Container.Resolve<LevelProgress>();
                 scope.Container.Resolve<PlayerDeathRule>(); // subscribes on creation; disposed with the scope
                 GameLog.Info(LogChannel.LevelLoading, $"LevelScope for '{level.name}' created.");
-                return new LevelSession(scope, scene, levelAssets, runtime, exits);
+                return new LevelSession(scope, scene, levelAssets, runtime, exits, progress);
             }
             catch
             {
@@ -89,11 +90,14 @@ namespace Maze.Composition
             private readonly IAssetOwner _assets;
             private readonly LevelRuntime _runtime;
             private readonly ExitSystem _exits;
+            private readonly LevelProgress _progress;
             private LevelLifetimeScope _scope;
             private bool _released;
 
-            public LevelSession(LevelLifetimeScope scope, Scene scene, IAssetOwner assets, LevelRuntime runtime, ExitSystem exits)
+            public LevelSession(LevelLifetimeScope scope, Scene scene, IAssetOwner assets, LevelRuntime runtime, ExitSystem exits,
+                LevelProgress progress)
             {
+                _progress = progress;
                 _scope = scope;
                 _scene = scene;
                 _assets = assets;
@@ -113,6 +117,8 @@ namespace Maze.Composition
             public void SetPaused(bool paused) => _runtime.SetPaused(paused);
 
             public void StopGameplay() => _runtime.Stop();
+
+            public LevelResult GetResult(LevelOutcome outcome) => _progress.GetResult(outcome);
 
             public async UniTask UnloadAsync()
             {

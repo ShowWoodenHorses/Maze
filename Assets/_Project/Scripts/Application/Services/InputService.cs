@@ -11,6 +11,9 @@ namespace Maze.Application.Services
     {
         /// <summary>Escape / gamepad Start / Android Back.</summary>
         event Action PauseRequested;
+
+        /// <summary>M / Tab / gamepad Select (also the HUD's map button on touch screens).</summary>
+        event Action MapRequested;
     }
 
     /// <summary>
@@ -29,6 +32,7 @@ namespace Maze.Application.Services
         public string Name => "Input";
 
         public event Action PauseRequested;
+        public event Action MapRequested;
 
         public Vector2 Move => _move != null ? _move.ReadValue<Vector2>() : Vector2.zero;
         public Vector2 Look => _look != null ? _look.ReadValue<Vector2>() : Vector2.zero;
@@ -62,9 +66,11 @@ namespace Maze.Application.Services
             Button(PlayerAction.Interact, "<Keyboard>/e", "<Gamepad>/buttonWest");
             Button(PlayerAction.SwitchMelee, "<Keyboard>/1", "<Gamepad>/leftShoulder");
             Button(PlayerAction.SwitchRanged, "<Keyboard>/2", "<Gamepad>/rightShoulder");
-            Button(PlayerAction.OpenMap, "<Keyboard>/m", "<Keyboard>/tab", "<Gamepad>/select");
+            // Map and pause also work while gameplay is paused (to close the map), so they are events
+            // rather than polled by level ticks. Android Back arrives as Escape.
+            var map = Button(PlayerAction.OpenMap, "<Keyboard>/m", "<Keyboard>/tab", "<Gamepad>/select");
+            map.performed += _ => MapRequested?.Invoke();
 
-            // Pause works in any state, so it is an event rather than polled by level ticks. Android Back arrives as Escape.
             var pause = _actions.AddAction("Pause", InputActionType.Button);
             pause.AddBinding("<Keyboard>/escape");
             pause.AddBinding("<Gamepad>/start");
