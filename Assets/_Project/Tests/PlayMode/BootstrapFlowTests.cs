@@ -286,6 +286,22 @@ namespace Maze.Tests.PlayMode
             var held = container.Resolve<PlayerWeaponPresenter>().Shown;
             Assert.IsNotNull(held, "The gun in hands is shown.");
             Assert.AreEqual("Weapon " + gun.Definition.Id, held.name);
+
+            // After the blend-in: the left palm holds the gun's grip, the bladed rifle stance is turned to the facing.
+            var playerView = container.Resolve<PlayerViewPresenter>().View;
+            var rig = playerView.GetComponent<CharacterWeaponRig>();
+            await WaitFor(() => rig.HandWeight >= 1f);
+            await UniTask.Yield(PlayerLoopTiming.PostLateUpdate);
+            var grip = held.GetComponent<WeaponModel>().GripLeft;
+            Assert.IsNotNull(grip, "Guns have a left hand grip mark.");
+            Assert.Less(Vector3.Distance(rig.PalmLeft.position, grip.position), 0.03f, "Left palm on the grip.");
+            var animator = playerView.GetComponent<Animator>();
+            var across = animator.GetBoneTransform(HumanBodyBones.RightUpperArm).position -
+                         animator.GetBoneTransform(HumanBodyBones.LeftUpperArm).position;
+            var chestYaw = Vector3.SignedAngle(playerView.transform.forward,
+                Vector3.Cross(Vector3.ProjectOnPlane(across, Vector3.up), Vector3.up), Vector3.up);
+            Assert.Less(Mathf.Abs(chestYaw), 25f, $"Chest turned toward the facing (yaw {chestYaw:F0}).");
+
             Assert.IsTrue(combat.TryAttack(Vector2.down));
             Assert.AreEqual(1, bullets.Active.Count);
             Assert.AreEqual(1, views.ActiveBulletViews, "A bullet view taken from the pool.");

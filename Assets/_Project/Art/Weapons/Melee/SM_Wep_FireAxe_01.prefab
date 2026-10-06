@@ -106,6 +106,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Maze.Presentation::Maze.Presentation.Visual.WeaponModel
   _muzzle: {fileID: 0}
   _tip: {fileID: 1533697771361681329}
+  _gripLeft: {fileID: 0}
 --- !u!1 &532976987282731370
 GameObject:
   m_ObjectHideFlags: 0

@@ -216,6 +216,7 @@ Transform:
   - {fileID: 4553708126759066}
   - {fileID: 4739123024952568}
   - {fileID: 2860123775563229761}
+  - {fileID: 7842164562335400201}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &33070997758550968
@@ -289,6 +290,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Maze.Presentation::Maze.Presentation.Visual.WeaponModel
   _muzzle: {fileID: 2860123775563229761}
   _tip: {fileID: 0}
+  _gripLeft: {fileID: 7842164562335400201}
 --- !u!1 &1444030071612964
 GameObject:
   m_ObjectHideFlags: 0
@@ -405,6 +407,37 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -0.000000018626451, y: 0.0038877204, z: 0.9622113}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4207305543073516}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &7287111719675852080
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7842164562335400201}
+  m_Layer: 0
+  m_Name: Grip_L
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7842164562335400201
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7287111719675852080}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.12940516, y: -0.95099425, z: 0.030168133, w: -0.27920246}
+  m_LocalPosition: {x: 0.00000024586916, y: 0.00000013411045, z: 0.2983667}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

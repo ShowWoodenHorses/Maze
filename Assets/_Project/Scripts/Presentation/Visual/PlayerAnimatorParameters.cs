@@ -43,6 +43,14 @@ namespace Maze.Presentation.Visual
         /// <summary>Layer with reload, hit and use reactions over the upper body.</summary>
         public const string UpperBodyLayer = "UpperBody";
 
+        /// <summary>State tag: the left hand leaves the gun (reload, hit, use) — no left hand IK.</summary>
+        public const string NoHandIK = "NoHandIK";
+        /// <summary>State tag: no gun pose at all (death) — the clip as is.</summary>
+        public const string NoWeaponPose = "NoWeaponPose";
+
+        public static readonly int NoHandIKTag = Animator.StringToHash(NoHandIK);
+        public static readonly int NoWeaponPoseTag = Animator.StringToHash(NoWeaponPose);
+
         public static readonly int SpeedHash = Animator.StringToHash(Speed);
         public static readonly int WeaponHash = Animator.StringToHash(Weapon);
         public static readonly int AttackHash = Animator.StringToHash(Attack);

@@ -25,6 +25,8 @@ namespace Maze.Editor.Dev
     /// saved levels whose weapon visuals no longer fit are reassigned.</item>
     /// <item><see cref="CharacterWeaponRig"/> on the player prefab: palm centres and the melee socket, from the hand
     /// and finger bones (independent of any pose).</item>
+    /// <item>Gun's <see cref="WeaponModel.GripLeft"/> (Grip_L): where the left palm is on the gun in the shooting pose
+    /// (<see cref="GripPoseClip"/>), posed as in game — the left hand IK pulls the hand there in every other pose.</item>
     /// </list>
     /// </summary>
     internal static class WeaponsBuilder
@@ -40,6 +42,10 @@ namespace Maze.Editor.Dev
         private const float PickupScale = 0.75f;
 
         private const float PickupYaw = 45f; // diagonal: the longest guns fit the cell
+
+        /// <summary>Pose where the clip holds a gun properly with both hands: the left grip mark is taken from it.</summary>
+        private const string GripPoseClip = "Player_rifle_weapon_shoot";
+        private const float GripPoseTime = 0.5f; // normalized
 
         private sealed class Weapon
         {
@@ -111,6 +117,7 @@ namespace Maze.Editor.Dev
                 EditorUtility.SetDirty(set);
                 EditorUtility.SetDirty(settings);
                 RigPlayer();
+                MarkGrips();
                 var reassigned = ReassignLevels(set);
                 var problem = LevelDesigner.LevelSync.SyncShared(settings);
                 if (problem != null) Debug.LogWarning("[Maze] " + problem);
@@ -324,6 +331,52 @@ namespace Maze.Editor.Dev
             finally
             {
                 PrefabUtility.UnloadPrefabContents(root);
+            }
+        }
+
+        /// <summary>Grip_L of every gun: the left palm relative to the gun, in the shooting pose, posed as in game.</summary>
+        private static void MarkGrips()
+        {
+            var player = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(PlayerPrefabPath));
+            try
+            {
+                var rig = player.GetComponent<CharacterWeaponRig>();
+                var clip = CharacterAnimationUtility.LoadClip(GripPoseClip);
+                clip.SampleAnimation(player, clip.length * GripPoseTime);
+
+                foreach (var weapon in Weapons)
+                {
+                    if (weapon.Slot != WeaponSlot.Ranged) continue;
+                    var path = $"{ModelsPath}/{weapon.Model}.prefab";
+
+                    var gun = (GameObject)UnityEngine.Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(path), rig.PalmRight, false);
+                    gun.transform.localPosition = Vector3.zero;
+                    gun.transform.localRotation = Quaternion.identity;
+                    gun.transform.rotation = rig.TwoHandedRotation();
+                    var position = gun.transform.InverseTransformPoint(rig.PalmLeft.position);
+                    var rotation = Quaternion.Inverse(gun.transform.rotation) * rig.PalmLeft.rotation;
+                    UnityEngine.Object.DestroyImmediate(gun);
+
+                    var root = PrefabUtility.LoadPrefabContents(path);
+                    try
+                    {
+                        var mark = Child(root.transform, "Grip_L");
+                        mark.localPosition = position;
+                        mark.localRotation = rotation;
+                        var serialized = new SerializedObject(root.GetComponent<WeaponModel>());
+                        serialized.FindProperty("_gripLeft").objectReferenceValue = mark;
+                        serialized.ApplyModifiedPropertiesWithoutUndo();
+                        PrefabUtility.SaveAsPrefabAsset(root, path);
+                    }
+                    finally
+                    {
+                        PrefabUtility.UnloadPrefabContents(root);
+                    }
+                }
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(player);
             }
         }
 

@@ -18,7 +18,9 @@ namespace Maze.Editor.Dev
     /// <item>Clips are imported as Humanoid (own avatar per file, retargeted onto the model), one clip per file named
     /// after the file, root motion baked into the pose (movement is done by gameplay); idle/run loop.</item>
     /// <item>Animator Controller: base layer — locomotion per weapon in hands (blend idle → run by Speed) and death;
-    /// layer UpperBody (arms, spine, head) — attacks, shots, reload, hit, use, so the legs keep running.</item>
+    /// layer UpperBody (arms, spine, head) — attacks, shots, reload, hit, use, so the legs keep running. States where
+    /// the left hand leaves the gun are tagged <see cref="P.NoHandIK"/>, death <see cref="P.NoWeaponPose"/>
+    /// (<see cref="CharacterWeaponRig.PoseGun"/>).</item>
     /// <item>The model prefab gets the controller (no root motion) and becomes <see cref="PlayerVisualDefinition"/>'s
     /// prefab (made Addressable by Build / Sync's shared step).</item>
     /// </list>
@@ -140,6 +142,7 @@ namespace Maze.Editor.Dev
 
             var death = machine.AddState("Death", new Vector3(600f, 100f));
             death.motion = LoadClip(Death);
+            death.tag = P.NoWeaponPose;
             var toDeath = machine.AddAnyStateTransition(death);
             Configure(toDeath, 0.15f);
             toDeath.canTransitionToSelf = false;
@@ -199,14 +202,17 @@ namespace Maze.Editor.Dev
 
             var hit = AddAction(machine, empty, "Hit", LoadClip(Hit), new Vector3(0f, 100f));
             hit.speed = hit.motion.averageDuration / HitDuration;
+            hit.tag = P.NoHandIK;
             AddEnter(machine, hit, P.Hit, 0.05f);
 
             var use = AddAction(machine, empty, "Use", LoadClip(Use), new Vector3(0f, 200f));
             use.speed = use.motion.averageDuration / UseDuration;
+            use.tag = P.NoHandIK;
             AddEnter(machine, use, P.Use, 0.1f);
 
             var reload = machine.AddState("Reload", new Vector3(300f, 300f));
             reload.motion = LoadClip(Reload);
+            reload.tag = P.NoHandIK; // the left hand goes to the magazine
             // At ReloadSpeed = 1 the state lasts 1 s; the presenter sets 1 / reload time.
             reload.speed = reload.motion.averageDuration;
             reload.speedParameter = P.ReloadSpeed;

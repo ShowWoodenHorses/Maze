@@ -17,8 +17,9 @@ namespace Maze.Presentation.Visual
     /// The weapon in the player's hands (ТЗ §39: WeaponRuntime → WeaponView). On load, the held prefabs of the
     /// weapons lying in this level are loaded (<see cref="WeaponVisualCatalog"/>, level asset owner) and instantiated
     /// hidden in the hands — nothing is loaded or created during play (and <see cref="LevelWarmup"/> draws them once). The active weapon is shown, the other slot hidden. A melee weapon sits rigidly in the
-    /// right hand (<see cref="CharacterWeaponRig.MeleeSocket"/>); a gun is posed every frame after animation: grip in
-    /// the right palm, barrel toward the left one. Must be registered after <see cref="PlayerViewPresenter"/>
+    /// right hand (<see cref="CharacterWeaponRig.MeleeSocket"/>); a gun is posed every frame after animation by
+    /// <see cref="CharacterWeaponRig.PoseGun"/>: grip in the right palm, barrel where the clip points it, chest turned
+    /// toward the facing, left hand on the gun's <see cref="WeaponModel.GripLeft"/>. Must be registered after <see cref="PlayerViewPresenter"/>
     /// (same load stage and late tick: the player is placed first).
     /// </summary>
     public sealed class PlayerWeaponPresenter : ILevelLoadStep, ILevelLateTickable, IViewWarmup, IDisposable
@@ -34,6 +35,7 @@ namespace Maze.Presentation.Visual
         private CharacterWeaponRig _rig;
         private GameObject _shown;
         private bool _shownIsGun;
+        private Transform _shownGrip;
         private bool _subscribed;
 
         public PlayerWeaponPresenter(LevelData level, PlayerViewPresenter playerView, WeaponSystem weapons,
@@ -90,8 +92,8 @@ namespace Maze.Presentation.Visual
 
         public void LateTick(float deltaTime)
         {
-            if (_shown != null && _shownIsGun)
-                _shown.transform.rotation = _rig.TwoHandedRotation();
+            if (_rig != null && _rig.IsValid)
+                _rig.PoseGun(_shownIsGun && _shown != null ? _shown.transform : null, _shownGrip, deltaTime);
         }
 
         public void CollectWarmup(List<GameObject> objects)
@@ -113,6 +115,7 @@ namespace Maze.Presentation.Visual
             _instances.Clear();
             _prefabs.Clear();
             _shown = null;
+            _shownGrip = null;
         }
 
         private void Refresh()
@@ -124,7 +127,11 @@ namespace Maze.Presentation.Visual
             if (_shown != null) _shown.SetActive(false);
             _shown = next;
             _shownIsGun = weapon != null && weapon.Slot == WeaponSlot.Ranged;
+            _shownGrip = null;
             if (_shown == null) return;
+
+            var model = _shown.GetComponent<WeaponModel>();
+            _shownGrip = model != null ? model.GripLeft : null;
 
             _shown.SetActive(true);
             LateTick(0f);
