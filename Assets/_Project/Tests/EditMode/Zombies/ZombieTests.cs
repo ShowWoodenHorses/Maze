@@ -65,11 +65,11 @@ namespace Maze.Tests.EditMode.Zombies
         }
 
         private ZombieDefinition Definition(ZombieDetectionType detection, float visionAngle = 45f, float visionRange = 5f,
-            float hearingRadius = 5f, float detectionRadius = 4f, float damage = 10f, float attackInterval = 1f, float moveSpeed = 2f)
+            float hearingRadius = 5f, float detectionRadius = 4f, float damage = 10f, float attackInterval = 1f, float moveSpeed = 2f, float chaseSpeed = 0f)
         {
             var definition = ScriptableObject.CreateInstance<ZombieDefinition>();
             definition.Configure("z", detection, visionAngle, visionRange, hearingRadius, detectionRadius, 30f, damage,
-                attackInterval, moveSpeed);
+                attackInterval, moveSpeed, chaseSpeed);
             _definitions.Add(definition);
             return definition;
         }
@@ -136,7 +136,7 @@ namespace Maze.Tests.EditMode.Zombies
                 "Zombies do not open doors.");
         }
 
-        // ------------------------------------------------------------------ Detection
+        // ------------------------------------------------------------------ Detection (noticing → Alert, the roar before a chase)
 
         [Test]
         public void Vision_SeesThePlayerInItsCone_NotBehind()
@@ -146,7 +146,7 @@ namespace Maze.Tests.EditMode.Zombies
             Build();
             Run(0.2f);
 
-            Assert.AreEqual(ZombieState.Chase, Zombie(0).State, "Player 4 cells ahead.");
+            Assert.AreEqual(ZombieState.Alert, Zombie(0).State, "Player 4 cells ahead.");
             Assert.AreEqual(ZombieState.Idle, Zombie(1).State, "Player behind.");
         }
 
@@ -161,7 +161,7 @@ namespace Maze.Tests.EditMode.Zombies
 
             _doors.SetOpen("door_1", true);
             Run(0.2f);
-            Assert.AreEqual(ZombieState.Chase, Zombie().State);
+            Assert.AreEqual(ZombieState.Alert, Zombie().State);
         }
 
         [Test]
@@ -176,7 +176,7 @@ namespace Maze.Tests.EditMode.Zombies
 
             _sounds.Emit(SoundType.Ranged, new Vector2(2f, 3f), 8f);
             Run(0.1f);
-            Assert.AreEqual(ZombieState.Chase, Zombie().State, "A shot carries 8, the zombie hears 5.");
+            Assert.AreEqual(ZombieState.Alert, Zombie().State, "A shot carries 8, the zombie hears 5.");
         }
 
         [Test]
@@ -187,7 +187,7 @@ namespace Maze.Tests.EditMode.Zombies
             Build();
             Run(0.2f);
 
-            Assert.AreEqual(ZombieState.Chase, Zombie(0).State, "Exactly 4 cells away, facing away.");
+            Assert.AreEqual(ZombieState.Alert, Zombie(0).State, "Exactly 4 cells away, facing away.");
             Assert.AreEqual(ZombieState.Idle, Zombie(1).State, "5.4 cells away.");
         }
 
@@ -229,6 +229,74 @@ namespace Maze.Tests.EditMode.Zombies
             Run(1f);
             Assert.AreEqual(hp - 40, _health.Current, "Then once per interval each.");
             Assert.AreEqual(4, attacks);
+        }
+
+        [Test]
+        public void Patrol_Walks_Chase_RunsAtChaseSpeed()
+        {
+            AddZombie(10, 3, Definition(ZombieDetectionType.VisionOnly, visionAngle: 10f, visionRange: 1f, moveSpeed: 1f,
+                chaseSpeed: 3f), Direction.North, new GridPosition(10, 1), new GridPosition(10, 5));
+            AddZombie(7, 3, Definition(ZombieDetectionType.VisionAndHearing, detectionRadius: 12f, moveSpeed: 1f,
+                chaseSpeed: 3f));
+            Build();
+            var patrolStart = Zombie(0).Position;
+
+            Run(0.5f);
+            Assert.AreEqual(ZombieState.Patrol, Zombie(0).State);
+            Assert.AreEqual(0.5f, (Zombie(0).Position - patrolStart).magnitude, 0.05f, "Patrol walks at MoveSpeed.");
+
+            RunUntil(() => Zombie(1).State == ZombieState.Chase);
+            var chaseStart = Zombie(1).Position;
+            Run(0.5f);
+            Assert.AreEqual(ZombieState.Chase, Zombie(1).State);
+            Assert.AreEqual(1.5f, (Zombie(1).Position - chaseStart).magnitude, 0.05f, "Chase runs at ChaseSpeed.");
+        }
+
+        [Test]
+        public void Alert_RoarsInPlace_ThenChases()
+        {
+            AddZombie(7, 3, Definition(ZombieDetectionType.VisionAndHearing, detectionRadius: 12f), Direction.North);
+            Build();
+
+            RunUntil(() => Zombie().State == ZombieState.Alert);
+            var position = Zombie().Position;
+            Assert.AreEqual(-1f, Zombie().Facing.x, 1e-3f, "Turns toward the player.");
+
+            Run(ZombieController.AlertDuration - 0.05f);
+            Assert.AreEqual(ZombieState.Alert, Zombie().State, "Still roaring.");
+            Assert.AreEqual(position, Zombie().Position, "Does not move while roaring.");
+            Assert.AreEqual(0f, Zombie().SpeedFactor);
+
+            Run(0.1f);
+            Assert.AreEqual(ZombieState.Chase, Zombie().State, "Chases after the roar.");
+        }
+
+        [Test]
+        public void Alert_PlayerNextToIt_AttacksAtOnce()
+        {
+            AddZombie(3, 3, Definition(ZombieDetectionType.VisionAndHearing, detectionRadius: 4f));
+            Build();
+
+            RunUntil(() => Zombie().State != ZombieState.Idle);
+            Run(Dt * 2f);
+            Assert.AreEqual(ZombieState.Attack, Zombie().State, "The roar is cut short.");
+        }
+
+        [Test]
+        public void Alert_RepeatsBeforeEveryNewChase()
+        {
+            AddZombie(10, 3, Definition(ZombieDetectionType.VisionOnly, visionAngle: 360f, visionRange: 9f), Direction.West,
+                new GridPosition(10, 1), new GridPosition(10, 5));
+            Build();
+            RunUntil(() => Zombie().State == ZombieState.Alert);
+            RunUntil(() => Zombie().State == ZombieState.Chase);
+
+            _doors.SetOpen("door_1", false); // lost: returns to the patrol
+            RunUntil(() => Zombie().State == ZombieState.Patrol);
+
+            _doors.SetOpen("door_1", true); // seen again
+            RunUntil(() => Zombie().State != ZombieState.Patrol);
+            Assert.AreEqual(ZombieState.Alert, Zombie().State, "Roars again before the new chase.");
         }
 
         [Test]

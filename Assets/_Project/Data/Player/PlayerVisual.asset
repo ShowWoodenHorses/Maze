@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: PlayerVisual
   m_EditorClassIdentifier: Maze.Core::Maze.Core.Visual.PlayerVisualDefinition
   _prefab:
-    m_AssetGUID: 723eebf207321ba4dade271de22cf09c
+    m_AssetGUID: a4be1ef066a343b479403ae698a6a07c
     m_SubObjectName: 
     m_SubObjectType: 
     m_SubObjectGUID: 

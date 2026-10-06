@@ -29,10 +29,10 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _BlurRadius: 0.55
+    - _BlurRadius: 1.5
     - _Density: 0.96
-    - _EdgeOffset: 0.05
-    - _EdgeSoftness: 0.6
+    - _EdgeOffset: -0.025
+    - _EdgeSoftness: 0.423
     - _FadeSeconds: 0.35
     - _PlaneHeight: 0.01
     - _WispStrength: 0.7

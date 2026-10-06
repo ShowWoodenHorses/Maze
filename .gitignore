@@ -39,3 +39,8 @@ sysinfo.txt
 
 UserSettings/
 .vsconfig
+
+# Third-party asset packs as downloaded (hundreds of MB). Used assets are moved into Assets/_Project/Art
+# (keeping GUIDs) before committing; the packs themselves stay local.
+/Assets/_Project/Import/
+/Assets/_Project/Import.meta

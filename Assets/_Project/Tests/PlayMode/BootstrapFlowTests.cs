@@ -310,8 +310,11 @@ namespace Maze.Tests.PlayMode
 
             var victim = zombies.Zombies[0];
             victim.ApplyDamage(10000f, Vector2.right);
-            Assert.IsFalse(views.TryGet(victim.Id, out _), "Killed zombie's view is removed.");
             Assert.AreEqual(1, zombies.KilledCount);
+            if (views.TryGet(victim.Id, out var corpse) && corpse.GameObject.GetComponentInChildren<Animator>() is { } animator)
+                Assert.IsTrue(animator.GetBool(ZombieAnimatorParameters.Dead), "The corpse plays the death.");
+            await UniTask.Delay(TimeSpan.FromSeconds(ZombieViewPresenter.CorpseTime + 0.5f));
+            Assert.IsFalse(views.TryGet(victim.Id, out _), "Killed zombie's view is removed after the death animation.");
 
             await _flow.ExitToMenu();
         });

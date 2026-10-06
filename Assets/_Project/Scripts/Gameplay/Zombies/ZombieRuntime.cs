@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace Maze.Gameplay.Zombies
 {
-    /// <summary>ТЗ §74.</summary>
+    /// <summary>ТЗ §74 plus <see cref="Alert"/>.</summary>
     public enum ZombieState
     {
         Idle = 0,
@@ -17,6 +17,11 @@ namespace Maze.Gameplay.Zombies
         Attack = 3,
         Return = 4,
         Dead = 5,
+        /// <summary>
+        /// Beyond ТЗ §74: noticed the player and roars for <see cref="ZombieController.AlertDuration"/> before every
+        /// chase that starts from Idle / Patrol / Return.
+        /// </summary>
+        Alert = 6,
     }
 
     /// <summary>

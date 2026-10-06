@@ -55,6 +55,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 380a06f7e15f09340ba7d15ab415dcbd
+    m_Address: Assets/_Project/Art/Zombie/Zombie_03.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 38b2943fcbbd3e04999a3ffe42b0306b
     m_Address: Assets/_Project/Art/Placeholders/floor_02.prefab
     m_ReadOnly: 0
@@ -82,6 +87,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 52a40ffef88101d488aa917a4847fb26
     m_Address: Assets/_Project/Art/Placeholders/key_green.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5bf5b8e260d165c448c4d016eebda95c
+    m_Address: Assets/_Project/Art/Zombie/Zombie_02.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -132,6 +142,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: ea58a74de66ad6149960500c35476343
     m_Address: Assets/_Project/Art/Placeholders/wall_corner.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f2c84bc6f7c40c34f97ab68de3a3d006
+    m_Address: Assets/_Project/Art/Zombie/Zombie_01.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

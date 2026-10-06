@@ -1,29 +1,30 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using Maze.Application.Assets;
 using Maze.Core.Definitions;
+using Maze.Core.Level;
 using Maze.Core.Visual;
 using Maze.Gameplay.Combat;
 using Maze.Gameplay.Level;
 using Maze.Gameplay.Player;
 using Maze.Gameplay.Weapons;
 using UnityEngine;
+using P = Maze.Presentation.Visual.PlayerAnimatorParameters;
 
 namespace Maze.Presentation.Visual
 {
     /// <summary>
     /// Player view (ТЗ §79: PlayerRuntime → PlayerView): instantiates the player prefab after the player spawned and
-    /// mirrors gameplay state every frame — position, facing, Animator "Speed" — and keeps the camera on the player.
-    /// Attacks fire Animator triggers "Attack" (melee) and "Shoot" (ranged) when the controller has them.
-    /// Must be registered after <see cref="PlayerSystem"/> (same load stage, registration order).
+    /// mirrors gameplay state every frame — position, facing, Animator parameters — and keeps the camera on the
+    /// player. The Animator only shows state (<see cref="PlayerAnimatorParameters"/>): speed, weapon in hands,
+    /// reload; attacks, shots, hits, interactions and death come from gameplay events. Parameters missing from the
+    /// controller are skipped. Must be registered after <see cref="PlayerSystem"/> (same load stage, registration order).
     /// </summary>
     public sealed class PlayerViewPresenter : ILevelLoadStep, ILevelLateTickable, IDisposable
     {
         private const float TurnSpeed = 900f; // degrees per second
-        private static readonly int SpeedParameter = Animator.StringToHash("Speed");
-        private static readonly int AttackTrigger = Animator.StringToHash("Attack");
-        private static readonly int ShootTrigger = Animator.StringToHash("Shoot");
 
         private readonly PlayerSystem _player;
         private readonly PlayerVisualDefinition _visual;
@@ -31,15 +32,21 @@ namespace Maze.Presentation.Visual
         private readonly LevelViewRoot _root;
         private readonly TopDownCamera _camera;
         private readonly PlayerCombat _combat;
+        private readonly WeaponSystem _weapons;
+        private readonly PlayerHealth _health;
+        private readonly PlayerInteraction _interaction;
+        private readonly HashSet<int> _parameters = new HashSet<int>();
 
         private GameObject _view;
         private Animator _animator;
-        private bool _hasSpeed;
-        private bool _hasAttackTrigger;
-        private bool _hasShootTrigger;
+        private int _upperBodyLayer = -1;
+        private int _attackCounter;
+        private int _lastHealth;
+        private bool _subscribed;
 
         public PlayerViewPresenter(PlayerSystem player, PlayerVisualDefinition visual, IAssetOwner assets,
-            LevelViewRoot root, TopDownCamera camera, PlayerCombat combat)
+            LevelViewRoot root, TopDownCamera camera, PlayerCombat combat, WeaponSystem weapons, PlayerHealth health,
+            PlayerInteraction interaction)
         {
             _combat = combat;
             _player = player;
@@ -47,6 +54,9 @@ namespace Maze.Presentation.Visual
             _assets = assets;
             _root = root;
             _camera = camera;
+            _weapons = weapons;
+            _health = health;
+            _interaction = interaction;
         }
 
         public LevelLoadStage Stage => LevelLoadStage.SpawnPlayer;
@@ -63,12 +73,15 @@ namespace Maze.Presentation.Visual
 
             _view = UnityEngine.Object.Instantiate(prefab, _root.transform);
             _view.name = "Player";
-            var speedAnimator = FindSpeedAnimator(_view);
-            _hasSpeed = speedAnimator != null;
-            _animator = speedAnimator ?? _view.GetComponentInChildren<Animator>();
-            _hasAttackTrigger = HasTrigger(_animator, AttackTrigger);
-            _hasShootTrigger = HasTrigger(_animator, ShootTrigger);
+            _animator = _view.GetComponentInChildren<Animator>();
+            CacheParameters();
+
+            _lastHealth = _health.Current;
             _combat.Attacked += OnAttacked;
+            _combat.ReloadChanged += OnReloadChanged;
+            _health.Changed += OnHealthChanged;
+            _interaction.Interacted += OnInteracted;
+            _subscribed = true;
             Sync(0f, snap: true);
         }
 
@@ -76,7 +89,15 @@ namespace Maze.Presentation.Visual
 
         public void Dispose()
         {
-            _combat.Attacked -= OnAttacked;
+            if (_subscribed)
+            {
+                _combat.Attacked -= OnAttacked;
+                _combat.ReloadChanged -= OnReloadChanged;
+                _health.Changed -= OnHealthChanged;
+                _interaction.Interacted -= OnInteracted;
+                _subscribed = false;
+            }
+
             UnityObjects.Destroy(_view);
             _view = null;
             _animator = null;
@@ -94,40 +115,93 @@ namespace Maze.Presentation.Visual
                 ? facing
                 : Quaternion.RotateTowards(transform.localRotation, facing, TurnSpeed * deltaTime);
 
-            if (_hasSpeed)
-                _animator.SetFloat(SpeedParameter, _player.SpeedFactor);
+            if (_parameters.Count > 0)
+            {
+                var weapon = _weapons.Active;
+                SetFloat(P.SpeedHash, _player.SpeedFactor);
+                SetInt(P.WeaponHash, weapon == null ? P.WeaponNone : weapon.Slot == WeaponSlot.Melee ? P.WeaponMelee : P.WeaponRanged);
+                SetBool(P.AutomaticHash, weapon != null && weapon.Slot == WeaponSlot.Ranged && weapon.Definition.FireMode == FireMode.Automatic);
+                SetBool(P.ReloadingHash, weapon != null && weapon.IsReloading);
+            }
 
             _camera.Follow(_root.transform.TransformPoint(position), deltaTime, snap);
         }
 
         private void OnAttacked(WeaponRuntime weapon, Vector2 direction)
         {
-            if (_animator == null) return;
-            if (weapon.Slot == WeaponSlot.Melee && _hasAttackTrigger) _animator.SetTrigger(AttackTrigger);
-            else if (weapon.Slot == WeaponSlot.Ranged && _hasShootTrigger) _animator.SetTrigger(ShootTrigger);
+            if (weapon.Slot == WeaponSlot.Melee)
+            {
+                SetInt(P.AttackIndexHash, _attackCounter++ % P.AttackVariants);
+                SetFloat(P.AttackSpeedHash, 1f / Mathf.Max(weapon.Definition.Cooldown, 0.01f));
+                SetTrigger(P.AttackHash);
+            }
+            else
+            {
+                SetTrigger(P.ShootHash);
+            }
         }
 
-        private static bool HasTrigger(Animator animator, int hash)
+        private void OnReloadChanged(WeaponRuntime weapon)
         {
-            if (animator == null || animator.runtimeAnimatorController == null) return false;
-            foreach (var parameter in animator.parameters)
-                if (parameter.nameHash == hash && parameter.type == AnimatorControllerParameterType.Trigger)
-                    return true;
-            return false;
+            if (weapon.IsReloading)
+                SetFloat(P.ReloadSpeedHash, 1f / Mathf.Max(weapon.Definition.ReloadTime, 0.01f));
         }
 
-        /// <summary>The first Animator with a float "Speed" parameter, or null (animation is optional).</summary>
-        private static Animator FindSpeedAnimator(GameObject view)
+        private void OnHealthChanged(int current, int max)
         {
-            var animator = view.GetComponentInChildren<Animator>();
-            if (animator == null || animator.runtimeAnimatorController == null)
-                return null;
+            var damaged = current < _lastHealth;
+            _lastHealth = current;
+            if (!damaged) return;
 
-            foreach (var parameter in animator.parameters)
-                if (parameter.nameHash == SpeedParameter && parameter.type == AnimatorControllerParameterType.Float)
-                    return animator;
+            if (current > 0)
+            {
+                SetTrigger(P.HitHash);
+                return;
+            }
 
-            return null;
+            SetBool(P.DeadHash, true);
+            if (_upperBodyLayer >= 0)
+                _animator.SetLayerWeight(_upperBodyLayer, 0f);
+        }
+
+        private void OnInteracted(InteractionResult result, DoorData door)
+        {
+            if (result == InteractionResult.WeaponTaken || result == InteractionResult.DoorOpened ||
+                result == InteractionResult.DoorClosed || result == InteractionResult.DoorUnlocked)
+                SetTrigger(P.UseHash);
+        }
+
+        /// <summary>Once per view: <c>animator.parameters</c> allocates.</summary>
+        private void CacheParameters()
+        {
+            _parameters.Clear();
+            _upperBodyLayer = -1;
+            if (_animator == null || _animator.runtimeAnimatorController == null)
+                return;
+
+            foreach (var parameter in _animator.parameters)
+                _parameters.Add(parameter.nameHash);
+            _upperBodyLayer = _animator.GetLayerIndex(P.UpperBodyLayer);
+        }
+
+        private void SetFloat(int hash, float value)
+        {
+            if (_parameters.Contains(hash)) _animator.SetFloat(hash, value);
+        }
+
+        private void SetInt(int hash, int value)
+        {
+            if (_parameters.Contains(hash)) _animator.SetInteger(hash, value);
+        }
+
+        private void SetBool(int hash, bool value)
+        {
+            if (_parameters.Contains(hash)) _animator.SetBool(hash, value);
+        }
+
+        private void SetTrigger(int hash)
+        {
+            if (_parameters.Contains(hash)) _animator.SetTrigger(hash);
         }
     }
 }

@@ -63,11 +63,13 @@
 ### Зомби (Zombie)
 - В варианте заполнить **Definition** ссылкой на `ZombieDefinition` (Walker, Listener, Hunter), чтобы тип был виден.
 - Лицом по **+Z**, пивот у ног.
-- Animator (необязательно): float `Speed`, триггеры `Attack`, `Hit`.
+- Сейчас — `Art/Zombie/Zombie_01..03` (Synty, Humanoid; одна модель, разные материалы): Walker, Listener, Hunter. Собираются меню **Maze → Dev → Build Zombie Animations**: клипы `Art/Animations/Zombie_*` → Humanoid, общий контроллер `Art/Zombie/Zombie.controller` на все префабы папки, масштаб 0.75, варианты Zombie Set темы (`zombie_walker/listener/hunter` с Definition) и переназначение зомби в сохранённых уровнях. Новый вид — префаб в `Art/Zombie` + строка в `ZombieAnimationsBuilder.Looks`.
+- Animator (необязательно, любой параметр можно опустить; имена — `ZombieAnimatorParameters`): float `Speed`, bool `Chasing` (бег вместо ходьбы), bool `Alert` (рык перед погоней), `WalkPlayback`/`RunPlayback` (множители, ставит презентер) и `WalkGroundSpeed`/`RunGroundSpeed` (данные билдера: скорость ступни клипа), float `IdleVariant` (0/1), триггер `Attack` + int `AttackIndex` + float `AttackSpeed`, триггер `Hit` (клипа нет), bool `Dead`.
 
 ### Игрок
 - Лицом по **+Z**, пивот у ног.
-- Animator (необязательно): float `Speed`, триггеры `Attack`, `Shoot`.
+- Сейчас — модель `Art/Player/SM_Chr_Hunter_Male_01` (Synty, Humanoid) с клипами Mixamo `Art/Animations/Player_*`. Собирается меню **Maze → Dev → Build Player Animations**: клипы → Humanoid, контроллер `Art/Player/Player.controller`, маска `PlayerUpperBody`, масштаб модели 0.75, назначение в `PlayerVisual`. Шаг бега подгоняется под скорость, но не быстрее 1.4× (`LocomotionAnimation`).
+- Animator (необязательно, любой параметр можно опустить; имена — `PlayerAnimatorParameters`): float `Speed`, int `Weapon` (0 нет, 1 ближнее, 2 дальнее), триггеры `Attack` + int `AttackIndex` + float `AttackSpeed`, `Shoot` + bool `Automatic`, bool `Reloading` + float `ReloadSpeed`, триггеры `Hit`, `Use`, bool `Dead`; слой `UpperBody` выключается при смерти.
 
 ### Эффекты боя
 - **Bullet:** летит вдоль +Z.

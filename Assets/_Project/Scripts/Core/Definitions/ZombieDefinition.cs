@@ -31,8 +31,10 @@ namespace Maze.Core.Definitions
         [SerializeField, Min(0f)] private float _damage = 10f;
         [Tooltip("Seconds between attacks.")]
         [SerializeField, Min(0.01f)] private float _attackInterval = 1f;
-        [Tooltip("Cells per second.")]
+        [Tooltip("Cells per second while patrolling and returning (walk).")]
         [SerializeField, Min(0.01f)] private float _moveSpeed = 1.5f;
+        [Tooltip("Cells per second while chasing the player (run).")]
+        [SerializeField, Min(0.01f)] private float _chaseSpeed = 2.5f;
 
         public string Id => _id;
         public ZombieDetectionType DetectionType => _detectionType;
@@ -44,11 +46,12 @@ namespace Maze.Core.Definitions
         public float Damage => _damage;
         public float AttackInterval => _attackInterval;
         public float MoveSpeed => _moveSpeed;
+        public float ChaseSpeed => _chaseSpeed;
 
         /// <summary>For tests and tools.</summary>
         internal void Configure(string id, ZombieDetectionType detection, float visionAngle = 45f, float visionRange = 5f,
             float hearingRadius = 5f, float detectionRadius = 4f, float maxHp = 30f, float damage = 10f,
-            float attackInterval = 1f, float moveSpeed = 1.5f)
+            float attackInterval = 1f, float moveSpeed = 1.5f, float chaseSpeed = 0f)
         {
             _id = id;
             _detectionType = detection;
@@ -60,6 +63,7 @@ namespace Maze.Core.Definitions
             _damage = damage;
             _attackInterval = attackInterval;
             _moveSpeed = moveSpeed;
+            _chaseSpeed = chaseSpeed > 0f ? chaseSpeed : moveSpeed; // 0: chase as fast as patrol
         }
     }
 }

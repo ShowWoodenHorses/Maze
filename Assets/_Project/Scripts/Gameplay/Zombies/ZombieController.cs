@@ -48,7 +48,9 @@ namespace Maze.Gameplay.Zombies
     /// The AI of one zombie (ТЗ §74–77): Idle / Patrol / Chase / Attack / Return.
     /// <list type="bullet">
     /// <item>Idle — stands at the spawn; Patrol — walks the loop A → B → … → A.</item>
-    /// <item>Chase — on detection walks to the last known player cell (updated while detected). Reaching it without
+    /// <item>Alert — on detection from Idle / Patrol / Return: stands and roars for <see cref="AlertDuration"/>, then
+    /// Chase; the player stepping next to it → Attack at once.</item>
+    /// <item>Chase — runs (ChaseSpeed) to the last known player cell (updated while detected). Reaching it without
     /// noticing the player again → Return.</item>
     /// <item>Attack — the player is in a side-adjacent cell (ТЗ §77): hits every AttackInterval (first hit after half
     /// of it). The player leaving → Chase.</item>
@@ -60,6 +62,9 @@ namespace Maze.Gameplay.Zombies
     public sealed class ZombieController
     {
         public const float DetectionInterval = 0.1f;
+
+        /// <summary>Seconds a zombie roars (Alert) after noticing the player, before it starts the chase.</summary>
+        public const float AlertDuration = 0.5f;
         private const float ArriveDistance = 0.02f;
 
         private readonly NavigationSystem _navigation;
@@ -77,6 +82,7 @@ namespace Maze.Gameplay.Zombies
         private bool _hasTarget;
         private GridPosition _target;
         private float _attackTimer;
+        private float _alertTimer;
         private int _patrolIndex;
         private GridPosition _returnGoal;
         private int _returnPatrolIndex = -1;
@@ -120,7 +126,7 @@ namespace Maze.Gameplay.Zombies
                 case ZombieState.Idle:
                 case ZombieState.Patrol:
                 case ZombieState.Return:
-                    if (_hasTarget) Enter(ZombieState.Chase);
+                    if (_hasTarget) Enter(ZombieState.Alert);
                     break;
             }
 
@@ -128,6 +134,7 @@ namespace Maze.Gameplay.Zombies
             {
                 case ZombieState.Idle: break;
                 case ZombieState.Patrol: TickPatrol(deltaTime); break;
+                case ZombieState.Alert: TickAlert(deltaTime); break;
                 case ZombieState.Chase: TickChase(deltaTime); break;
                 case ZombieState.Attack: TickAttack(deltaTime); break;
                 case ZombieState.Return: TickReturn(deltaTime); break;
@@ -157,6 +164,9 @@ namespace Maze.Gameplay.Zombies
             }
         }
 
+        /// <summary>Chase runs (ChaseSpeed), everything else walks (MoveSpeed).</summary>
+        private float CurrentSpeed => Zombie.State == ZombieState.Chase ? Zombie.Definition.ChaseSpeed : Zombie.Definition.MoveSpeed;
+
         private void Notice(GridPosition cell)
         {
             _hasTarget = true;
@@ -172,6 +182,9 @@ namespace Maze.Gameplay.Zombies
             {
                 case ZombieState.Attack:
                     _attackTimer = Zombie.Definition.AttackInterval * 0.5f;
+                    break;
+                case ZombieState.Alert:
+                    _alertTimer = AlertDuration;
                     break;
                 case ZombieState.Return:
                     ChooseReturnGoal();
@@ -191,6 +204,23 @@ namespace Maze.Gameplay.Zombies
             var result = MoveTo(points[_patrolIndex], deltaTime);
             if (result != MoveResult.Moving)
                 _patrolIndex = (_patrolIndex + 1) % points.Count; // arrived, or unreachable: try the next point
+        }
+
+        /// <summary>Stands roaring toward the target, then chases; the player stepping next to it cuts the roar short.</summary>
+        private void TickAlert(float deltaTime)
+        {
+            if (IsPlayerAdjacent())
+            {
+                Enter(ZombieState.Attack);
+                return;
+            }
+
+            var toTarget = new Vector2(_target.X, _target.Y) - Zombie.Position;
+            if (toTarget.sqrMagnitude > 1e-6f) Zombie.Facing = toTarget.normalized;
+
+            _alertTimer -= deltaTime;
+            if (_alertTimer <= 0f)
+                Enter(ZombieState.Chase);
         }
 
         private void TickChase(float deltaTime)
@@ -342,7 +372,7 @@ namespace Maze.Gameplay.Zombies
             var target = new Vector2(next.X, next.Y);
             var offset = target - Zombie.Position;
             var distance = offset.magnitude;
-            var step = Zombie.Definition.MoveSpeed * deltaTime;
+            var step = CurrentSpeed * deltaTime;
             var newPosition = distance <= step ? target : Zombie.Position + offset / distance * step;
 
             var newCell = PlayerMovement.CellOf(newPosition);

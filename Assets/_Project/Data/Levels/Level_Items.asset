@@ -1601,15 +1601,15 @@ MonoBehaviour:
         _rotation: 0
     - _entityId: zombie_1
       _choice:
-        _variantId: zombie_01
+        _variantId: zombie_hunter
         _rotation: 0
     - _entityId: zombie_2
       _choice:
-        _variantId: zombie_01
+        _variantId: zombie_walker
         _rotation: 0
     - _entityId: zombie_3
       _choice:
-        _variantId: zombie_02
+        _variantId: zombie_listener
         _rotation: 0
     - _entityId: fragment_1
       _choice:
