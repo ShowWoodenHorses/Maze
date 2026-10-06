@@ -192,14 +192,25 @@ namespace Maze.Editor.LevelDesigner
         /// <summary>
         /// Makes every duplicated dependency an explicit entry of <see cref="SharedDependenciesGroup"/>, so a build has
         /// one copy of it: smaller, and the same object everywhere (a definition copied into two bundles would be two
-        /// different objects at runtime). Returns how many assets were moved.
+        /// different objects at runtime). The group is rebuilt from scratch: an asset that is no longer shared (e.g. a
+        /// model replaced by extracted meshes) leaves it and is not built any more. Returns the group's entry count.
         /// </summary>
         public static int IsolateDuplicates(AddressableAssetSettings settings)
         {
-            var duplicates = FindDuplicates(settings);
-            if (duplicates.Count == 0) return 0;
+            var group = settings.FindGroup(SharedDependenciesGroup);
+            if (group != null)
+                foreach (var stale in group.entries.ToList())
+                    group.RemoveAssetEntry(stale, false);
 
-            var group = GetOrCreateGroup(settings, SharedDependenciesGroup);
+            var duplicates = FindDuplicates(settings);
+            if (duplicates.Count == 0)
+            {
+                EditorUtility.SetDirty(settings);
+                AssetDatabase.SaveAssets();
+                return 0;
+            }
+
+            group = group != null ? group : GetOrCreateGroup(settings, SharedDependenciesGroup);
             foreach (var path in duplicates)
             {
                 var entry = settings.CreateOrMoveEntry(AssetDatabase.AssetPathToGUID(path), group);

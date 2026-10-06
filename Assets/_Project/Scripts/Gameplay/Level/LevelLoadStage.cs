@@ -14,6 +14,9 @@ namespace Maze.Gameplay.Level
         InitializeUI = 5,
         SpawnPlayer = 6,
         SpawnZombies = 7,
+
+        /// <summary>Last: everything is created; first-draw costs are paid while the loading screen is shown.</summary>
+        Warmup = 8,
     }
 
     /// <summary>

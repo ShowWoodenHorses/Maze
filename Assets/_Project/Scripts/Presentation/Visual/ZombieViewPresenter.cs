@@ -17,7 +17,8 @@ namespace Maze.Presentation.Visual
     /// Moves the view's cell in <see cref="EntityViewRegistry"/>, so visibility follows the zombie. The Animator only
     /// shows state (<see cref="ZombieAnimatorParameters"/>, each optional): standing / walking (patrol, return) /
     /// roaring before a chase (Alert), running (chase) with the step rate matched to the real speed (<see cref="LocomotionAnimation"/>), attacks (three variants in turn, as long as the attack interval), death.
-    /// A random idle variant (per zombie, deterministic) is picked whenever the zombie stops. A killed zombie's view
+    /// A random idle variant (per zombie, deterministic) is picked whenever the zombie stops; the idle starts at a random
+    /// phase on the zombie's first show. A killed zombie's view
     /// stays for <see cref="CorpseTime"/> to play the death, then is removed.
     /// Must be registered after <see cref="ZombieSystem"/> (same load stage, registration order).
     /// </summary>
@@ -156,15 +157,23 @@ namespace Maze.Presentation.Visual
                 bound.SetFloat(Z.RunPlaybackHash, LocomotionAnimation.Playback(definition.ChaseSpeed, bound.RunGroundSpeed));
                 bound.SetFloat(Z.AttackSpeedHash, 1f / Mathf.Max(definition.AttackInterval, 0.01f));
                 bound.SetFloat(Z.IdleVariantHash, bound.Random.NextInt(Z.IdleVariants));
-                // Zombies standing next to each other should not breathe in sync.
+                // Zombies standing next to each other should not breathe in sync. Applied on first show: the view
+                // is hidden until then, and an inactive Animator ignores Play.
                 if (bound.Animator.HasState(0, IdleState))
-                    bound.Animator.Play(IdleState, 0, (float)bound.Random.NextDouble());
+                    bound.IdlePhase = (float)bound.Random.NextDouble();
             }
         }
 
         private static void SyncAnimator(ZombieRuntime zombie, Binding bound)
         {
             if (!bound.HasParameters) return;
+
+            if (bound.IdlePhase >= 0f && bound.Animator.isActiveAndEnabled)
+            {
+                if (bound.Animator.GetCurrentAnimatorStateInfo(0).shortNameHash == IdleState)
+                    bound.Animator.Play(IdleState, 0, bound.IdlePhase);
+                bound.IdlePhase = -1f;
+            }
 
             var moving = zombie.SpeedFactor > MovingThreshold;
             if (bound.WasMoving && !moving)
@@ -224,6 +233,7 @@ namespace Maze.Presentation.Visual
             public bool WasMoving;
             public float WalkGroundSpeed;
             public float RunGroundSpeed;
+            public float IdlePhase = -1f; // < 0: nothing to apply
 
             public bool HasParameters => _parameters.Count > 0;
 

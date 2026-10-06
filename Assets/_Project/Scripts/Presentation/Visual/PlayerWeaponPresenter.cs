@@ -15,13 +15,13 @@ namespace Maze.Presentation.Visual
 {
     /// <summary>
     /// The weapon in the player's hands (ТЗ §39: WeaponRuntime → WeaponView). On load, the held prefabs of the
-    /// weapons lying in this level are loaded (<see cref="WeaponVisualCatalog"/>, level asset owner) — nothing is
-    /// loaded during play. The active weapon is shown, the other slot hidden. A melee weapon sits rigidly in the
+    /// weapons lying in this level are loaded (<see cref="WeaponVisualCatalog"/>, level asset owner) and instantiated
+    /// hidden in the hands — nothing is loaded or created during play (and <see cref="LevelWarmup"/> draws them once). The active weapon is shown, the other slot hidden. A melee weapon sits rigidly in the
     /// right hand (<see cref="CharacterWeaponRig.MeleeSocket"/>); a gun is posed every frame after animation: grip in
     /// the right palm, barrel toward the left one. Must be registered after <see cref="PlayerViewPresenter"/>
     /// (same load stage and late tick: the player is placed first).
     /// </summary>
-    public sealed class PlayerWeaponPresenter : ILevelLoadStep, ILevelLateTickable, IDisposable
+    public sealed class PlayerWeaponPresenter : ILevelLoadStep, ILevelLateTickable, IViewWarmup, IDisposable
     {
         private readonly LevelData _level;
         private readonly PlayerViewPresenter _playerView;
@@ -77,6 +77,12 @@ namespace Maze.Presentation.Visual
                 cancellation.ThrowIfCancellationRequested();
             }
 
+            foreach (var definition in _prefabs.Keys)
+            {
+                var instance = GetOrCreate(definition);
+                if (instance != null) instance.SetActive(false);
+            }
+
             _weapons.Changed += Refresh;
             _subscribed = true;
             Refresh();
@@ -86,6 +92,13 @@ namespace Maze.Presentation.Visual
         {
             if (_shown != null && _shownIsGun)
                 _shown.transform.rotation = _rig.TwoHandedRotation();
+        }
+
+        public void CollectWarmup(List<GameObject> objects)
+        {
+            foreach (var instance in _instances.Values)
+                if (instance != null)
+                    objects.Add(instance);
         }
 
         public void Dispose()

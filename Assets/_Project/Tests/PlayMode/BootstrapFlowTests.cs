@@ -227,6 +227,17 @@ namespace Maze.Tests.PlayMode
             Assert.IsTrue(doors.IsLocked(locked.Id));
             Assert.IsTrue(Child(views, locked.Id, "Lock").activeSelf, "Padlock shown on a locked door.");
 
+            // The warm-up drew everything (both door states, every held weapon) and put it all back.
+            Assert.Greater(container.Resolve<LevelWarmup>().WarmedCount, views.Count, "Views plus held weapons and effects.");
+            Assert.IsTrue(Child(views, plain.Id, "Closed").activeSelf);
+            Assert.IsFalse(Child(views, plain.Id, "Open").activeSelf);
+            Assert.IsNull(container.Resolve<PlayerWeaponPresenter>().Shown);
+            var hands = container.Resolve<PlayerViewPresenter>().View.GetComponentsInChildren<Transform>(true)
+                .Where(t => t.name.StartsWith("Weapon ")).ToList();
+            Assert.AreEqual(level.Weapons.Select(w => w.Definition.Id).Distinct().Count(), hands.Count,
+                "Every weapon of the level is created in hands while loading.");
+            Assert.IsTrue(hands.All(t => !t.gameObject.activeSelf), "Not held yet: hidden.");
+
             doors.SetOpen(plain.Id, true);
             Assert.IsFalse(Child(views, plain.Id, "Closed").activeSelf);
             Assert.IsTrue(Child(views, plain.Id, "Open").activeSelf);

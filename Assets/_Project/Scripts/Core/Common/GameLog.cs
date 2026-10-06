@@ -23,7 +23,18 @@ namespace Maze.Core.Common
     /// </summary>
     public static class GameLog
     {
-        public static void Info(LogChannel channel, string message) => Debug.Log(Format(channel, message));
+        /// <summary>
+        /// Informational message. In a release player it is written without a stack trace: capturing one costs far
+        /// more than the message, and gameplay info (pickups, kills) is logged during play.
+        /// </summary>
+        public static void Info(LogChannel channel, string message)
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.Log(Format(channel, message));
+#else
+            Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null, "{0}", Format(channel, message));
+#endif
+        }
 
         public static void Warning(LogChannel channel, string message) => Debug.LogWarning(Format(channel, message));
 

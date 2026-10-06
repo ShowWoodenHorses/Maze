@@ -14,7 +14,10 @@ namespace Maze.Editor.Dev
     /// prefab outside Import;</item>
     /// <item>moves everything the project uses from Import/&lt;Pack&gt;/… to Art/ThirdParty/&lt;Pack&gt;/… —
     /// <see cref="AssetDatabase.MoveAsset"/> keeps GUIDs, so prefabs, levels and Addressables stay linked;</item>
-    /// <item>checks that nothing outside Import references Import any more.</item>
+    /// <item>checks that nothing outside Import references Import any more;</item>
+    /// <item>caps texture sizes for Android and WebGL (<see cref="MobileTextureSize"/>, smaller for tiny objects in
+    /// <see cref="SmallObjectFolders"/>) with normal compression: packs ship 4096² atlases, ~10–22 MB of video memory
+    /// each on a phone, while the camera sees a few metres of the maze.</item>
     /// </list>
     /// Run again after taking anything new from a pack. What stays in Import is unused and can be deleted.
     /// </summary>
@@ -22,6 +25,11 @@ namespace Maze.Editor.Dev
     {
         private const string ImportRoot = "Assets/_Project/Import";
         private const string TargetRoot = "Assets/_Project/Art/ThirdParty";
+        private const int MobileTextureSize = 2048;
+        private static readonly string[] MobilePlatforms = { "Android", "WebGL" };
+
+        /// <summary>Folders (under <see cref="TargetRoot"/>) of objects only a few centimetres on screen, and their size cap.</summary>
+        private static readonly (string Folder, int Size)[] SmallObjectFolders = { ("Gabies_Assets/Keys", 256) };
 
         [MenuItem("Maze/Dev/Collect Used Third-Party Assets")]
         public static void Collect()
@@ -43,6 +51,7 @@ namespace Maze.Editor.Dev
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
+            var capped = CapTextureSizes();
 
             var remaining = FindUsedImportAssets();
             foreach (var error in failed)
@@ -51,7 +60,7 @@ namespace Maze.Editor.Dev
                 Debug.LogError("[Maze] Still referenced from Import: " + path);
 
             Debug.Log($"[Maze] Third-party assets: physics stripped from {stripped} prefab(s), {moved} file(s) moved to " +
-                      $"{TargetRoot}, {remaining.Count} still in Import" +
+                      $"{TargetRoot}, {capped} texture(s) capped for mobile, {remaining.Count} still in Import" +
                       (remaining.Count == 0 ? " — Import is unused and can be deleted." : "."));
         }
 
@@ -99,6 +108,50 @@ namespace Maze.Editor.Dev
             }
 
             return count;
+        }
+
+        [MenuItem("Maze/Dev/Cap Third-Party Texture Sizes")]
+        public static void CapTextureSizesMenu() =>
+            Debug.Log($"[Maze] {CapTextureSizes()} third-party texture(s) capped for {string.Join(", ", MobilePlatforms)}.");
+
+        /// <summary>Overrides for <see cref="MobilePlatforms"/>; returns how many textures were changed.</summary>
+        private static int CapTextureSizes()
+        {
+            var changed = 0;
+            foreach (var guid in AssetDatabase.FindAssets("t:Texture2D", new[] { TargetRoot }))
+            {
+                var path = AssetDatabase.GUIDToAssetPath(guid);
+                if (!(AssetImporter.GetAtPath(path) is TextureImporter importer)) continue;
+
+                var cap = MobileTextureSize;
+                foreach (var (folder, folderCap) in SmallObjectFolders)
+                    if (path.StartsWith(TargetRoot + "/" + folder + "/", StringComparison.Ordinal))
+                        cap = Math.Min(cap, folderCap);
+                importer.GetSourceTextureWidthAndHeight(out var width, out var height);
+                var size = Math.Min(cap, Math.Max(32, Mathf.NextPowerOfTwo(Math.Max(width, height))));
+
+                var dirty = false;
+                foreach (var platform in MobilePlatforms)
+                {
+                    var settings = importer.GetPlatformTextureSettings(platform);
+                    if (settings.overridden && settings.maxTextureSize == size &&
+                        settings.textureCompression == TextureImporterCompression.Compressed)
+                        continue;
+
+                    settings.overridden = true;
+                    settings.maxTextureSize = size;
+                    settings.textureCompression = TextureImporterCompression.Compressed;
+                    settings.format = TextureImporterFormat.Automatic;
+                    importer.SetPlatformTextureSettings(settings);
+                    dirty = true;
+                }
+
+                if (!dirty) continue;
+                importer.SaveAndReimport();
+                changed++;
+            }
+
+            return changed;
         }
 
         private static bool IsInImport(string path) =>

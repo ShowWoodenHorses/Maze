@@ -75,6 +75,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7c2a5fb0e861fc242bb7bb40feddc206
+    m_Address: Assets/_Project/Art/Characters/CharactersAvatar.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 7ca6f9caabab14249976bf0a5ceda6ef
     m_Address: Assets/_Project/Data/Weapons/HuntingRifle.asset
     m_ReadOnly: 0
@@ -132,11 +137,6 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: eed7f5fc0ce713d418f2014e9021fd8b
     m_Address: Assets/_Project/Data/Weapons/SniperRifle.asset
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: ffdfcb810f2918b4f8fe9f917f07bc78
-    m_Address: Assets/_Project/Art/ThirdParty/PolygonApocalypse/Models/Characters.fbx
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
