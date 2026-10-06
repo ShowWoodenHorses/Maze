@@ -14,8 +14,9 @@ namespace Maze.Presentation.Visual
         [SerializeField, Min(1f)] private float _margin = 1.05f;
 
         [Tooltip("Half-size (cells) of the square around the player that always fits the screen, on any aspect. " +
-                 "6.5 shows the 11x11 visible area with a cell of margin.")]
-        [SerializeField, Min(1f)] private float _followHalfExtent = 6.5f;
+                 "6.5 shows the whole 11x11 visible area with a cell of margin; 4 (the user's choice) is closer, the " +
+                 "edges of the visible area are off screen.")]
+        [SerializeField, Min(1f)] private float _followHalfExtent = 4f;
 
         [SerializeField, Min(0f)] private float _followSmoothTime = 0.12f;
         [SerializeField] private Camera _camera;

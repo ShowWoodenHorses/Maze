@@ -22,3 +22,6 @@ MonoBehaviour:
   - _levelId: Level_01
     _address: Levels/Level_01
     _displayName: New Level
+  - _levelId: Level_weapon
+    _address: Levels/Level_weapon
+    _displayName: New Level

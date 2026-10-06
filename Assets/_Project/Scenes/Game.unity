@@ -151,7 +151,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Maze.Presentation::Maze.Presentation.Visual.TopDownCamera
   _pitch: 88
   _margin: 1.05
-  _followHalfExtent: 6.5
+  _followHalfExtent: 4
   _followSmoothTime: 0.12
   _camera: {fileID: 402579870}
 --- !u!20 &402579870

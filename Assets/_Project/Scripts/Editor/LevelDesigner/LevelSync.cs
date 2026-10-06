@@ -1,10 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Maze.Core.Definitions;
 using Maze.Core.Level;
 using Maze.Core.Visual;
 using UnityEditor;
 using UnityEditor.AddressableAssets;
+using UnityEditor.AddressableAssets.Build.AnalyzeRules;
 using UnityEditor.AddressableAssets.Settings;
 using UnityEditor.AddressableAssets.Settings.GroupSchemas;
 using UnityEngine;
@@ -22,6 +24,7 @@ namespace Maze.Editor.LevelDesigner
         public const string LevelsGroup = "Maze Levels";
         public const string VisualsGroup = "Maze Visuals";
         public const string SharedGroup = "Maze Shared";
+        public const string SharedDependenciesGroup = "Maze Shared Dependencies";
         public const string LevelAddressPrefix = "Levels/";
         public const string CatalogPath = "Assets/_Project/Data/Levels/LevelCatalog.asset";
 
@@ -163,6 +166,49 @@ namespace Maze.Editor.LevelDesigner
             }
 
             return catalog;
+        }
+
+        /// <summary>
+        /// Assets that would be copied into more than one bundle (a non-Addressable dependency of several groups:
+        /// weapon definitions used by levels and by the weapon catalog, models shared by the player and zombies, the
+        /// Synty atlas…), from the Addressables "Check Duplicate Bundle Dependencies" analysis.
+        /// </summary>
+        public static List<string> FindDuplicates(AddressableAssetSettings settings)
+        {
+            var rule = new CheckBundleDupeDependencies();
+            var paths = new HashSet<string>();
+            foreach (var result in rule.RefreshAnalysis(settings))
+            {
+                // "Group:bundle:Assets/…" — the asset path is the last part.
+                var parts = result.resultName.Split(':');
+                var path = parts[parts.Length - 1];
+                if (parts.Length >= 3 && path.StartsWith("Assets/", StringComparison.Ordinal) && !AssetDatabase.IsValidFolder(path))
+                    paths.Add(path);
+            }
+
+            return paths.OrderBy(p => p, StringComparer.Ordinal).ToList();
+        }
+
+        /// <summary>
+        /// Makes every duplicated dependency an explicit entry of <see cref="SharedDependenciesGroup"/>, so a build has
+        /// one copy of it: smaller, and the same object everywhere (a definition copied into two bundles would be two
+        /// different objects at runtime). Returns how many assets were moved.
+        /// </summary>
+        public static int IsolateDuplicates(AddressableAssetSettings settings)
+        {
+            var duplicates = FindDuplicates(settings);
+            if (duplicates.Count == 0) return 0;
+
+            var group = GetOrCreateGroup(settings, SharedDependenciesGroup);
+            foreach (var path in duplicates)
+            {
+                var entry = settings.CreateOrMoveEntry(AssetDatabase.AssetPathToGUID(path), group);
+                entry.address = path;
+            }
+
+            EditorUtility.SetDirty(settings);
+            AssetDatabase.SaveAssets();
+            return duplicates.Count;
         }
 
         private static AddressableAssetGroup GetOrCreateGroup(AddressableAssetSettings settings, string name)

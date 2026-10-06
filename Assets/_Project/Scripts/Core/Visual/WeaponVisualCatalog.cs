@@ -39,12 +39,21 @@ namespace Maze.Core.Visual
 
         internal List<WeaponVisualDefinition> MutableWeapons => _weapons;
 
-        /// <summary>The look of <paramref name="definition"/>, or null.</summary>
+        /// <summary>
+        /// The look of <paramref name="definition"/>, or null. Matched by reference, then by id: in a player build a
+        /// definition that is not Addressable itself is copied into every bundle referencing it, so the level's and
+        /// this catalog's copies may be different objects.
+        /// </summary>
         public WeaponVisualDefinition Find(WeaponDefinition definition)
         {
             if (definition == null) return null;
             foreach (var weapon in _weapons)
                 if (weapon != null && weapon.Definition == definition)
+                    return weapon;
+
+            if (string.IsNullOrEmpty(definition.Id)) return null;
+            foreach (var weapon in _weapons)
+                if (weapon?.Definition != null && weapon.Definition.Id == definition.Id)
                     return weapon;
             return null;
         }

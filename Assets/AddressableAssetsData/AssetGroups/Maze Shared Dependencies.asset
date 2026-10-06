@@ -1,0 +1,153 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Maze Shared Dependencies
+  m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.AddressableAssetGroup
+  m_GroupName: Maze Shared Dependencies
+  m_GUID: f25b94d44c1933643bbcfe494300844d
+  m_SerializeEntries:
+  - m_GUID: 05592bd23d54afc4fa8f4f31f4a5f45b
+    m_Address: Assets/_Project/Data/Weapons/SubMachineGun.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 174abc94a5cf6b44992c03a6bf528bee
+    m_Address: Assets/_Project/Art/ThirdParty/PolygonApocalypse/Models/SM_Wep_AssaultRifle_01.fbx
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2047875a40d94ed4eb241d51cf1bdf5f
+    m_Address: Assets/_Project/Art/ThirdParty/PolygonApocalypse/Models/SM_Wep_Crowbar_01.fbx
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2bb7dc9d0eb49d94aa908e133bb58da9
+    m_Address: Assets/_Project/Data/Weapons/Crowbar.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2cc7b8ab74a2dfe4db5e2b8abe10cd6b
+    m_Address: Assets/_Project/Art/ThirdParty/PolygonApocalypse/Models/SM_Wep_HuntingRifle_Clean_01.fbx
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3493d85149291cd41ac4d077cc3ec857
+    m_Address: Assets/_Project/Data/Weapons/AssaultRifle03.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3af61cfeddf135f499b68564046540f3
+    m_Address: Assets/_Project/Art/ThirdParty/PolygonApocalypse/Models/SM_Wep_Bat_Wood_01.fbx
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 52544eaa2c194144ab7b28fa647d781c
+    m_Address: Assets/_Project/Art/ThirdParty/PolygonApocalypse/Textures/Misc/PolygonApocalypse_Emissive_01.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 535606c83797fb04ea7fd64794db6d8c
+    m_Address: Assets/_Project/Art/ThirdParty/PolygonApocalypse/Models/SM_Wep_SubMGun_02.fbx
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 58f9375385fbcf64d85d0df3b1a9714f
+    m_Address: Assets/_Project/Art/ThirdParty/PolygonApocalypse/Models/SM_Wep_SniperRifle_01.fbx
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5bb68a94905ffc0418608fc7e572ea42
+    m_Address: Assets/_Project/Art/ThirdParty/PolygonApocalypse/Materials/PolygonApocalypse_Material_01_A.mat
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5c99cec570bb90c4db42c3a608969eee
+    m_Address: Assets/_Project/Art/ThirdParty/PolygonApocalypse/Textures/Misc/PolygonApocalypse_Normal.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7ca6f9caabab14249976bf0a5ceda6ef
+    m_Address: Assets/_Project/Data/Weapons/HuntingRifle.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 81b5bd9bb854c674fb9ed9598003a2cd
+    m_Address: Assets/_Project/Art/ThirdParty/PolygonApocalypse/Models/SM_Wep_FireAxe_01.fbx
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 822402f846727b24890cc7d5f5430675
+    m_Address: Assets/_Project/Art/ThirdParty/PolygonApocalypse/Textures/PolygonApocalypse_Texture_01_A.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9782ffd36b3686f4eb4d820b0861438f
+    m_Address: Assets/_Project/Art/ThirdParty/PolygonApocalypse/Models/SM_Wep_AssaultRifle_03.fbx
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9b82d6373e2325c468a37bd22a5efb5b
+    m_Address: Assets/_Project/Art/ThirdParty/PolygonApocalypse/Models/SM_Wep_Hybrid_03.fbx
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9f444227525d435499517b13b3b00da1
+    m_Address: Assets/_Project/Data/Weapons/Katana.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a63bb30920a56754d8f8a5188eea4139
+    m_Address: Assets/_Project/Data/Weapons/Bat.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b648aac8a8cb44c45a97d41297b31aba
+    m_Address: Assets/_Project/Data/Weapons/FireAxe.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bd948e954d146054e87e4bd8308c40a7
+    m_Address: Assets/_Project/Data/Weapons/AssaultRifle01.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c7e9ec95b3da8ad40a670cc1a1994bf7
+    m_Address: Assets/_Project/Data/Weapons/RevolverRifle.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d7c996b3a490a6348bd7a4ef95c8cf36
+    m_Address: Assets/_Project/Art/ThirdParty/PolygonApocalypse/Models/SM_Wep_Katana_01.fbx
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: eed7f5fc0ce713d418f2014e9021fd8b
+    m_Address: Assets/_Project/Data/Weapons/SniperRifle.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ffdfcb810f2918b4f8fe9f917f07bc78
+    m_Address: Assets/_Project/Art/ThirdParty/PolygonApocalypse/Models/Characters.fbx
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: 7b0b4a63a91ea59479d6f21c16e4df79, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: def98e0c82265334b891c88da8d087b8, type: 2}
+    - {fileID: 11400000, guid: c2fc7c65707fd884f95c74f757d50f21, type: 2}
+    m_SchemaDisplayOrder:
+    - Maze Shared Dependencies_BundledAssetGroupSchema
+    - Maze Shared Dependencies_ContentUpdateGroupSchema
+  m_IncludeInBuild: 1
+  m_IncludeInBuildMigrated: 1
