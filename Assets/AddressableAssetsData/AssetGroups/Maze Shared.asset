@@ -15,6 +15,11 @@ MonoBehaviour:
   m_GroupName: Maze Shared
   m_GUID: 3103d1cbfedb1f14f8c9d647de458c62
   m_SerializeEntries:
+  - m_GUID: 1ef373babc8e1a342bff0537d85420dd
+    m_Address: Weapons/Visual
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 246a1e70096affb4292fac6aabc958d3
     m_Address: Assets/_Project/Art/Placeholders/fx_melee_swing.prefab
     m_ReadOnly: 0
@@ -22,6 +27,16 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 2494f8572c21c1b4fbf7e875c5fe795a
     m_Address: Player/Definition
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 28e42837255a8cc418b9fb2162ecb882
+    m_Address: Assets/_Project/Art/Weapons/Rifle/SM_Wep_Hybrid_03.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 67d413abe225d2d47a78fb336374d015
+    m_Address: Assets/_Project/Art/Weapons/Rifle/Auto/SM_Wep_AssaultRifle_01.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -40,6 +55,16 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8e692d55281b90b43a27979a894927c2
+    m_Address: Assets/_Project/Art/Weapons/Rifle/SM_Wep_SniperRifle_01.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9dca697e99b490c43a892a09177b038d
+    m_Address: Assets/_Project/Art/Weapons/Melee/SM_Wep_Crowbar_01.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: a4be1ef066a343b479403ae698a6a07c
     m_Address: Assets/_Project/Art/Player/SM_Chr_Hunter_Male_01.prefab
     m_ReadOnly: 0
@@ -52,6 +77,36 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: b1e99142f56fa3c40af00df3d0b91fea
     m_Address: Player/Visual
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b68cdd3552a07f643aca1595689f96a4
+    m_Address: Assets/_Project/Art/Weapons/Rifle/Auto/SM_Wep_SubMGun_02.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: be28daa0667386f4ab1d6e0ae1ac59dc
+    m_Address: Assets/_Project/Art/Weapons/Melee/SM_Wep_FireAxe_01.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ce3b93c2ff9f6f644890d8abcb3a5749
+    m_Address: Assets/_Project/Art/Weapons/Melee/SM_Wep_Bat_Wood_01.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d7fd9fdf4a2cc10458a5b98d0da75977
+    m_Address: Assets/_Project/Art/Weapons/Rifle/Auto/SM_Wep_AssaultRifle_03.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e28f1d16de9bd0a4b80abb0b08b53d94
+    m_Address: Assets/_Project/Art/Weapons/Rifle/SM_Wep_HuntingRifle_Clean_01.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e6e89d136fb41ad488c4568853260c9f
+    m_Address: Assets/_Project/Art/Weapons/Melee/SM_Wep_Katana_01.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

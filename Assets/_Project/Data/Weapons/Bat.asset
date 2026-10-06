@@ -14,9 +14,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Maze.Core::Maze.Core.Definitions.WeaponDefinition
   _id: bat
   _slot: 0
-  _damage: 10
-  _attackSpeed: 1
+  _damage: 12
+  _soundRadius: 4
+  _attackSpeed: 1.2
+  _meleeRange: 1.3
+  _meleeArc: 100
   _fireInterval: 0.3
-  _magazineSize: 6
+  _magazineSize: 10
   _reloadTime: 1.5
   _fireMode: 0
+  _projectileSpeed: 20

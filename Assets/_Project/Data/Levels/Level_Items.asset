@@ -1573,15 +1573,15 @@ MonoBehaviour:
         _rotation: 3
     - _entityId: weapon_1
       _choice:
-        _variantId: weapon_01
+        _variantId: weapon_katana
         _rotation: 0
     - _entityId: weapon_2
       _choice:
-        _variantId: weapon_01
+        _variantId: weapon_bat
         _rotation: 0
     - _entityId: weapon_3
       _choice:
-        _variantId: weapon_01
+        _variantId: weapon_hunting_rifle
         _rotation: 0
     - _entityId: door_1
       _choice:

@@ -105,7 +105,6 @@ namespace Maze.Editor.Dev
         }
 
         private const string PlayerDataPath = "Assets/_Project/Data/Player";
-        private const string WeaponDataPath = "Assets/_Project/Data/Weapons";
         private const string CombatDataPath = "Assets/_Project/Data/Combat";
         private const string ZombieDataPath = "Assets/_Project/Data/Zombies";
 
@@ -135,32 +134,6 @@ namespace Maze.Editor.Dev
             AssetDatabase.SaveAssets();
             if (problem != null) Debug.LogWarning("[Maze] " + problem);
             Debug.Log($"[Maze] Placeholder player created in {PlayerDataPath} and made Addressable.");
-        }
-
-        /// <summary>
-        /// Placeholder weapon definitions in Data/Weapons: Knife and Bat (Melee), Pistol (Ranged). Existing assets are
-        /// kept with their values; only new ones get defaults.
-        /// </summary>
-        [MenuItem("Maze/Dev/Create Placeholder Weapons")]
-        public static void CreateWeapons()
-        {
-            EnsureFolder(WeaponDataPath);
-            Weapon("Knife", "knife", WeaponSlot.Melee, 6);
-            Weapon("Bat", "bat", WeaponSlot.Melee, 6);
-            Weapon("Pistol", "pistol", WeaponSlot.Ranged, 8);
-            AssetDatabase.SaveAssets();
-            Debug.Log($"[Maze] Placeholder weapons created in {WeaponDataPath}.");
-        }
-
-        private static void Weapon(string assetName, string id, WeaponSlot slot, int magazineSize)
-        {
-            var path = $"{WeaponDataPath}/{assetName}.asset";
-            if (AssetDatabase.LoadAssetAtPath<WeaponDefinition>(path) != null)
-                return;
-
-            var weapon = ScriptableObject.CreateInstance<WeaponDefinition>();
-            weapon.Configure(id, slot, magazineSize);
-            AssetDatabase.CreateAsset(weapon, path);
         }
 
         /// <summary>

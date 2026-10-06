@@ -912,6 +912,8 @@ Transform:
   - {fileID: 4333570591565156}
   - {fileID: 4958964278490720}
   - {fileID: 4024725404732258}
+  - {fileID: 951852388942334972}
+  - {fileID: 7951318297356221377}
   m_Father: {fileID: 4954319597213514}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1416207648524992
@@ -1832,6 +1834,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4679946784610308}
   - component: {fileID: 95131298953979194}
+  - component: {fileID: 7596154093022620333}
   m_Layer: 0
   m_Name: SM_Chr_Hunter_Male_01
   m_TagString: Untagged
@@ -1878,6 +1881,21 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 1
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &7596154093022620333
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1820416473181658}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4ebbd7d71757dfe4198a2e83475b57c4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Maze.Presentation::Maze.Presentation.Visual.CharacterWeaponRig
+  _meleeSocket: {fileID: 7951318297356221377}
+  _palmRight: {fileID: 951852388942334972}
+  _palmLeft: {fileID: 1749563456431327318}
 --- !u!1 &1856413123109530
 GameObject:
   m_ObjectHideFlags: 0
@@ -1910,6 +1928,7 @@ Transform:
   - {fileID: 4694550323804586}
   - {fileID: 4934160387826876}
   - {fileID: 4710910373007786}
+  - {fileID: 1749563456431327318}
   m_Father: {fileID: 4434700110095580}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1879287093339696
@@ -2069,4 +2088,97 @@ Transform:
   m_Children:
   - {fileID: 4765851990503614}
   m_Father: {fileID: 4824525445004484}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1457597676248675925
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1749563456431327318}
+  m_Layer: 0
+  m_Name: Palm_L
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1749563456431327318
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1457597676248675925}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.06113727, y: 0.0008483022, z: -0.0018321181}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4994563262356552}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &7714604716411475255
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 951852388942334972}
+  m_Layer: 0
+  m_Name: Palm_R
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &951852388942334972
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7714604716411475255}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.06113736, y: -0.0008490162, z: 0.0018321235}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4392806848004646}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &8419946734851498160
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7951318297356221377}
+  m_Layer: 0
+  m_Name: WeaponSocket_Melee
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7951318297356221377
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8419946734851498160}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.7107552, y: 0.7012685, z: -0.0055919043, w: 0.054939084}
+  m_LocalPosition: {x: 0.06113736, y: -0.0008490162, z: 0.0018321235}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4392806848004646}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}

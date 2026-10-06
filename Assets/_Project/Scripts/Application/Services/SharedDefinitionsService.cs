@@ -8,7 +8,7 @@ using Maze.Core.Visual;
 namespace Maze.Application.Services
 {
     /// <summary>
-    /// Definitions shared by every level (player parameters and look, combat visuals), loaded once and kept resident
+    /// Definitions shared by every level (player parameters and look, combat visuals, held weapon looks), loaded once and kept resident
     /// for the application lifetime (ТЗ §84: shared assets may stay resident).
     /// </summary>
     public sealed class SharedDefinitionsService : IApplicationService, IDisposable
@@ -26,14 +26,16 @@ namespace Maze.Application.Services
         public PlayerDefinition Player { get; private set; }
         public PlayerVisualDefinition PlayerVisual { get; private set; }
         public CombatVisualDefinition CombatVisual { get; private set; }
+        public WeaponVisualCatalog WeaponVisuals { get; private set; }
 
         public async UniTask InitializeAsync(CancellationToken cancellation)
         {
             _assets = _addressables.CreateOwner("Application: Shared Definitions");
-            (Player, PlayerVisual, CombatVisual) = await UniTask.WhenAll(
+            (Player, PlayerVisual, CombatVisual, WeaponVisuals) = await UniTask.WhenAll(
                 _assets.LoadAsync<PlayerDefinition>(PlayerDefinition.Address, cancellation),
                 _assets.LoadAsync<PlayerVisualDefinition>(PlayerVisualDefinition.Address, cancellation),
-                _assets.LoadAsync<CombatVisualDefinition>(CombatVisualDefinition.Address, cancellation));
+                _assets.LoadAsync<CombatVisualDefinition>(CombatVisualDefinition.Address, cancellation),
+                _assets.LoadAsync<WeaponVisualCatalog>(WeaponVisualCatalog.Address, cancellation));
         }
 
         public void Dispose()
@@ -43,6 +45,7 @@ namespace Maze.Application.Services
             Player = null;
             PlayerVisual = null;
             CombatVisual = null;
+            WeaponVisuals = null;
         }
     }
 }

@@ -80,7 +80,8 @@ namespace Maze.Editor.LevelDesigner
 
         /// <summary>
         /// Keeps the definitions shared by all levels Addressable at their fixed addresses: <see cref="PlayerDefinition"/>,
-        /// <see cref="PlayerVisualDefinition"/> and its prefab, <see cref="CombatVisualDefinition"/> and its prefabs.
+        /// <see cref="PlayerVisualDefinition"/> and its prefab, <see cref="CombatVisualDefinition"/> and its prefabs,
+        /// <see cref="WeaponVisualCatalog"/> and the held weapon prefabs.
         /// Returns a problem description or null.
         /// </summary>
         public static string SyncShared(AddressableAssetSettings settings)
@@ -104,6 +105,14 @@ namespace Maze.Editor.LevelDesigner
             EnsurePrefabAddressable(settings, sharedGroup, combat.Bullet);
             EnsurePrefabAddressable(settings, sharedGroup, combat.Impact);
             EnsurePrefabAddressable(settings, sharedGroup, combat.MeleeSwing);
+
+            var weapons = EnsureSingleAddressable<WeaponVisualCatalog>(settings, sharedGroup, WeaponVisualCatalog.Address);
+            if (weapons == null)
+                return "Weapon visuals are missing: run Maze → Dev → Build Weapons or create them " +
+                       "(Create → Maze → Visual → Weapon Visuals). The game cannot start without them.";
+            foreach (var weapon in weapons.Weapons)
+                if (weapon != null)
+                    EnsurePrefabAddressable(settings, sharedGroup, weapon.HeldPrefab);
 
             EditorUtility.SetDirty(settings);
             return null;

@@ -461,6 +461,7 @@ GameObject:
   - component: {fileID: 4252610548398956}
   - component: {fileID: 33612643866763530}
   - component: {fileID: 23875157421364124}
+  - component: {fileID: 5185504891612212191}
   m_Layer: 0
   m_Name: SM_Wep_SniperRifle_01
   m_TagString: Untagged
@@ -486,6 +487,7 @@ Transform:
   - {fileID: 4027073855146276}
   - {fileID: 4302914873427008}
   - {fileID: 4481329641457680}
+  - {fileID: 5677572208165930370}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &33612643866763530
@@ -545,3 +547,48 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &5185504891612212191
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1658074229854742}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ea4fbabd530c09a4fad00710940dbbf4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Maze.Presentation::Maze.Presentation.Visual.WeaponModel
+  _muzzle: {fileID: 5677572208165930370}
+  _tip: {fileID: 0}
+--- !u!1 &2592935078323979295
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5677572208165930370}
+  m_Layer: 0
+  m_Name: Muzzle
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5677572208165930370
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2592935078323979295}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.011742311, y: 0.0046744794, z: 0.7310235}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4252610548398956}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}

@@ -10,13 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5b50615c978853148ac821b2ced6756b, type: 3}
-  m_Name: Knife
+  m_Name: RevolverRifle
   m_EditorClassIdentifier: Maze.Core::Maze.Core.Definitions.WeaponDefinition
-  _id: knife
-  _slot: 0
-  _damage: 10
+  _id: revolver_rifle
+  _slot: 1
+  _damage: 18
+  _soundRadius: 7
   _attackSpeed: 1
-  _fireInterval: 0.3
+  _meleeRange: 1.2
+  _meleeArc: 100
+  _fireInterval: 0.5
   _magazineSize: 6
-  _reloadTime: 1.5
+  _reloadTime: 2
   _fireMode: 0
+  _projectileSpeed: 28

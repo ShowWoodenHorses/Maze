@@ -79,8 +79,9 @@ namespace Maze.Tests.PlayMode
         {
             var catalog = _container.Resolve<ILevelCatalog>();
             Assert.Greater(catalog.Levels.Count, 0, "Run Build / Sync for at least one level.");
-            Assert.AreEqual(4, _addressables.ActiveHandleCount,
-                "Only application-wide assets are resident in the menu: level catalog, player definition, player visual, combat visual.");
+            Assert.AreEqual(5, _addressables.ActiveHandleCount,
+                "Only application-wide assets are resident in the menu: level catalog, player definition, player visual, " +
+                "combat visual, weapon visuals.");
         }
 
         [UnityTest]
@@ -242,6 +243,13 @@ namespace Maze.Tests.PlayMode
             Assert.AreEqual(melee[1].Position, dropped.Cell);
             Assert.IsNotNull(dropped.GameObject);
 
+            var held = container.Resolve<PlayerWeaponPresenter>().Shown;
+            Assert.IsNotNull(held, "The weapon in hands is shown.");
+            Assert.AreEqual("Weapon " + melee[1].Definition.Id, held.name);
+            Assert.IsTrue(held.activeInHierarchy);
+            var rig = container.Resolve<PlayerViewPresenter>().View.GetComponent<CharacterWeaponRig>();
+            Assert.AreEqual(rig.MeleeSocket, held.transform.parent, "Melee weapons sit in the hand socket.");
+
             await _flow.ExitToMenu();
         });
 
@@ -264,6 +272,9 @@ namespace Maze.Tests.PlayMode
 
             var gun = level.Weapons.First(w => w.Definition.Slot == WeaponSlot.Ranged);
             Assert.IsTrue(container.Resolve<PickupSystem>().TryTakeWeapon(gun.Position));
+            var held = container.Resolve<PlayerWeaponPresenter>().Shown;
+            Assert.IsNotNull(held, "The gun in hands is shown.");
+            Assert.AreEqual("Weapon " + gun.Definition.Id, held.name);
             Assert.IsTrue(combat.TryAttack(Vector2.down));
             Assert.AreEqual(1, bullets.Active.Count);
             Assert.AreEqual(1, views.ActiveBulletViews, "A bullet view taken from the pool.");
@@ -273,7 +284,7 @@ namespace Maze.Tests.PlayMode
             Assert.AreEqual(0, views.ActiveBulletViews, "Returned to the pool when the bullet ended.");
 
             await _flow.ExitToMenu();
-            Assert.AreEqual(handlesInMenu, _addressables.ActiveHandleCount, "Combat prefabs released with the level.");
+            Assert.AreEqual(handlesInMenu, _addressables.ActiveHandleCount, "Combat and held weapon prefabs released with the level.");
         });
 
         [UnityTest]
