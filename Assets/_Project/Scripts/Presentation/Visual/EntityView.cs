@@ -109,10 +109,18 @@ namespace Maze.Presentation.Visual
             if (!VisualKinds.TryGetForEntity(entity, out var kind, out _))
                 return null;
 
-            return Create(entity.Id, kind, VisualResolver.ResolveObject(level, entity), entity.Position, parent);
+            // A placeable pickup may be shifted / lifted (e.g. on a table) / turned by the designer.
+            var choice = VisualResolver.ResolveObject(level, entity);
+            VisualResolver.ResolveObjectPose(level, entity, choice, out var offset, out var yaw);
+            return Create(entity.Id, kind, choice, entity.Position, parent, offset, yaw);
         }
 
-        public EntityView Create(string entityId, VisualKind kind, VisualChoice choice, GridPosition cell, Transform parent)
+        /// <summary>At the cell centre with the choice's quarter turn (dropped items, zombies).</summary>
+        public EntityView Create(string entityId, VisualKind kind, VisualChoice choice, GridPosition cell, Transform parent) =>
+            Create(entityId, kind, choice, cell, parent, Vector3.zero, 90f * choice.Rotation);
+
+        public EntityView Create(string entityId, VisualKind kind, VisualChoice choice, GridPosition cell, Transform parent,
+            Vector3 offset, float yaw)
         {
             var prefab = choice.IsEmpty ? null : _prefabs.Get(kind, choice.VariantId);
             if (prefab == null)
@@ -120,8 +128,8 @@ namespace Maze.Presentation.Visual
 
             var instance = UnityEngine.Object.Instantiate(prefab, parent);
             instance.name = entityId;
-            instance.transform.localPosition = cell.ToWorld();
-            instance.transform.localRotation = Quaternion.Euler(0f, 90f * choice.Rotation, 0f);
+            instance.transform.localPosition = cell.ToWorld() + offset;
+            instance.transform.localRotation = Quaternion.Euler(0f, yaw, 0f);
             return new EntityView(entityId, kind, cell, instance);
         }
     }

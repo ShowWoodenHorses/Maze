@@ -79,6 +79,58 @@ namespace Maze.Editor.LevelDesigner
                     choice => Apply("Set Visual Override", () => LevelEditing.SetCellOverride(Level, cell, layer, choice)),
                     () => Apply("Clear Visual Override", () => LevelEditing.ClearCellOverride(Level, cell, layer)));
             }
+
+            DrawDecor(cell, theme.GetSet(VisualKind.Decor));
+        }
+
+        /// <summary>"(automatic)" = auto placement decides; "(none)" = never decor here; a variant = placed by hand.</summary>
+        private void DrawDecor(GridPosition cell, VisualSet set)
+        {
+            if (set == null || !CellLayers.Exists(Level.Geometry.GetCell(cell), CellLayer.Decor))
+                return;
+
+            var current = VisualResolver.ResolveDecor(Level, cell, out var source);
+            EditorGUILayout.LabelField("Decor", current.IsEmpty
+                ? (source == VisualSource.Override ? "none [Override]" : "none")
+                : $"{current.VariantId} r{current.Rotation} [{source}]");
+
+            var ids = set.Variants.Select(v => v.Id).ToList();
+            var options = new[] { "(automatic)", "(none)" }.Concat(ids.Select(id => id ?? "<no id>")).ToArray();
+            var isOverride = source == VisualSource.Override;
+            var index = !isOverride ? 0 : current.IsEmpty ? 1 : Mathf.Max(0, ids.IndexOf(current.VariantId)) + 2;
+            var selected = EditorGUILayout.Popup("Decor override", index, options);
+            if (selected != index)
+            {
+                if (selected == 0)
+                    Apply("Clear Decor", () => LevelEditing.ClearCellOverride(Level, cell, CellLayer.Decor));
+                else
+                    Apply("Set Decor", () => LevelEditing.SetCellOverride(Level, cell, CellLayer.Decor,
+                        selected == 1 ? VisualChoice.None : new VisualChoice(ids[selected - 2], current.Rotation)));
+                return;
+            }
+
+            if (current.IsEmpty)
+                return;
+
+            var hasPlacement = Level.VisualData.TryGetDecorPlacement(cell, out _);
+            if (isOverride && !hasPlacement)
+            {
+                var rotation = EditorGUILayout.IntPopup("Decor rotation", current.Rotation, RotationNames, RotationValues);
+                if (rotation != current.Rotation)
+                    Apply("Rotate Decor", () => LevelEditing.SetCellOverride(Level, cell, CellLayer.Decor, new VisualChoice(current.VariantId, rotation)));
+            }
+
+            // Placement (also dragged in the Scene view on the preview). Editing it makes auto decor manual.
+            VisualResolver.ResolveDecorPose(Level, cell, current, out var offset, out var yaw);
+            EditorGUI.BeginChangeCheck();
+            var shift = EditorGUILayout.Vector2Field("Decor shift (X, Z)", new Vector2(offset.x, offset.z));
+            var height = EditorGUILayout.Slider("Decor height", offset.y, DecorPlacement.MinHeight, DecorPlacement.MaxHeight);
+            var turn = EditorGUILayout.Slider("Decor turn", yaw, 0f, 359.9f);
+            if (EditorGUI.EndChangeCheck())
+                Apply("Place Decor", () => LevelEditing.SetDecorPlacement(Level, cell, shift, height, turn));
+
+            if (hasPlacement && GUILayout.Button("Reset decor placement"))
+                Apply("Reset Decor Placement", () => LevelEditing.ResetDecorPlacement(Level, cell));
         }
 
         // ------------------------------------------------------------ Object
@@ -114,6 +166,9 @@ namespace Maze.Editor.LevelDesigner
                 VisualOverrideField("Override", Level.VisualTheme.GetSet(kind), current, source == VisualSource.Override,
                     choice => Apply("Set Visual Override", () => LevelEditing.SetObjectOverride(Level, entity, choice)),
                     () => Apply("Clear Visual Override", () => LevelEditing.ClearObjectOverride(Level, entity)));
+
+                if (VisualKinds.IsPlaceable(entity))
+                    DrawPlacement(entity, current);
             }
 
             EditorGUILayout.Space(2f);
@@ -225,6 +280,53 @@ namespace Maze.Editor.LevelDesigner
                 _tools.Tool = EditTool.FragmentRegion;
                 _notify("Drag a rectangle on the grid.");
             }
+        }
+
+        /// <summary>
+        /// Shift / height / turn of a pickup's view inside its cell (also dragged in the Scene view on the preview);
+        /// "Put on decor" lifts it onto the top of the cell's decor (e.g. a table).
+        /// </summary>
+        private void DrawPlacement(LevelEntityData entity, VisualChoice current)
+        {
+            VisualResolver.ResolveObjectPose(Level, entity, current, out var offset, out var yaw);
+            var hasPlacement = Level.VisualData.TryGetObjectPlacement(entity.Id, out _);
+            EditorGUI.BeginChangeCheck();
+            var shift = EditorGUILayout.Vector2Field("Shift (X, Z)", new Vector2(offset.x, offset.z));
+            var height = EditorGUILayout.Slider("Height", offset.y, DecorPlacement.MinHeight, DecorPlacement.MaxHeight);
+            var turn = EditorGUILayout.Slider("Turn", yaw, 0f, 359.9f);
+            if (EditorGUI.EndChangeCheck())
+                Apply("Place " + entity.Id, () => LevelEditing.SetObjectPlacement(Level, entity, shift, height, turn));
+
+            EditorGUILayout.BeginHorizontal();
+            var decor = VisualResolver.ResolveDecor(Level, entity.Position);
+            using (new EditorGUI.DisabledScope(decor.IsEmpty))
+            {
+                if (GUILayout.Button(new GUIContent("Put on decor", "Lift onto the top of this cell's decor (e.g. a table).")))
+                    PutOnDecor(entity, decor, hasPlacement ? shift : (Vector2?)null, turn);
+            }
+
+            using (new EditorGUI.DisabledScope(!hasPlacement))
+            {
+                if (GUILayout.Button("Reset placement"))
+                    Apply("Reset Placement", () => LevelEditing.ResetObjectPlacement(Level, entity));
+            }
+
+            EditorGUILayout.EndHorizontal();
+        }
+
+        /// <summary>Height = top of the decor model (measured) + the decor's own height; over its centre unless already shifted.</summary>
+        private void PutOnDecor(LevelEntityData entity, VisualChoice decor, Vector2? shift, float turn)
+        {
+            var set = Level.VisualTheme.GetSet(VisualKind.Decor);
+            var variant = set != null ? set.FindVariant(decor.VariantId) : null;
+            if (variant == null)
+                return;
+
+            DecorHeights.Refresh(set);
+            VisualResolver.ResolveDecorPose(Level, entity.Position, decor, out var decorOffset, out _);
+            var top = variant.Height + decorOffset.y;
+            var where = shift ?? new Vector2(decorOffset.x, decorOffset.z);
+            Apply("Put " + entity.Id + " on Decor", () => LevelEditing.SetObjectPlacement(Level, entity, where, top, turn));
         }
 
         // ------------------------------------------------------------ Helpers

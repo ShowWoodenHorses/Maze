@@ -69,6 +69,10 @@ namespace Maze.Core.Visual
 
     public static class VisualKinds
     {
+        /// <summary>Pickups whose view the designer may shift, lift and turn inside their cell (ObjectPlacement).</summary>
+        public static bool IsPlaceable(LevelEntityData entity) =>
+            entity is KeyData || entity is MedkitData || entity is WeaponPickupData || entity is MapFragmentData;
+
         /// <summary>False for entities without a visual (player starts).</summary>
         public static bool TryGetForEntity(LevelEntityData entity, out VisualKind kind, out ScriptableObject definition)
         {

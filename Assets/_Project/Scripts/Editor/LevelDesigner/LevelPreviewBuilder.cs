@@ -44,6 +44,24 @@ namespace Maze.Editor.LevelDesigner
                     missing++;
             }
 
+            // Optional decor on floor cells, named by cell: DecorSceneHandles moves them while their placement is dragged.
+            var decorSet = theme != null ? theme.GetSet(VisualKind.Decor) : null;
+            for (var i = 0; i < geometry.CellCount; i++)
+            {
+                var cell = geometry.ToPosition(i);
+                var decor = VisualResolver.ResolveDecor(level, cell);
+                if (decor.IsEmpty)
+                    continue;
+
+                if (!Spawn(decorSet, decor, cell, geometryRoot, DecorName(cell)))
+                {
+                    missing++;
+                    continue;
+                }
+
+                PlaceDecor(level, cell, decor, geometryRoot.Find(DecorName(cell)));
+            }
+
             foreach (var entity in level.AllEntities())
             {
                 if (!VisualKinds.TryGetForEntity(entity, out var kind, out _))
@@ -58,6 +76,8 @@ namespace Maze.Editor.LevelDesigner
                 var instance = Spawn(set, choice, entity.Position, objectsRoot, entity.Id);
                 if (!instance)
                     missing++;
+                else if (VisualKinds.IsPlaceable(entity))
+                    PlaceObject(level, entity, objectsRoot.Find(entity.Id));
             }
 
             // DontSave keeps the scene clean (not marked dirty, never saved). Such objects also survive a scene
@@ -67,6 +87,54 @@ namespace Maze.Editor.LevelDesigner
 
             Selection.activeGameObject = root;
             return missing;
+        }
+
+        public static string DecorName(GridPosition cell) => $"Decor {cell.X}_{cell.Y}";
+
+        /// <summary>Parent of the preview's object instances (named by entity id), or null without a preview.</summary>
+        public static Transform FindObjectsRoot()
+        {
+            var geometry = FindDecorRoot();
+            return geometry != null ? geometry.parent.Find("Objects") : null;
+        }
+
+        /// <summary>Puts a preview pickup where the level says (centre or hand-set placement).</summary>
+        public static void PlaceObject(LevelData level, LevelEntityData entity, Transform instance)
+        {
+            if (instance == null)
+                return;
+
+            VisualResolver.ResolveObjectPose(level, entity, VisualResolver.ResolveObject(level, entity), out var offset, out var yaw);
+            instance.localPosition = entity.Position.ToWorld() + offset;
+            instance.localRotation = Quaternion.Euler(0f, yaw, 0f);
+        }
+
+        /// <summary>Parent of the preview's cells and decor instances, or null without a preview.</summary>
+        public static Transform FindDecorRoot()
+        {
+            for (var i = 0; i < SceneManager.sceneCount; i++)
+            {
+                var scene = SceneManager.GetSceneAt(i);
+                if (!scene.IsValid() || !scene.isLoaded)
+                    continue;
+
+                foreach (var go in scene.GetRootGameObjects())
+                    if (go.name == RootName)
+                        return go.transform.Find("Geometry");
+            }
+
+            return null;
+        }
+
+        /// <summary>Puts a preview decor instance where the level says (centre or hand-set placement).</summary>
+        public static void PlaceDecor(LevelData level, GridPosition cell, VisualChoice decor, Transform instance)
+        {
+            if (instance == null)
+                return;
+
+            VisualResolver.ResolveDecorPose(level, cell, decor, out var offset, out var yaw);
+            instance.localPosition = cell.ToWorld() + offset;
+            instance.localRotation = Quaternion.Euler(0f, yaw, 0f);
         }
 
         public static void Clear()

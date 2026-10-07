@@ -1,0 +1,221 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d4059f11680f60145b7d0f9b59619e3b, type: 3}
+  m_Name: PlaceholderDecorSet
+  m_EditorClassIdentifier: Maze.Core::Maze.Core.Visual.VisualSet
+  _kind: 9
+  _defaultVariantId: 
+  _variants:
+  - _id: SM_DeadBody_Male_08
+    _prefab:
+      m_AssetGUID: 0c1032f40f199f2418c5d670d7118424
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+    _weight: 1
+    _category: 0
+    _definition: {fileID: 0}
+    _colorTag: 
+    _height: 0.351
+  - _id: SM_DeadBody_Male_12
+    _prefab:
+      m_AssetGUID: 1abf5e27cdaa2d24cb55353ed64a8861
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+    _weight: 1
+    _category: 0
+    _definition: {fileID: 0}
+    _colorTag: 
+    _height: 0.393
+  - _id: SM_Prop_Barrel_Nuke_01
+    _prefab:
+      m_AssetGUID: 9fadab9044064aa4abaaa2bef3503f9d
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+    _weight: 1
+    _category: 0
+    _definition: {fileID: 0}
+    _colorTag: 
+    _height: 1.045
+  - _id: SM_Prop_Barrel_Water_01
+    _prefab:
+      m_AssetGUID: cd6be72a77cef5a48aa9ad6d3eb30407
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+    _weight: 1
+    _category: 0
+    _definition: {fileID: 0}
+    _colorTag: 
+    _height: 1.05
+  - _id: SM_Prop_BloodPool_01
+    _prefab:
+      m_AssetGUID: f5f924cd63abdd04696bb82c74f4ed79
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+    _weight: 1
+    _category: 0
+    _definition: {fileID: 0}
+    _colorTag: 
+    _height: 0.004
+  - _id: SM_Prop_BloodPool_02
+    _prefab:
+      m_AssetGUID: 1681bc070307efc45a88839b0fb386ea
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+    _weight: 1
+    _category: 0
+    _definition: {fileID: 0}
+    _colorTag: 
+    _height: 0.004
+  - _id: SM_Prop_BloodPool_03
+    _prefab:
+      m_AssetGUID: eb89925d60d019e4ba12a516fffc49b9
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+    _weight: 1
+    _category: 0
+    _definition: {fileID: 0}
+    _colorTag: 
+    _height: 0.004
+  - _id: SM_Prop_BurnPile_01
+    _prefab:
+      m_AssetGUID: 4d46abda59fa611408258f5cf721c4c1
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+    _weight: 1
+    _category: 0
+    _definition: {fileID: 0}
+    _colorTag: 
+    _height: 0.175
+  - _id: SM_Prop_BurnPile_02
+    _prefab:
+      m_AssetGUID: bafb9f82f99160c4ea21bc3253958ab4
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+    _weight: 1
+    _category: 0
+    _definition: {fileID: 0}
+    _colorTag: 
+    _height: 0.15
+  - _id: SM_Prop_BurnPile_Books_01
+    _prefab:
+      m_AssetGUID: 86e55a12c453cf9418abf2113b0dc82b
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+    _weight: 1
+    _category: 0
+    _definition: {fileID: 0}
+    _colorTag: 
+    _height: 0.175
+  - _id: SM_Prop_BurnPile_Books_02
+    _prefab:
+      m_AssetGUID: d247dbba00b4456498edf1696de8ac8b
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+    _weight: 1
+    _category: 0
+    _definition: {fileID: 0}
+    _colorTag: 
+    _height: 0.182
+  - _id: SM_Prop_BurnPile_Books_03
+    _prefab:
+      m_AssetGUID: b12c1a0a575595c44830c7cc2b2dea1e
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+    _weight: 1
+    _category: 0
+    _definition: {fileID: 0}
+    _colorTag: 
+    _height: 0.189
+  - _id: SM_Prop_Rug_01
+    _prefab:
+      m_AssetGUID: c8f356fbb2b52184d8635ce984d1f1e4
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+    _weight: 1
+    _category: 0
+    _definition: {fileID: 0}
+    _colorTag: 
+    _height: 0.032
+  - _id: SM_Prop_Rug_03
+    _prefab:
+      m_AssetGUID: e93ad9174aea8c042bdb0f0d87fca578
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+    _weight: 1
+    _category: 0
+    _definition: {fileID: 0}
+    _colorTag: 
+    _height: 0.048
+  - _id: SM_Prop_Rug_05
+    _prefab:
+      m_AssetGUID: 06cc803953dc077438a16286539d4472
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+    _weight: 1
+    _category: 0
+    _definition: {fileID: 0}
+    _colorTag: 
+    _height: 0.023
+  - _id: SM_Prop_Table_01
+    _prefab:
+      m_AssetGUID: f93f53310920b544b98e5d432a6e4778
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+    _weight: 1
+    _category: 0
+    _definition: {fileID: 0}
+    _colorTag: 
+    _height: 0.581
+  - _id: SM_Prop_Table_02
+    _prefab:
+      m_AssetGUID: b25ac67a5fcfdd1448db74b22c224d8b
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+    _weight: 1
+    _category: 0
+    _definition: {fileID: 0}
+    _colorTag: 
+    _height: 0.329

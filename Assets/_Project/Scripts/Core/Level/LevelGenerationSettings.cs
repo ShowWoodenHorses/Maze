@@ -10,7 +10,7 @@ namespace Maze.Core.Level
 
     /// <summary>
     /// Input for "Generate New". Used only at level creation time; runtime never reads it.
-    /// MazeSeed drives the logical maze, VisualSeed drives the initial visual variant selection and light placement.
+    /// MazeSeed drives the logical maze, VisualSeed drives the initial visual variant selection, light and decor placement.
     /// </summary>
     [Serializable]
     public sealed class LevelGenerationSettings
@@ -27,6 +27,12 @@ namespace Maze.Core.Level
         [Tooltip("Auto placed light sources: 0 = none, 1 = as many as fit (about every 3 cells along walls).")]
         [SerializeField, Range(0f, 1f)] private float _lightDensity = 0.5f;
 
+        [Tooltip("Auto placed decor: share of floor cells with a prop (0 = none, 1 = every floor cell).")]
+        [SerializeField, Range(0f, 1f)] private float _decorDensity = 0.15f;
+
+        [Tooltip("Decor taller than this (metres) is never placed automatically, only with the Decor brush.")]
+        [SerializeField, Min(0f)] private float _maxAutoDecorHeight = 0.3f;
+
         public int Width { get => _width; internal set => _width = value; }
         public int Height { get => _height; internal set => _height = value; }
         public int MazeSeed { get => _mazeSeed; internal set => _mazeSeed = value; }
@@ -36,6 +42,8 @@ namespace Maze.Core.Level
         public int InitialPlayerStartCount { get => _initialPlayerStartCount; internal set => _initialPlayerStartCount = value; }
         public int InitialExitCount { get => _initialExitCount; internal set => _initialExitCount = value; }
         public float LightDensity { get => _lightDensity; internal set => _lightDensity = value; }
+        public float DecorDensity { get => _decorDensity; internal set => _decorDensity = value; }
+        public float MaxAutoDecorHeight { get => _maxAutoDecorHeight; internal set => _maxAutoDecorHeight = value; }
 
         /// <summary>
         /// The generator needs odd width and height: a border wall plus alternating passage/wall cells, all one

@@ -24,7 +24,21 @@ namespace Maze.Editor.LevelDesigner
         MapFragment,
         FragmentRegion,
         Patrol,
+        Decor,
         Erase,
+    }
+
+    /// <summary>What the Decor brush paints.</summary>
+    internal enum DecorBrushMode
+    {
+        /// <summary>The chosen variant (a manual override).</summary>
+        Variant,
+
+        /// <summary>"No decor here" (an empty override: auto placement never puts decor there).</summary>
+        None,
+
+        /// <summary>Removes the manual choice: the cell gets the auto placed decor again.</summary>
+        Automatic,
     }
 
     /// <summary>
@@ -54,6 +68,10 @@ namespace Maze.Editor.LevelDesigner
         public Direction ZombieFacing { get; set; } = Direction.South;
         public WeaponDefinition WeaponDefinition { get; set; }
 
+        public DecorBrushMode DecorMode { get; set; }
+        public string DecorVariantId { get; set; }
+        public int DecorRotation { get; set; }
+
         /// <summary>Door waiting for a key: the next key placed is linked to it.</summary>
         public string PendingKeyDoorId { get; set; }
 
@@ -71,6 +89,8 @@ namespace Maze.Editor.LevelDesigner
             {
                 if (ActiveTool == EditTool.Patrol && _state.SelectedEntity is ZombieSpawnData zombie)
                     Apply("Remove Patrol Point", () => LevelEditing.RemoveLastPatrolPoint(Level, zombie));
+                else if (ActiveTool == EditTool.Decor)
+                    PaintDecor(cell, DecorBrushMode.None);
                 return;
             }
 
@@ -93,6 +113,9 @@ namespace Maze.Editor.LevelDesigner
                 case EditTool.Patrol:
                     AddPatrolPoint(cell);
                     break;
+                case EditTool.Decor:
+                    PaintDecor(cell, DecorMode);
+                    break;
                 case EditTool.Erase:
                     Erase(cell);
                     break;
@@ -104,6 +127,12 @@ namespace Maze.Editor.LevelDesigner
 
         public void OnMouseDrag(GridPosition cell, Event e)
         {
+            if (ActiveTool == EditTool.Decor && (e.button == 0 || e.button == 1))
+            {
+                PaintDecor(cell, e.button == 1 ? DecorBrushMode.None : DecorMode);
+                return;
+            }
+
             if (e.button != 0)
                 return;
 
@@ -186,6 +215,39 @@ namespace Maze.Editor.LevelDesigner
             Apply("Paint " + type, () => LevelEditing.SetCellType(Level, cell, type));
             if (type == CellType.Door)
                 _state.Select(Level.Doors.FirstOrDefault(d => d.Position == cell));
+        }
+
+        /// <summary>Decor only on floor cells; other cells are skipped silently while dragging.</summary>
+        private void PaintDecor(GridPosition cell, DecorBrushMode mode)
+        {
+            if (Level.Geometry.GetCell(cell) != CellType.Floor)
+                return;
+
+            var data = Level.VisualData;
+            var hasOverride = data.TryGetCellOverride(cell, Maze.Core.Visual.CellLayer.Decor, out var current);
+            switch (mode)
+            {
+                case DecorBrushMode.Automatic:
+                    if (hasOverride)
+                        Apply("Clear Decor", () => LevelEditing.ClearCellOverride(Level, cell, Maze.Core.Visual.CellLayer.Decor));
+                    break;
+                case DecorBrushMode.None:
+                    if (!hasOverride || !current.IsEmpty)
+                        Apply("Remove Decor", () => LevelEditing.SetCellOverride(Level, cell, Maze.Core.Visual.CellLayer.Decor,
+                            Maze.Core.Visual.VisualChoice.None));
+                    break;
+                default:
+                    if (string.IsNullOrEmpty(DecorVariantId))
+                    {
+                        _notify("Choose a decor variant in the tool options.");
+                        return;
+                    }
+
+                    var choice = new Maze.Core.Visual.VisualChoice(DecorVariantId, DecorRotation);
+                    if (!hasOverride || !current.Equals(choice))
+                        Apply("Paint Decor", () => LevelEditing.SetCellOverride(Level, cell, Maze.Core.Visual.CellLayer.Decor, choice));
+                    break;
+            }
         }
 
         private void Place(GridPosition cell)

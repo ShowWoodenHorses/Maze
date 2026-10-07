@@ -60,6 +60,74 @@ namespace Maze.Core.Visual
             return VisualChoice.None;
         }
 
+        public static VisualChoice ResolveDecor(LevelData level, GridPosition position) => ResolveDecor(level, position, out _);
+
+        /// <summary>
+        /// Decor of a floor cell: override (an empty one = "no decor here") > assignment; never a set default (decor is
+        /// optional). None for walls and doors.
+        /// </summary>
+        public static VisualChoice ResolveDecor(LevelData level, GridPosition position, out VisualSource source)
+        {
+            var geometry = level.Geometry;
+            if (!CellLayers.Exists(geometry.GetCell(position), CellLayer.Decor))
+            {
+                source = VisualSource.None;
+                return VisualChoice.None;
+            }
+
+            var data = level.VisualData;
+            if (data.TryGetCellOverride(position, CellLayer.Decor, out var choice))
+            {
+                source = VisualSource.Override;
+                return choice;
+            }
+
+            choice = data.GetCellAssignment(CellLayer.Decor, geometry.ToIndex(position));
+            source = choice.IsEmpty ? VisualSource.None : VisualSource.Assignment;
+            return choice;
+        }
+
+        /// <summary>
+        /// Where the decor of a cell stands relative to the cell centre (x = East, y = up, z = North) and its turn in
+        /// degrees clockwise from above: the hand-set placement of manual decor, otherwise the centre and the quarter
+        /// turn of <paramref name="decor"/>.
+        /// </summary>
+        public static void ResolveDecorPose(LevelData level, GridPosition position, VisualChoice decor,
+            out UnityEngine.Vector3 offset, out float yaw)
+        {
+            var data = level.VisualData;
+            if (data.TryGetDecorPlacement(position, out var placement) && placement.IsValid &&
+                data.TryGetCellOverride(position, CellLayer.Decor, out var manual) && !manual.IsEmpty)
+            {
+                offset = new UnityEngine.Vector3(placement.Offset.x, placement.Height, placement.Offset.y);
+                yaw = placement.Yaw;
+                return;
+            }
+
+            offset = UnityEngine.Vector3.zero;
+            yaw = 90f * decor.Rotation;
+        }
+
+        /// <summary>
+        /// Where an object's view stands relative to its cell centre and its turn (degrees clockwise from above):
+        /// the hand-set placement of a placeable pickup, otherwise the centre and the quarter turn of
+        /// <paramref name="choice"/>.
+        /// </summary>
+        public static void ResolveObjectPose(LevelData level, LevelEntityData entity, VisualChoice choice,
+            out UnityEngine.Vector3 offset, out float yaw)
+        {
+            if (VisualKinds.IsPlaceable(entity) &&
+                level.VisualData.TryGetObjectPlacement(entity.Id, out var placement) && placement.IsValid)
+            {
+                offset = new UnityEngine.Vector3(placement.Offset.x, placement.Height, placement.Offset.y);
+                yaw = placement.Yaw;
+                return;
+            }
+
+            offset = UnityEngine.Vector3.zero;
+            yaw = 90f * choice.Rotation;
+        }
+
         public static VisualChoice ResolveObject(LevelData level, LevelEntityData entity) => ResolveObject(level, entity, out _);
 
         public static VisualChoice ResolveObject(LevelData level, LevelEntityData entity, out VisualSource source)

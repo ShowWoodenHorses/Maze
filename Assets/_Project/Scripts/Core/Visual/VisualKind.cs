@@ -12,6 +12,9 @@ namespace Maze.Core.Visual
         Weapon = 6,
         Zombie = 7,
         MapFragment = 8,
+
+        /// <summary>Purely visual props on floor cells (cell layer <see cref="CellLayer.Decor"/>).</summary>
+        Decor = 9,
     }
 
     /// <summary>

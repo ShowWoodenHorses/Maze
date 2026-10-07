@@ -23,6 +23,10 @@ namespace Maze.Core.Visual
                  "a key always uses the colour of its door.")]
         [SerializeField] private string _colorTag;
 
+        [Tooltip("Decor: height of the model in metres, measured from the prefab by the editor (Regenerate Visuals, " +
+                 "Place Decor). Taller than the level's Max Auto Decor Height = placed only by hand.")]
+        [SerializeField, Min(0f)] private float _height;
+
         public VisualVariant(string id, int weight = 1, VisualCategory category = VisualCategory.General,
             ScriptableObject definition = null, AssetReferenceGameObject prefab = null, string colorTag = null)
         {
@@ -42,6 +46,9 @@ namespace Maze.Core.Visual
         public int Weight => _weight;
         public VisualCategory Category => _category;
         public ScriptableObject Definition => _definition;
+
+        /// <summary>Model height, metres (decor; measured by the editor).</summary>
+        public float Height { get => _height; internal set => _height = value; }
 
         public bool Matches(VisualCategory category, ScriptableObject definition) =>
             _category == category && (_definition == null || _definition == definition);

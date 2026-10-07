@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using Maze.Core.Definitions;
 using Maze.Core.Grid;
+using Maze.Core.Visual;
 using UnityEditor;
 using UnityEngine;
 
@@ -34,12 +35,39 @@ namespace Maze.Editor.LevelDesigner
                 case EditTool.Weapon:
                     tools.WeaponDefinition = (WeaponDefinition)EditorGUILayout.ObjectField("Definition", tools.WeaponDefinition, typeof(WeaponDefinition), false);
                     break;
+                case EditTool.Decor:
+                    DecorOptions(state, tools);
+                    break;
                 case EditTool.Key when tools.PendingKeyDoorId != null:
                     EditorGUILayout.HelpBox($"The next key you place opens '{tools.PendingKeyDoorId}'.", MessageType.Info);
                     break;
             }
 
             EditorGUILayout.HelpBox(Help(tools.Tool), MessageType.None);
+        }
+
+        private static readonly string[] RotationNames = { "0°", "90°", "180°", "270°" };
+
+        private static void DecorOptions(LevelDesignerState state, EditToolController tools)
+        {
+            tools.DecorMode = (DecorBrushMode)EditorGUILayout.EnumPopup("Paint", tools.DecorMode);
+            if (tools.DecorMode != DecorBrushMode.Variant)
+                return;
+
+            var set = state.Level.VisualTheme != null ? state.Level.VisualTheme.GetSet(VisualKind.Decor) : null;
+            if (set == null || set.Variants.Count == 0)
+            {
+                EditorGUILayout.HelpBox("The theme has no Decor set (Maze > Dev > Build Decor).", MessageType.Warning);
+                return;
+            }
+
+            var limit = state.Level.Generation.MaxAutoDecorHeight;
+            var variants = set.Variants.ToList();
+            var names = variants.Select(v => $"{v.Id}  ({v.Height:0.00} m{(v.Height > limit ? ", by hand only" : string.Empty)})").ToArray();
+            var index = Mathf.Max(0, variants.FindIndex(v => v.Id == tools.DecorVariantId));
+            index = EditorGUILayout.Popup("Variant", index, names);
+            tools.DecorVariantId = variants[index].Id;
+            tools.DecorRotation = EditorGUILayout.Popup("Rotation", tools.DecorRotation, RotationNames);
         }
 
         private static string Label(EditTool tool)
@@ -65,6 +93,7 @@ namespace Maze.Editor.LevelDesigner
                 case EditTool.MapFragment: return "Click a floor cell to place a map fragment, then drag the region it reveals.";
                 case EditTool.FragmentRegion: return "Drag a rectangle to set the region of the selected map fragment. Regions must not overlap.";
                 case EditTool.Patrol: return "Select a zombie, then click cells to add patrol points (loop A→B→…→A). Right-click removes the last point.";
+                case EditTool.Decor: return "Click or drag on floor cells to paint decor (Paint: a variant, None = no decor, Automatic = back to auto placement). Right-click or right-drag removes decor. Decor is only visual.";
                 case EditTool.Erase: return "Click or drag to remove objects. Erasing a door turns its cell into floor.";
                 default: return "Click a floor cell to place.";
             }

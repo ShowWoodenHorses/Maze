@@ -50,10 +50,10 @@ namespace Maze.Editor.LevelDesigner
             SceneView.duringSceneGui -= OnSceneGUI;
         }
 
-        /// <summary>Light sources are dragged in the Scene view (over the preview).</summary>
+        /// <summary>Light sources and decor are dragged in the Scene view (over the preview).</summary>
         private void OnSceneGUI(SceneView view)
         {
-            if (LightSceneHandles.Draw(_state))
+            if (LevelSceneHandles.Draw(_state))
                 Repaint();
         }
 
@@ -257,6 +257,9 @@ namespace Maze.Editor.LevelDesigner
                         var visual = VisualResolver.ResolveCell(level, cell, layer, out var source);
                         return Describe(visual, source);
                     }));
+                var decor = VisualResolver.ResolveDecor(level, cell, out var decorSource);
+                if (!decor.IsEmpty)
+                    visuals += "  +  " + Describe(decor, decorSource);
                 var entities = string.Join(", ", level.AllEntities().Where(e => e.Position == cell).Select(e => e.Id));
                 GUILayout.Label($"{cell}  {level.Geometry.GetCell(cell)}  ·  {visuals}" +
                                 (entities.Length > 0 ? $"  ·  {entities}" : string.Empty), EditorStyles.miniLabel);

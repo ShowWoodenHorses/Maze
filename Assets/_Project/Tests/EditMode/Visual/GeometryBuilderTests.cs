@@ -144,6 +144,61 @@ namespace Maze.Tests.EditMode.Visual
         }
 
         [Test]
+        public void Decor_IsMergedIntoItsCell_MissingDecorPrefabIsCounted()
+        {
+            _fixture.AddSet(VisualKind.Decor, null, VisualFixture.Variant("decor_barrel", 1));
+            var floor = Enumerable.Range(0, Level.Geometry.CellCount).Select(Level.Geometry.ToPosition)
+                .First(p => Level.Geometry.GetCell(p) == CellType.Floor);
+            LevelEditing.SetCellOverride(Level, floor, CellLayer.Decor, new VisualChoice("decor_barrel", 1));
+            var without = Build().Chunks.Sum(c => c.Mesh.vertexCount);
+            Assert.AreEqual(1, _view.MissingVisuals, "Decor without its prefab is missing.");
+            _view.Dispose();
+
+            _prefabs.Decor = CubePrefab("decor", _wallMaterial, new Vector3(0f, 0.2f, 0f), new Vector3(0.3f, 0.4f, 0.3f));
+            var view = Build();
+            Assert.AreEqual(0, view.MissingVisuals);
+            Assert.AreEqual(without + CubeVertexCount, view.Chunks.Sum(c => c.Mesh.vertexCount), "One more cube.");
+
+            var chunk = view.Chunks.Single(c => c.Cells.Contains(floor));
+            var cells = new List<Vector2>();
+            chunk.Mesh.GetUVs(GeometryShader.CellUvChannel, cells);
+            var vertices = chunk.Mesh.vertices;
+            // Above the floor cube (its top is at -0.45), around the cell centre.
+            var decorVertices = Enumerable.Range(0, vertices.Length).Where(i => vertices[i].y > -0.1f &&
+                Mathf.Abs(vertices[i].x - floor.X) <= 0.16f && Mathf.Abs(vertices[i].z - floor.Y) <= 0.16f).ToList();
+            Assert.AreEqual(CubeVertexCount, decorVertices.Count, "The decor cube stands in its cell.");
+            foreach (var i in decorVertices)
+                Assert.AreEqual(new Vector2(floor.X, floor.Y), cells[i], "Hidden with its cell.");
+        }
+
+        [Test]
+        public void DecorPlacement_ShiftsLiftsAndTurns_VerticesKeepTheirCell()
+        {
+            _fixture.AddSet(VisualKind.Decor, null, VisualFixture.Variant("decor_barrel", 1));
+            var floor = Enumerable.Range(0, Level.Geometry.CellCount).Select(Level.Geometry.ToPosition)
+                .First(p => Level.Geometry.GetCell(p) == CellType.Floor);
+            LevelEditing.SetCellOverride(Level, floor, CellLayer.Decor, new VisualChoice("decor_barrel"));
+            LevelEditing.SetDecorPlacement(Level, floor, new Vector2(0.3f, -0.2f), 1.5f, 90f); // Above the wall cubes (their top is at 1).
+            // A bar 0.6 long along North (+Z): turned by 90° clockwise it lies along East (+X).
+            _prefabs.Decor = CubePrefab("decor", _wallMaterial, Vector3.zero, new Vector3(0.1f, 0.1f, 0.6f));
+            var view = Build();
+
+            var chunk = view.Chunks.Single(c => c.Cells.Contains(floor));
+            var cells = new List<Vector2>();
+            chunk.Mesh.GetUVs(GeometryShader.CellUvChannel, cells);
+            var vertices = chunk.Mesh.vertices;
+            var bar = Enumerable.Range(0, vertices.Length).Where(i => vertices[i].y > 1.4f && vertices[i].y < 1.6f).ToList();
+            Assert.AreEqual(CubeVertexCount, bar.Count, "Lifted to 1.5 m.");
+            var min = new Vector3(bar.Min(i => vertices[i].x), 0f, bar.Min(i => vertices[i].z));
+            var max = new Vector3(bar.Max(i => vertices[i].x), 0f, bar.Max(i => vertices[i].z));
+            Assert.AreEqual(floor.X + 0.3f, (min.x + max.x) * 0.5f, 1e-4f, "Shifted east.");
+            Assert.AreEqual(floor.Y - 0.2f, (min.z + max.z) * 0.5f, 1e-4f, "Shifted south.");
+            Assert.AreEqual(0.6f, max.x - min.x, 1e-4f, "Turned: long along East.");
+            foreach (var i in bar)
+                Assert.AreEqual(new Vector2(floor.X, floor.Y), cells[i], "Still hidden with its cell.");
+        }
+
+        [Test]
         public void MissingPrefab_IsCounted_AndSkipped()
         {
             _prefabs.Floor = null;
@@ -216,6 +271,37 @@ namespace Maze.Tests.EditMode.Visual
         }
 
         [Test]
+        public void EntityViewFactory_AppliesPickupPlacement_ButNotToDroppedItems()
+        {
+            var key = new KeyData("key_1", new GridPosition(4, 6));
+            Level.MutableKeys.Add(key);
+            Level.VisualData.SetObjectOverride(key.Id, new VisualChoice("key_red"));
+            LevelEditing.SetObjectPlacement(Level, key, new Vector2(-0.2f, 0.1f), 0.6f, 45f);
+            _prefabs.Door = CubePrefab("key", _wallMaterial, Vector3.zero, Vector3.one * 0.1f);
+
+            var view = KeyFactoryOf(_prefabs).Create(Level, key, _parent.transform);
+            Assert.AreEqual(new Vector3(3.8f, 0.6f, 6.1f), view.GameObject.transform.localPosition, "On the table.");
+            Assert.AreEqual(45f, view.GameObject.transform.localEulerAngles.y, 1e-3f);
+
+            // A dropped item (same id) appears where it was dropped, on the floor.
+            var dropped = KeyFactoryOf(_prefabs).Create(key.Id, VisualKind.Key, new VisualChoice("key_red"), new GridPosition(1, 1), _parent.transform);
+            Assert.AreEqual(new Vector3(1f, 0f, 1f), dropped.GameObject.transform.localPosition);
+            Object.DestroyImmediate(view.GameObject);
+            Object.DestroyImmediate(dropped.GameObject);
+        }
+
+        /// <summary>Factory over the fake prefabs where keys reuse the door slot.</summary>
+        private static EntityViewFactory KeyFactoryOf(FakePrefabs prefabs) => new EntityViewFactory(new KeysAsDoors(prefabs));
+
+        private sealed class KeysAsDoors : IVisualPrefabs
+        {
+            private readonly FakePrefabs _prefabs;
+            public KeysAsDoors(FakePrefabs prefabs) => _prefabs = prefabs;
+            public GameObject Get(VisualKind kind, string variantId) =>
+                _prefabs.Get(kind == VisualKind.Key ? VisualKind.Door : kind, variantId);
+        }
+
+        [Test]
         public void LevelVisualUsage_ListsEachUsedVariantOnce()
         {
             var keys = LevelVisualUsage.Collect(Level);
@@ -261,6 +347,7 @@ namespace Maze.Tests.EditMode.Visual
             public GameObject Floor;
             public GameObject Wall;
             public GameObject Door;
+            public GameObject Decor;
             public string LastRequested;
 
             public GameObject Get(VisualKind kind, string variantId)
@@ -271,6 +358,7 @@ namespace Maze.Tests.EditMode.Visual
                     case VisualKind.Floor: return Floor;
                     case VisualKind.Wall: return Wall;
                     case VisualKind.Door: return Door;
+                    case VisualKind.Decor: return Decor;
                     default: return null;
                 }
             }

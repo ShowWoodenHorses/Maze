@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Maze.Core.Common;
 using Maze.Core.Grid;
 using Maze.Core.Level;
 using Maze.Core.Lighting;
@@ -22,6 +23,20 @@ namespace Maze.Core.Visual
             LightPlacer.PlaceAll(level, keepManual: !clearOverrides);
         }
 
+        /// <summary>"Place Decor": recreates only the auto placed decor (density, VisualSeed); overrides stay.</summary>
+        public static void AssignAllDecor(LevelData level)
+        {
+            var geometry = level.Geometry;
+            if (!level.VisualData.HasCellAssignments(geometry.CellCount))
+            {
+                AssignAll(level, clearOverrides: false);
+                return;
+            }
+
+            for (var i = 0; i < geometry.CellCount; i++)
+                level.VisualData.SetCellAssignment(CellLayer.Decor, i, ChooseDecor(level, geometry.ToPosition(i)));
+        }
+
         public static void AssignAllCells(LevelData level)
         {
             var geometry = level.Geometry;
@@ -30,13 +45,45 @@ namespace Maze.Core.Visual
                 AssignCell(level, geometry.ToPosition(i));
         }
 
-        /// <summary>Both layers of one cell; a layer the cell does not have is cleared.</summary>
+        /// <summary>All layers of one cell (decor included); a layer the cell does not have is cleared.</summary>
         private static void AssignCell(LevelData level, GridPosition position)
         {
             var index = level.Geometry.ToIndex(position);
             foreach (var layer in CellLayers.All)
                 level.VisualData.SetCellAssignment(layer, index, ChooseCell(level, position, layer));
+            level.VisualData.SetCellAssignment(CellLayer.Decor, index, ChooseDecor(level, position));
         }
+
+        /// <summary>
+        /// Auto decor of a floor cell: present with probability <see cref="LevelGenerationSettings.DecorDensity"/>
+        /// (stable per cell and VisualSeed), a weighted General variant not taller than
+        /// <see cref="LevelGenerationSettings.MaxAutoDecorHeight"/>, a stable quarter turn. No set default.
+        /// </summary>
+        public static VisualChoice ChooseDecor(LevelData level, GridPosition position)
+        {
+            var theme = level.VisualTheme;
+            var geometry = level.Geometry;
+            if (theme == null || !CellLayers.Exists(geometry.GetCell(position), CellLayer.Decor))
+                return VisualChoice.None;
+
+            var settings = level.Generation;
+            var key = VisualSelector.CellKey(settings.VisualSeed, VisualKind.Decor, geometry.ToIndex(position));
+            var roll = (StableHash.Mix(key ^ DecorChanceSalt) >> 40) / (float)(1UL << 24);
+            if (roll >= settings.DecorDensity)
+                return VisualChoice.None;
+
+            var maxHeight = settings.MaxAutoDecorHeight;
+            var variant = VisualSelector.Pick(theme.GetSet(VisualKind.Decor), VisualCategory.General, null, key,
+                v => v.Height <= maxHeight);
+            if (variant == null)
+                return VisualChoice.None;
+
+            var rotation = (int)(StableHash.Mix(key ^ DecorRotationSalt) & 3UL);
+            return new VisualChoice(variant.Id, rotation);
+        }
+
+        private const ulong DecorChanceSalt = 0x4465636F72UL;
+        private const ulong DecorRotationSalt = 0x526F7444UL;
 
         /// <summary>
         /// Doors first (locked doors get distinct colours while colours last), then keys (each takes its door's

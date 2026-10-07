@@ -19,6 +19,7 @@ namespace Maze.Editor.LevelDesigner
         private bool _showOverrides = true;
         private bool _showLights = true;
         private bool _showLightList;
+        private bool _showDecor = true;
 
         public void OnGUI(LevelDesignerState state)
         {
@@ -61,6 +62,7 @@ namespace Maze.Editor.LevelDesigner
                 MessageType.None);
 
             DrawLights(state);
+            DrawDecor(state);
             DrawOverrides(state);
             DrawDistribution(level);
         }
@@ -155,6 +157,61 @@ namespace Maze.Editor.LevelDesigner
                 Change(state, "Remove Light", () => LevelEditing.RemoveLight(level, toRemove));
                 GUIUtility.ExitGUI();
             }
+        }
+
+        /// <summary>
+        /// Decor: auto placement settings of the level (density, the height limit for auto placement) and Place Decor
+        /// (also part of Regenerate Visuals). Manual decor is painted with the Decor tool (Edit tab).
+        /// </summary>
+        private void DrawDecor(LevelDesignerState state)
+        {
+            var level = state.Level;
+            var geometry = level.Geometry;
+            int auto = 0, manual = 0;
+            for (var i = 0; i < geometry.CellCount; i++)
+            {
+                var choice = VisualResolver.ResolveDecor(level, geometry.ToPosition(i), out var source);
+                if (choice.IsEmpty) continue;
+                if (source == VisualSource.Override) manual++;
+                else auto++;
+            }
+
+            EditorGUILayout.Space();
+            _showDecor = EditorGUILayout.Foldout(_showDecor, $"Decor ({auto + manual}: {auto} auto, {manual} manual)", true);
+            if (!_showDecor)
+                return;
+
+            var set = level.VisualTheme.GetSet(VisualKind.Decor);
+            if (set == null)
+            {
+                EditorGUILayout.HelpBox("The theme has no Decor set (Maze > Dev > Build Decor).", MessageType.Info);
+                return;
+            }
+
+            EditorGUI.BeginChangeCheck();
+            var density = EditorGUILayout.Slider("Density", level.Generation.DecorDensity, 0f, 1f);
+            var maxHeight = Mathf.Max(0f, EditorGUILayout.FloatField(
+                new GUIContent("Max Auto Height (m)", "Taller decor is never placed automatically, only with the Decor tool."),
+                level.Generation.MaxAutoDecorHeight));
+            if (EditorGUI.EndChangeCheck())
+                LevelEditorCommands.Modify(level, "Change Decor Settings", () =>
+                {
+                    level.Generation.DecorDensity = density;
+                    level.Generation.MaxAutoDecorHeight = maxHeight;
+                });
+
+            if (GUILayout.Button("Place Decor"))
+            {
+                DecorHeights.Refresh(set);
+                Change(state, "Place Decor", () => LevelEditing.PlaceDecor(level));
+            }
+
+            var limit = level.Generation.MaxAutoDecorHeight;
+            var autoVariants = set.Variants.Count(v => v.Weight > 0 && v.Category == VisualCategory.General && v.Height <= limit);
+            EditorGUILayout.HelpBox(
+                $"Place Decor replaces auto placed decor (Visual Seed, density) and keeps manual decor. {autoVariants} of " +
+                $"{set.Variants.Count} variants are low enough for auto placement; taller ones only with the Decor tool.",
+                autoVariants == 0 ? MessageType.Warning : MessageType.None);
         }
 
         private static void Change(LevelDesignerState state, string undoName, Action change)

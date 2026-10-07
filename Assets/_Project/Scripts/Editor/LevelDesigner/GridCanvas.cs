@@ -30,6 +30,8 @@ namespace Maze.Editor.LevelDesigner
         private static readonly Color FloorColor = new Color(0.80f, 0.78f, 0.72f);
         private static readonly Color DoorColor = new Color(0.55f, 0.36f, 0.18f);
         private static readonly Color FragmentColor = new Color(0.65f, 0.35f, 0.95f);
+        private static readonly Color DecorAutoColor = new Color(0.45f, 0.4f, 0.32f);
+        private static readonly Color DecorManualColor = new Color(0.2f, 0.6f, 0.25f);
         private static readonly Color SelectedColor = new Color(1f, 0.85f, 0.1f);
         private static readonly Color ErrorColor = new Color(1f, 0.2f, 0.2f);
         private static readonly Color WarningColor = new Color(1f, 0.65f, 0.1f);
@@ -249,6 +251,7 @@ namespace Maze.Editor.LevelDesigner
             }
 
             PaintPatrols(state);
+            PaintDecor(level, local);
             PaintLights(level, local);
             PaintGlyphs(level, local);
             PaintIssues(state);
@@ -274,6 +277,30 @@ namespace Maze.Editor.LevelDesigner
 
             if (state.DragTarget.HasValue && geometry.IsInside(state.DragTarget.Value))
                 DrawOutline(CellRect(state.DragTarget.Value, geometry.Height), SelectedEntityColor, 2f);
+        }
+
+        /// <summary>Decor: a small square in the cell's bottom-left corner (dark: auto placed, green: by hand).</summary>
+        private void PaintDecor(LevelData level, Rect local)
+        {
+            if (_cellSize < 8f)
+                return;
+
+            var geometry = level.Geometry;
+            var size = Mathf.Max(3f, _cellSize * 0.22f);
+            for (var i = 0; i < geometry.CellCount; i++)
+            {
+                var cell = geometry.ToPosition(i);
+                var r = CellRect(cell, geometry.Height);
+                if (!r.Overlaps(local))
+                    continue;
+
+                var decor = VisualResolver.ResolveDecor(level, cell, out var source);
+                if (decor.IsEmpty)
+                    continue;
+
+                EditorGUI.DrawRect(new Rect(r.x + 2f, r.yMax - size - 3f, size, size),
+                    source == VisualSource.Override ? DecorManualColor : DecorAutoColor);
+            }
         }
 
         /// <summary>Light sources: a dot of the light's colour at its point (shifted towards its wall).</summary>

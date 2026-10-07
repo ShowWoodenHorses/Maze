@@ -233,6 +233,8 @@ namespace Maze.Core.Validation
             foreach (var entity in level.AllEntities())
                 if (VisualKinds.TryGetForEntity(entity, out var kind, out _))
                     requiredKinds.Add(kind);
+            if (theme.GetSet(VisualKind.Decor) != null || UsesDecor(level))
+                requiredKinds.Add(VisualKind.Decor);
 
             foreach (var kind in requiredKinds.OrderBy(k => k))
             {
@@ -315,6 +317,65 @@ namespace Maze.Core.Validation
                         $"Colour '{pair.Key}' is used by several locked doors: {string.Join(", ", pair.Value)}.");
         }
 
+        /// <summary>
+        /// Placed decor must name an existing variant of the theme's Decor set; a hand-set placement must be within
+        /// its limits and belong to manual decor of a floor cell.
+        /// </summary>
+        private static void ValidateDecor(LevelData level, VisualTheme theme, ValidationReport report)
+        {
+            var geometry = level.Geometry;
+            foreach (var placement in level.VisualData.DecorPlacements)
+            {
+                var cell = placement.Cell;
+                if (!placement.IsValid)
+                    report.Add(Error, Visual, ValidationCodes.InvalidDecorPlacement,
+                        $"Decor placement at {cell} is out of limits (shift up to half a cell, height " +
+                        $"{DecorPlacement.MinHeight}..{DecorPlacement.MaxHeight} m).", cell);
+                else if (!geometry.IsInside(cell) ||
+                         !level.VisualData.TryGetCellOverride(cell, CellLayer.Decor, out var manual) || manual.IsEmpty ||
+                         !CellLayers.Exists(geometry.GetCell(cell), CellLayer.Decor))
+                    report.Add(Warning, Visual, ValidationCodes.StaleDecorPlacement,
+                        $"Decor placement at {cell} is ignored: the cell has no manual decor.", cell);
+            }
+
+            var set = theme.GetSet(VisualKind.Decor);
+            for (var i = 0; i < geometry.CellCount; i++)
+            {
+                var p = geometry.ToPosition(i);
+                var choice = VisualResolver.ResolveDecor(level, p);
+                if (choice.IsEmpty || set == null)
+                    continue; // A missing set is reported once as MissingVisualSet.
+
+                if (set.FindVariant(choice.VariantId) == null)
+                    report.Add(Error, Visual, ValidationCodes.UnknownVariant,
+                        $"Cell {p} uses unknown decor variant '{choice.VariantId}'.", p);
+            }
+        }
+
+        /// <summary>A pickup's hand-set placement must be within the limits.</summary>
+        private static void ValidateObjectPlacements(LevelData level, ValidationReport report)
+        {
+            foreach (var placement in level.VisualData.ObjectPlacements)
+            {
+                if (placement.IsValid)
+                    continue;
+
+                var entity = level.AllEntities().FirstOrDefault(e => e.Id == placement.EntityId);
+                report.Add(Error, Visual, ValidationCodes.InvalidObjectPlacement,
+                    $"Placement of '{placement.EntityId}' is out of limits (shift up to half a cell, height " +
+                    $"{DecorPlacement.MinHeight}..{DecorPlacement.MaxHeight} m).", entity?.Position, placement.EntityId);
+            }
+        }
+
+        private static bool UsesDecor(LevelData level)
+        {
+            var geometry = level.Geometry;
+            for (var i = 0; i < geometry.CellCount; i++)
+                if (!VisualResolver.ResolveDecor(level, geometry.ToPosition(i)).IsEmpty)
+                    return true;
+            return false;
+        }
+
         private static void ValidateSet(VisualSet set, VisualKind kind, ValidationReport report)
         {
             if (set.Kind != kind)
@@ -350,8 +411,13 @@ namespace Maze.Core.Validation
                     report.Add(Error, Visual, ValidationCodes.OverrideOutOfBounds, $"Visual override at {entry.Position} is outside the level.", entry.Position);
                 else if (!CellLayers.Exists(geometry.GetCell(entry.Position), entry.Layer))
                     report.Add(Warning, Visual, ValidationCodes.OverrideLayerMismatch,
-                        $"{entry.Layer} override at {entry.Position} is ignored: the cell is not a wall.", entry.Position);
+                        entry.Layer == CellLayer.Decor
+                            ? $"Decor at {entry.Position} is ignored: decor is allowed on floor cells only, not in walls and doors."
+                            : $"{entry.Layer} override at {entry.Position} is ignored: the cell is not a wall.", entry.Position);
             }
+
+            ValidateDecor(level, theme, report);
+            ValidateObjectPlacements(level, report);
 
             var staleWalls = 0;
             var wallCategoriesWithoutVariants = new Dictionary<VisualCategory, int>();

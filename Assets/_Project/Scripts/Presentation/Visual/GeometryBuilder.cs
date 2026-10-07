@@ -67,19 +67,19 @@ namespace Maze.Presentation.Visual
                         continue;
 
                     var choice = VisualResolver.ResolveCell(level, cell, layer);
-                    var prefab = choice.IsEmpty ? null : _prefabs.Get(CellLayers.Kind(layer), choice.VariantId);
-                    if (prefab == null)
-                    {
+                    if (!Append(CellLayers.Kind(layer), choice, cell, Vector3.zero, 90f * choice.Rotation))
                         missing++;
-                        continue;
-                    }
-
-                    // Same placement as Instantiate(prefab, cell, rotation): the root keeps its own scale.
-                    var matrix = Matrix4x4.TRS(cell.ToWorld(), Quaternion.Euler(0f, 90f * choice.Rotation, 0f),
-                        prefab.transform.localScale);
-                    foreach (var part in _parts.Get(prefab))
-                        _accumulator.Append(part, matrix * part.LocalMatrix, new Vector2(x, y));
                 }
+
+                // Optional: no decor is normal, a decor without its prefab is missing. Its vertices keep its cell
+                // (hidden with it) even where the prop sticks out.
+                var decor = VisualResolver.ResolveDecor(level, cell);
+                if (decor.IsEmpty)
+                    continue;
+
+                VisualResolver.ResolveDecorPose(level, cell, decor, out var offset, out var yaw);
+                if (!Append(VisualKind.Decor, decor, cell, offset, yaw))
+                    missing++;
             }
 
             if (_accumulator.IsEmpty)
@@ -97,6 +97,20 @@ namespace Maze.Presentation.Visual
             renderer.sharedMaterials = materials;
 
             return new VisibilityChunk(rect, go, mesh);
+        }
+
+        /// <summary>Adds the prefab of <paramref name="choice"/> at the cell; false when it has no prefab.</summary>
+        private bool Append(VisualKind kind, VisualChoice choice, GridPosition cell, Vector3 offset, float yaw)
+        {
+            var prefab = choice.IsEmpty ? null : _prefabs.Get(kind, choice.VariantId);
+            if (prefab == null)
+                return false;
+
+            // Same placement as Instantiate(prefab, cell + offset, yaw): the root keeps its own scale.
+            var matrix = Matrix4x4.TRS(cell.ToWorld() + offset, Quaternion.Euler(0f, yaw, 0f), prefab.transform.localScale);
+            foreach (var part in _parts.Get(prefab))
+                _accumulator.Append(part, matrix * part.LocalMatrix, new Vector2(cell.X, cell.Y));
+            return true;
         }
     }
 }

@@ -31,6 +31,7 @@ namespace Maze.Editor.LevelDesigner
                 return false;
 
             Undo.RegisterCompleteObjectUndo(level, "Generate New Level");
+            DecorHeights.Refresh(level.VisualTheme);
             try
             {
                 LevelAuthoring.GenerateNew(level);
@@ -58,6 +59,7 @@ namespace Maze.Editor.LevelDesigner
                 return false;
 
             Undo.RegisterCompleteObjectUndo(level, clearOverrides ? "Regenerate Visuals + Clear Overrides" : "Regenerate Visuals");
+            DecorHeights.Refresh(level.VisualTheme);
             LevelAuthoring.RegenerateVisuals(level, clearOverrides);
             EditorUtility.SetDirty(level);
             return true;

@@ -47,7 +47,7 @@ namespace Maze.Editor.LevelDesigner
         }
 
         /// <summary>
-        /// Floor and wall prefabs are merged into chunk meshes at runtime (GeometryBuilder): their meshes must be
+        /// Floor, wall and decor prefabs are merged into chunk meshes at runtime (GeometryBuilder): their meshes must be
         /// readable and their materials must use the Maze/Geometry shader, otherwise visibility cannot hide cells.
         /// </summary>
         private static void CheckGeometryPrefabs(LevelData level, ValidationReport report)
@@ -57,7 +57,7 @@ namespace Maze.Editor.LevelDesigner
                 return;
 
             var reported = new HashSet<UnityEngine.Object>();
-            foreach (var kind in new[] { VisualKind.Floor, VisualKind.Wall })
+            foreach (var kind in new[] { VisualKind.Floor, VisualKind.Wall, VisualKind.Decor })
             {
                 var set = theme.GetSet(kind);
                 if (set == null)

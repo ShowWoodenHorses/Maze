@@ -40,6 +40,8 @@ namespace Maze.Core.Authoring
 
             if (type != CellType.Wall)
                 level.VisualData.ClearCellOverride(position, CellLayer.Wall);
+            if (type != CellType.Floor)
+                level.VisualData.ClearCellOverride(position, CellLayer.Decor);
 
             VisualAssigner.ReassignAround(level, position);
 
@@ -140,12 +142,15 @@ namespace Maze.Core.Authoring
 
             var from = entity.Position;
             entity.Position = to;
+            if (from != to)
+                level.VisualData.ClearObjectPlacement(entity.Id); // Another cell, another surrounding: back to its centre.
 
             if (entity is DoorData)
             {
                 geometry.SetCell(from, CellType.Floor);
                 geometry.SetCell(to, CellType.Door);
                 level.VisualData.ClearCellOverride(to, CellLayer.Wall);
+                level.VisualData.ClearCellOverride(to, CellLayer.Decor);
                 VisualAssigner.ReassignAround(level, from);
                 VisualAssigner.ReassignAround(level, to);
             }
@@ -277,6 +282,46 @@ namespace Maze.Core.Authoring
 
         public static void SetCellOverride(LevelData level, GridPosition position, CellLayer layer, VisualChoice choice) =>
             level.VisualData.SetCellOverride(position, layer, choice);
+
+        /// <summary>
+        /// Moves / lifts / turns the decor of a floor cell (values clamped: shift ≤ half a cell, height
+        /// <see cref="DecorPlacement.MinHeight"/>..<see cref="DecorPlacement.MaxHeight"/>). Auto placed decor becomes
+        /// manual (an override with the same variant), so regeneration keeps it. False when the cell has no decor.
+        /// </summary>
+        public static bool SetDecorPlacement(LevelData level, GridPosition cell, UnityEngine.Vector2 offset, float height, float yaw)
+        {
+            var decor = VisualResolver.ResolveDecor(level, cell, out var source);
+            if (decor.IsEmpty)
+                return false;
+
+            if (source != VisualSource.Override)
+                level.VisualData.SetCellOverride(cell, CellLayer.Decor, decor);
+            level.VisualData.SetDecorPlacement(cell, offset, height, yaw);
+            return true;
+        }
+
+        /// <summary>
+        /// Shifts / lifts / turns the view of a pickup (key, medkit, weapon, map fragment) inside its cell; clamped like
+        /// decor. Purely visual. False for other objects.
+        /// </summary>
+        public static bool SetObjectPlacement(LevelData level, LevelEntityData entity, UnityEngine.Vector2 offset, float height, float yaw)
+        {
+            if (!VisualKinds.IsPlaceable(entity))
+                return false;
+
+            level.VisualData.SetObjectPlacement(entity.Id, offset, height, yaw);
+            return true;
+        }
+
+        /// <summary>Back to the cell centre on the floor.</summary>
+        public static bool ResetObjectPlacement(LevelData level, LevelEntityData entity) =>
+            level.VisualData.ClearObjectPlacement(entity.Id);
+
+        /// <summary>Back to the cell centre and the quarter turn of the choice; the decor stays manual.</summary>
+        public static bool ResetDecorPlacement(LevelData level, GridPosition cell) => level.VisualData.ClearDecorPlacement(cell);
+
+        /// <summary>Recreates the auto placed decor (density, max auto height, VisualSeed); manual decor stays.</summary>
+        public static void PlaceDecor(LevelData level) => VisualAssigner.AssignAllDecor(level);
 
         public static void ClearCellOverride(LevelData level, GridPosition position, CellLayer layer) =>
             level.VisualData.ClearCellOverride(position, layer);

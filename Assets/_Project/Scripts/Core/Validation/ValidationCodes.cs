@@ -47,6 +47,9 @@ namespace Maze.Core.Validation
         public const string StaleWallVisual = "StaleWallVisual";
         public const string OverrideOutOfBounds = "OverrideOutOfBounds";
         public const string OverrideLayerMismatch = "OverrideLayerMismatch";
+        public const string InvalidDecorPlacement = "InvalidDecorPlacement";
+        public const string StaleDecorPlacement = "StaleDecorPlacement";
+        public const string InvalidObjectPlacement = "InvalidObjectPlacement";
         public const string OverrideForMissingEntity = "OverrideForMissingEntity";
         public const string UniformDistribution = "UniformDistribution";
         public const string KeyDoorColorMismatch = "KeyDoorColorMismatch";
