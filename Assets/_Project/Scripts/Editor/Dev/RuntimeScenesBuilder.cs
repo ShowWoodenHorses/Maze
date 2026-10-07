@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using Maze.Application.Save;
 using Maze.Composition;
+using Maze.Presentation.Map;
 using Maze.Presentation.UI;
 using Maze.Presentation.UI.Touch;
 using Maze.Presentation.Visual;
@@ -499,6 +500,17 @@ namespace Maze.Editor.Dev
             return screen;
         }
 
+        private static Toggle MapToggle(Transform parent, string name, string text, float x)
+        {
+            var toggle = ToggleRow(parent, name, text);
+            var rect = (RectTransform)toggle.transform;
+            rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(0f, 1f);
+            rect.anchoredPosition = new Vector2(x, -42f);
+            rect.sizeDelta = new Vector2(210f, 54f);
+            toggle.GetComponentInChildren<Text>().horizontalOverflow = HorizontalWrapMode.Overflow;
+            return toggle;
+        }
+
         private static ResultScreen BuildResult(Transform parent)
         {
             var screen = Screen<ResultScreen>(parent, "ResultScreen", Dim);
@@ -551,6 +563,16 @@ namespace Maze.Editor.Dev
             fitter.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
             fitter.aspectRatio = 1f;
 
+            // Icon switches at the top left (the caption is centred).
+            var showPlayer = MapToggle(screen.transform, "ShowPlayer", "Player", 32f);
+            var showFragments = MapToggle(screen.transform, "ShowFragments", "Map pieces", 252f);
+
+            var icons = AssetDatabase.LoadAssetAtPath<MapIconSet>(MapIconsBuilder.SetPath);
+            if (icons == null) icons = MapIconsBuilder.Build();
+
+            SetReference(screen, "_icons", icons);
+            SetReference(screen, "_showPlayer", showPlayer);
+            SetReference(screen, "_showFragments", showFragments);
             SetReference(screen, "_image", image);
             SetReference(screen, "_fitter", fitter);
             SetReference(screen, "_caption", caption);

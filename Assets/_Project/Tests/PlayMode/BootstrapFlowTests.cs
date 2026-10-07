@@ -7,6 +7,7 @@ using Maze.Application.Assets;
 using Maze.Application.Flow;
 using Maze.Application.Levels;
 using Maze.Application.Save;
+using Maze.Application.Services;
 using Maze.Composition;
 using Maze.Core.Definitions;
 using Maze.Core.Grid;
@@ -15,6 +16,7 @@ using Maze.Gameplay.Doors;
 using Maze.Gameplay.Level;
 using Maze.Gameplay.Map;
 using Maze.Gameplay.Pickups;
+using Maze.Gameplay.Player;
 using Maze.Gameplay.Visibility;
 using Maze.Presentation.Map;
 using Maze.Presentation.UI;
@@ -23,6 +25,7 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
+using UnityEngine.UI;
 using VContainer;
 
 namespace Maze.Tests.PlayMode
@@ -402,6 +405,32 @@ namespace Maze.Tests.PlayMode
                 Assert.AreEqual(LevelRunState.Paused, runtime.State, "ТЗ §60: the map pauses gameplay.");
                 Assert.IsTrue(ui.Map.IsVisible);
                 Assert.IsFalse(ui.Hud.IsVisible);
+
+                // Icons: refreshed on opening; the player always, fragments not collected yet everywhere.
+                var icons = presenter.Icons;
+                var player = container.Resolve<PlayerSystem>();
+                var playerIcon = icons[icons.Count - 1];
+                Assert.AreEqual(MapIconKind.Player, playerIcon.Kind);
+                Assert.IsTrue(playerIcon.Visible, "The player is shown also outside collected regions.");
+                Assert.AreEqual(MapIconLayout.CenterOf(player.Position), playerIcon.Center);
+                var fragmentIcons = icons.Where(icon => icon.Kind == MapIconKind.MapFragment).ToList();
+                Assert.AreEqual(map.TotalCount, fragmentIcons.Count);
+                Assert.IsFalse(fragmentIcons[0].Visible, "Collected fragment: no icon.");
+                Assert.IsTrue(fragmentIcons[1].Visible, "Not collected: shown even in an unknown region.");
+                var start = level.PlayerStarts[0].Position;
+                Assert.AreEqual(map.IsRevealed(start), icons[0].Visible, "The start only in collected regions.");
+                foreach (var doorIcon in icons.Where(icon => icon.Kind == MapIconKind.Door || icon.Kind == MapIconKind.LockedDoor))
+                {
+                    var cell = new GridPosition(Mathf.FloorToInt(doorIcon.Center.x), Mathf.FloorToInt(doorIcon.Center.y));
+                    Assert.AreEqual(map.IsRevealed(cell), doorIcon.Visible, "Doors only in collected regions.");
+                }
+
+                var playerToggle = ui.Map.transform.Find("ShowPlayerToggle").GetComponent<Toggle>();
+                Assert.IsTrue(playerToggle.isOn);
+                playerToggle.isOn = false;
+                Assert.IsFalse(presenter.Icons[presenter.Icons.Count - 1].Visible, "Player toggle hides the icon.");
+                Assert.IsFalse(_container.Resolve<SettingsService>().MapShowPlayer, "Saved in the settings.");
+                playerToggle.isOn = true;
                 _flow.CloseMap();
                 Assert.AreEqual(LevelRunState.Running, runtime.State);
 

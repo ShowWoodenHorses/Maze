@@ -272,6 +272,76 @@ namespace Maze.Tests.EditMode.Progress
         }
 
         [Test]
+        public void MapIconLayout_StableTiltAndShift_DoorAndPlayerRotation()
+        {
+            Assert.AreEqual(MapIconLayout.Tilt("door_1", 12f), MapIconLayout.Tilt("door_1", 12f), "Stable per id.");
+            Assert.AreEqual(MapIconLayout.Shift("door_1", 0.15f), MapIconLayout.Shift("door_1", 0.15f));
+            var differs = false;
+            for (var i = 0; i < 20; i++)
+            {
+                var tilt = MapIconLayout.Tilt("door_" + i, 12f);
+                var shift = MapIconLayout.Shift("door_" + i, 0.15f);
+                Assert.LessOrEqual(Mathf.Abs(tilt), 12f);
+                Assert.LessOrEqual(Mathf.Abs(shift.x), 0.15f);
+                Assert.LessOrEqual(Mathf.Abs(shift.y), 0.15f);
+                differs |= !Mathf.Approximately(tilt, MapIconLayout.Tilt("door_0", 12f));
+            }
+
+            Assert.IsTrue(differs, "Different objects lie differently.");
+
+            var level = ScriptableObject.CreateInstance<LevelData>();
+            try
+            {
+                // Row y=1: floor - door - floor (east-west passage, walls north and south); column x=3: a north-south one.
+                var geometry = new LevelGeometry(5, 3);
+                geometry.SetCell(new GridPosition(0, 1), CellType.Floor);
+                geometry.SetCell(new GridPosition(1, 1), CellType.Door);
+                geometry.SetCell(new GridPosition(2, 1), CellType.Floor);
+                geometry.SetCell(new GridPosition(3, 0), CellType.Floor);
+                geometry.SetCell(new GridPosition(3, 1), CellType.Door);
+                geometry.SetCell(new GridPosition(3, 2), CellType.Floor);
+                level.ReplaceGeometry(geometry);
+                var grid = new LevelGrid(level.Geometry);
+                Assert.AreEqual(90f, MapIconLayout.DoorRotation(grid, new GridPosition(1, 1)), "East-west passage: turned plank.");
+                Assert.AreEqual(0f, MapIconLayout.DoorRotation(grid, new GridPosition(3, 1)), "North-south passage.");
+            }
+            finally
+            {
+                Object.DestroyImmediate(level);
+            }
+
+            Assert.AreEqual(0f, MapIconLayout.PlayerRotation(Vector2.up), 1e-4f);
+            Assert.AreEqual(-90f, MapIconLayout.PlayerRotation(Vector2.right), 1e-4f, "Facing east: turned clockwise.");
+            Assert.AreEqual(new Vector2(2.5f, 3.5f), MapIconLayout.CenterOf(new GridPosition(2, 3)));
+            Assert.AreEqual(new Vector2(2.5f, 3.5f), MapIconLayout.CenterOf(new Vector2(2f, 3f)));
+        }
+
+        [Test]
+        public void MapIconToggles_OnByDefault_AlsoInOldSaves_Saved()
+        {
+            var settings = new SettingsService(_save);
+            Assert.IsTrue(settings.MapShowPlayer);
+            Assert.IsTrue(settings.MapShowFragments);
+
+            var writes = _storage.Writes;
+            settings.MapShowPlayer = false;
+            settings.MapShowPlayer = false;
+            Assert.AreEqual(writes + 1, _storage.Writes, "Saved once per change.");
+
+            var save = new SaveService(_storage);
+            save.Load();
+            var loaded = new SettingsService(save);
+            Assert.IsFalse(loaded.MapShowPlayer);
+            Assert.IsTrue(loaded.MapShowFragments);
+
+            _storage.Json = "{\"Settings\":{\"ShowFps\":true}}";
+            _save.Load();
+            var old = new SettingsService(_save);
+            Assert.IsTrue(old.MapShowPlayer, "Old saves show the icons.");
+            Assert.IsTrue(old.MapShowFragments);
+        }
+
+        [Test]
         public void SaveWithoutControls_GetsDefaultControls()
         {
             _storage.Json = "{\"Settings\":{\"MusicVolume\":0.5,\"SfxVolume\":1.0}}";
@@ -284,7 +354,7 @@ namespace Maze.Tests.EditMode.Progress
         // ------------------------------------------------------------ Map
 
         [Test]
-        public void MapRenderer_DrawsOnlyCollectedRegions_WithMarkers()
+        public void MapRenderer_DrawsOnlyCollectedRegions_DoorsAsPassages()
         {
             var level = ScriptableObject.CreateInstance<LevelData>();
             try
@@ -299,24 +369,23 @@ namespace Maze.Tests.EditMode.Progress
 
                 var grid = new LevelGrid(level.Geometry);
                 var map = new MapSystem(level);
-                var markers = new Dictionary<GridPosition, Color32> { [new GridPosition(3, 0)] = MapRenderer.Exit };
                 var pixels = new Color32[grid.CellCount];
 
-                MapRenderer.Render(grid, map, markers, pixels);
+                MapRenderer.Render(grid, map, pixels);
                 foreach (var pixel in pixels)
                     Assert.AreEqual(MapRenderer.Unknown, pixel, "Nothing collected: the map is empty.");
 
                 map.Collect(level.MapFragments[0]);
-                MapRenderer.Render(grid, map, markers, pixels);
+                MapRenderer.Render(grid, map, pixels);
                 Assert.AreEqual(MapRenderer.Wall, pixels[grid.ToIndex(new GridPosition(0, 0))]);
                 Assert.AreEqual(MapRenderer.Floor, pixels[grid.ToIndex(new GridPosition(1, 0))]);
                 Assert.AreEqual(MapRenderer.Wall, pixels[grid.ToIndex(new GridPosition(1, 1))]);
                 Assert.AreEqual(MapRenderer.Unknown, pixels[grid.ToIndex(new GridPosition(2, 0))], "Other fragment's region.");
 
                 map.Collect(level.MapFragments[1]);
-                MapRenderer.Render(grid, map, markers, pixels);
-                Assert.AreEqual(MapRenderer.Door, pixels[grid.ToIndex(new GridPosition(2, 0))]);
-                Assert.AreEqual(MapRenderer.Exit, pixels[grid.ToIndex(new GridPosition(3, 0))]);
+                MapRenderer.Render(grid, map, pixels);
+                Assert.AreEqual(MapRenderer.Floor, pixels[grid.ToIndex(new GridPosition(2, 0))], "A door is a passage; its icon shows it.");
+                Assert.AreEqual(MapRenderer.Floor, pixels[grid.ToIndex(new GridPosition(3, 0))]);
                 Assert.IsTrue(map.AllCollected);
             }
             finally

@@ -52,6 +52,20 @@ namespace Maze.Application.Services
             }
         }
 
+        /// <summary>Map screen shows the player icon. Saved at once.</summary>
+        public bool MapShowPlayer
+        {
+            get => !_save.Data.Settings.MapHidePlayer;
+            set => SetFlag(ref _save.Data.Settings.MapHidePlayer, !value);
+        }
+
+        /// <summary>Map screen shows icons of map fragments not collected yet. Saved at once.</summary>
+        public bool MapShowFragments
+        {
+            get => !_save.Data.Settings.MapHideFragments;
+            set => SetFlag(ref _save.Data.Settings.MapHideFragments, !value);
+        }
+
         /// <summary>Raised when <see cref="Controls"/> change (also once after loading).</summary>
         public event Action ControlsChanged;
 
@@ -114,6 +128,13 @@ namespace Maze.Application.Services
             ControlsChanged?.Invoke();
             ShowFpsChanged?.Invoke();
             return UniTask.CompletedTask;
+        }
+
+        private void SetFlag(ref bool field, bool value)
+        {
+            if (field == value) return;
+            field = value;
+            _save.Save();
         }
 
         private void Set(ref float field, float value)

@@ -62,8 +62,14 @@ namespace Maze.Application.Save
         public float SfxVolume = 1f;
         public ControlsSettings Controls = ControlsSettings.Default;
 
-        /// <summary>Frames-per-second counter in the corner of the screen (off by default; old saves get false).</summary>
+        /// <summary>Frames-per-second counter on screen (off by default; old saves get false).</summary>
         public bool ShowFps;
+
+        /// <summary>Map screen: hide the player icon. Negated so that old saves (false) show it.</summary>
+        public bool MapHidePlayer;
+
+        /// <summary>Map screen: hide icons of map fragments not collected yet. Negated like <see cref="MapHidePlayer"/>.</summary>
+        public bool MapHideFragments;
     }
 
     /// <summary>

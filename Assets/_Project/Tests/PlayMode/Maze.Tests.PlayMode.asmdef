@@ -9,6 +9,7 @@
         "Maze.Composition",
         "VContainer",
         "UniTask",
+        "UnityEngine.UI",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],
