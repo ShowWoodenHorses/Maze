@@ -3,6 +3,7 @@ using Maze.Application.Flow;
 using Maze.Application.Levels;
 using Maze.Application.Save;
 using Maze.Application.Services;
+using Maze.Gameplay.Combat;
 using Maze.Gameplay.Player;
 using Maze.Presentation.UI;
 using UnityEngine;
@@ -28,7 +29,7 @@ namespace Maze.Composition
             // IApplicationService initialization order = registration order. Settings are read from the save.
             builder.Register<PlayerPrefsSaveStorage>(Lifetime.Singleton).As<ISaveStorage>();
             builder.Register<SaveService>(Lifetime.Singleton).AsSelf().As<IApplicationService>();
-            builder.Register<SettingsService>(Lifetime.Singleton).AsSelf().As<IApplicationService>();
+            builder.Register<SettingsService>(Lifetime.Singleton).AsSelf().As<IApplicationService, IAimSettings>();
             builder.Register<AudioService>(Lifetime.Singleton).AsSelf().As<IApplicationService>();
             builder.Register<InputService>(Lifetime.Singleton).As<IInputService, IPlayerInput, IApplicationService>();
             builder.Register<SharedDefinitionsService>(Lifetime.Singleton).AsSelf().As<IApplicationService>();
@@ -41,6 +42,7 @@ namespace Maze.Composition
 
             builder.RegisterInstance(_ui);
             builder.Register<ScreenRouter>(Lifetime.Singleton);
+            builder.Register<SettingsPresenter>(Lifetime.Singleton);
 
             builder.RegisterEntryPoint<ApplicationEntryPoint>();
         }

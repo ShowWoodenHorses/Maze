@@ -13,18 +13,21 @@ namespace Maze.Composition
         private readonly GameFlow _flow;
         private readonly ScreenRouter _screens;
         private readonly PauseController _pause;
+        private readonly SettingsPresenter _settings;
 
-        public ApplicationEntryPoint(GameFlow flow, ScreenRouter screens, PauseController pause)
+        public ApplicationEntryPoint(GameFlow flow, ScreenRouter screens, PauseController pause, SettingsPresenter settings)
         {
             _flow = flow;
             _screens = screens;
             _pause = pause;
+            _settings = settings;
         }
 
         public async UniTask StartAsync(CancellationToken cancellation)
         {
             GameLog.Info(LogChannel.Bootstrap, "Bootstrap started.");
             _screens.Initialize();
+            _settings.Initialize();
             _pause.Initialize();
 
             await _flow.InitializeApplication();

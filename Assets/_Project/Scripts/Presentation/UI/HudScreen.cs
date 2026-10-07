@@ -1,4 +1,5 @@
 using System;
+using Maze.Presentation.UI.Touch;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
@@ -15,10 +16,14 @@ namespace Maze.Presentation.UI
         [SerializeField] private Button _pauseButton;
         [SerializeField] private Button _mapButton;
 
-        [Tooltip("On-screen stick and buttons (ТЗ §64, Android). They drive gamepad controls through the Input System.")]
-        [SerializeField] private GameObject _touchControls;
+        [Tooltip("On-screen stick and buttons (ТЗ §64, Android): a separate canvas, shown while the HUD is. " +
+                 "They drive gamepad controls through the Input System.")]
+        [SerializeField] private TouchControls _touchControls;
 
         private float _messageHideTime;
+
+        /// <summary>A real touch was seen on a platform that is not mobile (e.g. a desktop browser on a touchscreen).</summary>
+        private static bool _touchSeen;
 
         public event Action PauseClicked;
         public event Action MapClicked;
@@ -33,21 +38,35 @@ namespace Maze.Presentation.UI
         {
             Bind(_pauseButton, () => PauseClicked?.Invoke());
             Bind(_mapButton, () => MapClicked?.Invoke());
-            if (_touchControls != null)
-                _touchControls.SetActive(IsTouchAvailable);
+        }
+
+        private void OnEnable() => RefreshTouchControls();
+
+        private void OnDisable()
+        {
+            if (_touchControls != null) _touchControls.SetShown(false);
         }
 
         private void Update()
         {
-            if (_touchControls != null && !_touchControls.activeSelf)
+            if (!IsTouchAvailable && !_touchSeen)
             {
                 var touch = Touchscreen.current;
                 if (touch != null && touch.primaryTouch.press.wasPressedThisFrame)
-                    _touchControls.SetActive(true);
+                {
+                    _touchSeen = true;
+                    RefreshTouchControls();
+                }
             }
 
             if (_message != null && _message.text.Length > 0 && Time.unscaledTime >= _messageHideTime)
                 _message.text = string.Empty;
+        }
+
+        private void RefreshTouchControls()
+        {
+            if (_touchControls != null)
+                _touchControls.SetShown(isActiveAndEnabled && (IsTouchAvailable || _touchSeen));
         }
 
         public void SetLevelName(string levelName) => _levelName.text = levelName;

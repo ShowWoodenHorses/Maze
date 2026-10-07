@@ -1,3 +1,4 @@
+using Maze.Presentation.UI.Touch;
 using UnityEngine;
 
 namespace Maze.Presentation.UI
@@ -13,6 +14,10 @@ namespace Maze.Presentation.UI
         [SerializeField] private ResultScreen _result;
         [SerializeField] private ConfirmExitScreen _confirmExit;
         [SerializeField] private MapScreen _map;
+        [SerializeField] private SettingsScreen _settings;
+
+        [Tooltip("On-screen controls: a separate canvas with physical sizes, shown by the HUD.")]
+        [SerializeField] private TouchControls _touchControls;
 
         public MainMenuScreen MainMenu => _mainMenu;
         public LoadingScreen Loading => _loading;
@@ -22,5 +27,7 @@ namespace Maze.Presentation.UI
         public ResultScreen Result => _result;
         public ConfirmExitScreen ConfirmExit => _confirmExit;
         public MapScreen Map => _map;
+        public SettingsScreen Settings => _settings;
+        public TouchControls TouchControls => _touchControls;
     }
 }

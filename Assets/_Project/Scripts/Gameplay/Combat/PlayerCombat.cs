@@ -20,11 +20,20 @@ namespace Maze.Gameplay.Combat
     /// <item>Ranged: a bullet (<see cref="BulletSystem"/>). Single fires once per press, Automatic while held.
     /// An empty magazine reloads automatically (ReloadTime); reload runs only while the weapon is in hands.</item>
     /// </list>
+    /// Aiming (<see cref="IAimSettings"/>): with aim assist the attack turns to the best living target within
+    /// <see cref="AssistAngle"/> of the wanted direction, in reach and not behind a wall or closed door; otherwise
+    /// the wanted direction is snapped (<see cref="Aim.Snap"/>).
     /// Must be registered before <see cref="PlayerSystem"/> (it stops this tick's movement).
     /// </summary>
     public sealed class PlayerCombat : ILevelTickable
     {
         private const float DeadZone = 0.1f;
+
+        /// <summary>Half-angle of the aim assist cone, degrees.</summary>
+        public const float AssistAngle = 30f;
+
+        /// <summary>Aim assist reach of ranged weapons, cells (about the view window).</summary>
+        public const float AssistRange = 6f;
 
         private readonly IPlayerInput _input;
         private readonly PlayerSystem _player;
@@ -32,12 +41,14 @@ namespace Maze.Gameplay.Combat
         private readonly ISpatialQueryService _spatial;
         private readonly BulletSystem _bullets;
         private readonly SoundEventBus _sounds;
+        private readonly IAimSettings _aim;
         private readonly List<ISpatialObject> _candidates = new List<ISpatialObject>();
         private readonly List<IDamageable> _hits = new List<IDamageable>();
 
         public PlayerCombat(IPlayerInput input, PlayerSystem player, WeaponSystem weapons, ISpatialQueryService spatial,
-            BulletSystem bullets, SoundEventBus sounds)
+            BulletSystem bullets, SoundEventBus sounds, IAimSettings aim)
         {
+            _aim = aim;
             _input = input;
             _player = player;
             _weapons = weapons;
@@ -66,8 +77,8 @@ namespace Maze.Gameplay.Combat
                 return;
 
             var move = _input.Move;
-            var direction = move.sqrMagnitude >= DeadZone * DeadZone ? move.normalized : _player.Facing;
-            Attack(weapon, direction);
+            var wanted = move.sqrMagnitude >= DeadZone * DeadZone ? move.normalized : _player.Facing;
+            Attack(weapon, AimDirection(weapon.Definition, wanted));
         }
 
         /// <summary>Performs an attack with the active weapon now, ignoring input (tests, tools).</summary>
@@ -79,6 +90,56 @@ namespace Maze.Gameplay.Combat
 
             Attack(weapon, direction.normalized);
             return true;
+        }
+
+        /// <summary>Direction of an attack the player wants to make towards <paramref name="wanted"/>.</summary>
+        public Vector2 AimDirection(WeaponDefinition definition, Vector2 wanted)
+        {
+            if (_aim.AimAssist && TryFindAssistTarget(definition, wanted, out var toTarget))
+                return toTarget;
+            return Aim.Snap(wanted, _aim.AimMode);
+        }
+
+        /// <summary>
+        /// Best target in the cone: nearest, with off-axis targets counted farther (up to twice at the cone edge).
+        /// </summary>
+        private bool TryFindAssistTarget(WeaponDefinition definition, Vector2 wanted, out Vector2 direction)
+        {
+            direction = default;
+            if (wanted.sqrMagnitude <= 0f) return false;
+            wanted.Normalize();
+
+            var origin = _player.Position;
+            var range = definition.Slot == WeaponSlot.Melee ? definition.MeleeRange : AssistRange;
+            var minCos = Mathf.Cos(AssistAngle * Mathf.Deg2Rad);
+            var bestScore = float.MaxValue;
+            _spatial.QueryRadius(origin, range, _candidates);
+
+            foreach (var candidate in _candidates)
+            {
+                if (!(candidate is IDamageable target) || !target.IsAlive)
+                    continue;
+
+                var offset = target.Position - origin;
+                var distance = offset.magnitude;
+                if (distance <= 1e-4f)
+                    continue;
+                var toTarget = offset / distance;
+                var cos = Vector2.Dot(toTarget, wanted);
+                if (cos < minCos)
+                    continue;
+
+                var offAxis = Mathf.Acos(Mathf.Clamp(cos, -1f, 1f)) * Mathf.Rad2Deg / AssistAngle;
+                var score = distance * (1f + offAxis);
+                if (score >= bestScore || !_spatial.IsClear(origin, target.Position))
+                    continue;
+
+                bestScore = score;
+                direction = toTarget;
+            }
+
+            _candidates.Clear();
+            return bestScore < float.MaxValue;
         }
 
         private bool WantsToAttack(WeaponRuntime weapon)

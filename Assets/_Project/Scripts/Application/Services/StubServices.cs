@@ -1,17 +1,21 @@
+using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using Maze.Application.Save;
+using Maze.Gameplay.Combat;
 using UnityEngine;
 
 namespace Maze.Application.Services
 {
     /// <summary>
     /// Player settings (ТЗ §85: part of SaveData). Every change is saved at once (a persistent event).
-    /// Must be initialized after <see cref="SaveService"/>.
+    /// Must be initialized after <see cref="SaveService"/>. Controls are previewed while a slider moves and saved
+    /// once with <see cref="SaveControls"/> (not on every frame of a drag).
     /// </summary>
-    public sealed class SettingsService : IApplicationService
+    public sealed class SettingsService : IApplicationService, IAimSettings
     {
         private readonly SaveService _save;
+        private bool _controlsDirty;
 
         public SettingsService(SaveService save)
         {
@@ -32,11 +36,48 @@ namespace Maze.Application.Services
             set => Set(ref _save.Data.Settings.SfxVolume, value);
         }
 
+        /// <summary>Raised when <see cref="Controls"/> change (also once after loading).</summary>
+        public event Action ControlsChanged;
+
+        public ControlsSettings Controls => _save.Data.Settings.Controls;
+
+        AimMode IAimSettings.AimMode => Controls.AimMode;
+        bool IAimSettings.AimAssist => Controls.AimAssist;
+
+        /// <summary>Applies the controls at once; they are written by <see cref="SaveControls"/>.</summary>
+        public void PreviewControls(ControlsSettings controls)
+        {
+            controls = controls.Clamped();
+            if (controls.Equals(Controls)) return;
+            _save.Data.Settings.Controls = controls;
+            _controlsDirty = true;
+            ControlsChanged?.Invoke();
+        }
+
+        /// <summary>Applies and saves the controls.</summary>
+        public void SetControls(ControlsSettings controls)
+        {
+            PreviewControls(controls);
+            SaveControls();
+        }
+
+        public void ResetControls() => SetControls(ControlsSettings.Default);
+
+        /// <summary>Saves previewed controls, if any.</summary>
+        public void SaveControls()
+        {
+            if (!_controlsDirty) return;
+            _controlsDirty = false;
+            _save.Save();
+        }
+
         public UniTask InitializeAsync(CancellationToken cancellation)
         {
             var settings = _save.Data.Settings;
             settings.MusicVolume = Mathf.Clamp01(settings.MusicVolume);
             settings.SfxVolume = Mathf.Clamp01(settings.SfxVolume);
+            settings.Controls = settings.Controls.Clamped();
+            ControlsChanged?.Invoke();
             return UniTask.CompletedTask;
         }
 

@@ -5,6 +5,7 @@ using Maze.Core.Common;
 using Maze.Core.Definitions;
 using Maze.Core.Grid;
 using Maze.Core.Level;
+using Maze.Gameplay.Combat;
 using Maze.Gameplay.Grid;
 using Maze.Gameplay.Level;
 using UnityEngine;
@@ -46,12 +47,15 @@ namespace Maze.Gameplay.Player
         private readonly LevelPassability _passability;
         private readonly OccupancyMap _occupancy;
         private readonly LevelLaunchOptions _options;
+        private readonly IAimSettings _aim;
         private bool _holdStill;
+        private bool _moved;
         private Vector2 _holdFacing;
 
         public PlayerSystem(LevelData level, PlayerDefinition definition, IPlayerInput input, LevelPassability passability,
-            OccupancyMap occupancy, LevelLaunchOptions options)
+            OccupancyMap occupancy, LevelLaunchOptions options, IAimSettings aim)
         {
+            _aim = aim;
             _level = level;
             _definition = definition;
             _input = input;
@@ -70,7 +74,11 @@ namespace Maze.Gameplay.Player
 
         public GridPosition Cell { get; private set; }
 
-        /// <summary>Unit look direction: the last movement direction (ТЗ §65), kept when the player stops.</summary>
+        /// <summary>
+        /// Unit look direction: the last movement direction (ТЗ §65). When the player stops it snaps to the aim
+        /// directions (<see cref="IAimSettings.AimMode"/>), so standing still shows where an attack would go.
+        /// An attack sets it exactly (it may aim at a target).
+        /// </summary>
         public Vector2 Facing { get; private set; } = Vector2.up;
 
         /// <summary>Actual speed this tick relative to <see cref="PlayerDefinition.MoveSpeed"/>, 0..1 (for animation).</summary>
@@ -110,17 +118,21 @@ namespace Maze.Gameplay.Player
                 if (_holdFacing.sqrMagnitude > 0f)
                     Facing = _holdFacing.normalized;
                 SpeedFactor = 0f;
+                _moved = false;
                 return;
             }
 
             var move = Vector2.ClampMagnitude(_input.Move, 1f);
             if (move.sqrMagnitude < DeadZone * DeadZone || deltaTime <= 0f)
             {
+                if (_moved) Facing = Aim.Snap(Facing, _aim.AimMode);
+                _moved = false;
                 SpeedFactor = 0f;
                 return;
             }
 
             Facing = move.normalized;
+            _moved = true;
             var maxDistance = _definition.MoveSpeed * deltaTime;
             var target = PlayerMovement.Move(Position, move * maxDistance, _definition.BodyHalfSize, _definition.CornerAssist, this);
             SpeedFactor = Mathf.Clamp01((target - Position).magnitude / maxDistance);
@@ -148,6 +160,7 @@ namespace Maze.Gameplay.Player
             Cell = start.Position;
             Position = new Vector2(start.Position.X, start.Position.Y);
             Facing = InitialFacing(start.Position);
+            _moved = false;
             SpeedFactor = 0f;
             IsSpawned = true;
 

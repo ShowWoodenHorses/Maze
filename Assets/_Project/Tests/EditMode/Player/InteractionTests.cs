@@ -5,6 +5,7 @@ using Maze.Core.Grid;
 using Maze.Core.Level;
 using Maze.Gameplay.Doors;
 using Maze.Gameplay.Grid;
+using Maze.Gameplay.Combat;
 using Maze.Gameplay.Level;
 using Maze.Gameplay.Map;
 using Maze.Gameplay.Pickups;
@@ -81,7 +82,8 @@ namespace Maze.Tests.EditMode.Player
             _inventory = new PlayerInventory();
             _weapons = new WeaponSystem(_input);
             _sounds = new SoundEventBus();
-            _player = new PlayerSystem(_level, _definition, _input, _passability, _occupancy, new LevelLaunchOptions(startIndex: 0));
+            _player = new PlayerSystem(_level, _definition, _input, _passability, _occupancy, new LevelLaunchOptions(startIndex: 0),
+                Aim.FreeNoAssist);
             _map = new MapSystem(_level);
             _pickups = new PickupSystem(_level, _player, _health, _inventory, _weapons, _sounds, _map);
             _interaction = new PlayerInteraction(_input, _player, _pickups, _doors, _inventory, _occupancy, _sounds);

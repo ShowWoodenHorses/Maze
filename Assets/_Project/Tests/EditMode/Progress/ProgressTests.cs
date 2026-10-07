@@ -159,6 +159,50 @@ namespace Maze.Tests.EditMode.Progress
             Assert.AreEqual(1f, save.Data.Settings.SfxVolume, "Clamped.");
         }
 
+        [Test]
+        public void ControlsSettings_PreviewAppliesAtOnce_SaveWritesOnce_Clamped()
+        {
+            var settings = new SettingsService(_save);
+            settings.InitializeAsync(CancellationToken.None);
+            var changes = 0;
+            settings.ControlsChanged += () => changes++;
+            var writes = _storage.Writes;
+
+            var controls = settings.Controls;
+            controls.StickDeadZone = 0.3f;
+            settings.PreviewControls(controls);
+            controls.Size = 5f;
+            settings.PreviewControls(controls);
+            settings.PreviewControls(controls);
+
+            Assert.AreEqual(2, changes, "Once per real change.");
+            Assert.AreEqual(ControlsSettings.MaxSize, settings.Controls.Size, "Clamped.");
+            Assert.AreEqual(writes, _storage.Writes, "Preview does not write.");
+
+            settings.SaveControls();
+            settings.SaveControls();
+            Assert.AreEqual(writes + 1, _storage.Writes);
+
+            var save = new SaveService(_storage);
+            save.Load();
+            Assert.AreEqual(0.3f, save.Data.Settings.Controls.StickDeadZone, 1e-5f);
+            Assert.AreEqual(ControlsSettings.MaxSize, save.Data.Settings.Controls.Size, 1e-5f);
+
+            settings.ResetControls();
+            Assert.AreEqual(ControlsSettings.Default, settings.Controls);
+            Assert.AreEqual(writes + 2, _storage.Writes);
+        }
+
+        [Test]
+        public void SaveWithoutControls_GetsDefaultControls()
+        {
+            _storage.Json = "{\"Settings\":{\"MusicVolume\":0.5,\"SfxVolume\":1.0}}";
+            _save.Load();
+
+            Assert.AreEqual(0.5f, _save.Data.Settings.MusicVolume);
+            Assert.AreEqual(ControlsSettings.Default, _save.Data.Settings.Controls);
+        }
+
         // ------------------------------------------------------------ Map
 
         [Test]

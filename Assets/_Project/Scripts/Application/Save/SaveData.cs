@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Maze.Gameplay.Combat;
 
 namespace Maze.Application.Save
 {
@@ -10,7 +11,8 @@ namespace Maze.Application.Save
     [Serializable]
     public sealed class SaveData
     {
-        public const int CurrentVersion = 1;
+        /// <summary>2: aim settings in <see cref="ControlsSettings"/>.</summary>
+        public const int CurrentVersion = 2;
 
         public int Version = CurrentVersion;
 
@@ -31,6 +33,15 @@ namespace Maze.Application.Save
             UnlockedLevels ??= new List<string>();
             LevelStars ??= new List<LevelStarsRecord>();
             Settings ??= new SettingsData();
+            // Saves made before the controls settings existed have zeros there (a valid size is never zero).
+            if (!(Settings.Controls.Size > 0f)) Settings.Controls = ControlsSettings.Default;
+            if (Version < 2)
+            {
+                var defaults = ControlsSettings.Default;
+                Settings.Controls.AimMode = defaults.AimMode;
+                Settings.Controls.AimAssist = defaults.AimAssist;
+            }
+            Version = CurrentVersion;
             UnlockedLevels.RemoveAll(string.IsNullOrEmpty);
             LevelStars.RemoveAll(record => record == null || string.IsNullOrEmpty(record.LevelId));
             if (TotalKills < 0) TotalKills = 0;
@@ -49,5 +60,85 @@ namespace Maze.Application.Save
     {
         public float MusicVolume = 1f;
         public float SfxVolume = 1f;
+        public ControlsSettings Controls = ControlsSettings.Default;
+    }
+
+    /// <summary>
+    /// Controls: on-screen stick response and layout, aiming (all input devices). Applied at once, without restarting
+    /// a level.
+    /// </summary>
+    [Serializable]
+    public struct ControlsSettings : IEquatable<ControlsSettings>
+    {
+        public const float MinDeadZone = 0f;
+        public const float MaxDeadZone = 0.4f;
+        public const float MinSize = 0.7f;
+        public const float MaxSize = 1.4f;
+        public const float MinOpacity = 0.2f;
+        public const float MaxOpacity = 1f;
+
+        /// <summary>Part of the stick travel (0..1) that does nothing.</summary>
+        public float StickDeadZone;
+
+        /// <summary>0 = soft start (fine control near the centre), 1 = full speed quickly.</summary>
+        public float StickSensitivity;
+
+        /// <summary>The stick appears where the thumb touches (its side of the screen) rather than staying in place.</summary>
+        public bool FloatingStick;
+
+        /// <summary>Scale of the stick and buttons.</summary>
+        public float Size;
+
+        public float Opacity;
+
+        /// <summary>Mirrored layout: stick on the right, buttons on the left.</summary>
+        public bool LeftHanded;
+
+        /// <summary>Directions attacks and the standing facing snap to.</summary>
+        public AimMode AimMode;
+
+        /// <summary>Attacks turn to the nearest visible zombie near the wanted direction.</summary>
+        public bool AimAssist;
+
+        /// <summary>Aim help is on by default on mobile (touch), off elsewhere.</summary>
+        public static ControlsSettings Default => new ControlsSettings
+        {
+            AimMode = UnityEngine.Application.isMobilePlatform ? AimMode.Eight : AimMode.Free,
+            AimAssist = UnityEngine.Application.isMobilePlatform,
+            StickDeadZone = 0.2f,
+            StickSensitivity = 0.5f,
+            FloatingStick = true,
+            Size = 1f,
+            Opacity = 0.6f,
+            LeftHanded = false,
+        };
+
+        public ControlsSettings Clamped()
+        {
+            var result = this;
+            result.StickDeadZone = Clamp(StickDeadZone, MinDeadZone, MaxDeadZone, Default.StickDeadZone);
+            result.StickSensitivity = Clamp(StickSensitivity, 0f, 1f, Default.StickSensitivity);
+            result.Size = Clamp(Size, MinSize, MaxSize, Default.Size);
+            result.Opacity = Clamp(Opacity, MinOpacity, MaxOpacity, Default.Opacity);
+            if (!Enum.IsDefined(typeof(AimMode), AimMode)) result.AimMode = Default.AimMode;
+            return result;
+        }
+
+        public bool Equals(ControlsSettings other) =>
+            UnityEngine.Mathf.Approximately(StickDeadZone, other.StickDeadZone) &&
+            UnityEngine.Mathf.Approximately(StickSensitivity, other.StickSensitivity) &&
+            FloatingStick == other.FloatingStick &&
+            UnityEngine.Mathf.Approximately(Size, other.Size) &&
+            UnityEngine.Mathf.Approximately(Opacity, other.Opacity) &&
+            LeftHanded == other.LeftHanded &&
+            AimMode == other.AimMode &&
+            AimAssist == other.AimAssist;
+
+        public override bool Equals(object obj) => obj is ControlsSettings other && Equals(other);
+
+        public override int GetHashCode() => HashCode.Combine(StickDeadZone, StickSensitivity, FloatingStick, Size, Opacity, LeftHanded, AimMode, AimAssist);
+
+        private static float Clamp(float value, float min, float max, float fallback) =>
+            float.IsNaN(value) ? fallback : UnityEngine.Mathf.Clamp(value, min, max);
     }
 }

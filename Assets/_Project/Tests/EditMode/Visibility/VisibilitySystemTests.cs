@@ -5,6 +5,7 @@ using Maze.Core.Grid;
 using Maze.Core.Level;
 using Maze.Gameplay.Doors;
 using Maze.Gameplay.Grid;
+using Maze.Gameplay.Combat;
 using Maze.Gameplay.Level;
 using Maze.Gameplay.Player;
 using Maze.Gameplay.Visibility;
@@ -49,7 +50,7 @@ namespace Maze.Tests.EditMode.Visibility
             _doors = new DoorSystem(_level);
             var occupancy = new OccupancyMap(_grid);
             _player = new PlayerSystem(_level, _definition, _input, new LevelPassability(_grid, _doors), occupancy,
-                new LevelLaunchOptions(startIndex: 0));
+                new LevelLaunchOptions(startIndex: 0), Aim.FreeNoAssist);
             _visibility = new VisibilitySystem(_grid, _doors, _player);
 
             // Load order of the real level: InitializeVisibility before SpawnPlayer.

@@ -5,6 +5,7 @@ using Maze.Core.Grid;
 using Maze.Core.Level;
 using Maze.Gameplay.Doors;
 using Maze.Gameplay.Grid;
+using Maze.Gameplay.Combat;
 using Maze.Gameplay.Level;
 using Maze.Gameplay.Navigation;
 using Maze.Gameplay.Player;
@@ -98,7 +99,7 @@ namespace Maze.Tests.EditMode.Zombies
             _sounds = new SoundEventBus();
             _health = new PlayerHealth(_playerDefinition);
             _player = new PlayerSystem(_level, _playerDefinition, new FakePlayerInput(), passability, _occupancy,
-                new LevelLaunchOptions(startIndex: 0));
+                new LevelLaunchOptions(startIndex: 0), Aim.FreeNoAssist);
             _navigation = new NavigationSystem(_grid, passability, _doors);
             _zombies = new ZombieSystem(_level, _navigation, _player, _health, _occupancy, _spatial, _sounds);
             _player.ExecuteAsync(CancellationToken.None).GetAwaiter().GetResult();

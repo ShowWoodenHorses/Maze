@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using Maze.Composition;
 using Maze.Presentation.UI;
+using Maze.Presentation.UI.Touch;
 using Maze.Presentation.Visual;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -123,6 +124,9 @@ namespace Maze.Editor.Dev
             eventSystem.AddComponent<InputSystemUIInputModule>();
 
             var ui = BuildUI();
+            var touch = BuildTouchControls();
+            SetReference(ui, "_touchControls", touch);
+            SetReference(ui.Hud, "_touchControls", touch);
 
             var scopeObject = new GameObject("ProjectLifetimeScope");
             var scope = scopeObject.AddComponent<ProjectLifetimeScope>();
@@ -164,6 +168,7 @@ namespace Maze.Editor.Dev
             SetReference(root, "_confirmExit", BuildConfirmExit(parent));
             SetReference(root, "_map", BuildMap(parent));
             SetReference(root, "_result", BuildResult(parent));
+            SetReference(root, "_settings", BuildSettings(parent));
             SetReference(root, "_error", BuildError(parent));
             return root;
         }
@@ -189,12 +194,14 @@ namespace Maze.Editor.Dev
             var empty = Label(column, "EmptyLabel", "No levels yet: run Build / Sync in Maze > Level Designer.", 24,
                 FontStyle.Italic, 60f);
             var summary = Label(column, "Summary", "", 24, FontStyle.Normal, 40f);
+            var settings = Button(column, "SettingsButton", "Settings");
             var reset = Button(column, "DebugResetProgressButton", "Debug: reset progress");
 
             SetReference(screen, "_levelList", list.GetComponent<RectTransform>());
             SetReference(screen, "_levelButtonTemplate", template);
             SetReference(screen, "_emptyLabel", empty);
             SetReference(screen, "_summary", summary);
+            SetReference(screen, "_settingsButton", settings);
             SetReference(screen, "_debugResetProgressButton", reset);
             return screen;
         }
@@ -211,6 +218,7 @@ namespace Maze.Editor.Dev
         {
             var screen = Screen<HudScreen>(parent, "HudScreen", Color.clear);
             screen.GetComponent<Image>().raycastTarget = false;
+            screen.gameObject.AddComponent<SafeAreaFitter>(); // Notches and rounded corners.
 
             var levelName = Label(screen.transform, "LevelName", "Level", 30, FontStyle.Bold, 60f);
             levelName.alignment = TextAnchor.MiddleLeft;
@@ -249,50 +257,89 @@ namespace Maze.Editor.Dev
             SetReference(screen, "_message", message);
             SetReference(screen, "_pauseButton", pause);
             SetReference(screen, "_mapButton", map);
-            SetReference(screen, "_touchControls", BuildTouchControls(screen.transform));
             return screen;
         }
 
         /// <summary>
-        /// ТЗ §64 Android: stick bottom-left, attack bottom-right, plus melee, ranged and use (pick up a weapon, doors) buttons; map is a HUD button.
-        /// They emulate gamepad controls, which InputService already binds.
+        /// ТЗ §64 Android: a separate overlay canvas under the application UI (screens with a dimmed background cover
+        /// it), shown by the HUD. Units are 0.1 mm (see <see cref="TouchControls"/>), inside the safe area.
+        /// Stick zone on the left part of the screen (the stick floats there or rests near its corner); attack
+        /// bottom-right under the thumb, use above it, melee and ranged to its left; map and pause are HUD buttons at
+        /// the top. Everything is mirrored for the left-handed layout. They emulate gamepad controls bound by InputService.
         /// </summary>
-        private static GameObject BuildTouchControls(Transform parent)
+        private static TouchControls BuildTouchControls()
         {
-            var root = new GameObject("TouchControls", typeof(RectTransform));
-            root.transform.SetParent(parent, false);
-            Stretch(root.GetComponent<RectTransform>());
-            var knob = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd");
+            var go = new GameObject("TouchControls", typeof(RectTransform));
+            var canvas = go.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = -1;
+            go.AddComponent<GraphicRaycaster>();
+            var group = go.AddComponent<CanvasGroup>();
+            var controls = go.AddComponent<TouchControls>();
+            var knobSprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd");
 
-            var stickArea = Rect(root.transform, "StickArea", new Vector2(0f, 0f), new Vector2(240f, 240f), new Vector2(320f, 320f));
-            var area = stickArea.gameObject.AddComponent<Image>();
-            area.sprite = knob;
-            area.color = new Color(1f, 1f, 1f, 0.12f);
-            var handle = Rect(stickArea, "Stick", new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(150f, 150f));
-            var handleImage = handle.gameObject.AddComponent<Image>();
-            handleImage.sprite = knob;
-            handleImage.color = new Color(1f, 1f, 1f, 0.45f);
-            var stick = handle.gameObject.AddComponent<OnScreenStick>();
-            stick.controlPath = "<Gamepad>/leftStick";
-            stick.movementRange = 110f;
+            var content = new GameObject("SafeArea", typeof(RectTransform)).GetComponent<RectTransform>();
+            content.SetParent(go.transform, false);
+            Stretch(content);
+            content.gameObject.AddComponent<SafeAreaFitter>();
 
-            TouchButton(root.transform, "Attack", "<Gamepad>/buttonSouth", new Vector2(-230f, 230f), 220f, knob);
-            TouchButton(root.transform, "Melee", "<Gamepad>/leftShoulder", new Vector2(-470f, 150f), 120f, knob);
-            TouchButton(root.transform, "Ranged", "<Gamepad>/rightShoulder", new Vector2(-470f, 310f), 120f, knob);
-            TouchButton(root.transform, "Use", "<Gamepad>/buttonWest", new Vector2(-230f, 470f), 130f, knob);
-            return root;
+            var zone = new GameObject("StickZone", typeof(RectTransform)).GetComponent<RectTransform>();
+            zone.SetParent(content, false);
+            zone.anchorMin = Vector2.zero;
+            zone.anchorMax = new Vector2(0.45f, 0.72f);
+            zone.pivot = Vector2.zero;
+            zone.offsetMin = zone.offsetMax = Vector2.zero;
+            zone.gameObject.AddComponent<Image>().color = Color.clear; // Catches touches, draws nothing visible.
+
+            var ring = Rect(zone, "Ring", Vector2.zero, new Vector2(230f, 230f), new Vector2(240f, 240f));
+            var ringImage = ring.gameObject.AddComponent<Image>();
+            ringImage.sprite = knobSprite;
+            ringImage.color = new Color(1f, 1f, 1f, 0.2f);
+            ringImage.raycastTarget = false;
+            var knob = Rect(ring, "Knob", new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(110f, 110f));
+            var knobImage = knob.gameObject.AddComponent<Image>();
+            knobImage.sprite = knobSprite;
+            knobImage.color = new Color(1f, 1f, 1f, 0.75f);
+            knobImage.raycastTarget = false;
+
+            var stick = zone.gameObject.AddComponent<TouchStick>();
+            SetReference(stick, "_ring", ring);
+            SetReference(stick, "_knob", knob);
+            var serializedStick = new SerializedObject(stick);
+            serializedStick.FindProperty("_restFromCorner").vector2Value = new Vector2(230f, 230f);
+            serializedStick.FindProperty("_radius").floatValue = 100f;
+            serializedStick.ApplyModifiedPropertiesWithoutUndo();
+
+            var mirrored = new List<Object>
+            {
+                zone,
+                TouchButton(content, "Attack", "<Gamepad>/buttonSouth", new Vector2(-200f, 200f), 170f, 32, knobSprite),
+                TouchButton(content, "Use", "<Gamepad>/buttonWest", new Vector2(-200f, 410f), 110f, 26, knobSprite),
+                TouchButton(content, "Melee", "<Gamepad>/leftShoulder", new Vector2(-400f, 140f), 100f, 24, knobSprite),
+                TouchButton(content, "Ranged", "<Gamepad>/rightShoulder", new Vector2(-400f, 300f), 100f, 24, knobSprite),
+            };
+
+            SetReference(controls, "_canvas", canvas);
+            SetReference(controls, "_group", group);
+            SetReference(controls, "_stick", stick);
+            SetReferences(controls, "_mirrored", mirrored);
+            go.SetActive(false); // The HUD shows it on touch devices.
+            return controls;
         }
 
-        private static void TouchButton(Transform parent, string label, string controlPath, Vector2 fromBottomRight, float size, Sprite sprite)
+        private static RectTransform TouchButton(Transform parent, string label, string controlPath, Vector2 fromBottomRight,
+            float size, int fontSize, Sprite sprite)
         {
             var rect = Rect(parent, label + "Button", new Vector2(1f, 0f), fromBottomRight, new Vector2(size, size));
             var image = rect.gameObject.AddComponent<Image>();
             image.sprite = sprite;
-            image.color = new Color(1f, 1f, 1f, 0.3f);
+            image.color = new Color(1f, 1f, 1f, 0.5f);
             rect.gameObject.AddComponent<OnScreenButton>().controlPath = controlPath;
 
-            var text = Label(rect, "Text", label, 26, FontStyle.Bold, size);
+            var text = Label(rect, "Text", label, fontSize, FontStyle.Bold, size);
+            text.horizontalOverflow = HorizontalWrapMode.Overflow;
             Stretch(text.rectTransform);
+            return rect;
         }
 
         private static RectTransform Rect(Transform parent, string name, Vector2 anchor, Vector2 position, Vector2 size)
@@ -326,6 +373,7 @@ namespace Maze.Editor.Dev
             Label(column, "Title", "Paused", 48, FontStyle.Bold, 90f);
             var resume = Button(column, "ResumeButton", "Resume");
             var retry = Button(column, "RetryButton", "Restart level");
+            var settings = Button(column, "SettingsButton", "Settings");
             var exit = Button(column, "ExitButton", "Exit to menu");
 
             var debugGroup = new GameObject("DebugGroup", typeof(RectTransform));
@@ -340,6 +388,7 @@ namespace Maze.Editor.Dev
 
             SetReference(screen, "_resumeButton", resume);
             SetReference(screen, "_retryButton", retry);
+            SetReference(screen, "_settingsButton", settings);
             SetReference(screen, "_exitButton", exit);
             SetReference(screen, "_debugGroup", debugGroup);
             SetReference(screen, "_debugCompleteButton", complete);
@@ -403,6 +452,50 @@ namespace Maze.Editor.Dev
             SetReference(screen, "_fitter", fitter);
             SetReference(screen, "_caption", caption);
             SetReference(screen, "_closeButton", close);
+            return screen;
+        }
+
+        /// <summary>Touch controls settings: an overlay over the main menu or the pause screen.</summary>
+        private static SettingsScreen BuildSettings(Transform parent)
+        {
+            var screen = Screen<SettingsScreen>(parent, "SettingsScreen", Dim);
+            // Opaque: the main menu text must not show through.
+            var column = Column(screen.transform, 640f, 6f, new Color(Panel.r, Panel.g, Panel.b, 1f));
+            Label(column, "Title", "Controls", 40, FontStyle.Bold, 56f);
+            var (deadZoneLabel, deadZone) = SliderRow(column, "DeadZone");
+            var (sensitivityLabel, sensitivity) = SliderRow(column, "Sensitivity");
+            var (sizeLabel, size) = SliderRow(column, "Size");
+            var (opacityLabel, opacity) = SliderRow(column, "Opacity");
+            var floating = ToggleRow(column, "FloatingStick", "Floating stick (appears under the thumb)");
+            var leftHanded = ToggleRow(column, "LeftHanded", "Left-handed layout");
+            var aimMode = Button(column, "AimModeButton", "Aim");
+            var aimAssist = ToggleRow(column, "AimAssist", "Auto-aim at zombies");
+
+            var buttons = new GameObject("Buttons", typeof(RectTransform));
+            buttons.transform.SetParent(column, false);
+            var buttonsLayout = buttons.AddComponent<HorizontalLayoutGroup>();
+            buttonsLayout.spacing = 12f;
+            buttonsLayout.childControlWidth = true;
+            buttonsLayout.childControlHeight = true;
+            buttons.AddComponent<LayoutElement>().preferredHeight = 72f;
+            var reset = Button(buttons.transform, "ResetButton", "Reset to defaults");
+            var back = Button(buttons.transform, "BackButton", "Back");
+
+            SetReference(screen, "_deadZone", deadZone);
+            SetReference(screen, "_deadZoneLabel", deadZoneLabel);
+            SetReference(screen, "_sensitivity", sensitivity);
+            SetReference(screen, "_sensitivityLabel", sensitivityLabel);
+            SetReference(screen, "_size", size);
+            SetReference(screen, "_sizeLabel", sizeLabel);
+            SetReference(screen, "_opacity", opacity);
+            SetReference(screen, "_opacityLabel", opacityLabel);
+            SetReference(screen, "_floatingStick", floating);
+            SetReference(screen, "_leftHanded", leftHanded);
+            SetReference(screen, "_aimModeButton", aimMode);
+            SetReference(screen, "_aimModeLabel", aimMode.GetComponentInChildren<Text>());
+            SetReference(screen, "_aimAssist", aimAssist);
+            SetReference(screen, "_resetButton", reset);
+            SetReference(screen, "_backButton", back);
             return screen;
         }
 
@@ -486,6 +579,52 @@ namespace Maze.Editor.Dev
             return button;
         }
 
+        private static DefaultControls.Resources ControlResources() => new DefaultControls.Resources
+        {
+            standard = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd"),
+            background = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Background.psd"),
+            knob = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd"),
+            checkmark = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Checkmark.psd"),
+        };
+
+        /// <summary>A caption (its text is set by the screen) above a slider.</summary>
+        private static (Text, Slider) SliderRow(Transform parent, string name)
+        {
+            var label = Label(parent, name + "Label", name, 26, FontStyle.Normal, 38f);
+            label.alignment = TextAnchor.MiddleLeft;
+            var go = DefaultControls.CreateSlider(ControlResources());
+            go.name = name + "Slider";
+            go.transform.SetParent(parent, false);
+            go.AddComponent<LayoutElement>().preferredHeight = 40f;
+            return (label, go.GetComponent<Slider>());
+        }
+
+        private static Toggle ToggleRow(Transform parent, string name, string text)
+        {
+            var go = DefaultControls.CreateToggle(ControlResources());
+            go.name = name + "Toggle";
+            go.transform.SetParent(parent, false);
+            go.AddComponent<LayoutElement>().preferredHeight = 54f;
+            var toggle = go.GetComponent<Toggle>();
+
+            var box = (RectTransform)go.transform.Find("Background");
+            box.anchorMin = box.anchorMax = box.pivot = new Vector2(0f, 0.5f);
+            box.anchoredPosition = Vector2.zero;
+            box.sizeDelta = new Vector2(44f, 44f);
+            Stretch((RectTransform)box.Find("Checkmark"));
+
+            var label = go.transform.Find("Label").GetComponent<Text>();
+            label.font = _font;
+            label.text = text;
+            label.fontSize = 26;
+            label.color = TextColor;
+            label.alignment = TextAnchor.MiddleLeft;
+            var labelRect = label.rectTransform;
+            Stretch(labelRect);
+            labelRect.offsetMin = new Vector2(60f, 0f);
+            return toggle;
+        }
+
         private static void Stretch(RectTransform rect)
         {
             rect.anchorMin = Vector2.zero;
@@ -501,6 +640,18 @@ namespace Maze.Editor.Dev
             if (property == null)
                 throw new System.InvalidOperationException($"{target.GetType().Name} has no serialized field '{field}'.");
             property.objectReferenceValue = value;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static void SetReferences(Object target, string field, IReadOnlyList<Object> values)
+        {
+            var serialized = new SerializedObject(target);
+            var property = serialized.FindProperty(field);
+            if (property == null || !property.isArray)
+                throw new System.InvalidOperationException($"{target.GetType().Name} has no serialized array '{field}'.");
+            property.arraySize = values.Count;
+            for (var i = 0; i < values.Count; i++)
+                property.GetArrayElementAtIndex(i).objectReferenceValue = values[i];
             serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 

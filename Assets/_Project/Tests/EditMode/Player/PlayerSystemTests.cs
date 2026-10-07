@@ -6,6 +6,7 @@ using Maze.Core.Grid;
 using Maze.Core.Level;
 using Maze.Gameplay.Doors;
 using Maze.Gameplay.Grid;
+using Maze.Gameplay.Combat;
 using Maze.Gameplay.Level;
 using Maze.Gameplay.Player;
 using NUnit.Framework;
@@ -59,7 +60,7 @@ namespace Maze.Tests.EditMode.Player
 
         private PlayerSystem Spawn(LevelLaunchOptions options)
         {
-            var player = new PlayerSystem(_level, _definition, _input, new LevelPassability(_grid, _doors), _occupancy, options);
+            var player = new PlayerSystem(_level, _definition, _input, new LevelPassability(_grid, _doors), _occupancy, options, Aim.FreeNoAssist);
             player.ExecuteAsync(CancellationToken.None).GetAwaiter().GetResult();
             return player;
         }

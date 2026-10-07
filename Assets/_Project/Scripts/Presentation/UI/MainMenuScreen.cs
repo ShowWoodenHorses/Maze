@@ -26,6 +26,7 @@ namespace Maze.Presentation.UI
         [SerializeField] private Button _levelButtonTemplate;
         [SerializeField] private Text _emptyLabel;
         [SerializeField] private Text _summary;
+        [SerializeField] private Button _settingsButton;
 
         [Header("Debug (development builds only)")]
         [SerializeField] private Button _debugResetProgressButton;
@@ -33,10 +34,12 @@ namespace Maze.Presentation.UI
         private readonly List<Button> _buttons = new List<Button>();
 
         public event Action<string> LevelSelected;
+        public event Action SettingsClicked;
         public event Action DebugResetProgressClicked;
 
         private void Awake()
         {
+            Bind(_settingsButton, () => SettingsClicked?.Invoke());
             Bind(_debugResetProgressButton, () => DebugResetProgressClicked?.Invoke());
             if (_debugResetProgressButton != null)
                 _debugResetProgressButton.gameObject.SetActive(Debug.isDebugBuild);

@@ -35,8 +35,15 @@ namespace Maze.Tests.EditMode.Combat
         private PlayerSystem _player;
         private BulletSystem _bullets;
         private PlayerCombat _combat;
+        private TestAim _aim;
         private readonly List<SoundEvent> _heard = new List<SoundEvent>();
         private readonly List<(Vector2 Point, BulletEnd Reason)> _ended = new List<(Vector2, BulletEnd)>();
+
+        private sealed class TestAim : IAimSettings
+        {
+            public AimMode AimMode { get; set; }
+            public bool AimAssist { get; set; }
+        }
 
         private sealed class Target : IDamageable
         {
@@ -82,6 +89,7 @@ namespace Maze.Tests.EditMode.Combat
             _definition = ScriptableObject.CreateInstance<PlayerDefinition>();
             _definition.Configure(moveSpeed: 3f, bodyHalfSize: 0.3f, cornerAssist: 0.35f);
             _input = new FakePlayerInput();
+            _aim = new TestAim();
             var grid = new LevelGrid(_level.Geometry);
             _doors = new DoorSystem(_level);
             var occupancy = new OccupancyMap(grid);
@@ -90,10 +98,10 @@ namespace Maze.Tests.EditMode.Combat
             _sounds.Emitted += _heard.Add;
             _weapons = new WeaponSystem(_input);
             _player = new PlayerSystem(_level, _definition, _input, new LevelPassability(grid, _doors), occupancy,
-                new LevelLaunchOptions(startIndex: 0));
+                new LevelLaunchOptions(startIndex: 0), _aim);
             _bullets = new BulletSystem(_spatial);
             _bullets.Ended += (bullet, point, reason) => _ended.Add((point, reason));
-            _combat = new PlayerCombat(_input, _player, _weapons, _spatial, _bullets, _sounds);
+            _combat = new PlayerCombat(_input, _player, _weapons, _spatial, _bullets, _sounds, _aim);
             _heard.Clear();
             _ended.Clear();
             _player.ExecuteAsync(CancellationToken.None).GetAwaiter().GetResult();
@@ -324,6 +332,86 @@ namespace Maze.Tests.EditMode.Combat
         }
 
         // ------------------------------------------------------------------ Spatial queries
+
+        // ------------------------------------------------------------------ Aim
+
+        [Test]
+        public void AimSnap_EightAndFourDirections()
+        {
+            Vector2 Dir(float degrees) => new Vector2(Mathf.Cos(degrees * Mathf.Deg2Rad), Mathf.Sin(degrees * Mathf.Deg2Rad));
+
+            Assert.AreEqual(Vector2.right, Aim.Snap(Dir(10f), AimMode.Eight));
+            AssertDirection(Dir(45f), Aim.Snap(Dir(30f), AimMode.Eight));
+            Assert.AreEqual(Vector2.right, Aim.Snap(Dir(40f), AimMode.Four));
+            Assert.AreEqual(Vector2.up, Aim.Snap(Dir(50f), AimMode.Four));
+            Assert.AreEqual(Vector2.down, Aim.Snap(new Vector2(0.2f, -3f), AimMode.Four));
+            AssertDirection(Dir(30f), Aim.Snap(Dir(30f) * 3f, AimMode.Free));
+        }
+
+        [Test]
+        public void Facing_SnapsWhenThePlayerStops_AttackDirectionIsSnapped()
+        {
+            _aim.AimMode = AimMode.Eight;
+            Equip(_pistol);
+            _input.Move = new Vector2(1f, 0.3f);
+            Frame();
+            AssertDirection(new Vector2(1f, 0.3f).normalized, _player.Facing, "Free while moving.");
+
+            _input.Move = Vector2.zero;
+            Frame();
+            Assert.AreEqual(Vector2.right, _player.Facing, "Snapped on stop.");
+
+            Vector2? attacked = null;
+            _combat.Attacked += (_, direction) => attacked = direction;
+            _input.Move = new Vector2(0.2f, 1f);
+            _input.Press(PlayerAction.Attack);
+            Frame();
+            Assert.AreEqual(Vector2.up, attacked);
+        }
+
+        [Test]
+        public void AimAssist_TurnsToTheTarget_FallsBackToSnapping()
+        {
+            _aim.AimMode = AimMode.Eight;
+            var target = AddTarget(5f, 2.8f); // About 15 degrees off east.
+            var origin = _player.Position;
+
+            Assert.AreEqual(Vector2.right, _combat.AimDirection(_pistol, Vector2.right), "No assist: snapped.");
+
+            _aim.AimAssist = true;
+            AssertDirection((target.Position - origin).normalized, _combat.AimDirection(_pistol, Vector2.right));
+            Assert.AreEqual(Vector2.up, _combat.AimDirection(_pistol, new Vector2(0.1f, 1f)), "Outside the cone.");
+
+            Equip(_pistol);
+            _input.Move = Vector2.right;
+            _input.Press(PlayerAction.Attack);
+            Frame();
+            FlyBullets();
+            Assert.AreEqual(1, target.Hits, "The assisted shot hits.");
+        }
+
+        [Test]
+        public void AimAssist_PrefersNearTargets_IgnoresTargetsBehindWallsAndOutOfReach()
+        {
+            _aim.AimAssist = true;
+            var origin = _player.Position;
+
+            var behindDoor = AddTarget(8f, 2.4f);
+            AssertDirection(Vector2.right, _combat.AimDirection(_pistol, Vector2.right), "Closed door blocks the assist.");
+            _doors.SetOpen("door_1", true);
+            AssertDirection((behindDoor.Position - origin).normalized, _combat.AimDirection(_pistol, Vector2.right));
+
+            var near = AddTarget(4f, 2.4f);
+            AddTarget(6f, 2f);
+            AssertDirection((near.Position - origin).normalized, _combat.AimDirection(_pistol, Vector2.right), "Nearer wins.");
+
+            AssertDirection(Vector2.right, _combat.AimDirection(_knife, Vector2.right), "Melee reach is short.");
+        }
+
+        private static void AssertDirection(Vector2 expected, Vector2 actual, string message = null)
+        {
+            Assert.That(Vector2.Distance(expected, actual), Is.LessThan(1e-4f), $"{message} expected {expected}, got {actual}");
+        }
 
         [Test]
         public void SpatialQueries_CellAroundRadius()
