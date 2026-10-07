@@ -21,9 +21,13 @@ namespace Maze.Core.Visual
         [Tooltip("Animated fog over hidden cells (shader Maze/Fog). Empty = no fog: hidden cells are simply not drawn.")]
         [SerializeField] private Material _fogMaterial;
 
+        [SerializeField] private ThemeLighting _lighting = new ThemeLighting();
+
         public string Id => _id;
 
         public Material FogMaterial { get => _fogMaterial; internal set => _fogMaterial = value; }
+
+        public ThemeLighting Lighting => _lighting ??= new ThemeLighting();
 
         public VisualSet GetSet(VisualKind kind)
         {

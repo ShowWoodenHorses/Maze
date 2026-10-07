@@ -23,3 +23,29 @@ MonoBehaviour:
   _zombie: {fileID: 11400000, guid: 57b71dca180984d488eb03f23f3bef0b, type: 2}
   _mapFragment: {fileID: 11400000, guid: 5dc92ded2f0988040b3dde97dc96baf9, type: 2}
   _fogMaterial: {fileID: 2100000, guid: e44f05f90fed0e446b142333febf4f9e, type: 2}
+  _lighting:
+    Ambient: {r: 0.2, g: 0.25, b: 0.34, a: 1}
+    MoonColor: {r: 0.62, g: 0.72, b: 0.95, a: 1}
+    MoonIntensity: 0.35
+    LanternColor: {r: 1, g: 0.82, b: 0.58, a: 1}
+    LanternIntensity: 0.9
+    LanternRadius: 4.5
+    LanternHeight: 1.3
+    LightFadeStart: 0.8
+    LightFadeLength: 0.6
+    LightTopShare: 0.15
+    BlobShadowMaterial: {fileID: 2100000, guid: 46cd222b1c4f77742b6e467b2b291b2c, type: 2}
+    BlobShadowSize: 0.9
+    LightPresets:
+    - Id: torch
+      Weight: 3
+      Color: {r: 1, g: 0.6, b: 0.28, a: 1}
+      Radius: 4
+      Intensity: 1.3
+      Flicker: 0.6
+    - Id: cold_lamp
+      Weight: 1
+      Color: {r: 0.62, g: 0.82, b: 1, a: 1}
+      Radius: 5
+      Intensity: 0.9
+      Flicker: 0.05

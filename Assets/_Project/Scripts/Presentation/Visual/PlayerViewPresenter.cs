@@ -35,6 +35,7 @@ namespace Maze.Presentation.Visual
         private readonly WeaponSystem _weapons;
         private readonly PlayerHealth _health;
         private readonly PlayerInteraction _interaction;
+        private readonly BlobShadows _shadows;
         private readonly HashSet<int> _parameters = new HashSet<int>();
 
         private GameObject _view;
@@ -46,8 +47,9 @@ namespace Maze.Presentation.Visual
 
         public PlayerViewPresenter(PlayerSystem player, PlayerVisualDefinition visual, IAssetOwner assets,
             LevelViewRoot root, TopDownCamera camera, PlayerCombat combat, WeaponSystem weapons, PlayerHealth health,
-            PlayerInteraction interaction)
+            PlayerInteraction interaction, BlobShadows shadows)
         {
+            _shadows = shadows;
             _combat = combat;
             _player = player;
             _visual = visual;
@@ -73,6 +75,7 @@ namespace Maze.Presentation.Visual
 
             _view = UnityEngine.Object.Instantiate(prefab, _root.transform);
             _view.name = "Player";
+            _shadows.Attach(_view);
             _animator = _view.GetComponentInChildren<Animator>();
             CacheParameters();
 

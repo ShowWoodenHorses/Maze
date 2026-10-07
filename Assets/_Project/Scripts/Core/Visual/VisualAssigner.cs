@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Maze.Core.Grid;
 using Maze.Core.Level;
+using Maze.Core.Lighting;
 
 namespace Maze.Core.Visual
 {
@@ -18,6 +19,7 @@ namespace Maze.Core.Visual
 
             AssignAllCells(level);
             AssignAllObjects(level);
+            LightPlacer.PlaceAll(level, keepManual: !clearOverrides);
         }
 
         public static void AssignAllCells(LevelData level)

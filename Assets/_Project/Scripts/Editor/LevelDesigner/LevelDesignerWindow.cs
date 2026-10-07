@@ -40,10 +40,22 @@ namespace Maze.Editor.LevelDesigner
             _tools = new EditToolController(_state, Notify);
             _inspector = new SelectionInspector(_state, _tools, Notify);
             Undo.undoRedoPerformed += OnUndoRedo;
+            SceneView.duringSceneGui += OnSceneGUI;
             _state.SetLevel(_level);
         }
 
-        private void OnDisable() => Undo.undoRedoPerformed -= OnUndoRedo;
+        private void OnDisable()
+        {
+            Undo.undoRedoPerformed -= OnUndoRedo;
+            SceneView.duringSceneGui -= OnSceneGUI;
+        }
+
+        /// <summary>Light sources are dragged in the Scene view (over the preview).</summary>
+        private void OnSceneGUI(SceneView view)
+        {
+            if (LightSceneHandles.Draw(_state))
+                Repaint();
+        }
 
         private void Notify(string message) => ShowNotification(new GUIContent(message), 2.5);
 

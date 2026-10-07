@@ -3,6 +3,7 @@ using System.Linq;
 using Maze.Core.Definitions;
 using Maze.Core.Grid;
 using Maze.Core.Level;
+using Maze.Core.Lighting;
 using Maze.Core.Visual;
 
 namespace Maze.Core.Authoring
@@ -313,6 +314,61 @@ namespace Maze.Core.Authoring
             var key = level.Keys.FirstOrDefault(k => door.RequiresKey && k.Id == door.KeyId);
             if (key != null)
                 VisualAssigner.AssignObject(level, key);
+        }
+    
+        // ------------------------------------------------------------ Lights
+
+        /// <summary>
+        /// Light from auto placement (generated lights are replaced, hand-placed ones kept); same as the light part
+        /// of Regenerate Visuals.
+        /// </summary>
+        public static void PlaceLights(LevelData level) => LightPlacer.PlaceAll(level, keepManual: true);
+
+        /// <summary>
+        /// Hand-placed light on a floor cell: shifted towards a wall next to it, if any; values of the theme's first
+        /// light preset, otherwise defaults.
+        /// </summary>
+        public static LightSourceData AddLight(LevelData level, GridPosition cell)
+        {
+            var offset = UnityEngine.Vector2.zero;
+            foreach (var side in DirectionExtensions.All)
+            {
+                var neighbour = cell + side.ToOffset();
+                if (level.Geometry.IsInside(neighbour) && level.Geometry.GetCell(neighbour) != CellType.Wall)
+                    continue;
+                var step = side.ToOffset();
+                offset = new UnityEngine.Vector2(step.X, step.Y) * LightPlacer.WallOffset;
+                break;
+            }
+
+            var presets = level.VisualTheme != null ? level.VisualTheme.Lighting.LightPresets : null;
+            var preset = presets != null && presets.Count > 0 && presets[0] != null ? presets[0] : new LightPreset();
+            var light = new LightSourceData(level.CreateUniqueId(LightSourceData.IdPrefix), cell, offset, preset.Color,
+                preset.Radius, preset.Intensity, preset.Flicker, isGenerated: false);
+            level.MutableLights.Add(light);
+            return light;
+        }
+
+        public static void RemoveLight(LevelData level, LightSourceData light) => level.MutableLights.Remove(light);
+
+        /// <summary>Any edit makes a light hand-placed, so auto placement keeps it.</summary>
+        public static void SetLight(LightSourceData light, UnityEngine.Color color, float radius, float intensity, float flicker)
+        {
+            light.Color = color;
+            light.Radius = UnityEngine.Mathf.Max(0.1f, radius);
+            light.Intensity = UnityEngine.Mathf.Max(0f, intensity);
+            light.Flicker = UnityEngine.Mathf.Clamp01(flicker);
+            light.IsGenerated = false;
+        }
+
+        /// <summary>Moves a light to a point in grid units: it belongs to the cell the point is in.</summary>
+        public static void MoveLight(LightSourceData light, UnityEngine.Vector2 point)
+        {
+            var cell = new GridPosition(UnityEngine.Mathf.RoundToInt(point.x), UnityEngine.Mathf.RoundToInt(point.y));
+            light.Cell = cell;
+            light.Offset = new UnityEngine.Vector2(
+                UnityEngine.Mathf.Clamp(point.x - cell.X, -0.5f, 0.5f), UnityEngine.Mathf.Clamp(point.y - cell.Y, -0.5f, 0.5f));
+            light.IsGenerated = false;
         }
     }
 }

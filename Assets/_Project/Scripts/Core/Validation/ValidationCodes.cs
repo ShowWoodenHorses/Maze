@@ -27,6 +27,8 @@ namespace Maze.Core.Validation
 
         // Visual
         public const string NoVisualTheme = "NoVisualTheme";
+        public const string LightNotOnFloor = "LightNotOnFloor";
+        public const string InvalidLight = "InvalidLight";
         public const string MissingVisualSet = "MissingVisualSet";
         public const string VisualSetKindMismatch = "VisualSetKindMismatch";
         public const string DuplicateVariantId = "DuplicateVariantId";

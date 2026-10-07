@@ -38,11 +38,13 @@ namespace Maze.Presentation.Visual
         private readonly LevelViewRoot _root;
         private readonly Dictionary<ZombieRuntime, Binding> _bound = new Dictionary<ZombieRuntime, Binding>();
         private readonly List<Corpse> _corpses = new List<Corpse>();
+        private readonly BlobShadows _shadows;
         private bool _subscribed;
 
         public ZombieViewPresenter(LevelData level, ZombieSystem zombies, LevelVisualSystem visuals, EntityViewRegistry views,
-            LevelViewRoot root)
+            LevelViewRoot root, BlobShadows shadows)
         {
+            _shadows = shadows;
             _level = level;
             _zombies = zombies;
             _visuals = visuals;
@@ -138,6 +140,7 @@ namespace Maze.Presentation.Visual
             // Facing comes from gameplay, not from the saved visual rotation.
             view.GameObject.transform.localRotation =
                 Quaternion.LookRotation(new Vector3(zombie.Facing.x, 0f, zombie.Facing.y), Vector3.up);
+            _shadows.Attach(view.GameObject);
             _views.Add(view);
 
             var bound = new Binding

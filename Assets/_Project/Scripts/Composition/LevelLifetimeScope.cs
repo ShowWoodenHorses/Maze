@@ -88,6 +88,7 @@ namespace Maze.Composition
             builder.Register<LevelVisualSystem>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep>();
             builder.Register<VisibilityController>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep>();
             builder.Register<FogOfWarView>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep, ILevelLateTickable>();
+            builder.Register<LevelLightMap>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep>();
             builder.Register<DoorViewPresenter>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep>();
             builder.Register<PickupViewPresenter>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep>();
             builder.Register<HudPresenter>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep>();
@@ -96,6 +97,9 @@ namespace Maze.Composition
             builder.Register<PlayerViewPresenter>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep, ILevelLateTickable>();
             builder.Register<PlayerWeaponPresenter>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep, ILevelLateTickable, IViewWarmup>();
             builder.Register<ZombieViewPresenter>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep, ILevelLateTickable>();
+            builder.Register<BlobShadows>(Lifetime.Singleton);
+            // After the player view: the lantern follows it in the same late tick.
+            builder.Register<LevelLighting>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep, ILevelLateTickable>();
             builder.Register<LevelWarmup>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep>();
         }
     }

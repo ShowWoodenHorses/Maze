@@ -87,13 +87,18 @@ namespace Maze.Editor.Dev
             var topDown = cameraObject.AddComponent<TopDownCamera>();
             SetReference(topDown, "_camera", camera);
 
+            // Weak "moon" without shadows; LevelLighting sets color and intensity from the theme.
             var lightObject = new GameObject("Directional Light");
             var light = lightObject.AddComponent<Light>();
             light.type = LightType.Directional;
-            light.shadows = LightShadows.Hard; // ТЗ §103: no heavy realtime shadows.
+            light.shadows = LightShadows.None;
+            light.intensity = 0.35f;
             lightObject.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
+            RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
+            RenderSettings.ambientLight = new Color(0.2f, 0.25f, 0.34f);
 
             var viewRoot = new GameObject("Level View").AddComponent<LevelViewRoot>();
+            SetReference(viewRoot, "_moon", light);
 
             var scopeObject = new GameObject("LevelLifetimeScope");
             var scope = scopeObject.AddComponent<LevelLifetimeScope>();

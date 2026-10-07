@@ -220,6 +220,8 @@ namespace Maze.Core.Validation
 
         private static void ValidateVisuals(LevelData level, ValidationReport report)
         {
+            ValidateLights(level, report);
+
             var theme = level.VisualTheme;
             if (theme == null)
             {
@@ -244,6 +246,24 @@ namespace Maze.Core.Validation
             ValidateCellVisuals(level, theme, report);
             ValidateObjectVisuals(level, theme, report);
             ValidateKeyDoorColors(level, theme, report);
+        }
+
+        /// <summary>A light belongs to a floor cell, stays inside it and has a positive radius.</summary>
+        private static void ValidateLights(LevelData level, ValidationReport report)
+        {
+            var geometry = level.Geometry;
+            foreach (var light in level.Lights)
+            {
+                if (!geometry.IsInside(light.Cell) || geometry.GetCell(light.Cell) != CellType.Floor)
+                    report.Add(Error, Visual, ValidationCodes.LightNotOnFloor,
+                        $"Light '{light.Id}' is not on a floor cell.", light.Cell, light.Id);
+
+                if (!(light.Radius > 0f) || light.Intensity < 0f ||
+                    Math.Abs(light.Offset.x) > 0.5f || Math.Abs(light.Offset.y) > 0.5f)
+                    report.Add(Error, Visual, ValidationCodes.InvalidLight,
+                        $"Light '{light.Id}' needs a positive radius, non-negative intensity and an offset within its cell.",
+                        light.Cell, light.Id);
+            }
         }
 
         /// <summary>A key must have the colour of its door; distinct pairs should have distinct colours (ТЗ §40).</summary>

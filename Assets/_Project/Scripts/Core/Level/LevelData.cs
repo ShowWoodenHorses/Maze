@@ -26,6 +26,7 @@ namespace Maze.Core.Level
         [SerializeField] private List<KeyData> _keys = new List<KeyData>();
         [SerializeField] private List<MedkitData> _medkits = new List<MedkitData>();
         [SerializeField] private List<MapFragmentData> _mapFragments = new List<MapFragmentData>();
+        [SerializeField] private List<LightSourceData> _lights = new List<LightSourceData>();
         [SerializeField] private VisualTheme _visualTheme;
         [SerializeField] private VisualData _visualData = new VisualData();
 
@@ -44,6 +45,9 @@ namespace Maze.Core.Level
         public IReadOnlyList<MedkitData> Medkits => _medkits;
         public IReadOnlyList<MapFragmentData> MapFragments => _mapFragments;
 
+        /// <summary>Light sources (visual only, not in <see cref="AllEntities"/>).</summary>
+        public IReadOnlyList<LightSourceData> Lights => _lights;
+
         internal List<DoorData> MutableDoors => _doors;
         internal List<PlayerStartData> MutablePlayerStarts => _playerStarts;
         internal List<ExitData> MutableExits => _exits;
@@ -53,6 +57,7 @@ namespace Maze.Core.Level
         internal List<KeyData> MutableKeys => _keys;
         internal List<MedkitData> MutableMedkits => _medkits;
         internal List<MapFragmentData> MutableMapFragments => _mapFragments;
+        internal List<LightSourceData> MutableLights => _lights;
 
         /// <summary>All placed objects, in a stable order.</summary>
         public IEnumerable<LevelEntityData> AllEntities()
@@ -72,6 +77,7 @@ namespace Maze.Core.Level
         {
             foreach (var entity in AllEntities()) yield return entity.Id;
             foreach (var patrol in _patrols) yield return patrol.Id;
+            foreach (var light in _lights) yield return light.Id;
         }
 
         internal void ReplaceGeometry(LevelGeometry geometry) => _geometry = geometry;
@@ -85,6 +91,7 @@ namespace Maze.Core.Level
             _geometry = result.Geometry;
             ClearObjects();
             _visualData.Clear();
+            _lights.Clear();
 
             foreach (var position in result.PlayerStarts)
                 _playerStarts.Add(new PlayerStartData(CreateUniqueId(PlayerStartData.IdPrefix), position));

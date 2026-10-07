@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Maze.Core.Authoring;
 using Maze.Core.Grid;
 using Maze.Core.Level;
 using Maze.Core.Visual;
@@ -9,13 +10,15 @@ using UnityEngine;
 
 namespace Maze.Editor.LevelDesigner
 {
-    /// <summary>Theme, Regenerate Visuals, overrides and distribution diagnostics (ТЗ §93–96).</summary>
+    /// <summary>Theme, Regenerate Visuals, light sources, overrides and distribution diagnostics (ТЗ §93–96).</summary>
     internal sealed class VisualsPanel
     {
         private bool _clearOverrides;
         private bool _showSets = true;
         private bool _showDistribution = true;
         private bool _showOverrides = true;
+        private bool _showLights = true;
+        private bool _showLightList;
 
         public void OnGUI(LevelDesignerState state)
         {
@@ -57,6 +60,7 @@ namespace Maze.Editor.LevelDesigner
             EditorGUILayout.HelpBox("Changing the Visual Seed does not change the level until you press Regenerate Visuals.",
                 MessageType.None);
 
+            DrawLights(state);
             DrawOverrides(state);
             DrawDistribution(level);
         }
@@ -74,6 +78,89 @@ namespace Maze.Editor.LevelDesigner
             }
 
             EditorGUILayout.HelpBox("Edit sets and weights in the Inspector of the theme / set assets.", MessageType.None);
+        }
+
+        /// <summary>
+        /// Light sources: auto placement (density, Place Lights; also part of Regenerate Visuals) and manual edits.
+        /// Editing a light makes it hand-placed, so auto placement keeps it.
+        /// </summary>
+        private void DrawLights(LevelDesignerState state)
+        {
+            var level = state.Level;
+            var auto = level.Lights.Count(l => l.IsGenerated);
+
+            EditorGUILayout.Space();
+            _showLights = EditorGUILayout.Foldout(_showLights,
+                $"Lights ({level.Lights.Count}: {auto} auto, {level.Lights.Count - auto} manual)", true);
+            if (!_showLights)
+                return;
+
+            EditorGUI.BeginChangeCheck();
+            var density = EditorGUILayout.Slider("Density", level.Generation.LightDensity, 0f, 1f);
+            if (EditorGUI.EndChangeCheck())
+                LevelEditorCommands.Modify(level, "Change Light Density", () => level.Generation.LightDensity = density);
+
+            if (level.VisualTheme.Lighting.LightPresets.Count == 0)
+                EditorGUILayout.HelpBox("The theme has no light presets (theme asset > Lighting > Light Presets): " +
+                                        "auto placement places nothing.", MessageType.Warning);
+
+            EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Button("Place Lights"))
+                Change(state, "Place Lights", () => LevelEditing.PlaceLights(level));
+
+            var cell = state.SelectedCell;
+            var canAdd = cell.HasValue && level.Geometry.IsInside(cell.Value) &&
+                         level.Geometry.GetCell(cell.Value) == CellType.Floor;
+            using (new EditorGUI.DisabledScope(!canAdd))
+            {
+                if (GUILayout.Button("Add at Selected Cell"))
+                    Change(state, "Add Light", () => LevelEditing.AddLight(level, cell.Value));
+            }
+
+            EditorGUILayout.EndHorizontal();
+            EditorGUILayout.HelpBox("Place Lights replaces auto placed lights (Visual Seed, density) and keeps manual ones. " +
+                                    "Drag lights in the Scene view on the preview.", MessageType.None);
+
+            _showLightList = EditorGUILayout.Foldout(_showLightList, "Light List", true);
+            if (!_showLightList)
+                return;
+
+            LightSourceData toRemove = null;
+            foreach (var light in level.Lights)
+            {
+                EditorGUILayout.BeginHorizontal();
+                if (GUILayout.Button(light.Id, EditorStyles.linkLabel, GUILayout.Width(70f)))
+                    state.SelectedCell = light.Cell;
+                EditorGUILayout.LabelField(light.IsGenerated ? "auto" : "manual", GUILayout.Width(46f));
+
+                EditorGUI.BeginChangeCheck();
+                var color = EditorGUILayout.ColorField(GUIContent.none, light.Color, true, false, false, GUILayout.Width(50f));
+                EditorGUIUtility.labelWidth = 14f;
+                var radius = EditorGUILayout.FloatField("R", light.Radius, GUILayout.Width(52f));
+                EditorGUIUtility.labelWidth = 14f;
+                var intensity = EditorGUILayout.FloatField("I", light.Intensity, GUILayout.Width(52f));
+                EditorGUIUtility.labelWidth = 14f;
+                var flicker = EditorGUILayout.Slider("F", light.Flicker, 0f, 1f);
+                EditorGUIUtility.labelWidth = 0f;
+                if (EditorGUI.EndChangeCheck())
+                    LevelEditorCommands.Modify(level, "Edit Light", () => LevelEditing.SetLight(light, color, radius, intensity, flicker));
+
+                if (GUILayout.Button("X", GUILayout.Width(22f)))
+                    toRemove = light;
+                EditorGUILayout.EndHorizontal();
+            }
+
+            if (toRemove != null)
+            {
+                Change(state, "Remove Light", () => LevelEditing.RemoveLight(level, toRemove));
+                GUIUtility.ExitGUI();
+            }
+        }
+
+        private static void Change(LevelDesignerState state, string undoName, Action change)
+        {
+            LevelEditorCommands.Modify(state.Level, undoName, change);
+            state.Revalidate();
         }
 
         private void DrawOverrides(LevelDesignerState state)

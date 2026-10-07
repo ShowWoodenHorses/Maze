@@ -25,6 +25,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 17964ef0678f5d14385a3e458f62ade4
+    m_Address: Assets/_Project/Art/Shaders/MazeLit.shader
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 2047875a40d94ed4eb241d51cf1bdf5f
     m_Address: Assets/_Project/Art/ThirdParty/PolygonApocalypse/Models/SM_Wep_Crowbar_01.fbx
     m_ReadOnly: 0

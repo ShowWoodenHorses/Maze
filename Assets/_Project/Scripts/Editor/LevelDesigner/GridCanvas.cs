@@ -249,6 +249,7 @@ namespace Maze.Editor.LevelDesigner
             }
 
             PaintPatrols(state);
+            PaintLights(level, local);
             PaintGlyphs(level, local);
             PaintIssues(state);
 
@@ -273,6 +274,27 @@ namespace Maze.Editor.LevelDesigner
 
             if (state.DragTarget.HasValue && geometry.IsInside(state.DragTarget.Value))
                 DrawOutline(CellRect(state.DragTarget.Value, geometry.Height), SelectedEntityColor, 2f);
+        }
+
+        /// <summary>Light sources: a dot of the light's colour at its point (shifted towards its wall).</summary>
+        private void PaintLights(LevelData level, Rect local)
+        {
+            var height = level.Geometry.Height;
+            var radius = Mathf.Max(2f, _cellSize * 0.16f);
+            foreach (var light in level.Lights)
+            {
+                var point = light.Point;
+                var center = new Vector3(_origin.x + (point.x + 0.5f) * _cellSize, _origin.y + (height - 0.5f - point.y) * _cellSize);
+                if (!local.Contains(center))
+                    continue;
+
+                Handles.color = Color.black;
+                Handles.DrawSolidDisc(center, Vector3.forward, radius + 1f);
+                var color = light.Color;
+                color.a = 1f;
+                Handles.color = color;
+                Handles.DrawSolidDisc(center, Vector3.forward, radius);
+            }
         }
 
         /// <summary>Patrol loops: spawn -> P1 -> ... -> Pn -> P1. The selected zombie's route is highlighted.</summary>

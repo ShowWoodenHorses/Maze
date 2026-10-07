@@ -10,7 +10,7 @@ namespace Maze.Core.Level
 
     /// <summary>
     /// Input for "Generate New". Used only at level creation time; runtime never reads it.
-    /// MazeSeed drives the logical maze, VisualSeed drives the initial visual variant selection.
+    /// MazeSeed drives the logical maze, VisualSeed drives the initial visual variant selection and light placement.
     /// </summary>
     [Serializable]
     public sealed class LevelGenerationSettings
@@ -24,6 +24,9 @@ namespace Maze.Core.Level
         [SerializeField, Min(1)] private int _initialPlayerStartCount = 1;
         [SerializeField, Min(1)] private int _initialExitCount = 1;
 
+        [Tooltip("Auto placed light sources: 0 = none, 1 = as many as fit (about every 3 cells along walls).")]
+        [SerializeField, Range(0f, 1f)] private float _lightDensity = 0.5f;
+
         public int Width { get => _width; internal set => _width = value; }
         public int Height { get => _height; internal set => _height = value; }
         public int MazeSeed { get => _mazeSeed; internal set => _mazeSeed = value; }
@@ -32,6 +35,7 @@ namespace Maze.Core.Level
         public float LoopDensity { get => _loopDensity; internal set => _loopDensity = value; }
         public int InitialPlayerStartCount { get => _initialPlayerStartCount; internal set => _initialPlayerStartCount = value; }
         public int InitialExitCount { get => _initialExitCount; internal set => _initialExitCount = value; }
+        public float LightDensity { get => _lightDensity; internal set => _lightDensity = value; }
 
         /// <summary>
         /// The generator needs odd width and height: a border wall plus alternating passage/wall cells, all one
