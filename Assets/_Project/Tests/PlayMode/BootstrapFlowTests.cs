@@ -352,6 +352,7 @@ namespace Maze.Tests.PlayMode
             var footprints = container.Resolve<FootprintsView>().Field;
             Assert.IsNotNull(footprints, "The theme has footprints (Maze → Dev → Build Footprints).");
             Assert.Greater(footprints.AliveCount, 0, "The patrolling zombie leaves prints, also out of the player's sight.");
+            Assert.AreEqual(2, container.Resolve<VisionZonesView>().ZoneCount, "Walker and Hunter have vision zones, Listener none.");
 
             var victim = zombies.Zombies[0];
             victim.ApplyDamage(10000f, Vector2.right);

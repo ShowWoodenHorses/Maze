@@ -9,5 +9,14 @@ namespace Maze.Presentation.Visual
             if (UnityEngine.Application.isPlaying) UnityEngine.Object.Destroy(target);
             else UnityEngine.Object.DestroyImmediate(target);
         }
+
+        /// <summary>
+        /// Destroys the object a component is on. Safe when the component is already gone (leaving Play Mode destroys
+        /// the scenes before the level scope is disposed; <c>.gameObject</c> of a destroyed component throws).
+        /// </summary>
+        public static void DestroyObjectOf(UnityEngine.Component component)
+        {
+            if (component != null) Destroy(component.gameObject);
+        }
     }
 }

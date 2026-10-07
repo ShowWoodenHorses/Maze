@@ -75,3 +75,19 @@ MonoBehaviour:
     DustSize: 0.28
     DustLifetime: 0.4
     DustRunSpeed: 1.5
+  _awareness:
+    ZoneMaterial: {fileID: 2100000, guid: 307013d4046175540b40ca4e3e8dcfd7, type: 2}
+    CalmColor: {r: 1, g: 0.82, b: 0.3, a: 1}
+    AlertColor: {r: 1, g: 0.18, b: 0.12, a: 1}
+    FillAlpha: 0.05
+    EdgeAlpha: 0.35
+    EdgeWidth: 0.04
+    RayStep: 4
+    ZoneFade: 0.2
+    NoiseMaterial: {fileID: 2100000, guid: f27b134fb56d17341899f871cca56d03, type: 2}
+    NoiseColor: {r: 0.75, g: 0.75, b: 0.78, a: 0.2}
+    RingWidth: 0.035
+    WaveTime: 0.7
+    RingGrow: 0.3
+    RingFade: 0.4
+    RingRearm: 0.3

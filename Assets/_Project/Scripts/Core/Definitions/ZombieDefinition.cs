@@ -20,10 +20,11 @@ namespace Maze.Core.Definitions
         [SerializeField, Range(1f, 360f)] private float _visionAngle = 45f;
         [SerializeField, Min(0f)] private float _visionRange = 5f;
 
-        [Header("Hearing (HearingOnly)")]
+        [Header("Hearing (HearingOnly, VisionAndHearing)")]
         [SerializeField, Min(0f)] private float _hearingRadius = 5f;
 
         [Header("Vision + Hearing")]
+        [Tooltip("Sees all around within this radius; walls and closed doors block the view. Hears by Hearing Radius.")]
         [SerializeField, Min(0f)] private float _detectionRadius = 4f;
 
         [Header("Combat & Movement")]

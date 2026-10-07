@@ -17,7 +17,8 @@ namespace Maze.Gameplay.Zombies
     /// <item>Vision only: the player within VisionRange, inside the VisionAngle cone around the facing, with a clear
     /// line (walls and closed doors block).</item>
     /// <item>Hearing only: a sound whose position is within both the sound's radius and the HearingRadius.</item>
-    /// <item>Vision + hearing: the player within DetectionRadius (walls do not matter, as for sound).</item>
+    /// <item>Vision + hearing: sees all around — the player within DetectionRadius with a clear line (walls and closed
+    /// doors block, as for vision only; the zone shown on the floor is exactly this), and hears sounds as hearing only.</item>
     /// </list>
     /// </summary>
     public static class ZombieDetection
@@ -34,8 +35,17 @@ namespace Maze.Gameplay.Zombies
             return spatial.IsClear(zombie.Position, player);
         }
 
-        public static bool InRadius(ZombieRuntime zombie, Vector2 player) =>
-            (player - zombie.Position).sqrMagnitude <= zombie.Definition.DetectionRadius * zombie.Definition.DetectionRadius;
+        /// <summary>Vision + hearing: all around within DetectionRadius, walls and closed doors block.</summary>
+        public static bool SeesAround(ZombieRuntime zombie, Vector2 player, ISpatialQueryService spatial)
+        {
+            var radius = zombie.Definition.DetectionRadius;
+            return (player - zombie.Position).sqrMagnitude <= radius * radius && spatial.IsClear(zombie.Position, player);
+        }
+
+        /// <summary>Whether this type hears sounds at all.</summary>
+        public static bool CanHear(ZombieDefinition definition) =>
+            definition.DetectionType == ZombieDetectionType.HearingOnly ||
+            definition.DetectionType == ZombieDetectionType.VisionAndHearing;
 
         public static bool Hears(ZombieRuntime zombie, SoundEvent sound)
         {
@@ -107,7 +117,7 @@ namespace Maze.Gameplay.Zombies
         /// <summary>Called for every gameplay sound (only hearing zombies use it).</summary>
         public void Hear(SoundEvent sound)
         {
-            if (!Zombie.IsAlive || Zombie.Definition.DetectionType != ZombieDetectionType.HearingOnly)
+            if (!Zombie.IsAlive || !ZombieDetection.CanHear(Zombie.Definition))
                 return;
             if (ZombieDetection.Hears(Zombie, sound))
                 Notice(PlayerMovement.CellOf(sound.Position));
@@ -159,7 +169,7 @@ namespace Maze.Gameplay.Zombies
                     if (ZombieDetection.Sees(Zombie, player, _spatial)) Notice(_player.Cell);
                     break;
                 case ZombieDetectionType.VisionAndHearing:
-                    if (ZombieDetection.InRadius(Zombie, player)) Notice(_player.Cell);
+                    if (ZombieDetection.SeesAround(Zombie, player, _spatial)) Notice(_player.Cell);
                     break;
             }
         }

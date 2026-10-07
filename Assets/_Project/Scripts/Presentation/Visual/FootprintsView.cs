@@ -121,7 +121,7 @@ namespace Maze.Presentation.Visual
         {
             UnityObjects.Destroy(_printsObject);
             UnityObjects.Destroy(_mesh);
-            if (_dust != null) UnityObjects.Destroy(_dust.gameObject);
+            UnityObjects.DestroyObjectOf(_dust);
             _printsObject = null;
             _mesh = null;
             _dust = null;

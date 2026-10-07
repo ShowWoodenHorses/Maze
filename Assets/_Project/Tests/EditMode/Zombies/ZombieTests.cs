@@ -193,6 +193,24 @@ namespace Maze.Tests.EditMode.Zombies
         }
 
         [Test]
+        public void VisionAndHearing_WallsAndClosedDoorsBlock_ButSoundsAreHeard()
+        {
+            AddZombie(10, 3, Definition(ZombieDetectionType.VisionAndHearing, detectionRadius: 12f, hearingRadius: 5f));
+            AddZombie(9, 1, Definition(ZombieDetectionType.VisionAndHearing, detectionRadius: 12f, hearingRadius: 5f));
+            Build();
+            _doors.SetOpen("door_1", false);
+            Run(0.3f);
+
+            Assert.AreEqual(ZombieState.Idle, Zombie(0).State, "In the radius, but behind the closed door.");
+            Assert.AreEqual(ZombieState.Idle, Zombie(1).State, "In the radius, but behind the wall.");
+
+            _sounds.Emit(SoundType.Ranged, new Vector2(6f, 3f), 8f);
+            Run(Dt);
+            Assert.AreEqual(ZombieState.Alert, Zombie(0).State, "Hears a sound 4 cells away (hearing radius 5).");
+            Assert.AreEqual(ZombieState.Alert, Zombie(1).State, "3.6 cells away.");
+        }
+
+        [Test]
         public void DamageWithoutDetection_CausesNoReaction()
         {
             AddZombie(6, 3, Definition(ZombieDetectionType.VisionOnly), Direction.East);

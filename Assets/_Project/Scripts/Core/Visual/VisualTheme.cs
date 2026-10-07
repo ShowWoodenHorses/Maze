@@ -25,6 +25,8 @@ namespace Maze.Core.Visual
 
         [SerializeField] private ThemeFootprints _footprints = new ThemeFootprints();
 
+        [SerializeField] private ThemeAwareness _awareness = new ThemeAwareness();
+
         public string Id => _id;
 
         public Material FogMaterial { get => _fogMaterial; internal set => _fogMaterial = value; }
@@ -32,6 +34,8 @@ namespace Maze.Core.Visual
         public ThemeLighting Lighting => _lighting ??= new ThemeLighting();
 
         public ThemeFootprints Footprints => _footprints ??= new ThemeFootprints();
+
+        public ThemeAwareness Awareness => _awareness ??= new ThemeAwareness();
 
         public VisualSet GetSet(VisualKind kind)
         {
