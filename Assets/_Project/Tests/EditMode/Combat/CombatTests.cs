@@ -195,9 +195,10 @@ namespace Maze.Tests.EditMode.Combat
         }
 
         [Test]
-        public void Attack_StopsMovementOnlyForThatTick_AndTurnsToTheStick()
+        public void Attack_StandsForStandTime_StickOnlyTurns_ThenMovesAgain()
         {
-            Equip(_knife);
+            _pistol.ConfigureCombat(damage: 40f, fireInterval: 1f, reloadTime: 1f, fireMode: FireMode.Single);
+            Equip(_pistol);
             var start = _player.Position;
             _input.Move = Vector2.right;
             _input.Press(PlayerAction.Attack);
@@ -206,9 +207,31 @@ namespace Maze.Tests.EditMode.Combat
             Assert.AreEqual(start, _player.Position, "No movement during the attack.");
             Assert.AreEqual(Vector2.right, _player.Facing, "Attacked towards the stick.");
 
+            _input.Move = Vector2.up;
+            for (var t = Dt; t < PlayerCombat.StandTime - Dt; t += Dt) Frame();
+            Assert.AreEqual(start, _player.Position, "Still standing after the attack.");
+            Assert.AreEqual(Vector2.up, _player.Facing, "The stick turns the player meanwhile.");
+
+            for (var i = 0; i < 3; i++) Frame();
+            Assert.Greater(_player.Position.y, start.y, "Moves again after StandTime (the cooldown is still on).");
+        }
+
+        [Test]
+        public void HoldingRepeatingAttack_StandsTheWholeTime_ReloadLetsMove()
+        {
+            _pistol.Configure("pistol", WeaponSlot.Ranged, magazineSize: 3);
+            _pistol.ConfigureCombat(damage: 40f, fireInterval: 0.25f, reloadTime: 1f, fireMode: FireMode.Automatic);
+            Equip(_pistol);
+            var start = _player.Position;
             _input.Move = Vector2.right;
-            Frame();
-            Assert.Greater(_player.Position.x, start.x, "Moves again right after.");
+            _input.AttackHeld = true;
+            for (var t = 0f; t < 0.6f; t += Dt) Frame();
+
+            Assert.AreEqual(3, _bullets.Active.Count + _ended.Count, "Three shots, then the magazine is empty.");
+            Assert.AreEqual(start, _player.Position, "Stands while the burst goes on.");
+
+            for (var t = 0f; t < 0.5f; t += Dt) Frame();
+            Assert.Greater(_player.Position.x, start.x, "Reloading: the player may move although the button is held.");
         }
 
         [Test]

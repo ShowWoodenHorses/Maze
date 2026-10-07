@@ -12,8 +12,10 @@ namespace Maze.Gameplay.Combat
 {
     /// <summary>
     /// The player's attacks (ТЗ §66, §68, §69). Attack = Attack button; the direction is the facing (movement
-    /// direction, ТЗ §65), or the stick direction pressed in the same frame. On an attack the player does not move
-    /// this tick and may move again on the next; the weapon's cooldown blocks only the next attack.
+    /// direction, ТЗ §65), or the stick direction pressed in the same frame. The player stands while attacking
+    /// (ТЗ §66): for <see cref="StandTime"/> after every attack, and all the time the button is held with a weapon
+    /// that repeats on hold (melee, automatic; not while reloading). Standing, the stick only turns the player (aims).
+    /// The weapon's cooldown blocks only the next attack.
     /// <list type="bullet">
     /// <item>Melee: every living target in a sector in front of the player (range, arc) with no wall or closed
     /// door in between takes the damage. Repeats while the button is held.</item>
@@ -28,6 +30,9 @@ namespace Maze.Gameplay.Combat
     public sealed class PlayerCombat : ILevelTickable
     {
         private const float DeadZone = 0.1f;
+
+        /// <summary>Seconds the player stands after an attack.</summary>
+        public const float StandTime = 0.25f;
 
         /// <summary>Half-angle of the aim assist cone, degrees.</summary>
         public const float AssistAngle = 30f;
@@ -44,6 +49,7 @@ namespace Maze.Gameplay.Combat
         private readonly IAimSettings _aim;
         private readonly List<ISpatialObject> _candidates = new List<ISpatialObject>();
         private readonly List<IDamageable> _hits = new List<IDamageable>();
+        private float _standLeft;
 
         public PlayerCombat(IPlayerInput input, PlayerSystem player, WeaponSystem weapons, ISpatialQueryService spatial,
             BulletSystem bullets, SoundEventBus sounds, IAimSettings aim)
@@ -66,20 +72,37 @@ namespace Maze.Gameplay.Combat
         /// <summary>Targets hit by the last melee attack.</summary>
         public IReadOnlyList<IDamageable> LastMeleeHits => _hits;
 
+        /// <summary>The player stands this tick because of attacking (see the class remarks).</summary>
+        public bool IsStanding { get; private set; }
+
         public void Tick(float deltaTime)
         {
+            _standLeft = Mathf.Max(0f, _standLeft - deltaTime);
+            IsStanding = false;
             var weapon = _weapons.Active;
             if (weapon == null || !_player.IsSpawned)
                 return;
 
             UpdateTimers(weapon, deltaTime);
-            if (!WantsToAttack(weapon) || weapon.Cooldown > 0f || weapon.IsReloading)
-                return;
-
             var move = _input.Move;
-            var wanted = move.sqrMagnitude >= DeadZone * DeadZone ? move.normalized : _player.Facing;
-            Attack(weapon, AimDirection(weapon.Definition, wanted));
+            var stick = move.sqrMagnitude >= DeadZone * DeadZone;
+            if (WantsToAttack(weapon) && weapon.Cooldown <= 0f && !weapon.IsReloading)
+            {
+                Attack(weapon, AimDirection(weapon.Definition, stick ? move.normalized : _player.Facing));
+                return;
+            }
+
+            // Between attacks: still standing, the stick turns the player.
+            if (_standLeft > 0f || HoldsRepeatingAttack(weapon))
+            {
+                _player.HoldStill(stick ? move.normalized : Vector2.zero);
+                IsStanding = true;
+            }
         }
+
+        private bool HoldsRepeatingAttack(WeaponRuntime weapon) =>
+            _input.AttackHeld && !weapon.IsReloading &&
+            (weapon.Slot == WeaponSlot.Melee || weapon.Definition.FireMode == FireMode.Automatic);
 
         /// <summary>Performs an attack with the active weapon now, ignoring input (tests, tools).</summary>
         public bool TryAttack(Vector2 direction)
@@ -170,6 +193,8 @@ namespace Maze.Gameplay.Combat
         private void Attack(WeaponRuntime weapon, Vector2 direction)
         {
             _player.HoldStill(direction);
+            _standLeft = StandTime;
+            IsStanding = true;
             var definition = weapon.Definition;
             weapon.Cooldown = definition.Cooldown;
 
