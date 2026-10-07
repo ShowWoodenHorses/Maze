@@ -40,6 +40,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 143018cfbd162844a91be3f2b49a8c21
+    m_Address: Assets/_Project/Art/Keys/key_green.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 1681bc070307efc45a88839b0fb386ea
     m_Address: Assets/_Project/Art/Decor/SM_Prop_BloodPool_02.prefab
     m_ReadOnly: 0
@@ -55,8 +60,18 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 228d362ddec8bb7479d312437ec801fe
+    m_Address: Assets/_Project/Art/Keys/key_blue.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 22d9508cdfcebae4f898dc3270a841e9
     m_Address: Assets/_Project/Art/Placeholders/key_red.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 24319d0f96baa0b42a9e6db3c26027d4
+    m_Address: Assets/_Project/Art/Floors/SM_Bld_Bunker_Floor_Wood_01.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -67,6 +82,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 264655015b698b545b64f50511a09226
     m_Address: Assets/_Project/Art/Weapons/Pickups/SM_Wep_AssaultRifle_03_Pickup.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 266a46f376028f3468b7fdf521b9ebb5
+    m_Address: Assets/_Project/Art/Floors/SM_Bld_Bunker_Floor_Wood_03.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -82,6 +102,16 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 309bd111d7d2d0e4db1e7ab7610bf954
     m_Address: Assets/_Project/Art/Placeholders/floor_03.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3201111cf6a7873488717227d0f908d4
+    m_Address: Assets/_Project/Art/Doors/SM_Bld_Door_Barricaded_08_green.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 334b759b0204b3f47a95a6c8325df011
+    m_Address: Assets/_Project/Art/Keys/key_red.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -130,6 +160,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 560f18092b37e2544aab4b08ffca02e8
+    m_Address: Assets/_Project/Art/Doors/SM_Bld_Door_04.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 58150729399d0ab4ab8f198f91ade59a
     m_Address: Assets/_Project/Art/Weapons/Pickups/SM_Wep_FireAxe_01_Pickup.prefab
     m_ReadOnly: 0
@@ -152,6 +187,16 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 74b4e6258f807744eb65f5231a73b5e4
     m_Address: Assets/_Project/Art/Placeholders/wall_cross.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 80829110669eccc459c625929fb933c4
+    m_Address: Assets/_Project/Art/Doors/SM_Bld_Door_Barricaded_08_red.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 83c093c4e335b1d469a4032f23a75672
+    m_Address: Assets/_Project/Art/Items/SM_Prop_MedicalBox_01.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -205,6 +250,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ba4897ffed852104ea57eea973481eae
+    m_Address: Assets/_Project/Art/Doors/SM_Bld_Door_Barricaded_08_yellow.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: ba861bc331b687d4080cede81ae6eb73
     m_Address: Assets/_Project/Art/Weapons/Pickups/SM_Wep_HuntingRifle_Clean_01_Pickup.prefab
     m_ReadOnly: 0
@@ -230,6 +280,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cbbc307ac2c9b30478769a23a53df34f
+    m_Address: Assets/_Project/Art/Floors/SM_Bld_Bunker_Floor_Wood_02.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: cd6be72a77cef5a48aa9ad6d3eb30407
     m_Address: Assets/_Project/Art/Decor/SM_Prop_Barrel_Water_01.prefab
     m_ReadOnly: 0
@@ -240,8 +295,28 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d3a3580e80602684e8594cf479170f2d
+    m_Address: Assets/_Project/Art/Keys/key_yellow.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e068c4d9df561f942bd10addf004cd1d
+    m_Address: Assets/_Project/Art/Walls/SM_Bld_Castle_Wall_Block_02.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e59132867b851604591d941b9096e133
+    m_Address: Assets/_Project/Art/Items/SM_Item_Book_Open_01.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: e70302ea4c17d6442b2e7555d6d824bf
     m_Address: Assets/_Project/Art/Placeholders/wall_t.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e8ce55ce5f2a6e046be1087f736239ae
+    m_Address: Assets/_Project/Art/Doors/SM_Bld_Door_Barricaded_08_blue.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
