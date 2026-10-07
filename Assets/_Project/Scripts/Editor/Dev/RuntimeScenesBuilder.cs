@@ -225,6 +225,14 @@ namespace Maze.Editor.Dev
             screen.GetComponent<Image>().raycastTarget = false;
             screen.gameObject.AddComponent<SafeAreaFitter>(); // Notches and rounded corners.
 
+            // First child: under the texts. Its texture is made by the screen, it is switched on only while pulsing.
+            var damageObject = new GameObject("DamageFlash", typeof(RectTransform));
+            damageObject.transform.SetParent(screen.transform, false);
+            Stretch(damageObject.GetComponent<RectTransform>());
+            var damageFlash = damageObject.AddComponent<RawImage>();
+            damageFlash.raycastTarget = false;
+            damageFlash.enabled = false;
+
             var levelName = Label(screen.transform, "LevelName", "Level", 30, FontStyle.Bold, 60f);
             levelName.alignment = TextAnchor.MiddleLeft;
             var nameRect = levelName.rectTransform;
@@ -262,6 +270,7 @@ namespace Maze.Editor.Dev
             SetReference(screen, "_message", message);
             SetReference(screen, "_pauseButton", pause);
             SetReference(screen, "_mapButton", map);
+            SetReference(screen, "_damageFlash", damageFlash);
             return screen;
         }
 

@@ -20,7 +20,9 @@ namespace Maze.Editor.Dev
     /// <item>Animator Controller: base layer — locomotion per weapon in hands (blend idle → run by Speed) and death;
     /// layer UpperBody (arms, spine, head) — attacks, shots, reload, hit, use, so the legs keep running. States where
     /// the left hand leaves the gun are tagged <see cref="P.NoHandIK"/>, death <see cref="P.NoWeaponPose"/>
-    /// (<see cref="CharacterWeaponRig.PoseGun"/>).</item>
+    /// (<see cref="CharacterWeaponRig.PoseGun"/>). The moment each attack clip hits is measured and stored as the
+    /// defaults of <see cref="P.AttackContact"/>0..2 (views time the swing effect and hit reactions by it), the side
+    /// the weapon moves to then as <see cref="P.AttackSweep"/>0..2 (the swing effect follows it).</item>
     /// <item>The model prefab gets the controller (no root motion) and becomes <see cref="PlayerVisualDefinition"/>'s
     /// prefab (made Addressable by Build / Sync's shared step).</item>
     /// </list>
@@ -103,6 +105,14 @@ namespace Maze.Editor.Dev
             controller.AddParameter(P.Attack, AnimatorControllerParameterType.Trigger);
             controller.AddParameter(P.AttackIndex, AnimatorControllerParameterType.Int);
             AddFloat(controller, P.AttackSpeed, 1f);
+            // Data for the views, not driven: when each attack clip hits.
+            var model = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath);
+            for (var i = 0; i < Attacks.Length; i++)
+            {
+                var (moment, sweep) = MeasureSwing(model, LoadClip(Attacks[i]));
+                AddFloat(controller, P.AttackContact + i, moment);
+                AddFloat(controller, P.AttackSweep + i, sweep);
+            }
             controller.AddParameter(P.Shoot, AnimatorControllerParameterType.Trigger);
             controller.AddParameter(P.Automatic, AnimatorControllerParameterType.Bool);
             controller.AddParameter(P.Reloading, AnimatorControllerParameterType.Bool);

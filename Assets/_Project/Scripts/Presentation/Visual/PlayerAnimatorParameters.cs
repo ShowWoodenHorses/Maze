@@ -19,6 +19,17 @@ namespace Maze.Presentation.Visual
         public const string AttackIndex = "AttackIndex";
         /// <summary>Float: playback multiplier of melee attacks, 1 / cooldown (attack states last 1 s at 1).</summary>
         public const string AttackSpeed = "AttackSpeed";
+        /// <summary>
+        /// Float defaults "AttackContact0".."AttackContact2", never set at runtime: when the weapon hits in melee attack
+        /// clip i, as a share of the clip (0..1). Measured by Build Player Animations (fastest right hand movement);
+        /// views show the swing and hit reactions then (gameplay damage is applied at once).
+        /// </summary>
+        public const string AttackContact = "AttackContact";
+        /// <summary>
+        /// Float defaults "AttackSweep0".."AttackSweep2", never set at runtime: which way the weapon moves when melee
+        /// clip i hits, +1 = to the character's right (left to right), -1 = to its left. Measured by Build Player Animations.
+        /// </summary>
+        public const string AttackSweep = "AttackSweep";
         /// <summary>Trigger: a shot.</summary>
         public const string Shoot = "Shoot";
         /// <summary>Bool: the ranged weapon in hands is automatic.</summary>
@@ -56,6 +67,14 @@ namespace Maze.Presentation.Visual
         public static readonly int AttackHash = Animator.StringToHash(Attack);
         public static readonly int AttackIndexHash = Animator.StringToHash(AttackIndex);
         public static readonly int AttackSpeedHash = Animator.StringToHash(AttackSpeed);
+        public static readonly int[] AttackContactHashes =
+        {
+            Animator.StringToHash(AttackContact + 0), Animator.StringToHash(AttackContact + 1), Animator.StringToHash(AttackContact + 2),
+        };
+        public static readonly int[] AttackSweepHashes =
+        {
+            Animator.StringToHash(AttackSweep + 0), Animator.StringToHash(AttackSweep + 1), Animator.StringToHash(AttackSweep + 2),
+        };
         public static readonly int ShootHash = Animator.StringToHash(Shoot);
         public static readonly int AutomaticHash = Animator.StringToHash(Automatic);
         public static readonly int ReloadingHash = Animator.StringToHash(Reloading);

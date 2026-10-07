@@ -21,13 +21,17 @@ namespace Maze.Presentation.Visual
     /// graphs. Every entity view (hidden ones too, with inactive children and disabled renderers — e.g. a door's other
     /// state) and every object from <see cref="IViewWarmup"/> is switched on for one frame of a helper camera that sees
     /// the whole level and draws into a tiny texture; then all of it is switched back exactly as it was. The helper
-    /// copies the level camera, so the same shader variants are used. Ends with a garbage collection, so the load's
+    /// copies the level camera, so the same shader variants are used. Particle systems are simulated for
+    /// <see cref="ParticleTime"/> so they have something to draw, then cleared. Ends with a garbage collection, so the load's
     /// garbage is not collected in the middle of play.
     /// </summary>
     public sealed class LevelWarmup : ILevelLoadStep
     {
         private const int TextureSize = 32;
         private const float CameraHeight = 20f;
+
+        /// <summary>Seconds particle systems are simulated before the draw: bursts are out, short flashes still alive.</summary>
+        private const float ParticleTime = 0.02f;
 
         private readonly LevelData _level;
         private readonly EntityViewRegistry _views;
@@ -40,6 +44,9 @@ namespace Maze.Presentation.Visual
         private readonly List<Transform> _transforms = new List<Transform>();
         private readonly List<Renderer> _renderers = new List<Renderer>();
         private readonly List<Animator> _animators = new List<Animator>();
+        private readonly List<ParticleSystem> _particles = new List<ParticleSystem>();
+        private readonly List<ParticleSystem> _foundParticles = new List<ParticleSystem>();
+        private readonly List<Animator> _foundAnimators = new List<Animator>();
 
         public LevelWarmup(LevelData level, EntityViewRegistry views, TopDownCamera camera, IReadOnlyList<IViewWarmup> sources)
         {
@@ -72,12 +79,19 @@ namespace Maze.Presentation.Visual
                 foreach (var animator in _animators)
                     if (animator != null && animator.isActiveAndEnabled)
                         animator.Update(0f);
+                foreach (var particles in _particles)
+                    if (particles != null)
+                        particles.Simulate(ParticleTime, false, true);
 
                 Render();
                 WarmedCount = _objects.Count;
             }
             finally
             {
+                foreach (var particles in _particles)
+                    if (particles != null)
+                        particles.Stop(false, ParticleSystemStopBehavior.StopEmittingAndClear);
+
                 // Reverse order: children were switched on after their parents.
                 for (var i = _enabled.Count - 1; i >= 0; i--)
                     if (_enabled[i] != null) _enabled[i].enabled = false;
@@ -88,6 +102,7 @@ namespace Maze.Presentation.Visual
                 _activated.Clear();
                 _enabled.Clear();
                 _animators.Clear();
+                _particles.Clear();
             }
 
             GC.Collect();
@@ -113,7 +128,13 @@ namespace Maze.Presentation.Visual
                 _enabled.Add(renderer);
             }
 
-            target.GetComponentsInChildren(true, _animators);
+            // GetComponentsInChildren clears the list it fills: collect per target, then add.
+            target.GetComponentsInChildren(true, _foundAnimators);
+            _animators.AddRange(_foundAnimators);
+            target.GetComponentsInChildren(true, _foundParticles);
+            _particles.AddRange(_foundParticles);
+            _foundAnimators.Clear();
+            _foundParticles.Clear();
             _transforms.Clear();
             _renderers.Clear();
         }

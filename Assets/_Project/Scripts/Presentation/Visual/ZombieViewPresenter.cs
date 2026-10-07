@@ -3,9 +3,12 @@ using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using Maze.Core.Common;
+using Maze.Core.Definitions;
 using Maze.Core.Level;
 using Maze.Core.Visual;
+using Maze.Gameplay.Combat;
 using Maze.Gameplay.Level;
+using Maze.Gameplay.Weapons;
 using Maze.Gameplay.Zombies;
 using UnityEngine;
 using Z = Maze.Presentation.Visual.ZombieAnimatorParameters;
@@ -19,7 +22,10 @@ namespace Maze.Presentation.Visual
     /// roaring before a chase (Alert), running (chase) with the step rate matched to the real speed (<see cref="LocomotionAnimation"/>), attacks (three variants in turn, as long as the attack interval), death.
     /// A random idle variant (per zombie, deterministic) is picked whenever the zombie stops; the idle starts at a random
     /// phase on the zombie's first show. A killed zombie's view
-    /// stays for <see cref="CorpseTime"/> to play the death, then is removed.
+    /// stays for <see cref="CorpseTime"/> to play the death, then is removed. Hits flash the model
+    /// (<see cref="HitFlash"/>, colour from <see cref="CombatVisualDefinition"/>), the killing one too. Hit reactions
+    /// (flash, Hit, death) are applied in the late tick; for a player's melee hit they wait until the attack clip hits
+    /// (<see cref="PlayerViewPresenter.LastMeleeContactDelay"/>) — gameplay damage itself is not delayed.
     /// Must be registered after <see cref="ZombieSystem"/> (same load stage, registration order).
     /// </summary>
     public sealed class ZombieViewPresenter : ILevelLoadStep, ILevelLateTickable, IDisposable
@@ -39,11 +45,19 @@ namespace Maze.Presentation.Visual
         private readonly Dictionary<ZombieRuntime, Binding> _bound = new Dictionary<ZombieRuntime, Binding>();
         private readonly List<Corpse> _corpses = new List<Corpse>();
         private readonly BlobShadows _shadows;
+        private readonly CombatVisualDefinition _combatVisual;
+        private readonly PlayerCombat _combat;
+        private readonly PlayerViewPresenter _playerView;
+        private readonly List<Reaction> _reactions = new List<Reaction>();
         private bool _subscribed;
 
         public ZombieViewPresenter(LevelData level, ZombieSystem zombies, LevelVisualSystem visuals, EntityViewRegistry views,
-            LevelViewRoot root, BlobShadows shadows)
+            LevelViewRoot root, BlobShadows shadows, CombatVisualDefinition combatVisual, PlayerCombat combat,
+            PlayerViewPresenter playerView)
         {
+            _combat = combat;
+            _playerView = playerView;
+            _combatVisual = combatVisual;
             _shadows = shadows;
             _level = level;
             _zombies = zombies;
@@ -65,6 +79,7 @@ namespace Maze.Presentation.Visual
                 _zombies.Spawned += Bind;
                 _zombies.Died += OnDied;
                 _zombies.Attacked += OnAttacked;
+                _combat.Attacked += OnPlayerAttacked;
                 _subscribed = true;
             }
 
@@ -73,6 +88,8 @@ namespace Maze.Presentation.Visual
 
         public void LateTick(float deltaTime)
         {
+            UpdateReactions(deltaTime);
+
             foreach (var pair in _bound)
             {
                 var zombie = pair.Key;
@@ -91,11 +108,13 @@ namespace Maze.Presentation.Visual
                 if (view.Cell != zombie.Cell)
                     _views.Move(view, zombie.Cell);
                 SyncAnimator(zombie, bound);
+                bound.Flash?.Tick(deltaTime);
             }
 
             for (var i = _corpses.Count - 1; i >= 0; i--)
             {
                 var corpse = _corpses[i];
+                corpse.Flash?.Tick(deltaTime);
                 corpse.TimeLeft -= deltaTime;
                 if (corpse.TimeLeft > 0f)
                 {
@@ -115,12 +134,14 @@ namespace Maze.Presentation.Visual
                 _zombies.Spawned -= Bind;
                 _zombies.Died -= OnDied;
                 _zombies.Attacked -= OnAttacked;
+                _combat.Attacked -= OnPlayerAttacked;
                 _subscribed = false;
             }
 
             foreach (var zombie in _bound.Keys)
                 zombie.Damaged -= OnDamaged;
             _bound.Clear();
+            _reactions.Clear();
             _corpses.Clear(); // their views are destroyed with the registry
         }
 
@@ -148,6 +169,7 @@ namespace Maze.Presentation.Visual
                 View = view,
                 Animator = view.GameObject.GetComponentInChildren<Animator>(),
                 Random = new DeterministicRandom(unchecked((int)StableHash.Of(zombie.Id))),
+                Flash = HitFlash.Create(view.GameObject),
             };
             bound.CacheParameters();
             _bound[zombie] = bound;
@@ -191,10 +213,82 @@ namespace Maze.Presentation.Visual
         private void OnDied(ZombieRuntime zombie)
         {
             zombie.Damaged -= OnDamaged;
+            _reactions.Add(new Reaction { Zombie = zombie, Died = true });
+        }
+
+        private void OnDamaged(ZombieRuntime zombie, float damage) => _reactions.Add(new Reaction { Zombie = zombie });
+
+        /// <summary>Raised after the melee damage was dealt (this tick): those reactions wait for the clip's hit.</summary>
+        private void OnPlayerAttacked(WeaponRuntime weapon, Vector2 direction)
+        {
+            if (weapon.Slot != WeaponSlot.Melee) return;
+            for (var i = 0; i < _reactions.Count; i++)
+            {
+                var reaction = _reactions[i];
+                if (reaction.Timed || !IsMeleeHit(reaction.Zombie)) continue;
+                reaction.Melee = true;
+                _reactions[i] = reaction;
+            }
+        }
+
+        private bool IsMeleeHit(ZombieRuntime zombie)
+        {
+            foreach (var target in _combat.LastMeleeHits)
+                if (ReferenceEquals(target, zombie))
+                    return true;
+            return false;
+        }
+
+        /// <summary>In order of the hits; a reaction of a zombie already removed is skipped.</summary>
+        private void UpdateReactions(float deltaTime)
+        {
+            for (var i = 0; i < _reactions.Count; i++)
+            {
+                var reaction = _reactions[i];
+                if (!reaction.Timed)
+                {
+                    reaction.Left = reaction.Melee && _playerView != null ? _playerView.LastMeleeContactDelay : 0f;
+                    reaction.Timed = true;
+                }
+                else
+                {
+                    reaction.Left -= deltaTime;
+                }
+
+                _reactions[i] = reaction;
+            }
+
+            // A later reaction never overtakes an earlier one of the same zombie (a death waits for the hit before it).
+            for (var i = 0; i < _reactions.Count;)
+            {
+                var reaction = _reactions[i];
+                if (reaction.Left > 0f || HasEarlier(i, reaction.Zombie))
+                {
+                    i++;
+                    continue;
+                }
+
+                _reactions.RemoveAt(i);
+                if (reaction.Died) ShowDeath(reaction.Zombie);
+                else ShowHit(reaction.Zombie);
+            }
+        }
+
+        private bool HasEarlier(int index, ZombieRuntime zombie)
+        {
+            for (var i = 0; i < index; i++)
+                if (_reactions[i].Zombie == zombie)
+                    return true;
+            return false;
+        }
+
+        private void ShowDeath(ZombieRuntime zombie)
+        {
             if (!_bound.TryGetValue(zombie, out var bound))
                 return;
 
             _bound.Remove(zombie);
+            Flash(bound.Flash);
             if (!bound.Has(Z.DeadHash))
             {
                 _views.Remove(zombie.Id);
@@ -203,7 +297,7 @@ namespace Maze.Presentation.Visual
 
             bound.SetFloat(Z.SpeedHash, 0f);
             bound.SetBool(Z.DeadHash, true);
-            _corpses.Add(new Corpse { EntityId = zombie.Id, TimeLeft = CorpseTime });
+            _corpses.Add(new Corpse { EntityId = zombie.Id, TimeLeft = CorpseTime, Flash = bound.Flash });
         }
 
         private void OnAttacked(ZombieRuntime zombie)
@@ -213,16 +307,34 @@ namespace Maze.Presentation.Visual
             bound.SetTrigger(Z.AttackHash);
         }
 
-        private void OnDamaged(ZombieRuntime zombie, float damage)
+        private void ShowHit(ZombieRuntime zombie)
         {
-            if (_bound.TryGetValue(zombie, out var bound))
-                bound.SetTrigger(Z.HitHash);
+            if (!_bound.TryGetValue(zombie, out var bound)) return;
+            bound.SetTrigger(Z.HitHash);
+            Flash(bound.Flash);
+        }
+
+        private void Flash(HitFlash flash)
+        {
+            if (_combatVisual != null)
+                flash?.Trigger(_combatVisual.HitFlashColor, _combatVisual.HitFlashTime);
+        }
+
+        private struct Reaction
+        {
+            public ZombieRuntime Zombie;
+            public bool Died;
+            /// <summary>Hit by the player's melee attack: waits for the attack clip's hit.</summary>
+            public bool Melee;
+            public bool Timed;
+            public float Left;
         }
 
         private struct Corpse
         {
             public string EntityId;
             public float TimeLeft;
+            public HitFlash Flash;
         }
 
         private sealed class Binding
@@ -232,6 +344,7 @@ namespace Maze.Presentation.Visual
             public EntityView View;
             public Animator Animator;
             public DeterministicRandom Random;
+            public HitFlash Flash;
             public int AttackCounter;
             public bool WasMoving;
             public float WalkGroundSpeed;

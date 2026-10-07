@@ -49,3 +49,29 @@ MonoBehaviour:
       Radius: 5
       Intensity: 0.9
       Flicker: 0.05
+  _footprints:
+    PrintMaterial: {fileID: 2100000, guid: 8ec1aafa434afa44987c004e69ba7af6, type: 2}
+    MaxPrints: 96
+    Player:
+      StepLength: 0.7
+      Length: 0.3
+      Width: 0.15
+      Spacing: 0.09
+      Color: {r: 0.05, g: 0.04, b: 0.03, a: 0.7}
+      FadeFrom: 1
+      FadeTo: 2
+      Lifetime: 2
+    Zombie:
+      StepLength: 0.55
+      Length: 0.3
+      Width: 0.16
+      Spacing: 0.1
+      Color: {r: 0.05, g: 0.07, b: 0.02, a: 0.75}
+      FadeFrom: 3
+      FadeTo: 4
+      Lifetime: 8
+    DustMaterial: {fileID: 2100000, guid: 5bd4c4442526e134a9eb1a3db185116b, type: 2}
+    DustColor: {r: 0.7, g: 0.66, b: 0.58, a: 0.35}
+    DustSize: 0.28
+    DustLifetime: 0.4
+    DustRunSpeed: 1.5

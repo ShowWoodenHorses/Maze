@@ -23,11 +23,15 @@ namespace Maze.Core.Visual
 
         [SerializeField] private ThemeLighting _lighting = new ThemeLighting();
 
+        [SerializeField] private ThemeFootprints _footprints = new ThemeFootprints();
+
         public string Id => _id;
 
         public Material FogMaterial { get => _fogMaterial; internal set => _fogMaterial = value; }
 
         public ThemeLighting Lighting => _lighting ??= new ThemeLighting();
+
+        public ThemeFootprints Footprints => _footprints ??= new ThemeFootprints();
 
         public VisualSet GetSet(VisualKind kind)
         {

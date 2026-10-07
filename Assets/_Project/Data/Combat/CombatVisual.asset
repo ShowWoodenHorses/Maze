@@ -13,21 +13,43 @@ MonoBehaviour:
   m_Name: CombatVisual
   m_EditorClassIdentifier: Maze.Core::Maze.Core.Visual.CombatVisualDefinition
   _bullet:
-    m_AssetGUID: 7e5f64916d59165419367b89450f6a52
+    m_AssetGUID: 740c49c56bd0a924999b433a0c99d7d1
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_SubObjectGUID: 
+    m_EditorAssetChanged: 0
+  _tracerLength: 1.2
+  _muzzleFlash:
+    m_AssetGUID: 6f7df8ab0f74eb943ac0a4e89f9a49dc
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_SubObjectGUID: 
+    m_EditorAssetChanged: 0
+  _shellCasing:
+    m_AssetGUID: ff61208721dbe0245acebc1c37ef64fa
     m_SubObjectName: 
     m_SubObjectType: 
     m_SubObjectGUID: 
     m_EditorAssetChanged: 0
   _impact:
-    m_AssetGUID: a913449684e4a7b4e874749abe209a0e
+    m_AssetGUID: b8a5e01ac996b3f489772a571fe22712
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_SubObjectGUID: 
+    m_EditorAssetChanged: 0
+  _targetHit:
+    m_AssetGUID: 1bcb3a52cf5e4a846a3e14607b358298
     m_SubObjectName: 
     m_SubObjectType: 
     m_SubObjectGUID: 
     m_EditorAssetChanged: 0
   _meleeSwing:
-    m_AssetGUID: 246a1e70096affb4292fac6aabc958d3
+    m_AssetGUID: e072561891ea0bf4d96ffab9c5d065b2
     m_SubObjectName: 
     m_SubObjectType: 
     m_SubObjectGUID: 
     m_EditorAssetChanged: 0
   _effectDuration: 0.15
+  _hitFlashColor: {r: 1, g: 1, b: 1, a: 0.85}
+  _playerHitFlashColor: {r: 1, g: 0.25, b: 0.2, a: 0.7}
+  _hitFlashTime: 0.15

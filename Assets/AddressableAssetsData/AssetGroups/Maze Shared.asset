@@ -15,13 +15,13 @@ MonoBehaviour:
   m_GroupName: Maze Shared
   m_GUID: 3103d1cbfedb1f14f8c9d647de458c62
   m_SerializeEntries:
-  - m_GUID: 1ef373babc8e1a342bff0537d85420dd
-    m_Address: Weapons/Visual
+  - m_GUID: 1bcb3a52cf5e4a846a3e14607b358298
+    m_Address: Assets/_Project/Art/Effects/fx_hit_star.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 246a1e70096affb4292fac6aabc958d3
-    m_Address: Assets/_Project/Art/Placeholders/fx_melee_swing.prefab
+  - m_GUID: 1ef373babc8e1a342bff0537d85420dd
+    m_Address: Weapons/Visual
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -40,6 +40,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6f7df8ab0f74eb943ac0a4e89f9a49dc
+    m_Address: Assets/_Project/Art/Effects/fx_muzzle_flash.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 704945209d9b5ef4c9458c18ff7c7e99
     m_Address: Combat/Visual
     m_ReadOnly: 0
@@ -50,8 +55,8 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 7e5f64916d59165419367b89450f6a52
-    m_Address: Assets/_Project/Art/Placeholders/fx_bullet.prefab
+  - m_GUID: 740c49c56bd0a924999b433a0c99d7d1
+    m_Address: Assets/_Project/Art/Effects/fx_tracer.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -70,11 +75,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: a913449684e4a7b4e874749abe209a0e
-    m_Address: Assets/_Project/Art/Placeholders/fx_impact.prefab
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: b1e99142f56fa3c40af00df3d0b91fea
     m_Address: Player/Visual
     m_ReadOnly: 0
@@ -82,6 +82,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: b68cdd3552a07f643aca1595689f96a4
     m_Address: Assets/_Project/Art/Weapons/Rifle/Auto/SM_Wep_SubMGun_02.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b8a5e01ac996b3f489772a571fe22712
+    m_Address: Assets/_Project/Art/Effects/fx_wall_impact.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -100,6 +105,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e072561891ea0bf4d96ffab9c5d065b2
+    m_Address: Assets/_Project/Art/Effects/fx_melee_swing.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: e28f1d16de9bd0a4b80abb0b08b53d94
     m_Address: Assets/_Project/Art/Weapons/Rifle/SM_Wep_HuntingRifle_Clean_01.prefab
     m_ReadOnly: 0
@@ -107,6 +117,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: e6e89d136fb41ad488c4568853260c9f
     m_Address: Assets/_Project/Art/Weapons/Melee/SM_Wep_Katana_01.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ff61208721dbe0245acebc1c37ef64fa
+    m_Address: Assets/_Project/Art/Effects/fx_shell.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

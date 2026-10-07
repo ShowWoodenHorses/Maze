@@ -34,6 +34,7 @@ namespace Maze.Presentation.Visual
 
         private CharacterWeaponRig _rig;
         private GameObject _shown;
+        private WeaponModel _shownModel;
         private bool _shownIsGun;
         private Transform _shownGrip;
         private bool _subscribed;
@@ -52,6 +53,9 @@ namespace Maze.Presentation.Visual
 
         /// <summary>The weapon model now in the player's hands, or null.</summary>
         public GameObject Shown => _shown;
+
+        /// <summary>Marks of the weapon model in hands (muzzle, tip), or null.</summary>
+        public WeaponModel ShownModel => _shown != null ? _shownModel : null;
 
         public async UniTask ExecuteAsync(CancellationToken cancellation)
         {
@@ -115,6 +119,7 @@ namespace Maze.Presentation.Visual
             _instances.Clear();
             _prefabs.Clear();
             _shown = null;
+            _shownModel = null;
             _shownGrip = null;
         }
 
@@ -128,9 +133,11 @@ namespace Maze.Presentation.Visual
             _shown = next;
             _shownIsGun = weapon != null && weapon.Slot == WeaponSlot.Ranged;
             _shownGrip = null;
+            _shownModel = null;
             if (_shown == null) return;
 
             var model = _shown.GetComponent<WeaponModel>();
+            _shownModel = model;
             _shownGrip = model != null ? model.GripLeft : null;
 
             _shown.SetActive(true);

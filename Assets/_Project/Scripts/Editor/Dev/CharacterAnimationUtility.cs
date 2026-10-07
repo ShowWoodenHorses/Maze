@@ -182,6 +182,56 @@ namespace Maze.Editor.Dev
             }
         }
 
+        /// <summary>
+        /// When and which way a melee clip hits: the moment the right hand moves fastest (smoothed over three samples),
+        /// as a share of the clip (0..1), and the side it moves to then: +1 = to the character's right (left to right),
+        /// -1 = to its left. The model faces +Z.
+        /// </summary>
+        public static (float Moment, float Sweep) MeasureSwing(GameObject model, AnimationClip clip)
+        {
+            const int samples = 60;
+
+            var instance = (GameObject)PrefabUtility.InstantiatePrefab(model);
+            AnimationMode.StartAnimationMode();
+            try
+            {
+                instance.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
+                var hand = instance.GetComponent<Animator>().GetBoneTransform(HumanBodyBones.RightHand);
+                if (hand == null)
+                    throw new InvalidOperationException($"'{model.name}' has no right hand bone.");
+
+                var positions = new Vector3[samples + 1];
+                for (var i = 0; i <= samples; i++)
+                {
+                    AnimationMode.BeginSampling();
+                    AnimationMode.SampleAnimationClip(instance, clip, clip.length * i / samples);
+                    AnimationMode.EndSampling();
+                    positions[i] = hand.position;
+                }
+
+                var best = -1f;
+                var moment = 0.5f;
+                var sweep = 1f;
+                for (var i = 2; i < samples; i++)
+                {
+                    // Movement over samples i-2..i+1, centred between i-1 and i.
+                    var movement = positions[i + 1] - positions[i - 2];
+                    var speed = movement.magnitude;
+                    if (speed <= best) continue;
+                    best = speed;
+                    moment = (i - 0.5f) / samples;
+                    sweep = movement.x >= 0f ? 1f : -1f;
+                }
+
+                return (moment, sweep);
+            }
+            finally
+            {
+                AnimationMode.StopAnimationMode();
+                UnityEngine.Object.DestroyImmediate(instance);
+            }
+        }
+
         /// <summary>Puts the controller on the prefab's root Animator (Humanoid avatar required), no root motion, scale.</summary>
         public static void SetupPrefab(string prefabPath, RuntimeAnimatorController controller, float scale)
         {

@@ -305,10 +305,13 @@ namespace Maze.Tests.PlayMode
             Assert.IsTrue(combat.TryAttack(Vector2.down));
             Assert.AreEqual(1, bullets.Active.Count);
             Assert.AreEqual(1, views.ActiveBulletViews, "A bullet view taken from the pool.");
+            await UniTask.Yield(PlayerLoopTiming.PostLateUpdate);
+            Assert.GreaterOrEqual(views.ActiveEffects, 2, "Muzzle flash and shell shown after the gun was posed.");
 
             await WaitFor(() => bullets.Active.Count == 0);
             await UniTask.Yield(PlayerLoopTiming.PostLateUpdate);
             Assert.AreEqual(0, views.ActiveBulletViews, "Returned to the pool when the bullet ended.");
+            await WaitFor(() => views.ActiveEffects == 0);
 
             await _flow.ExitToMenu();
             Assert.AreEqual(handlesInMenu, _addressables.ActiveHandleCount, "Combat and held weapon prefabs released with the level.");
@@ -346,9 +349,14 @@ namespace Maze.Tests.PlayMode
                 Assert.AreEqual(zombie.Cell, view.Cell, "Visibility uses the zombie's current cell.");
             }
 
+            var footprints = container.Resolve<FootprintsView>().Field;
+            Assert.IsNotNull(footprints, "The theme has footprints (Maze → Dev → Build Footprints).");
+            Assert.Greater(footprints.AliveCount, 0, "The patrolling zombie leaves prints, also out of the player's sight.");
+
             var victim = zombies.Zombies[0];
             victim.ApplyDamage(10000f, Vector2.right);
             Assert.AreEqual(1, zombies.KilledCount);
+            await UniTask.Yield(PlayerLoopTiming.PostLateUpdate); // hit reactions are shown in the late tick
             if (views.TryGet(victim.Id, out var corpse) && corpse.GameObject.GetComponentInChildren<Animator>() is { } animator)
                 Assert.IsTrue(animator.GetBool(ZombieAnimatorParameters.Dead), "The corpse plays the death.");
             await UniTask.Delay(TimeSpan.FromSeconds(ZombieViewPresenter.CorpseTime + 0.5f));

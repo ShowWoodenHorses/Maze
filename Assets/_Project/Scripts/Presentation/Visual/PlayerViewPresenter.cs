@@ -20,7 +20,8 @@ namespace Maze.Presentation.Visual
     /// mirrors gameplay state every frame — position, facing, Animator parameters — and keeps the camera on the
     /// player. The Animator only shows state (<see cref="PlayerAnimatorParameters"/>): speed, weapon in hands,
     /// reload; attacks, shots, hits, interactions and death come from gameplay events. Parameters missing from the
-    /// controller are skipped. Must be registered after <see cref="PlayerSystem"/> (same load stage, registration order).
+    /// controller are skipped. <see cref="LastMeleeContactDelay"/> tells other views when the last melee attack's clip
+    /// actually hits (the clip starts with a wind-up). Damage flashes the model (<see cref="HitFlash"/>). Must be registered after <see cref="PlayerSystem"/> (same load stage, registration order).
     /// </summary>
     public sealed class PlayerViewPresenter : ILevelLoadStep, ILevelLateTickable, IDisposable
     {
@@ -36,7 +37,11 @@ namespace Maze.Presentation.Visual
         private readonly PlayerHealth _health;
         private readonly PlayerInteraction _interaction;
         private readonly BlobShadows _shadows;
+        private readonly CombatVisualDefinition _combatVisual;
         private readonly HashSet<int> _parameters = new HashSet<int>();
+        private readonly float[] _attackContacts = new float[P.AttackVariants];
+        private readonly float[] _attackSweeps = new float[P.AttackVariants];
+        private HitFlash _flash;
 
         private GameObject _view;
         private Animator _animator;
@@ -47,8 +52,9 @@ namespace Maze.Presentation.Visual
 
         public PlayerViewPresenter(PlayerSystem player, PlayerVisualDefinition visual, IAssetOwner assets,
             LevelViewRoot root, TopDownCamera camera, PlayerCombat combat, WeaponSystem weapons, PlayerHealth health,
-            PlayerInteraction interaction, BlobShadows shadows)
+            PlayerInteraction interaction, BlobShadows shadows, CombatVisualDefinition combatVisual)
         {
+            _combatVisual = combatVisual;
             _shadows = shadows;
             _combat = combat;
             _player = player;
@@ -65,6 +71,18 @@ namespace Maze.Presentation.Visual
 
         public GameObject View => _view;
 
+        /// <summary>
+        /// Seconds from the last melee attack until its clip hits (from the controller's AttackContact data and the
+        /// weapon's cooldown, which the clip is stretched to); 0 without that data. Set when the attack happens.
+        /// </summary>
+        public float LastMeleeContactDelay { get; private set; }
+
+        /// <summary>
+        /// Which way the last melee attack's clip swings: +1 = to the player's right (left to right), -1 = to the left,
+        /// 0 = unknown (no such data in the controller). Set when the attack happens.
+        /// </summary>
+        public float LastMeleeSweep { get; private set; }
+
         public async UniTask ExecuteAsync(CancellationToken cancellation)
         {
             if (!_player.IsSpawned)
@@ -76,6 +94,7 @@ namespace Maze.Presentation.Visual
             _view = UnityEngine.Object.Instantiate(prefab, _root.transform);
             _view.name = "Player";
             _shadows.Attach(_view);
+            _flash = HitFlash.Create(_view); // before weapons are put in hands: the body flashes, not the gun
             _animator = _view.GetComponentInChildren<Animator>();
             CacheParameters();
 
@@ -88,7 +107,11 @@ namespace Maze.Presentation.Visual
             Sync(0f, snap: true);
         }
 
-        public void LateTick(float deltaTime) => Sync(deltaTime, snap: false);
+        public void LateTick(float deltaTime)
+        {
+            Sync(deltaTime, snap: false);
+            _flash?.Tick(deltaTime);
+        }
 
         public void Dispose()
         {
@@ -104,6 +127,7 @@ namespace Maze.Presentation.Visual
             UnityObjects.Destroy(_view);
             _view = null;
             _animator = null;
+            _flash = null;
         }
 
         private void Sync(float deltaTime, bool snap)
@@ -134,7 +158,10 @@ namespace Maze.Presentation.Visual
         {
             if (weapon.Slot == WeaponSlot.Melee)
             {
-                SetInt(P.AttackIndexHash, _attackCounter++ % P.AttackVariants);
+                var variant = _attackCounter++ % P.AttackVariants;
+                LastMeleeContactDelay = _attackContacts[variant] * weapon.Definition.Cooldown;
+                LastMeleeSweep = _attackSweeps[variant];
+                SetInt(P.AttackIndexHash, variant);
                 SetFloat(P.AttackSpeedHash, 1f / Mathf.Max(weapon.Definition.Cooldown, 0.01f));
                 SetTrigger(P.AttackHash);
             }
@@ -155,6 +182,16 @@ namespace Maze.Presentation.Visual
             var damaged = current < _lastHealth;
             _lastHealth = current;
             if (!damaged) return;
+
+            if (current <= 0)
+            {
+                // The level finishes now and late ticks stop: a flash would stay on the corpse.
+                _flash?.Stop();
+            }
+            else if (_combatVisual != null)
+            {
+                _flash?.Trigger(_combatVisual.PlayerHitFlashColor, _combatVisual.HitFlashTime);
+            }
 
             if (current > 0)
             {
@@ -178,12 +215,22 @@ namespace Maze.Presentation.Visual
         private void CacheParameters()
         {
             _parameters.Clear();
+            Array.Clear(_attackContacts, 0, _attackContacts.Length);
+            Array.Clear(_attackSweeps, 0, _attackSweeps.Length);
             _upperBodyLayer = -1;
             if (_animator == null || _animator.runtimeAnimatorController == null)
                 return;
 
             foreach (var parameter in _animator.parameters)
+            {
                 _parameters.Add(parameter.nameHash);
+                var contact = Array.IndexOf(P.AttackContactHashes, parameter.nameHash);
+                if (contact >= 0 && contact < _attackContacts.Length)
+                    _attackContacts[contact] = Mathf.Clamp01(parameter.defaultFloat);
+                var sweep = Array.IndexOf(P.AttackSweepHashes, parameter.nameHash);
+                if (sweep >= 0 && sweep < _attackSweeps.Length)
+                    _attackSweeps[sweep] = Mathf.Sign(parameter.defaultFloat);
+            }
             _upperBodyLayer = _animator.GetLayerIndex(P.UpperBodyLayer);
         }
 

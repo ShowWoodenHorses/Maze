@@ -17,8 +17,8 @@ using Maze.Presentation.Visual;
 namespace Maze.Presentation.UI
 {
     /// <summary>
-    /// Shows the level's player state on the HUD (load stage InitializeUI): HP, weapon slots, keys, map fragments, and short
-    /// messages about interactions. The HUD lives in the Bootstrap scene; this presenter lives with the level.
+    /// Shows the level's player state on the HUD (load stage InitializeUI): HP, weapon slots, keys, map fragments, short
+    /// messages about interactions and a red pulse at the screen edges when the player is hurt. The HUD lives in the Bootstrap scene; this presenter lives with the level.
     /// </summary>
     public sealed class HudPresenter : ILevelLoadStep, IDisposable
     {
@@ -33,6 +33,7 @@ namespace Maze.Presentation.UI
         private readonly PlayerSystem _player;
         private readonly PickupSystem _pickups;
         private readonly StringBuilder _text = new StringBuilder();
+        private int _lastHealth;
         private bool _bound;
 
         public HudPresenter(UIRoot ui, LevelData level, PlayerHealth health, PlayerInventory inventory,
@@ -69,6 +70,7 @@ namespace Maze.Presentation.UI
             }
 
             _ui.Hud.ClearLevelInfo();
+            _lastHealth = _health.Current;
             Refresh();
             return UniTask.CompletedTask;
         }
@@ -89,7 +91,13 @@ namespace Maze.Presentation.UI
                 _ui.Hud.ClearLevelInfo();
         }
 
-        private void OnHealthChanged(int current, int max) => Refresh();
+        private void OnHealthChanged(int current, int max)
+        {
+            if (current < _lastHealth)
+                _ui.Hud.PulseDamage();
+            _lastHealth = current;
+            Refresh();
+        }
 
         private void OnAttacked(WeaponRuntime weapon, UnityEngine.Vector2 direction)
         {
