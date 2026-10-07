@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Maze.Application.Save;
 using Maze.Composition;
 using Maze.Presentation.UI;
 using Maze.Presentation.UI.Touch;
@@ -282,6 +283,8 @@ namespace Maze.Editor.Dev
         /// Stick zone on the left part of the screen (the stick floats there or rests near its corner); attack
         /// bottom-right under the thumb, use above it, melee and ranged to its left; map and pause are HUD buttons at
         /// the top. Everything is mirrored for the left-handed layout. They emulate gamepad controls bound by InputService.
+        /// The player may move and resize the stick and buttons (TouchLayoutHandle on each, disabled) in the layout
+        /// editor: a dim background under them and a toolbar at the top, both hidden until editing.
         /// </summary>
         private static TouchControls BuildTouchControls()
         {
@@ -290,14 +293,21 @@ namespace Maze.Editor.Dev
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvas.sortingOrder = -1;
             go.AddComponent<GraphicRaycaster>();
-            var group = go.AddComponent<CanvasGroup>();
             var controls = go.AddComponent<TouchControls>();
             var knobSprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd");
+
+            // Layout editing: under the controls, over the application UI (the canvas goes on top then).
+            var editBackground = new GameObject("EditBackground", typeof(RectTransform));
+            editBackground.transform.SetParent(go.transform, false);
+            Stretch(editBackground.GetComponent<RectTransform>());
+            editBackground.AddComponent<Image>().color = new Color(0f, 0f, 0f, 0.85f);
+            editBackground.SetActive(false);
 
             var content = new GameObject("SafeArea", typeof(RectTransform)).GetComponent<RectTransform>();
             content.SetParent(go.transform, false);
             Stretch(content);
             content.gameObject.AddComponent<SafeAreaFitter>();
+            var group = content.gameObject.AddComponent<CanvasGroup>(); // Opacity: not the editor toolbar.
 
             var zone = new GameObject("StickZone", typeof(RectTransform)).GetComponent<RectTransform>();
             zone.SetParent(content, false);
@@ -310,8 +320,7 @@ namespace Maze.Editor.Dev
             var ring = Rect(zone, "Ring", Vector2.zero, new Vector2(230f, 230f), new Vector2(240f, 240f));
             var ringImage = ring.gameObject.AddComponent<Image>();
             ringImage.sprite = knobSprite;
-            ringImage.color = new Color(1f, 1f, 1f, 0.2f);
-            ringImage.raycastTarget = false;
+            ringImage.color = new Color(1f, 1f, 1f, 0.2f); // Its touches go up to the zone (the stick) or a layout handle.
             var knob = Rect(ring, "Knob", new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(110f, 110f));
             var knobImage = knob.gameObject.AddComponent<Image>();
             knobImage.sprite = knobSprite;
@@ -326,7 +335,8 @@ namespace Maze.Editor.Dev
             serializedStick.FindProperty("_radius").floatValue = 100f;
             serializedStick.ApplyModifiedPropertiesWithoutUndo();
 
-            var mirrored = new List<Object>
+            // In TouchElement order.
+            var mirrored = new List<RectTransform>
             {
                 zone,
                 TouchButton(content, "Attack", "<Gamepad>/buttonSouth", new Vector2(-200f, 200f), 170f, 32, knobSprite),
@@ -335,12 +345,89 @@ namespace Maze.Editor.Dev
                 TouchButton(content, "Ranged", "<Gamepad>/rightShoulder", new Vector2(-400f, 300f), 100f, 24, knobSprite),
             };
 
+            var editor = BuildTouchLayoutEditor(go.transform, controls, editBackground);
+            AddLayoutHandle(ring.gameObject, TouchElement.Stick, editor);
+            for (var i = 1; i < mirrored.Count; i++)
+                AddLayoutHandle(mirrored[i].gameObject, (TouchElement)i, editor);
+
             SetReference(controls, "_canvas", canvas);
             SetReference(controls, "_group", group);
             SetReference(controls, "_stick", stick);
-            SetReferences(controls, "_mirrored", mirrored);
+            SetReference(controls, "_area", content);
+            SetReference(controls, "_editor", editor);
+            SetReferences(controls, "_mirrored", mirrored.Cast<Object>().ToList());
             go.SetActive(false); // The HUD shows it on touch devices.
             return controls;
+        }
+
+        private static void AddLayoutHandle(GameObject target, TouchElement element, TouchLayoutEditor editor)
+        {
+            var handle = target.AddComponent<TouchLayoutHandle>();
+            var serialized = new SerializedObject(handle);
+            serialized.FindProperty("_element").enumValueIndex = (int)element;
+            serialized.FindProperty("_editor").objectReferenceValue = editor;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            handle.enabled = false; // TouchControls enables it while editing.
+        }
+
+        /// <summary>
+        /// Toolbar of the layout editor at the top of the safe area (canvas units are 0.1 mm): hint, size of the selected
+        /// control, Reset layout, Done.
+        /// </summary>
+        private static TouchLayoutEditor BuildTouchLayoutEditor(Transform parent, TouchControls controls, GameObject background)
+        {
+            var panel = new GameObject("LayoutEditor", typeof(RectTransform));
+            panel.transform.SetParent(parent, false);
+            Stretch(panel.GetComponent<RectTransform>());
+            panel.AddComponent<SafeAreaFitter>();
+
+            var bar = Column(panel.transform, 640f, 8f, Panel);
+            var barRect = (RectTransform)bar;
+            barRect.anchorMin = barRect.anchorMax = barRect.pivot = new Vector2(0.5f, 1f);
+            barRect.anchoredPosition = new Vector2(0f, -10f);
+            var barLayout = bar.GetComponent<VerticalLayoutGroup>();
+            barLayout.padding = new RectOffset(16, 16, 12, 12);
+
+            Label(bar, "Hint", "Drag the stick and buttons. Tap one to resize it.", 24, FontStyle.Normal, 32f);
+
+            var row = new GameObject("Row", typeof(RectTransform));
+            row.transform.SetParent(bar, false);
+            var rowLayout = row.AddComponent<HorizontalLayoutGroup>();
+            rowLayout.spacing = 16f;
+            rowLayout.childControlWidth = true;
+            rowLayout.childControlHeight = true;
+            rowLayout.childForceExpandWidth = false;
+            row.AddComponent<LayoutElement>().preferredHeight = 80f;
+
+            var sizeColumn = new GameObject("Size", typeof(RectTransform));
+            sizeColumn.transform.SetParent(row.transform, false);
+            var sizeLayout = sizeColumn.AddComponent<VerticalLayoutGroup>();
+            sizeLayout.childControlWidth = true;
+            sizeLayout.childControlHeight = true;
+            sizeLayout.childForceExpandHeight = false;
+            sizeColumn.AddComponent<LayoutElement>().flexibleWidth = 1f;
+            var (sizeLabel, size) = SliderRow(sizeColumn.transform, "Size");
+            sizeLabel.fontSize = 24;
+            var handle = (RectTransform)size.transform.Find("Handle Slide Area/Handle");
+            if (handle != null) handle.sizeDelta = new Vector2(36f, 0f);
+
+            var reset = Button(row.transform, "ResetLayoutButton", "Reset layout");
+            var done = Button(row.transform, "DoneButton", "Done");
+            foreach (var button in new[] { reset, done })
+            {
+                button.GetComponent<LayoutElement>().preferredWidth = 170f;
+                button.GetComponentInChildren<Text>().fontSize = 26;
+            }
+
+            var editor = panel.AddComponent<TouchLayoutEditor>();
+            SetReference(editor, "_controls", controls);
+            SetReference(editor, "_background", background);
+            SetReference(editor, "_size", size);
+            SetReference(editor, "_sizeLabel", sizeLabel);
+            SetReference(editor, "_resetButton", reset);
+            SetReference(editor, "_doneButton", done);
+            panel.SetActive(false);
+            return editor;
         }
 
         private static RectTransform TouchButton(Transform parent, string label, string controlPath, Vector2 fromBottomRight,
@@ -472,7 +559,8 @@ namespace Maze.Editor.Dev
         }
 
         /// <summary>
-        /// Small FPS text in the bottom-right corner of the safe area, over every screen; ignores touches. Hidden until
+        /// Small FPS text on the left of the safe area, under the HUD status and above the stick (corners may be cut off
+        /// on some devices), over every screen; ignores touches. Hidden until
         /// the setting switches it on.
         /// </summary>
         private static FpsCounter BuildFpsCounter(Transform parent)
@@ -483,13 +571,14 @@ namespace Maze.Editor.Dev
             area.AddComponent<SafeAreaFitter>();
 
             var label = Label(area.transform, "Text", "FPS -", 22, FontStyle.Bold, 30f);
-            label.alignment = TextAnchor.LowerRight;
+            label.alignment = TextAnchor.UpperLeft;
             label.color = new Color(1f, 1f, 1f, 0.85f);
             var shadow = label.gameObject.AddComponent<Shadow>();
             shadow.effectColor = new Color(0f, 0f, 0f, 0.8f);
             var rect = label.rectTransform;
-            rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(1f, 0f);
-            rect.anchoredPosition = new Vector2(-12f, 8f);
+            // Left, under the HUD status (ends at -210) and above the stick zone; inset like the HUD texts.
+            rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(0f, 1f);
+            rect.anchoredPosition = new Vector2(32f, -220f);
             rect.sizeDelta = new Vector2(200f, 30f);
 
             var counter = area.AddComponent<FpsCounter>();
@@ -498,22 +587,49 @@ namespace Maze.Editor.Dev
             return counter;
         }
 
-        /// <summary>Touch controls settings: an overlay over the main menu or the pause screen.</summary>
+        /// <summary>
+        /// Settings: an overlay over the main menu or the pause screen. Tabs Controls / Shooting / Other (SettingsTab
+        /// order), one page at a time; the pages area keeps the height of the tallest page.
+        /// </summary>
         private static SettingsScreen BuildSettings(Transform parent)
         {
             var screen = Screen<SettingsScreen>(parent, "SettingsScreen", Dim);
             // Opaque: the main menu text must not show through.
-            var column = Column(screen.transform, 640f, 6f, new Color(Panel.r, Panel.g, Panel.b, 1f));
+            var column = Column(screen.transform, 680f, 6f, new Color(Panel.r, Panel.g, Panel.b, 1f));
             Label(column, "Title", "Settings", 40, FontStyle.Bold, 56f);
-            var (deadZoneLabel, deadZone) = SliderRow(column, "DeadZone");
-            var (sensitivityLabel, sensitivity) = SliderRow(column, "Sensitivity");
-            var (sizeLabel, size) = SliderRow(column, "Size");
-            var (opacityLabel, opacity) = SliderRow(column, "Opacity");
-            var floating = ToggleRow(column, "FloatingStick", "Floating stick (appears under the thumb)");
-            var leftHanded = ToggleRow(column, "LeftHanded", "Left-handed layout");
-            var aimMode = Button(column, "AimModeButton", "Aim");
-            var aimAssist = ToggleRow(column, "AimAssist", "Auto-aim at zombies");
-            var showFps = ToggleRow(column, "ShowFps", "Show FPS counter");
+
+            var tabs = Row(column, "Tabs", 64f);
+            var tabButtons = new List<Object>
+            {
+                Button(tabs, "ControlsTab", "Controls"),
+                Button(tabs, "ShootingTab", "Shooting"),
+                Button(tabs, "OtherTab", "Other"),
+            };
+
+            var pages = new GameObject("Pages", typeof(RectTransform));
+            pages.transform.SetParent(column, false);
+            var pagesLayout = pages.AddComponent<VerticalLayoutGroup>();
+            pagesLayout.childControlWidth = true;
+            pagesLayout.childControlHeight = true;
+            pagesLayout.childForceExpandHeight = false;
+            pagesLayout.padding = new RectOffset(0, 0, 10, 0);
+            pages.AddComponent<LayoutElement>().minHeight = 562f; // The Controls page with the top padding.
+
+            var controlsPage = Page(pages.transform, "ControlsPage");
+            var (deadZoneLabel, deadZone) = SliderRow(controlsPage, "DeadZone");
+            var (sensitivityLabel, sensitivity) = SliderRow(controlsPage, "Sensitivity");
+            var (sizeLabel, size) = SliderRow(controlsPage, "Size");
+            var (opacityLabel, opacity) = SliderRow(controlsPage, "Opacity");
+            var floating = ToggleRow(controlsPage, "FloatingStick", "Floating stick (appears under the thumb)");
+            var leftHanded = ToggleRow(controlsPage, "LeftHanded", "Left-handed layout");
+            var editLayout = Button(controlsPage, "EditLayoutButton", "Edit button layout");
+
+            var shootingPage = Page(pages.transform, "ShootingPage");
+            var aimMode = Button(shootingPage, "AimModeButton", "Aim");
+            var aimAssist = ToggleRow(shootingPage, "AimAssist", "Auto-aim at zombies");
+
+            var otherPage = Page(pages.transform, "OtherPage");
+            var showFps = ToggleRow(otherPage, "ShowFps", "Show FPS counter");
 
             var buttons = new GameObject("Buttons", typeof(RectTransform));
             buttons.transform.SetParent(column, false);
@@ -525,6 +641,9 @@ namespace Maze.Editor.Dev
             var reset = Button(buttons.transform, "ResetButton", "Reset to defaults");
             var back = Button(buttons.transform, "BackButton", "Back");
 
+            SetReferences(screen, "_tabButtons", tabButtons);
+            SetReferences(screen, "_pages", new List<Object> { controlsPage.gameObject, shootingPage.gameObject, otherPage.gameObject });
+            SetReference(screen, "_editLayoutButton", editLayout);
             SetReference(screen, "_deadZone", deadZone);
             SetReference(screen, "_deadZoneLabel", deadZoneLabel);
             SetReference(screen, "_sensitivity", sensitivity);
@@ -590,6 +709,33 @@ namespace Maze.Editor.Dev
             layout.childControlHeight = true;
             layout.childForceExpandHeight = false;
             go.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            return go.transform;
+        }
+
+        /// <summary>Equal-width children side by side.</summary>
+        private static Transform Row(Transform parent, string name, float height)
+        {
+            var go = new GameObject(name, typeof(RectTransform));
+            go.transform.SetParent(parent, false);
+            var layout = go.AddComponent<HorizontalLayoutGroup>();
+            layout.spacing = 8f;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            go.AddComponent<LayoutElement>().preferredHeight = height;
+            return go.transform;
+        }
+
+        /// <summary>A settings page: rows top to bottom.</summary>
+        private static Transform Page(Transform parent, string name)
+        {
+            var go = new GameObject(name, typeof(RectTransform));
+            go.transform.SetParent(parent, false);
+            var layout = go.AddComponent<VerticalLayoutGroup>();
+            layout.spacing = 6f;
+            layout.childAlignment = TextAnchor.UpperCenter;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandHeight = false;
             return go.transform;
         }
 

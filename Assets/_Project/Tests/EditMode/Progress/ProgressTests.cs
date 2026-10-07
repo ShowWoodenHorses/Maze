@@ -6,6 +6,7 @@ using Maze.Application.Save;
 using Maze.Application.Services;
 using Maze.Core.Grid;
 using Maze.Core.Level;
+using Maze.Gameplay.Combat;
 using Maze.Gameplay.Level;
 using Maze.Gameplay.Map;
 using Maze.Presentation.Map;
@@ -211,6 +212,63 @@ namespace Maze.Tests.EditMode.Progress
             settings.ResetControls();
             Assert.AreEqual(ControlsSettings.Default, settings.Controls);
             Assert.AreEqual(writes + 2, _storage.Writes);
+        }
+
+        [Test]
+        public void TouchLayout_IsSaved_Clamped_AndOldSavesGetBuiltInPlaces()
+        {
+            var settings = new SettingsService(_save);
+            settings.InitializeAsync(CancellationToken.None);
+            var controls = settings.Controls;
+            var layout = controls.Layout;
+            layout[TouchElement.Attack] = new TouchPlacement { Moved = true, Position = new Vector2(0.7f, 1.5f), Scale = 9f };
+            controls.Layout = layout;
+            settings.SetControls(controls);
+
+            var save = new SaveService(_storage);
+            save.Load();
+            var attack = save.Data.Settings.Controls.Layout.Attack;
+            Assert.IsTrue(attack.Moved);
+            Assert.AreEqual(new Vector2(0.7f, 1f), attack.Position, "Clamped to the safe area.");
+            Assert.AreEqual(TouchPlacement.MaxScale, attack.Scale, 1e-5f);
+            Assert.IsFalse(save.Data.Settings.Controls.Layout.Use.Moved);
+
+            // A save from before the layout existed: no Layout field.
+            _storage.Json = "{\"Version\":2,\"Settings\":{\"Controls\":{\"StickDeadZone\":0.1,\"Size\":1.2,\"Opacity\":0.5}}}";
+            _save.Load();
+            var old = new SettingsService(_save);
+            old.InitializeAsync(CancellationToken.None);
+            Assert.AreEqual(TouchLayout.Default, old.Controls.Layout, "Built-in places, scale 1.");
+            Assert.AreEqual(1.2f, old.Controls.Size, 1e-5f);
+        }
+
+        [Test]
+        public void ResetTouchControls_KeepsAim_ResetAim_KeepsTouchControls()
+        {
+            var settings = new SettingsService(_save);
+            settings.InitializeAsync(CancellationToken.None);
+            var controls = settings.Controls;
+            controls.Size = 1.3f;
+            controls.AimMode = AimMode.Four;
+            controls.AimAssist = !ControlsSettings.Default.AimAssist;
+            var layout = controls.Layout;
+            layout.Use = new TouchPlacement { Moved = true, Position = new Vector2(0.5f, 0.5f), Scale = 1.2f };
+            controls.Layout = layout;
+            settings.SetControls(controls);
+
+            settings.ResetAim();
+            Assert.AreEqual(ControlsSettings.Default.AimMode, settings.Controls.AimMode);
+            Assert.AreEqual(ControlsSettings.Default.AimAssist, settings.Controls.AimAssist);
+            Assert.AreEqual(1.3f, settings.Controls.Size, 1e-5f);
+            Assert.IsTrue(settings.Controls.Layout.Use.Moved);
+
+            controls = settings.Controls;
+            controls.AimMode = AimMode.Four;
+            settings.SetControls(controls);
+            settings.ResetTouchControls();
+            Assert.AreEqual(AimMode.Four, settings.Controls.AimMode, "Aim stays.");
+            Assert.AreEqual(ControlsSettings.Default.Size, settings.Controls.Size, 1e-5f);
+            Assert.AreEqual(TouchLayout.Default, settings.Controls.Layout);
         }
 
         [Test]

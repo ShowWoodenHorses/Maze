@@ -67,7 +67,7 @@ namespace Maze.Application.Save
     }
 
     /// <summary>
-    /// Controls: on-screen stick response and layout, aiming (all input devices). Applied at once, without restarting
+    /// Controls: on-screen stick response, size and layout (<see cref="TouchLayout"/>), aiming (all input devices). Applied at once, without restarting
     /// a level.
     /// </summary>
     [Serializable]
@@ -103,6 +103,9 @@ namespace Maze.Application.Save
         /// <summary>Attacks turn to the nearest visible zombie near the wanted direction.</summary>
         public bool AimAssist;
 
+        /// <summary>Positions and sizes of the stick and buttons set by the player (old saves: built-in places).</summary>
+        public TouchLayout Layout;
+
         /// <summary>Aim help is on by default on mobile (touch), off elsewhere.</summary>
         public static ControlsSettings Default => new ControlsSettings
         {
@@ -114,6 +117,7 @@ namespace Maze.Application.Save
             Size = 1f,
             Opacity = 0.6f,
             LeftHanded = false,
+            Layout = TouchLayout.Default,
         };
 
         public ControlsSettings Clamped()
@@ -124,6 +128,7 @@ namespace Maze.Application.Save
             result.Size = Clamp(Size, MinSize, MaxSize, Default.Size);
             result.Opacity = Clamp(Opacity, MinOpacity, MaxOpacity, Default.Opacity);
             if (!Enum.IsDefined(typeof(AimMode), AimMode)) result.AimMode = Default.AimMode;
+            result.Layout = Layout.Clamped();
             return result;
         }
 
@@ -135,11 +140,12 @@ namespace Maze.Application.Save
             UnityEngine.Mathf.Approximately(Opacity, other.Opacity) &&
             LeftHanded == other.LeftHanded &&
             AimMode == other.AimMode &&
-            AimAssist == other.AimAssist;
+            AimAssist == other.AimAssist &&
+            Layout.Equals(other.Layout);
 
         public override bool Equals(object obj) => obj is ControlsSettings other && Equals(other);
 
-        public override int GetHashCode() => HashCode.Combine(StickDeadZone, StickSensitivity, FloatingStick, Size, Opacity, LeftHanded, AimMode, AimAssist);
+        public override int GetHashCode() => HashCode.Combine(HashCode.Combine(StickDeadZone, StickSensitivity, FloatingStick, Size, Opacity, LeftHanded, AimMode, AimAssist), Layout);
 
         private static float Clamp(float value, float min, float max, float fallback) =>
             float.IsNaN(value) ? fallback : UnityEngine.Mathf.Clamp(value, min, max);

@@ -79,6 +79,24 @@ namespace Maze.Application.Services
 
         public void ResetControls() => SetControls(ControlsSettings.Default);
 
+        /// <summary>Defaults for the on-screen controls (stick, size, opacity, layout); aiming stays.</summary>
+        public void ResetTouchControls()
+        {
+            var controls = ControlsSettings.Default;
+            controls.AimMode = Controls.AimMode;
+            controls.AimAssist = Controls.AimAssist;
+            SetControls(controls);
+        }
+
+        /// <summary>Default aiming; the on-screen controls stay.</summary>
+        public void ResetAim()
+        {
+            var controls = Controls;
+            controls.AimMode = ControlsSettings.Default.AimMode;
+            controls.AimAssist = ControlsSettings.Default.AimAssist;
+            SetControls(controls);
+        }
+
         /// <summary>Saves previewed controls, if any.</summary>
         public void SaveControls()
         {

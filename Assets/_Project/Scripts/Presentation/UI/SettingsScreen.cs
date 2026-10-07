@@ -6,9 +6,33 @@ using UnityEngine.UI;
 
 namespace Maze.Presentation.UI
 {
-    /// <summary>Controls settings (touch controls, aiming), opened from the main menu and the pause screen. Changes apply at once.</summary>
+    /// <summary>Pages of the settings screen.</summary>
+    public enum SettingsTab
+    {
+        /// <summary>On-screen controls: stick, size, opacity, layout.</summary>
+        Controls,
+
+        /// <summary>Aim directions, auto-aim.</summary>
+        Shooting,
+
+        /// <summary>Everything else (FPS counter).</summary>
+        Other,
+    }
+
+    /// <summary>
+    /// Settings, opened from the main menu and the pause screen: tabs (<see cref="SettingsTab"/>), one page shown at a
+    /// time; "Reset to defaults" resets the shown page. Changes apply at once.
+    /// </summary>
     public sealed class SettingsScreen : UIScreen
     {
+        private static readonly Color TabColor = new Color(0.22f, 0.24f, 0.28f, 1f);
+        private static readonly Color ActiveTabColor = new Color(0.42f, 0.46f, 0.55f, 1f);
+
+        [Tooltip("In SettingsTab order.")]
+        [SerializeField] private Button[] _tabButtons;
+        [Tooltip("In SettingsTab order.")]
+        [SerializeField] private GameObject[] _pages;
+
         [SerializeField] private Slider _deadZone;
         [SerializeField] private Text _deadZoneLabel;
         [SerializeField] private Slider _sensitivity;
@@ -19,6 +43,7 @@ namespace Maze.Presentation.UI
         [SerializeField] private Text _opacityLabel;
         [SerializeField] private Toggle _floatingStick;
         [SerializeField] private Toggle _leftHanded;
+        [SerializeField] private Button _editLayoutButton;
         [Tooltip("Cycles Free / 8 / 4 aim directions.")]
         [SerializeField] private Button _aimModeButton;
         [SerializeField] private Text _aimModeLabel;
@@ -28,13 +53,19 @@ namespace Maze.Presentation.UI
         [SerializeField] private Button _backButton;
 
         public event Action<ControlsSettings> Changed;
-        public event Action ResetClicked;
+        /// <summary>"Reset to defaults" on the shown page.</summary>
+        public event Action<SettingsTab> ResetClicked;
+
+        /// <summary>"Edit button layout": drag the on-screen controls.</summary>
+        public event Action EditLayoutClicked;
 
         /// <summary>The "Show FPS counter" toggle was switched (not part of the controls).</summary>
         public event Action<bool> ShowFpsChanged;
         public event Action BackClicked;
 
         private AimMode _aimMode;
+
+        public SettingsTab Tab { get; private set; }
 
         private void Awake()
         {
@@ -49,7 +80,24 @@ namespace Maze.Presentation.UI
             _aimAssist.onValueChanged.AddListener(_ => OnEdited());
             if (_showFps != null) _showFps.onValueChanged.AddListener(value => ShowFpsChanged?.Invoke(value));
             Bind(_aimModeButton, OnAimModeClicked);
-            Bind(_resetButton, () => ResetClicked?.Invoke());
+            Bind(_resetButton, () => ResetClicked?.Invoke(Tab));
+            Bind(_editLayoutButton, () => EditLayoutClicked?.Invoke());
+            for (var i = 0; i < _tabButtons.Length; i++)
+            {
+                var tab = (SettingsTab)i;
+                Bind(_tabButtons[i], () => ShowTab(tab));
+            }
+
+            ShowTab(SettingsTab.Controls);
+        }
+
+        public void ShowTab(SettingsTab tab)
+        {
+            Tab = tab;
+            for (var i = 0; i < _pages.Length; i++)
+                _pages[i].SetActive(i == (int)tab);
+            for (var i = 0; i < _tabButtons.Length; i++)
+                _tabButtons[i].targetGraphic.color = i == (int)tab ? ActiveTabColor : TabColor;
             Bind(_backButton, () => BackClicked?.Invoke());
         }
 
@@ -60,6 +108,7 @@ namespace Maze.Presentation.UI
 
         public void SetValues(ControlsSettings settings)
         {
+            _values = settings;
             _deadZone.SetValueWithoutNotify(settings.StickDeadZone);
             _sensitivity.SetValueWithoutNotify(settings.StickSensitivity);
             _size.SetValueWithoutNotify(settings.Size);
@@ -71,17 +120,21 @@ namespace Maze.Presentation.UI
             UpdateLabels(settings);
         }
 
-        private ControlsSettings Read() => new ControlsSettings
+        private ControlsSettings _values;
+
+        private ControlsSettings Read()
         {
-            StickDeadZone = _deadZone.value,
-            StickSensitivity = _sensitivity.value,
-            FloatingStick = _floatingStick.isOn,
-            Size = _size.value,
-            Opacity = _opacity.value,
-            LeftHanded = _leftHanded.isOn,
-            AimMode = _aimMode,
-            AimAssist = _aimAssist.isOn,
-        };
+            var settings = _values; // Keeps what the screen does not edit (the layout).
+            settings.StickDeadZone = _deadZone.value;
+            settings.StickSensitivity = _sensitivity.value;
+            settings.FloatingStick = _floatingStick.isOn;
+            settings.Size = _size.value;
+            settings.Opacity = _opacity.value;
+            settings.LeftHanded = _leftHanded.isOn;
+            settings.AimMode = _aimMode;
+            settings.AimAssist = _aimAssist.isOn;
+            return settings;
+        }
 
         private void OnAimModeClicked()
         {
@@ -97,6 +150,7 @@ namespace Maze.Presentation.UI
         private void OnEdited()
         {
             var settings = Read();
+            _values = settings;
             UpdateLabels(settings);
             Changed?.Invoke(settings);
         }

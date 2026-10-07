@@ -35,6 +35,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 28090f5c9f83d0a41bd0fd189da3107a
+    m_Address: Assets/_Project/Art/Effects/fx_soft.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 2bb7dc9d0eb49d94aa908e133bb58da9
     m_Address: Assets/_Project/Data/Weapons/Crowbar.asset
     m_ReadOnly: 0
@@ -42,6 +47,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 2cc7b8ab74a2dfe4db5e2b8abe10cd6b
     m_Address: Assets/_Project/Art/ThirdParty/PolygonApocalypse/Models/SM_Wep_HuntingRifle_Clean_01.fbx
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2f70223cb96ce5342b1611c69ac6131d
+    m_Address: Assets/_Project/Art/Shaders/MazeParticle.shader
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -72,6 +82,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 5bb68a94905ffc0418608fc7e572ea42
     m_Address: Assets/_Project/Art/ThirdParty/PolygonApocalypse/Materials/PolygonApocalypse_Material_01_A.mat
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5bd4c4442526e134a9eb1a3db185116b
+    m_Address: Assets/_Project/Art/Effects/fx_dust.mat
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

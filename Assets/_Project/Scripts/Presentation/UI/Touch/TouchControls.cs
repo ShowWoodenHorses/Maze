@@ -1,5 +1,7 @@
 using Maze.Application.Save;
 using UnityEngine;
+using UnityEngine.InputSystem.OnScreen;
+using UnityEngine.UI;
 
 namespace Maze.Presentation.UI.Touch
 {
@@ -7,7 +9,10 @@ namespace Maze.Presentation.UI.Touch
     /// Root of the on-screen controls (ТЗ §64): a separate overlay canvas under the application UI, so sizes are
     /// physical rather than a share of the screen. One canvas unit = 0.1 mm × <see cref="ControlsSettings.Size"/>,
     /// limited so the layout (<see cref="_designHeight"/>) always fits the safe area of small screens.
-    /// Applies <see cref="ControlsSettings"/>: stick response, size, opacity, mirrored layout.
+    /// Applies <see cref="ControlsSettings"/>: stick response, size, opacity, mirrored layout and the player's
+    /// <see cref="TouchLayout"/> (moved controls are anchored at their point of the safe area and kept inside it;
+    /// the stick inside its zone). While <see cref="TouchLayoutEditor"/> edits the layout the controls are shown over
+    /// the whole UI and do not send input.
     /// </summary>
     [RequireComponent(typeof(Canvas))]
     public sealed class TouchControls : MonoBehaviour
@@ -19,24 +24,46 @@ namespace Maze.Presentation.UI.Touch
         [SerializeField] private CanvasGroup _group;
         [SerializeField] private TouchStick _stick;
 
-        [Tooltip("Stick zone and buttons; mirrored horizontally for the left-handed layout.")]
+        [Tooltip("Safe area the controls live in (layout positions are relative to it).")]
+        [SerializeField] private RectTransform _area;
+
+        [Tooltip("Stick zone and buttons in TouchElement order (the zone stands for the stick); mirrored horizontally for the left-handed layout.")]
         [SerializeField] private RectTransform[] _mirrored;
 
         [Tooltip("Height (canvas units) the layout needs.")]
         [SerializeField] private float _designHeight = 540f;
 
+        [Tooltip("Canvas sorting order while the layout is edited: over the application UI.")]
+        [SerializeField] private int _editSortingOrder = 10;
+
+        [SerializeField] private TouchLayoutEditor _editor;
+
         private Placement[] _rightHanded;
         private float _size = 1f;
+        private ControlsSettings _settings = ControlsSettings.Default;
+        private bool _shownByHud;
+        private bool _editing;
+        private int _normalSortingOrder;
+        private Vector2 _appliedAreaSize;
+        private OnScreenButton[] _buttons;
+        private TouchLayoutHandle[] _handles;
+
+        public TouchLayoutEditor LayoutEditor => _editor;
+
+        /// <summary>Safe area of the controls.</summary>
+        public RectTransform Area => _area;
+
+        public bool LeftHanded => _settings.LeftHanded;
 
         public void SetShown(bool shown)
         {
-            if (gameObject.activeSelf == shown) return;
-            if (shown) UpdateScale();
-            gameObject.SetActive(shown);
+            _shownByHud = shown;
+            RefreshActive();
         }
 
         public void Apply(ControlsSettings settings)
         {
+            _settings = settings;
             _size = settings.Size;
             if (_group != null) _group.alpha = settings.Opacity;
             SetLeftHanded(settings.LeftHanded);
@@ -44,9 +71,101 @@ namespace Maze.Presentation.UI.Touch
             if (_stick != null)
                 _stick.Configure(settings.StickDeadZone, StickResponse.ExponentFor(settings.StickSensitivity),
                     settings.FloatingStick, settings.LeftHanded);
+            ApplyLayout();
         }
 
-        private void Update() => UpdateScale();
+        /// <summary>Layout editing: shown over the UI, input off, drag handles on.</summary>
+        public void SetEditing(bool editing)
+        {
+            if (_editing == editing) return;
+            _editing = editing;
+            CacheComponents();
+            if (_canvas != null)
+            {
+                if (editing) _normalSortingOrder = _canvas.sortingOrder;
+                _canvas.sortingOrder = editing ? _editSortingOrder : _normalSortingOrder;
+            }
+
+            foreach (var button in _buttons) button.enabled = !editing;
+            if (_stick != null) _stick.enabled = !editing;
+            foreach (var handle in _handles) handle.enabled = editing;
+            // The stick zone (where the stick may go) is invisible in play, faintly drawn while editing.
+            var zone = _mirrored[0].GetComponent<Image>();
+            if (zone != null) zone.color = editing ? new Color(1f, 1f, 1f, 0.06f) : Color.clear;
+            RefreshActive();
+            ApplyLayout();
+        }
+
+        /// <summary>The drawn control: a button or the stick ring.</summary>
+        public RectTransform ElementRect(TouchElement element) =>
+            element == TouchElement.Stick ? _stick.Ring : _mirrored[(int)element];
+
+        /// <summary>Centre of the control as shown, normalized to the safe area.</summary>
+        public Vector2 DisplayedCenter(TouchElement element)
+        {
+            var size = _area.rect.size;
+            if (size.x <= 0f || size.y <= 0f) return new Vector2(0.5f, 0.5f);
+            var rect = ElementRect(element);
+            var local = (Vector2)_area.InverseTransformPoint(rect.TransformPoint(rect.rect.center));
+            return (local - _area.rect.min) / size;
+        }
+
+        /// <summary>Shown point (normalized) ↔ layout point: the left-handed layout mirrors x.</summary>
+        public Vector2 ToLayout(Vector2 displayed) => _settings.LeftHanded ? new Vector2(1f - displayed.x, displayed.y) : displayed;
+
+        /// <summary>Keeps a shown centre so the whole control (at that scale) stays in the safe area; the stick in its zone.</summary>
+        public Vector2 ClampDisplayed(TouchElement element, Vector2 displayed, float scale)
+        {
+            var size = _area.rect.size;
+            if (size.x <= 0f || size.y <= 0f) return displayed;
+
+            Vector2 min, max, half;
+            if (element == TouchElement.Stick)
+            {
+                var zone = _mirrored[0];
+                min = zone.anchorMin;
+                max = zone.anchorMax;
+                var radius = _stick.Ring.rect.width * 0.5f * scale;
+                half = new Vector2(radius, radius);
+            }
+            else
+            {
+                min = Vector2.zero;
+                max = Vector2.one;
+                half = _mirrored[(int)element].rect.size * (0.5f * scale);
+            }
+
+            return new Vector2(
+                ClampAxis(displayed.x, min.x + half.x / size.x, max.x - half.x / size.x),
+                ClampAxis(displayed.y, min.y + half.y / size.y, max.y - half.y / size.y));
+        }
+
+        private static float ClampAxis(float value, float min, float max) =>
+            min > max ? (min + max) * 0.5f : Mathf.Clamp(value, min, max);
+
+        private void Update()
+        {
+            UpdateScale();
+            // Moved controls are clamped against the safe area size, which follows the resolution.
+            if (_area != null && _area.rect.size != _appliedAreaSize) ApplyLayout();
+        }
+
+        private void RefreshActive()
+        {
+            var active = _shownByHud || _editing;
+            if (gameObject.activeSelf == active) return;
+            if (active) UpdateScale();
+            gameObject.SetActive(active);
+        }
+
+        private void CacheComponents()
+        {
+            if (_buttons != null) return;
+            _buttons = new OnScreenButton[_mirrored.Length - 1];
+            for (var i = 1; i < _mirrored.Length; i++)
+                _buttons[i - 1] = _mirrored[i].GetComponent<OnScreenButton>();
+            _handles = GetComponentsInChildren<TouchLayoutHandle>(true);
+        }
 
         /// <summary>Pixels per canvas unit; cheap, so checked every frame (resolution or DPI may change).</summary>
         private void UpdateScale()
@@ -58,6 +177,30 @@ namespace Maze.Presentation.UI.Touch
             if (height > 0f) scale = Mathf.Min(scale, height / _designHeight);
             if (!Mathf.Approximately(_canvas.scaleFactor, scale))
                 _canvas.scaleFactor = scale;
+        }
+
+        /// <summary>On top of the built-in (possibly mirrored) places from <see cref="SetLeftHanded"/>.</summary>
+        private void ApplyLayout()
+        {
+            if (_area == null || _mirrored == null || _stick == null) return;
+            _appliedAreaSize = _area.rect.size;
+            var layout = _settings.Layout;
+
+            for (var element = TouchElement.Attack; (int)element < _mirrored.Length; element++)
+            {
+                var placement = layout[element];
+                var rect = _mirrored[(int)element];
+                rect.localScale = new Vector3(placement.Scale, placement.Scale, 1f);
+                if (!placement.Moved) continue;
+                var point = ClampDisplayed(element, ToLayout(placement.Position), placement.Scale);
+                rect.anchorMin = rect.anchorMax = point;
+                rect.pivot = new Vector2(0.5f, 0.5f);
+                rect.anchoredPosition = Vector2.zero;
+            }
+
+            var stick = layout.Stick;
+            var rest = stick.Moved ? ClampDisplayed(TouchElement.Stick, ToLayout(stick.Position), stick.Scale) : Vector2.zero;
+            _stick.SetPlacement(stick.Moved, rest, stick.Scale);
         }
 
         private void SetLeftHanded(bool leftHanded)
