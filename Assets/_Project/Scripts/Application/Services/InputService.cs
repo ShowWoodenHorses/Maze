@@ -20,6 +20,8 @@ namespace Maze.Application.Services
     /// Input System (new only) wrapper with the input abstraction of ТЗ §64: Move, Look, Attack, Interact,
     /// SwitchMelee, SwitchRanged, OpenMap (+ Pause). Desktop: WASD/arrows, mouse, keys. Gamepad: sticks and buttons.
     /// Android: the HUD's on-screen stick and buttons drive the same gamepad controls.
+    /// A mouse click that starts over the UI (the HUD's Pause / Map buttons, screens) is not an attack, for as long as
+    /// that button stays down (<see cref="IUiPointer"/>; checked when gameplay polls the attack, not in input callbacks).
     /// </summary>
     public sealed class InputService : IInputService, IPlayerInput, IApplicationService, IDisposable
     {
@@ -27,7 +29,16 @@ namespace Maze.Application.Services
         private InputAction _move;
         private InputAction _look;
         private InputAction _attack;
+        private InputAction _pointerAttack;
         private readonly InputAction[] _buttons = new InputAction[5];
+        private readonly IUiPointer _uiPointer;
+        private bool _pointerBlocked;
+        private int _pointerCheckedFrame = -1;
+
+        public InputService(IUiPointer uiPointer)
+        {
+            _uiPointer = uiPointer;
+        }
 
         public string Name => "Input";
 
@@ -37,12 +48,47 @@ namespace Maze.Application.Services
         public Vector2 Move => _move != null ? _move.ReadValue<Vector2>() : Vector2.zero;
         public Vector2 Look => _look != null ? _look.ReadValue<Vector2>() : Vector2.zero;
         public bool LookIsPointer => _look?.activeControl?.device is Pointer;
-        public bool AttackHeld => _attack != null && _attack.IsPressed();
+        public bool AttackHeld
+        {
+            get
+            {
+                if (_attack == null) return false;
+                if (_attack.IsPressed()) return true;
+                UpdatePointerBlock();
+                return _pointerAttack.IsPressed() && !_pointerBlocked;
+            }
+        }
 
         public bool WasPressed(PlayerAction action)
         {
             var button = _buttons[(int)action];
-            return button != null && button.WasPerformedThisFrame();
+            if (button == null) return false;
+            if (action != PlayerAction.Attack) return button.WasPerformedThisFrame();
+
+            if (button.WasPerformedThisFrame()) return true;
+            UpdatePointerBlock();
+            return _pointerAttack.WasPerformedThisFrame() && !_pointerBlocked;
+        }
+
+        /// <summary>
+        /// A mouse press decides once, on its first frame, whether it belongs to the UI; it stays so until released.
+        /// </summary>
+        private void UpdatePointerBlock()
+        {
+            if (_pointerAttack == null) return;
+            if (_pointerAttack.WasPressedThisFrame())
+            {
+                var frame = Time.frameCount;
+                if (_pointerCheckedFrame != frame)
+                {
+                    _pointerCheckedFrame = frame;
+                    _pointerBlocked = _uiPointer != null && _uiPointer.IsOverUi;
+                }
+            }
+            else if (!_pointerAttack.IsPressed())
+            {
+                _pointerBlocked = false;
+            }
         }
 
         public UniTask InitializeAsync(CancellationToken cancellation)
@@ -62,7 +108,10 @@ namespace Maze.Application.Services
             _look.AddBinding("<Pointer>/position");
             _look.AddBinding("<Gamepad>/rightStick");
 
-            _attack = Button(PlayerAction.Attack, "<Mouse>/leftButton", "<Keyboard>/space", "<Gamepad>/buttonSouth");
+            _attack = Button(PlayerAction.Attack, "<Keyboard>/space", "<Gamepad>/buttonSouth");
+            // The mouse separately: its clicks may belong to the UI.
+            _pointerAttack = _actions.AddAction("PointerAttack", InputActionType.Button);
+            _pointerAttack.AddBinding("<Mouse>/leftButton");
             Button(PlayerAction.Interact, "<Keyboard>/e", "<Gamepad>/buttonWest");
             Button(PlayerAction.SwitchMelee, "<Keyboard>/1", "<Gamepad>/leftShoulder");
             Button(PlayerAction.SwitchRanged, "<Keyboard>/2", "<Gamepad>/rightShoulder");
@@ -86,7 +135,8 @@ namespace Maze.Application.Services
             _actions.Disable();
             _actions.Dispose();
             _actions = null;
-            _move = _look = _attack = null;
+            _move = _look = _attack = _pointerAttack = null;
+            _pointerBlocked = false;
             Array.Clear(_buttons, 0, _buttons.Length);
         }
 

@@ -1,5 +1,6 @@
 using Maze.Presentation.UI.Touch;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace Maze.Presentation.UI
 {
@@ -22,6 +23,9 @@ namespace Maze.Presentation.UI
         [Tooltip("Frames per second in the bottom-right corner, over every screen; shown when the setting is on.")]
         [SerializeField] private FpsCounter _fpsCounter;
 
+        [Tooltip("The scene's EventSystem: tells whether the pointer is over the UI (clicks there are not attacks).")]
+        [SerializeField] private EventSystem _eventSystem;
+
         public MainMenuScreen MainMenu => _mainMenu;
         public LoadingScreen Loading => _loading;
         public ErrorScreen Error => _error;
@@ -33,5 +37,6 @@ namespace Maze.Presentation.UI
         public SettingsScreen Settings => _settings;
         public TouchControls TouchControls => _touchControls;
         public FpsCounter FpsCounter => _fpsCounter;
+        public EventSystem EventSystem => _eventSystem;
     }
 }

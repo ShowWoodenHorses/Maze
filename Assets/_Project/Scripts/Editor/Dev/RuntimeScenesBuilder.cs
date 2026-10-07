@@ -129,6 +129,7 @@ namespace Maze.Editor.Dev
             eventSystem.AddComponent<InputSystemUIInputModule>();
 
             var ui = BuildUI();
+            SetReference(ui, "_eventSystem", eventSystem.GetComponent<EventSystem>());
             var touch = BuildTouchControls();
             SetReference(ui, "_touchControls", touch);
             SetReference(ui.Hud, "_touchControls", touch);

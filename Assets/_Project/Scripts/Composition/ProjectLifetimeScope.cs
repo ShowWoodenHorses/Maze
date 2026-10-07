@@ -31,6 +31,7 @@ namespace Maze.Composition
             builder.Register<SaveService>(Lifetime.Singleton).AsSelf().As<IApplicationService>();
             builder.Register<SettingsService>(Lifetime.Singleton).AsSelf().As<IApplicationService, IAimSettings>();
             builder.Register<AudioService>(Lifetime.Singleton).AsSelf().As<IApplicationService>();
+            builder.Register<UiPointer>(Lifetime.Singleton).As<IUiPointer>();
             builder.Register<InputService>(Lifetime.Singleton).As<IInputService, IPlayerInput, IApplicationService>();
             builder.Register<SharedDefinitionsService>(Lifetime.Singleton).AsSelf().As<IApplicationService>();
             builder.Register<LevelCatalogService>(Lifetime.Singleton).As<ILevelCatalog, IApplicationService>();
