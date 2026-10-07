@@ -175,6 +175,7 @@ namespace Maze.Editor.Dev
             SetReference(root, "_result", BuildResult(parent));
             SetReference(root, "_settings", BuildSettings(parent));
             SetReference(root, "_error", BuildError(parent));
+            SetReference(root, "_fpsCounter", BuildFpsCounter(parent)); // last: over every screen
             return root;
         }
 
@@ -469,13 +470,40 @@ namespace Maze.Editor.Dev
             return screen;
         }
 
+        /// <summary>
+        /// Small FPS text in the bottom-right corner of the safe area, over every screen; ignores touches. Hidden until
+        /// the setting switches it on.
+        /// </summary>
+        private static FpsCounter BuildFpsCounter(Transform parent)
+        {
+            var area = new GameObject("FpsCounter", typeof(RectTransform));
+            area.transform.SetParent(parent, false);
+            Stretch(area.GetComponent<RectTransform>());
+            area.AddComponent<SafeAreaFitter>();
+
+            var label = Label(area.transform, "Text", "FPS -", 22, FontStyle.Bold, 30f);
+            label.alignment = TextAnchor.LowerRight;
+            label.color = new Color(1f, 1f, 1f, 0.85f);
+            var shadow = label.gameObject.AddComponent<Shadow>();
+            shadow.effectColor = new Color(0f, 0f, 0f, 0.8f);
+            var rect = label.rectTransform;
+            rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(1f, 0f);
+            rect.anchoredPosition = new Vector2(-12f, 8f);
+            rect.sizeDelta = new Vector2(200f, 30f);
+
+            var counter = area.AddComponent<FpsCounter>();
+            SetReference(counter, "_text", label);
+            area.SetActive(false);
+            return counter;
+        }
+
         /// <summary>Touch controls settings: an overlay over the main menu or the pause screen.</summary>
         private static SettingsScreen BuildSettings(Transform parent)
         {
             var screen = Screen<SettingsScreen>(parent, "SettingsScreen", Dim);
             // Opaque: the main menu text must not show through.
             var column = Column(screen.transform, 640f, 6f, new Color(Panel.r, Panel.g, Panel.b, 1f));
-            Label(column, "Title", "Controls", 40, FontStyle.Bold, 56f);
+            Label(column, "Title", "Settings", 40, FontStyle.Bold, 56f);
             var (deadZoneLabel, deadZone) = SliderRow(column, "DeadZone");
             var (sensitivityLabel, sensitivity) = SliderRow(column, "Sensitivity");
             var (sizeLabel, size) = SliderRow(column, "Size");
@@ -484,6 +512,7 @@ namespace Maze.Editor.Dev
             var leftHanded = ToggleRow(column, "LeftHanded", "Left-handed layout");
             var aimMode = Button(column, "AimModeButton", "Aim");
             var aimAssist = ToggleRow(column, "AimAssist", "Auto-aim at zombies");
+            var showFps = ToggleRow(column, "ShowFps", "Show FPS counter");
 
             var buttons = new GameObject("Buttons", typeof(RectTransform));
             buttons.transform.SetParent(column, false);
@@ -508,6 +537,7 @@ namespace Maze.Editor.Dev
             SetReference(screen, "_aimModeButton", aimMode);
             SetReference(screen, "_aimModeLabel", aimMode.GetComponentInChildren<Text>());
             SetReference(screen, "_aimAssist", aimAssist);
+            SetReference(screen, "_showFps", showFps);
             SetReference(screen, "_resetButton", reset);
             SetReference(screen, "_backButton", back);
             return screen;

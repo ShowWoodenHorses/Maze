@@ -61,6 +61,9 @@ namespace Maze.Application.Save
         public float MusicVolume = 1f;
         public float SfxVolume = 1f;
         public ControlsSettings Controls = ControlsSettings.Default;
+
+        /// <summary>Frames-per-second counter in the corner of the screen (off by default; old saves get false).</summary>
+        public bool ShowFps;
     }
 
     /// <summary>

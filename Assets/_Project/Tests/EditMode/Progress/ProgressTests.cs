@@ -160,6 +160,26 @@ namespace Maze.Tests.EditMode.Progress
         }
 
         [Test]
+        public void ShowFps_OffByDefault_SavedAtOnce_AndRaisesItsEvent()
+        {
+            var settings = new SettingsService(_save);
+            settings.InitializeAsync(CancellationToken.None);
+            Assert.IsFalse(settings.ShowFps, "Off by default (old saves have no such field).");
+            var changes = 0;
+            settings.ShowFpsChanged += () => changes++;
+            var writes = _storage.Writes;
+
+            settings.ShowFps = true;
+            settings.ShowFps = true;
+
+            Assert.AreEqual(1, changes, "Once per real change.");
+            Assert.AreEqual(writes + 1, _storage.Writes, "Saved at once.");
+            var save = new SaveService(_storage);
+            save.Load();
+            Assert.IsTrue(save.Data.Settings.ShowFps);
+        }
+
+        [Test]
         public void ControlsSettings_PreviewAppliesAtOnce_SaveWritesOnce_Clamped()
         {
             var settings = new SettingsService(_save);

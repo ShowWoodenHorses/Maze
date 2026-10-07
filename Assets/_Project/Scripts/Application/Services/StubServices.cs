@@ -36,6 +36,22 @@ namespace Maze.Application.Services
             set => Set(ref _save.Data.Settings.SfxVolume, value);
         }
 
+        /// <summary>Raised when <see cref="ShowFps"/> changes (also once after loading).</summary>
+        public event Action ShowFpsChanged;
+
+        /// <summary>Frames-per-second counter on screen. Saved at once.</summary>
+        public bool ShowFps
+        {
+            get => _save.Data.Settings.ShowFps;
+            set
+            {
+                if (_save.Data.Settings.ShowFps == value) return;
+                _save.Data.Settings.ShowFps = value;
+                _save.Save();
+                ShowFpsChanged?.Invoke();
+            }
+        }
+
         /// <summary>Raised when <see cref="Controls"/> change (also once after loading).</summary>
         public event Action ControlsChanged;
 
@@ -78,6 +94,7 @@ namespace Maze.Application.Services
             settings.SfxVolume = Mathf.Clamp01(settings.SfxVolume);
             settings.Controls = settings.Controls.Clamped();
             ControlsChanged?.Invoke();
+            ShowFpsChanged?.Invoke();
             return UniTask.CompletedTask;
         }
 

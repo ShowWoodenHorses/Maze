@@ -19,6 +19,9 @@ namespace Maze.Presentation.UI
         [Tooltip("On-screen controls: a separate canvas with physical sizes, shown by the HUD.")]
         [SerializeField] private TouchControls _touchControls;
 
+        [Tooltip("Frames per second in the bottom-right corner, over every screen; shown when the setting is on.")]
+        [SerializeField] private FpsCounter _fpsCounter;
+
         public MainMenuScreen MainMenu => _mainMenu;
         public LoadingScreen Loading => _loading;
         public ErrorScreen Error => _error;
@@ -29,5 +32,6 @@ namespace Maze.Presentation.UI
         public MapScreen Map => _map;
         public SettingsScreen Settings => _settings;
         public TouchControls TouchControls => _touchControls;
+        public FpsCounter FpsCounter => _fpsCounter;
     }
 }

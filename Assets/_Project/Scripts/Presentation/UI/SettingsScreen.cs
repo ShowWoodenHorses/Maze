@@ -23,11 +23,15 @@ namespace Maze.Presentation.UI
         [SerializeField] private Button _aimModeButton;
         [SerializeField] private Text _aimModeLabel;
         [SerializeField] private Toggle _aimAssist;
+        [SerializeField] private Toggle _showFps;
         [SerializeField] private Button _resetButton;
         [SerializeField] private Button _backButton;
 
         public event Action<ControlsSettings> Changed;
         public event Action ResetClicked;
+
+        /// <summary>The "Show FPS counter" toggle was switched (not part of the controls).</summary>
+        public event Action<bool> ShowFpsChanged;
         public event Action BackClicked;
 
         private AimMode _aimMode;
@@ -43,9 +47,15 @@ namespace Maze.Presentation.UI
             _floatingStick.onValueChanged.AddListener(_ => OnEdited());
             _leftHanded.onValueChanged.AddListener(_ => OnEdited());
             _aimAssist.onValueChanged.AddListener(_ => OnEdited());
+            if (_showFps != null) _showFps.onValueChanged.AddListener(value => ShowFpsChanged?.Invoke(value));
             Bind(_aimModeButton, OnAimModeClicked);
             Bind(_resetButton, () => ResetClicked?.Invoke());
             Bind(_backButton, () => BackClicked?.Invoke());
+        }
+
+        public void SetShowFps(bool show)
+        {
+            if (_showFps != null) _showFps.SetIsOnWithoutNotify(show);
         }
 
         public void SetValues(ControlsSettings settings)
