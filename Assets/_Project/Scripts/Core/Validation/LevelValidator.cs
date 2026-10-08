@@ -235,6 +235,8 @@ namespace Maze.Core.Validation
                     requiredKinds.Add(kind);
             if (theme.GetSet(VisualKind.Decor) != null || UsesDecor(level))
                 requiredKinds.Add(VisualKind.Decor);
+            if (theme.GetSet(VisualKind.Light) != null || level.Lights.Any(l => !l.Visual.IsEmpty))
+                requiredKinds.Add(VisualKind.Light);
 
             foreach (var kind in requiredKinds.OrderBy(k => k))
             {
@@ -247,7 +249,24 @@ namespace Maze.Core.Validation
 
             ValidateCellVisuals(level, theme, report);
             ValidateObjectVisuals(level, theme, report);
+            ValidateLightVisuals(level, theme, report);
             ValidateKeyDoorColors(level, theme, report);
+        }
+
+        /// <summary>A light's fixture must exist in the theme's Light set (a missing set is reported as MissingVisualSet).</summary>
+        private static void ValidateLightVisuals(LevelData level, VisualTheme theme, ValidationReport report)
+        {
+            var set = theme.GetSet(VisualKind.Light);
+            if (set == null)
+                return;
+
+            foreach (var light in level.Lights)
+            {
+                var choice = LightFixtures.Resolve(level, light);
+                if (!choice.IsEmpty && set.FindVariant(choice.VariantId) == null)
+                    report.Add(Error, Visual, ValidationCodes.UnknownVariant,
+                        $"Light '{light.Id}' uses unknown fixture variant '{choice.VariantId}'.", light.Cell, light.Id);
+            }
         }
 
         /// <summary>A light belongs to a floor cell, stays inside it and has a positive radius.</summary>

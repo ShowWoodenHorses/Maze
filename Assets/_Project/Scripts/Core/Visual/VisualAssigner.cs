@@ -82,6 +82,26 @@ namespace Maze.Core.Visual
             return new VisualChoice(variant.Id, rotation);
         }
 
+        /// <summary>
+        /// Fixtures of the lights that have none (or one the Light set no longer has): a weighted General variant
+        /// of the theme's Light set, stable per light id and VisualSeed. Chosen fixtures stay.
+        /// </summary>
+        public static void AssignLights(LevelData level)
+        {
+            var set = level.VisualTheme != null ? level.VisualTheme.GetSet(VisualKind.Light) : null;
+            foreach (var light in level.Lights)
+                if (light.Visual.IsEmpty || set == null || set.FindVariant(light.Visual.VariantId) == null)
+                    light.Visual = ChooseLight(level, light.Id);
+        }
+
+        public static VisualChoice ChooseLight(LevelData level, string lightId)
+        {
+            var set = level.VisualTheme != null ? level.VisualTheme.GetSet(VisualKind.Light) : null;
+            var key = VisualSelector.ObjectKey(level.Generation.VisualSeed, VisualKind.Light, lightId);
+            var variant = VisualSelector.Pick(set, VisualCategory.General, null, key);
+            return variant != null ? new VisualChoice(variant.Id) : VisualChoice.None;
+        }
+
         private const ulong DecorChanceSalt = 0x4465636F72UL;
         private const ulong DecorRotationSalt = 0x526F7444UL;
 
@@ -314,8 +334,12 @@ namespace Maze.Core.Visual
                 case VisualKind.Door:
                     return context.East != CellType.Floor && context.West != CellType.Floor ? 0 : 1;
 
-                // Exit faces the first open side, so in a dead end it faces the corridor.
+                // Exit faces an open side with a wall behind it (a ladder stands against that wall), so in a dead end
+                // it faces the corridor; without such a side — the first open one.
                 case VisualKind.Exit:
+                    foreach (var direction in DirectionExtensions.All)
+                        if (context.Get(direction) != CellType.Wall && context.Get(direction.Opposite()) == CellType.Wall)
+                            return (int)direction;
                     foreach (var direction in DirectionExtensions.All)
                         if (context.Get(direction) != CellType.Wall)
                             return (int)direction;

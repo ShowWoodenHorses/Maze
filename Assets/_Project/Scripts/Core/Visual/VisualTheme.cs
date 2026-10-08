@@ -21,6 +21,9 @@ namespace Maze.Core.Visual
         [Tooltip("Props on floor cells (optional): auto placed by density, by hand with the Decor brush.")]
         [SerializeField] private VisualSet _decor;
 
+        [Tooltip("Fixtures of light sources (optional), e.g. torches: hung on the wall the light is shifted to.")]
+        [SerializeField] private VisualSet _light;
+
         [Tooltip("Animated fog over hidden cells (shader Maze/Fog). Empty = no fog: hidden cells are simply not drawn.")]
         [SerializeField] private Material _fogMaterial;
 
@@ -54,6 +57,7 @@ namespace Maze.Core.Visual
                 case VisualKind.Zombie: return _zombie;
                 case VisualKind.MapFragment: return _mapFragment;
                 case VisualKind.Decor: return _decor;
+                case VisualKind.Light: return _light;
                 default: throw new ArgumentOutOfRangeException(nameof(kind), kind, null);
             }
         }
@@ -72,6 +76,7 @@ namespace Maze.Core.Visual
                 case VisualKind.Zombie: _zombie = set; break;
                 case VisualKind.MapFragment: _mapFragment = set; break;
                 case VisualKind.Decor: _decor = set; break;
+                case VisualKind.Light: _light = set; break;
                 default: throw new ArgumentOutOfRangeException(nameof(kind), kind, null);
             }
         }

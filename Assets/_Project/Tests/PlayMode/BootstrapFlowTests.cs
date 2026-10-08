@@ -12,6 +12,7 @@ using Maze.Composition;
 using Maze.Core.Definitions;
 using Maze.Core.Grid;
 using Maze.Core.Level;
+using Maze.Core.Visual;
 using Maze.Gameplay.Doors;
 using Maze.Gameplay.Level;
 using Maze.Gameplay.Map;
@@ -136,8 +137,12 @@ namespace Maze.Tests.PlayMode
             Assert.AreEqual(0, geometry.MissingVisuals, "Every cell layer of a synced level has a prefab.");
             Assert.IsTrue(Shader.IsKeywordEnabled(GeometryShader.VisibilityKeyword));
 
-            // Every placed object has a view (zombies' come from ZombieViewPresenter), except player starts.
-            var expectedViews = level.AllEntities().Count(e => !(e is PlayerStartData));
+            // Every placed object has a view (zombies' come from ZombieViewPresenter), except player starts; so does
+            // every light source next to a wall (its fixture, e.g. a torch).
+            var fixtures = level.Lights.Count(l => !LightFixtures.Resolve(level, l).IsEmpty &&
+                                                   LightFixtures.TryGetWallSide(level.Geometry, l, out _));
+            Assert.AreEqual(fixtures, container.Resolve<LightFixturesView>().Count, "Every mounted light has a fixture.");
+            var expectedViews = level.AllEntities().Count(e => !(e is PlayerStartData)) + fixtures;
             Assert.AreEqual(expectedViews, container.Resolve<EntityViewRegistry>().Count);
 
             var meshes = geometry.Chunks.Select(c => c.Mesh).ToList();

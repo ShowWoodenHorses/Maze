@@ -87,6 +87,7 @@ namespace Maze.Composition
             builder.RegisterComponent(_camera);
             builder.Register<EntityViewRegistry>(Lifetime.Singleton);
             builder.Register<LevelVisualSystem>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep>();
+            builder.Register<LightFixturesView>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep, ILevelLateTickable>();
             builder.Register<VisibilityController>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep>();
             builder.Register<FogOfWarView>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep, ILevelLateTickable>();
             builder.Register<LevelLightMap>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep>();

@@ -80,6 +80,20 @@ namespace Maze.Editor.LevelDesigner
                     PlaceObject(level, entity, objectsRoot.Find(entity.Id));
             }
 
+            // Light fixtures (torches) on the walls, named by light id: LightSceneHandles moves them with their light.
+            var lightSet = theme != null ? theme.GetSet(VisualKind.Light) : null;
+            foreach (var light in level.Lights)
+            {
+                var fixture = LightFixtures.Resolve(level, light);
+                if (fixture.IsEmpty || !LightFixtures.TryGetPose(geometry, light, out _, out _))
+                    continue;
+
+                if (!Spawn(lightSet, fixture, light.Cell, objectsRoot, LightName(light.Id)))
+                    missing++;
+                else
+                    PlaceLight(level, light, objectsRoot.Find(LightName(light.Id)));
+            }
+
             // DontSave keeps the scene clean (not marked dirty, never saved). Such objects also survive a scene
             // unload, so the preview is removed before any scene closes (see PreviewSceneGuard).
             foreach (var transform in root.GetComponentsInChildren<Transform>(true))
@@ -90,6 +104,20 @@ namespace Maze.Editor.LevelDesigner
         }
 
         public static string DecorName(GridPosition cell) => $"Decor {cell.X}_{cell.Y}";
+
+        public static string LightName(string lightId) => $"Light {lightId}";
+
+        /// <summary>Puts a preview light fixture on its wall (hidden when the light has no wall next to it).</summary>
+        public static void PlaceLight(LevelData level, LightSourceData light, Transform instance)
+        {
+            if (instance == null)
+                return;
+
+            var mounted = LightFixtures.TryGetPose(level.Geometry, light, out var offset, out var yaw);
+            instance.gameObject.SetActive(mounted);
+            instance.localPosition = light.Cell.ToWorld() + offset;
+            instance.localRotation = Quaternion.Euler(0f, yaw, 0f);
+        }
 
         /// <summary>Parent of the preview's object instances (named by entity id), or null without a preview.</summary>
         public static Transform FindObjectsRoot()

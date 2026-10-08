@@ -25,11 +25,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 06cc803953dc077438a16286539d4472
-    m_Address: Assets/_Project/Art/Decor/SM_Prop_Rug_05.prefab
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 0c1032f40f199f2418c5d670d7118424
     m_Address: Assets/_Project/Art/Decor/SM_DeadBody_Male_08.prefab
     m_ReadOnly: 0
@@ -37,6 +32,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 0f7960afd8d4fcc419395025c83d109f
     m_Address: Assets/_Project/Art/Weapons/Pickups/SM_Wep_AssaultRifle_01_Pickup.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1321646b0ec40ed4fad6766376806244
+    m_Address: Assets/_Project/Art/Decor/SM_Prop_TreasurePile_01.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -112,6 +112,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 334b759b0204b3f47a95a6c8325df011
     m_Address: Assets/_Project/Art/Keys/key_red.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 34900a2fe8356b34a84ded3a07e96c95
+    m_Address: Assets/_Project/Art/Decor/SM_Prop_TreasurePile_04.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -220,6 +225,16 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a47e8dbbaf3bda04d9258a1b3c1e3776
+    m_Address: Assets/_Project/Art/Lighting/SM_Prop_Torch_04.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a5a611d7500f7ea4187419dafd60f86f
+    m_Address: Assets/_Project/Art/Exit/SM_Prop_Ladder_Tied_01.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: a5da9085dfba01444a84de434ec89334
     m_Address: Assets/_Project/Art/Placeholders/zombie_02.prefab
     m_ReadOnly: 0
@@ -265,6 +280,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bf481ca2ecbcd7741a2c1dd2634b337d
+    m_Address: Assets/_Project/Art/Lighting/SM_Prop_Torch_02.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: bf895cb5fd4363f479ff71d9c859c4cb
     m_Address: Assets/_Project/Art/Placeholders/door_wood.prefab
     m_ReadOnly: 0
@@ -275,8 +295,8 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: c8f356fbb2b52184d8635ce984d1f1e4
-    m_Address: Assets/_Project/Art/Decor/SM_Prop_Rug_01.prefab
+  - m_GUID: c65e68644a317d04bb623a9ad4070565
+    m_Address: Assets/_Project/Art/Exit/SM_Prop_Ladder_Stackable_01_Half.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -300,6 +320,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d8edb8760195c5842ade3b3708c73605
+    m_Address: Assets/_Project/Art/Decor/SM_Prop_TreasurePile_02.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: e068c4d9df561f942bd10addf004cd1d
     m_Address: Assets/_Project/Art/Walls/SM_Bld_Castle_Wall_Block_02.prefab
     m_ReadOnly: 0
@@ -320,11 +345,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: e93ad9174aea8c042bdb0f0d87fca578
-    m_Address: Assets/_Project/Art/Decor/SM_Prop_Rug_03.prefab
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: ea281acffbcd71f48b626a6e95dde94f
     m_Address: Assets/_Project/Art/Placeholders/key_blue.prefab
     m_ReadOnly: 0
@@ -342,6 +362,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: ec154b6779a6a27458406f925a7717e0
     m_Address: Assets/_Project/Art/Weapons/Pickups/SM_Wep_Crowbar_01_Pickup.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f26cc48745963e544b17f80fb7c34db3
+    m_Address: Assets/_Project/Art/Decor/SM_Prop_TreasurePile_03.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

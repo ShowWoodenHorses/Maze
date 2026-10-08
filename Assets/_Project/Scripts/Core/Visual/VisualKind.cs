@@ -15,6 +15,9 @@ namespace Maze.Core.Visual
 
         /// <summary>Purely visual props on floor cells (cell layer <see cref="CellLayer.Decor"/>).</summary>
         Decor = 9,
+
+        /// <summary>Fixture of a light source on a wall, e.g. a torch (<see cref="Level.LightSourceData"/>).</summary>
+        Light = 10,
     }
 
     /// <summary>

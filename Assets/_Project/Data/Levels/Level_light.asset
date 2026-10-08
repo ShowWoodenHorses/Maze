@@ -240,6 +240,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 0
+    _visual:
+      _variantId: SM_Prop_Torch_02
+      _rotation: 0
   - _id: light_27
     _cell:
       _x: 14
@@ -250,6 +253,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 0
+    _visual:
+      _variantId: SM_Prop_Torch_02
+      _rotation: 0
   - _id: light_29
     _cell:
       _x: 8
@@ -260,6 +266,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 0
+    _visual:
+      _variantId: SM_Prop_Torch_02
+      _rotation: 0
   - _id: light_30
     _cell:
       _x: 21
@@ -270,6 +279,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 0
+    _visual:
+      _variantId: SM_Prop_Torch_04
+      _rotation: 0
   - _id: light_31
     _cell:
       _x: 11
@@ -280,6 +292,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 0
+    _visual:
+      _variantId: SM_Prop_Torch_02
+      _rotation: 0
   - _id: light_32
     _cell:
       _x: 33
@@ -290,6 +305,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_02
+      _rotation: 0
   - _id: light_33
     _cell:
       _x: 7
@@ -300,6 +318,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_04
+      _rotation: 0
   - _id: light_34
     _cell:
       _x: 12
@@ -310,6 +331,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_04
+      _rotation: 0
   - _id: light_35
     _cell:
       _x: 26
@@ -320,6 +344,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_02
+      _rotation: 0
   - _id: light_36
     _cell:
       _x: 5
@@ -330,6 +357,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_04
+      _rotation: 0
   - _id: light_37
     _cell:
       _x: 31
@@ -340,6 +370,9 @@ MonoBehaviour:
     _intensity: 0.9
     _flicker: 0.05
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_04
+      _rotation: 0
   - _id: light_38
     _cell:
       _x: 16
@@ -350,6 +383,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_04
+      _rotation: 0
   - _id: light_39
     _cell:
       _x: 1
@@ -360,6 +396,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_04
+      _rotation: 0
   - _id: light_40
     _cell:
       _x: 7
@@ -370,6 +409,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_02
+      _rotation: 0
   - _id: light_41
     _cell:
       _x: 27
@@ -380,6 +422,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_04
+      _rotation: 0
   - _id: light_42
     _cell:
       _x: 29
@@ -390,6 +435,9 @@ MonoBehaviour:
     _intensity: 0.9
     _flicker: 0.05
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_04
+      _rotation: 0
   - _id: light_43
     _cell:
       _x: 18
@@ -400,6 +448,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_02
+      _rotation: 0
   - _id: light_44
     _cell:
       _x: 5
@@ -410,6 +461,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_04
+      _rotation: 0
   - _id: light_45
     _cell:
       _x: 21
@@ -420,6 +474,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_02
+      _rotation: 0
   - _id: light_46
     _cell:
       _x: 1
@@ -430,6 +487,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_04
+      _rotation: 0
   - _id: light_47
     _cell:
       _x: 27
@@ -440,6 +500,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_04
+      _rotation: 0
   - _id: light_48
     _cell:
       _x: 15
@@ -450,6 +513,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_02
+      _rotation: 0
   - _id: light_49
     _cell:
       _x: 3
@@ -460,6 +526,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_04
+      _rotation: 0
   - _id: light_50
     _cell:
       _x: 27
@@ -470,6 +539,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_02
+      _rotation: 0
   - _id: light_51
     _cell:
       _x: 22
@@ -480,6 +552,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_04
+      _rotation: 0
   - _id: light_52
     _cell:
       _x: 1
@@ -490,6 +565,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_02
+      _rotation: 0
   - _id: light_53
     _cell:
       _x: 22
@@ -500,6 +578,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_02
+      _rotation: 0
   - _id: light_54
     _cell:
       _x: 12
@@ -510,6 +591,9 @@ MonoBehaviour:
     _intensity: 0.9
     _flicker: 0.05
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_02
+      _rotation: 0
   - _id: light_55
     _cell:
       _x: 25
@@ -520,6 +604,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_02
+      _rotation: 0
   - _id: light_56
     _cell:
       _x: 25
@@ -530,6 +617,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_02
+      _rotation: 0
   - _id: light_57
     _cell:
       _x: 25
@@ -540,6 +630,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_04
+      _rotation: 0
   - _id: light_58
     _cell:
       _x: 23
@@ -550,6 +643,9 @@ MonoBehaviour:
     _intensity: 0.9
     _flicker: 0.05
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_02
+      _rotation: 0
   - _id: light_59
     _cell:
       _x: 30
@@ -560,6 +656,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_04
+      _rotation: 0
   - _id: light_60
     _cell:
       _x: 33
@@ -570,6 +669,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_02
+      _rotation: 0
   - _id: light_61
     _cell:
       _x: 1
@@ -580,6 +682,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_02
+      _rotation: 0
   - _id: light_62
     _cell:
       _x: 16
@@ -590,6 +695,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_04
+      _rotation: 0
   - _id: light_63
     _cell:
       _x: 22
@@ -600,6 +708,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_04
+      _rotation: 0
   - _id: light_64
     _cell:
       _x: 7
@@ -610,6 +721,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_04
+      _rotation: 0
   - _id: light_65
     _cell:
       _x: 31
@@ -620,6 +734,9 @@ MonoBehaviour:
     _intensity: 0.9
     _flicker: 0.05
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_02
+      _rotation: 0
   - _id: light_66
     _cell:
       _x: 19
@@ -630,6 +747,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_04
+      _rotation: 0
   - _id: light_67
     _cell:
       _x: 33
@@ -640,6 +760,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_04
+      _rotation: 0
   - _id: light_68
     _cell:
       _x: 6
@@ -650,6 +773,9 @@ MonoBehaviour:
     _intensity: 0.9
     _flicker: 0.05
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_04
+      _rotation: 0
   - _id: light_69
     _cell:
       _x: 19
@@ -660,6 +786,9 @@ MonoBehaviour:
     _intensity: 0.9
     _flicker: 0.05
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_02
+      _rotation: 0
   - _id: light_70
     _cell:
       _x: 31
@@ -670,6 +799,9 @@ MonoBehaviour:
     _intensity: 0.9
     _flicker: 0.05
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_02
+      _rotation: 0
   - _id: light_71
     _cell:
       _x: 7
@@ -680,6 +812,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_02
+      _rotation: 0
   - _id: light_72
     _cell:
       _x: 19
@@ -690,6 +825,9 @@ MonoBehaviour:
     _intensity: 0.9
     _flicker: 0.05
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_04
+      _rotation: 0
   - _id: light_73
     _cell:
       _x: 5
@@ -700,6 +838,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_04
+      _rotation: 0
   - _id: light_74
     _cell:
       _x: 19
@@ -710,6 +851,9 @@ MonoBehaviour:
     _intensity: 0.9
     _flicker: 0.05
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_04
+      _rotation: 0
   - _id: light_75
     _cell:
       _x: 28
@@ -720,6 +864,9 @@ MonoBehaviour:
     _intensity: 0.9
     _flicker: 0.05
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_02
+      _rotation: 0
   - _id: light_76
     _cell:
       _x: 1
@@ -730,6 +877,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_04
+      _rotation: 0
   - _id: light_77
     _cell:
       _x: 10
@@ -740,6 +890,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_02
+      _rotation: 0
   - _id: light_78
     _cell:
       _x: 13
@@ -750,6 +903,9 @@ MonoBehaviour:
     _intensity: 0.9
     _flicker: 0.05
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_04
+      _rotation: 0
   - _id: light_79
     _cell:
       _x: 1
@@ -760,6 +916,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_02
+      _rotation: 0
   - _id: light_80
     _cell:
       _x: 22
@@ -770,6 +929,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_02
+      _rotation: 0
   - _id: light_81
     _cell:
       _x: 4
@@ -780,6 +942,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_04
+      _rotation: 0
   - _id: light_82
     _cell:
       _x: 31
@@ -790,6 +955,9 @@ MonoBehaviour:
     _intensity: 0.9
     _flicker: 0.05
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_02
+      _rotation: 0
   - _id: light_83
     _cell:
       _x: 33
@@ -800,6 +968,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_04
+      _rotation: 0
   - _id: light_84
     _cell:
       _x: 20
@@ -810,6 +981,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_04
+      _rotation: 0
   - _id: light_85
     _cell:
       _x: 33
@@ -820,6 +994,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_02
+      _rotation: 0
   - _id: light_86
     _cell:
       _x: 15
@@ -830,6 +1007,9 @@ MonoBehaviour:
     _intensity: 0.9
     _flicker: 0.05
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_04
+      _rotation: 0
   - _id: light_87
     _cell:
       _x: 25
@@ -840,6 +1020,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_04
+      _rotation: 0
   - _id: light_88
     _cell:
       _x: 1
@@ -850,6 +1033,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_04
+      _rotation: 0
   - _id: light_89
     _cell:
       _x: 16
@@ -860,6 +1046,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_04
+      _rotation: 0
   - _id: light_90
     _cell:
       _x: 1
@@ -870,6 +1059,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_04
+      _rotation: 0
   - _id: light_91
     _cell:
       _x: 27
@@ -880,6 +1072,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_02
+      _rotation: 0
   - _id: light_92
     _cell:
       _x: 30
@@ -890,6 +1085,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_04
+      _rotation: 0
   - _id: light_93
     _cell:
       _x: 33
@@ -900,6 +1098,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_04
+      _rotation: 0
   - _id: light_94
     _cell:
       _x: 10
@@ -910,6 +1111,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_02
+      _rotation: 0
   - _id: light_95
     _cell:
       _x: 3
@@ -920,6 +1124,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_02
+      _rotation: 0
   - _id: light_96
     _cell:
       _x: 13
@@ -930,6 +1137,9 @@ MonoBehaviour:
     _intensity: 0.9
     _flicker: 0.05
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_04
+      _rotation: 0
   - _id: light_97
     _cell:
       _x: 29
@@ -940,6 +1150,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_04
+      _rotation: 0
   - _id: light_98
     _cell:
       _x: 21
@@ -950,6 +1163,9 @@ MonoBehaviour:
     _intensity: 0.9
     _flicker: 0.05
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_02
+      _rotation: 0
   - _id: light_99
     _cell:
       _x: 16
@@ -960,6 +1176,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_04
+      _rotation: 0
   - _id: light_100
     _cell:
       _x: 1
@@ -970,6 +1189,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_02
+      _rotation: 0
   - _id: light_101
     _cell:
       _x: 15
@@ -980,6 +1202,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_04
+      _rotation: 0
   - _id: light_102
     _cell:
       _x: 16
@@ -990,6 +1215,9 @@ MonoBehaviour:
     _intensity: 0.9
     _flicker: 0.05
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_04
+      _rotation: 0
   - _id: light_103
     _cell:
       _x: 21
@@ -1000,6 +1228,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_02
+      _rotation: 0
   - _id: light_104
     _cell:
       _x: 30
@@ -1010,6 +1241,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_04
+      _rotation: 0
   - _id: light_105
     _cell:
       _x: 3
@@ -1020,6 +1254,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_04
+      _rotation: 0
   - _id: light_106
     _cell:
       _x: 9
@@ -1030,6 +1267,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_04
+      _rotation: 0
   - _id: light_107
     _cell:
       _x: 33
@@ -1040,6 +1280,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_04
+      _rotation: 0
   - _id: light_108
     _cell:
       _x: 29
@@ -1050,6 +1293,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_02
+      _rotation: 0
   - _id: light_109
     _cell:
       _x: 33
@@ -1060,6 +1306,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_02
+      _rotation: 0
   - _id: light_110
     _cell:
       _x: 13
@@ -1070,6 +1319,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_04
+      _rotation: 0
   - _id: light_111
     _cell:
       _x: 1
@@ -1080,6 +1332,9 @@ MonoBehaviour:
     _intensity: 1.3
     _flicker: 0.6
     _isGenerated: 1
+    _visual:
+      _variantId: SM_Prop_Torch_02
+      _rotation: 0
   _visualTheme: {fileID: 11400000, guid: 4852d557940957f4e90455abefa07fe8, type: 2}
   _visualData:
     _floorAssignments:
@@ -6629,7 +6884,7 @@ MonoBehaviour:
       _rotation: 0
     - _variantId: 
       _rotation: 0
-    - _variantId: SM_Prop_Rug_03
+    - _variantId: SM_Prop_TreasurePile_03
       _rotation: 3
     - _variantId: 
       _rotation: 0
@@ -6663,7 +6918,7 @@ MonoBehaviour:
       _rotation: 0
     - _variantId: 
       _rotation: 0
-    - _variantId: SM_Prop_Rug_01
+    - _variantId: SM_Prop_TreasurePile_02
       _rotation: 1
     - _variantId: 
       _rotation: 0
@@ -6785,7 +7040,7 @@ MonoBehaviour:
       _rotation: 0
     - _variantId: 
       _rotation: 0
-    - _variantId: SM_Prop_Rug_05
+    - _variantId: SM_Prop_TreasurePile_04
       _rotation: 1
     - _variantId: 
       _rotation: 0
@@ -7237,7 +7492,7 @@ MonoBehaviour:
       _rotation: 0
     - _variantId: 
       _rotation: 0
-    - _variantId: SM_Prop_Rug_01
+    - _variantId: SM_Prop_TreasurePile_01
       _rotation: 1
     - _variantId: 
       _rotation: 0
@@ -7359,7 +7614,7 @@ MonoBehaviour:
       _rotation: 0
     - _variantId: 
       _rotation: 0
-    - _variantId: SM_Prop_Rug_05
+    - _variantId: SM_Prop_TreasurePile_04
       _rotation: 0
     - _variantId: 
       _rotation: 0
@@ -7555,7 +7810,7 @@ MonoBehaviour:
       _rotation: 0
     - _variantId: 
       _rotation: 0
-    - _variantId: SM_Prop_Rug_01
+    - _variantId: SM_Prop_TreasurePile_02
       _rotation: 1
     - _variantId: 
       _rotation: 0
@@ -7889,7 +8144,7 @@ MonoBehaviour:
       _rotation: 0
     - _variantId: 
       _rotation: 0
-    - _variantId: SM_Prop_Rug_05
+    - _variantId: SM_Prop_TreasurePile_03
       _rotation: 3
     - _variantId: 
       _rotation: 0
@@ -8131,7 +8386,7 @@ MonoBehaviour:
       _rotation: 0
     - _variantId: 
       _rotation: 0
-    - _variantId: SM_Prop_Rug_03
+    - _variantId: SM_Prop_TreasurePile_03
       _rotation: 3
     - _variantId: 
       _rotation: 0
@@ -8309,7 +8564,7 @@ MonoBehaviour:
       _rotation: 2
     - _variantId: 
       _rotation: 0
-    - _variantId: SM_Prop_Rug_01
+    - _variantId: SM_Prop_TreasurePile_02
       _rotation: 0
     - _variantId: 
       _rotation: 0
@@ -8321,7 +8576,7 @@ MonoBehaviour:
       _rotation: 0
     - _variantId: 
       _rotation: 0
-    - _variantId: SM_Prop_Rug_01
+    - _variantId: SM_Prop_TreasurePile_02
       _rotation: 3
     - _variantId: 
       _rotation: 0
@@ -8458,7 +8713,7 @@ MonoBehaviour:
     _objectAssignments:
     - _entityId: exit_1
       _choice:
-        _variantId: exit_01
+        _variantId: SM_Prop_Ladder_Tied_01
         _rotation: 1
     - _entityId: door_1
       _choice:

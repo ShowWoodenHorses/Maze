@@ -16,13 +16,14 @@ MonoBehaviour:
   _floor: {fileID: 11400000, guid: 3143762e16a7e23408d38ae891030756, type: 2}
   _wall: {fileID: 11400000, guid: 8f3a52989d6d9534290edf86e19f4dd9, type: 2}
   _door: {fileID: 11400000, guid: cb299dba8e11c1149aa22907c53bc418, type: 2}
-  _exit: {fileID: 11400000, guid: 081b96f0ef667944888d03b79b89d7d6, type: 2}
+  _exit: {fileID: 11400000, guid: 2a6342712722c654c8aa208b06371596, type: 2}
   _key: {fileID: 11400000, guid: f3f66466e2941c5458939f5dde50eff1, type: 2}
   _medkit: {fileID: 11400000, guid: 4329f07b42756c24caededb8268c1897, type: 2}
   _weapon: {fileID: 11400000, guid: fb15d3c7f0ca317498e3750cb736fd43, type: 2}
   _zombie: {fileID: 11400000, guid: 57b71dca180984d488eb03f23f3bef0b, type: 2}
   _mapFragment: {fileID: 11400000, guid: 848777e871c45864389124a0559bf682, type: 2}
   _decor: {fileID: 11400000, guid: e1e3a08f74b470148a08ad6db9711a10, type: 2}
+  _light: {fileID: 11400000, guid: cfa9392684729334e801c808b8fda77a, type: 2}
   _fogMaterial: {fileID: 2100000, guid: e44f05f90fed0e446b142333febf4f9e, type: 2}
   _lighting:
     Ambient: {r: 0.2, g: 0.25, b: 0.34, a: 1}

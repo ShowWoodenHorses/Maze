@@ -73,7 +73,9 @@ namespace Maze.Editor.Dev
                 variants.Add(new VisualVariant(id, 1, VisualCategory.General, null, new AssetReferenceGameObject(guid)));
             }
 
-            variants.RemoveAll(v => v.Prefab == null || string.IsNullOrEmpty(AssetDatabase.GUIDToAssetPath(v.Prefab.AssetGUID)));
+            // Only the prefabs found in the folder: GUIDToAssetPath may still return the path of a just deleted asset.
+            var found = new HashSet<string>(prefabs.Select(AssetDatabase.AssetPathToGUID));
+            variants.RemoveAll(v => v.Prefab == null || !found.Contains(v.Prefab.AssetGUID));
             DecorHeights.Refresh(set);
             EditorUtility.SetDirty(set);
 

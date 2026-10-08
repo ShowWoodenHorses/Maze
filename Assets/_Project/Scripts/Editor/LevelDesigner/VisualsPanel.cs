@@ -147,6 +147,7 @@ namespace Maze.Editor.LevelDesigner
                 if (EditorGUI.EndChangeCheck())
                     LevelEditorCommands.Modify(level, "Edit Light", () => LevelEditing.SetLight(light, color, radius, intensity, flicker));
 
+                DrawLightFixture(level, light);
                 if (GUILayout.Button("X", GUILayout.Width(22f)))
                     toRemove = light;
                 EditorGUILayout.EndHorizontal();
@@ -306,6 +307,22 @@ namespace Maze.Editor.LevelDesigner
                 if (unknown > 0)
                     EditorGUILayout.HelpBox($"{unknown} {kind} cell(s) have no or unknown visual.", MessageType.Warning);
             }
+        }
+
+        /// <summary>Fixture variant of a light (theme's Light set); "-" = the set default. Rebuild the preview to see it.</summary>
+        private static void DrawLightFixture(LevelData level, LightSourceData light)
+        {
+            var set = level.VisualTheme.GetSet(VisualKind.Light);
+            if (set == null || set.Variants.Count == 0)
+                return;
+
+            var ids = new List<string> { "-" };
+            ids.AddRange(set.Variants.Select(v => v.Id));
+            var current = Mathf.Max(0, ids.IndexOf(light.Visual.VariantId));
+            var chosen = EditorGUILayout.Popup(current, ids.ToArray(), GUILayout.Width(110f));
+            if (chosen != current)
+                LevelEditorCommands.Modify(level, "Change Light Fixture",
+                    () => LevelEditing.SetLightVisual(light, chosen == 0 ? null : ids[chosen]));
         }
     }
 }

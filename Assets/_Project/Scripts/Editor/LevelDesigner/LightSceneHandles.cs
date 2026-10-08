@@ -42,6 +42,9 @@ namespace Maze.Editor.LevelDesigner
                 {
                     var target = new Vector2(dragged.x, dragged.z);
                     LevelEditorCommands.Modify(level, "Move Light", () => LevelEditing.MoveLight(light, target));
+                    var objects = LevelPreviewBuilder.FindObjectsRoot();
+                    if (objects != null)
+                        LevelPreviewBuilder.PlaceLight(level, light, objects.Find(LevelPreviewBuilder.LightName(light.Id)));
                     moved = true;
                 }
 

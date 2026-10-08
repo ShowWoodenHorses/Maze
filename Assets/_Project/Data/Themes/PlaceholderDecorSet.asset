@@ -159,42 +159,6 @@ MonoBehaviour:
     _definition: {fileID: 0}
     _colorTag: 
     _height: 0.189
-  - _id: SM_Prop_Rug_01
-    _prefab:
-      m_AssetGUID: c8f356fbb2b52184d8635ce984d1f1e4
-      m_SubObjectName: 
-      m_SubObjectType: 
-      m_SubObjectGUID: 
-      m_EditorAssetChanged: 0
-    _weight: 1
-    _category: 0
-    _definition: {fileID: 0}
-    _colorTag: 
-    _height: 0.032
-  - _id: SM_Prop_Rug_03
-    _prefab:
-      m_AssetGUID: e93ad9174aea8c042bdb0f0d87fca578
-      m_SubObjectName: 
-      m_SubObjectType: 
-      m_SubObjectGUID: 
-      m_EditorAssetChanged: 0
-    _weight: 1
-    _category: 0
-    _definition: {fileID: 0}
-    _colorTag: 
-    _height: 0.048
-  - _id: SM_Prop_Rug_05
-    _prefab:
-      m_AssetGUID: 06cc803953dc077438a16286539d4472
-      m_SubObjectName: 
-      m_SubObjectType: 
-      m_SubObjectGUID: 
-      m_EditorAssetChanged: 0
-    _weight: 1
-    _category: 0
-    _definition: {fileID: 0}
-    _colorTag: 
-    _height: 0.023
   - _id: SM_Prop_Table_01
     _prefab:
       m_AssetGUID: f93f53310920b544b98e5d432a6e4778
@@ -219,3 +183,51 @@ MonoBehaviour:
     _definition: {fileID: 0}
     _colorTag: 
     _height: 0.329
+  - _id: SM_Prop_TreasurePile_01
+    _prefab:
+      m_AssetGUID: 1321646b0ec40ed4fad6766376806244
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+    _weight: 1
+    _category: 0
+    _definition: {fileID: 0}
+    _colorTag: 
+    _height: 0.229
+  - _id: SM_Prop_TreasurePile_02
+    _prefab:
+      m_AssetGUID: d8edb8760195c5842ade3b3708c73605
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+    _weight: 1
+    _category: 0
+    _definition: {fileID: 0}
+    _colorTag: 
+    _height: 0.088
+  - _id: SM_Prop_TreasurePile_03
+    _prefab:
+      m_AssetGUID: f26cc48745963e544b17f80fb7c34db3
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+    _weight: 1
+    _category: 0
+    _definition: {fileID: 0}
+    _colorTag: 
+    _height: 0.121
+  - _id: SM_Prop_TreasurePile_04
+    _prefab:
+      m_AssetGUID: 34900a2fe8356b34a84ded3a07e96c95
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+    _weight: 1
+    _category: 0
+    _definition: {fileID: 0}
+    _colorTag: 
+    _height: 0.223

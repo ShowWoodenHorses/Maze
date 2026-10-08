@@ -29,7 +29,7 @@ namespace Maze.Core.Visual
     /// </summary>
     public static class LevelVisualUsage
     {
-        /// <summary>Distinct variants of the cell layers (decor included) and of every placed object that has a visual, in stable order.</summary>
+        /// <summary>Distinct variants of the cell layers (decor included), of every placed object that has a visual and of light fixtures, in stable order.</summary>
         public static List<VisualKey> Collect(LevelData level)
         {
             var seen = new HashSet<VisualKey>();
@@ -54,6 +54,10 @@ namespace Maze.Core.Visual
             foreach (var entity in level.AllEntities())
                 if (VisualKinds.TryGetForEntity(entity, out var kind, out _))
                     Add(kind, VisualResolver.ResolveObject(level, entity));
+
+            foreach (var light in level.Lights)
+                if (LightFixtures.TryGetWallSide(level.Geometry, light, out _))
+                    Add(VisualKind.Light, LightFixtures.Resolve(level, light));
 
             return result;
         }

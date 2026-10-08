@@ -23,6 +23,7 @@ MonoBehaviour:
   _zombie: {fileID: 11400000, guid: 57b71dca180984d488eb03f23f3bef0b, type: 2}
   _mapFragment: {fileID: 11400000, guid: 5dc92ded2f0988040b3dde97dc96baf9, type: 2}
   _decor: {fileID: 11400000, guid: e1e3a08f74b470148a08ad6db9711a10, type: 2}
+  _light: {fileID: 11400000, guid: cfa9392684729334e801c808b8fda77a, type: 2}
   _fogMaterial: {fileID: 2100000, guid: e44f05f90fed0e446b142333febf4f9e, type: 2}
   _lighting:
     Ambient: {r: 0.2, g: 0.25, b: 0.34, a: 1}

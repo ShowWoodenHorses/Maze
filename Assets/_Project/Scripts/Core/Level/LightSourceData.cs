@@ -1,5 +1,6 @@
 using System;
 using Maze.Core.Grid;
+using Maze.Core.Visual;
 using UnityEngine;
 
 namespace Maze.Core.Level
@@ -22,6 +23,7 @@ namespace Maze.Core.Level
         [SerializeField] private float _intensity = 1f;
         [SerializeField] private float _flicker;
         [SerializeField] private bool _isGenerated;
+        [SerializeField] private VisualChoice _visual;
 
         public LightSourceData(string id, GridPosition cell, Vector2 offset, Color color, float radius, float intensity,
             float flicker, bool isGenerated)
@@ -59,5 +61,8 @@ namespace Maze.Core.Level
 
         /// <summary>Placed by auto placement (replaced when it reruns); false = placed or edited by hand.</summary>
         public bool IsGenerated { get => _isGenerated; internal set => _isGenerated = value; }
+
+        /// <summary>Saved fixture variant (theme's Light set), e.g. a torch; empty = the set default or none.</summary>
+        public VisualChoice Visual { get => _visual; internal set => _visual = value; }
     }
 }

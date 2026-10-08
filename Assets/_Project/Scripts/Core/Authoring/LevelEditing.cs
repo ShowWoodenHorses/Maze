@@ -390,8 +390,16 @@ namespace Maze.Core.Authoring
             var preset = presets != null && presets.Count > 0 && presets[0] != null ? presets[0] : new LightPreset();
             var light = new LightSourceData(level.CreateUniqueId(LightSourceData.IdPrefix), cell, offset, preset.Color,
                 preset.Radius, preset.Intensity, preset.Flicker, isGenerated: false);
+            light.Visual = VisualAssigner.ChooseLight(level, light.Id);
             level.MutableLights.Add(light);
             return light;
+        }
+
+        /// <summary>Fixture of a light (variant of the theme's Light set; empty = the set default). Makes it hand-placed.</summary>
+        public static void SetLightVisual(LightSourceData light, string variantId)
+        {
+            light.Visual = string.IsNullOrEmpty(variantId) ? VisualChoice.None : new VisualChoice(variantId);
+            light.IsGenerated = false;
         }
 
         public static void RemoveLight(LevelData level, LightSourceData light) => level.MutableLights.Remove(light);

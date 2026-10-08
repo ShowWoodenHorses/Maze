@@ -32,7 +32,10 @@ namespace Maze.Core.Lighting
             var presets = level.VisualTheme != null ? level.VisualTheme.Lighting.LightPresets : null;
             var density = level.Generation.LightDensity;
             if (presets == null || TotalWeight(presets) <= 0f || density <= 0f)
+            {
+                Visual.VisualAssigner.AssignLights(level);
                 return;
+            }
 
             var spacing = Mathf.Lerp(SparseSpacing, DenseSpacing, Mathf.Clamp01(density));
             var seed = StableHash.Combine(Salt, unchecked((ulong)level.Generation.VisualSeed));
@@ -64,6 +67,8 @@ namespace Maze.Core.Lighting
                 taken.Add(point);
                 usedCells.Add(candidate.Cell);
             }
+
+            Visual.VisualAssigner.AssignLights(level);
         }
 
         private static List<Candidate> Candidates(LevelGeometry geometry, ulong seed)
