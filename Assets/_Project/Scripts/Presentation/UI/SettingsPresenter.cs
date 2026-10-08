@@ -8,7 +8,7 @@ namespace Maze.Presentation.UI
 {
     /// <summary>
     /// Applies <see cref="SettingsService.Controls"/> to the on-screen controls and <see cref="SettingsService.ShowFps"/>
-    /// to the FPS counter, and runs the settings screen: it is an overlay over the main menu or the pause screen, not a
+    /// to the FPS counter, and runs the settings screen (volumes are previewed while a slider moves, saved on close): it is an overlay over the main menu or the pause screen, not a
     /// GameFlow state, and closes (saving) on any state change. "Edit button layout" hides the screen and runs
     /// <see cref="TouchLayoutEditor"/>; its changes are previewed like the other controls and saved when it is done.
     /// </summary>
@@ -36,6 +36,7 @@ namespace Maze.Presentation.UI
             _settings.ControlsChanged += ApplyControls;
             _settings.ShowFpsChanged += ApplyShowFps;
             _ui.Settings.ShowFpsChanged += OnShowFpsEdited;
+            _ui.Settings.VolumesChanged += OnVolumesEdited;
             _flow.StateChanged += OnStateChanged;
             _ui.MainMenu.SettingsClicked += Open;
             _ui.Pause.SettingsClicked += Open;
@@ -58,7 +59,7 @@ namespace Maze.Presentation.UI
             if (!_initialized) return;
             _initialized = false;
 
-            _settings.SaveControls();
+            _settings.SavePreviewed();
             _settings.ControlsChanged -= ApplyControls;
             _settings.ShowFpsChanged -= ApplyShowFps;
             _flow.StateChanged -= OnStateChanged;
@@ -70,6 +71,7 @@ namespace Maze.Presentation.UI
             _ui.Settings.ResetClicked -= OnReset;
             _ui.Settings.BackClicked -= Close;
             _ui.Settings.ShowFpsChanged -= OnShowFpsEdited;
+            _ui.Settings.VolumesChanged -= OnVolumesEdited;
             _ui.Settings.EditLayoutClicked -= BeginLayoutEdit;
             if (LayoutEditor != null)
             {
@@ -87,16 +89,19 @@ namespace Maze.Presentation.UI
 
         private void OnShowFpsEdited(bool show) => _settings.ShowFps = show;
 
+        private void OnVolumesEdited(float music, float sfx) => _settings.PreviewVolumes(music, sfx);
+
         private void Open()
         {
             _ui.Settings.SetValues(_settings.Controls);
+            _ui.Settings.SetVolumes(_settings.MusicVolume, _settings.SfxVolume);
             _ui.Settings.SetShowFps(_settings.ShowFps);
             _ui.Settings.SetVisible(true);
         }
 
         private void Close()
         {
-            _settings.SaveControls();
+            _settings.SavePreviewed();
             _ui.Settings.SetVisible(false);
         }
 
@@ -105,7 +110,7 @@ namespace Maze.Presentation.UI
             if (LayoutEditor != null && LayoutEditor.IsEditing)
             {
                 LayoutEditor.End();
-                _settings.SaveControls();
+                _settings.SavePreviewed();
             }
 
             if (_ui.Settings.IsVisible) Close();
@@ -128,7 +133,7 @@ namespace Maze.Presentation.UI
         private void EndLayoutEdit()
         {
             LayoutEditor.End();
-            _settings.SaveControls();
+            _settings.SavePreviewed();
             Open();
         }
 
@@ -140,10 +145,11 @@ namespace Maze.Presentation.UI
             {
                 case SettingsTab.Controls: _settings.ResetTouchControls(); break;
                 case SettingsTab.Shooting: _settings.ResetAim(); break;
-                default: _settings.ShowFps = false; break;
+                default: _settings.ResetOther(); break;
             }
 
             _ui.Settings.SetValues(_settings.Controls);
+            _ui.Settings.SetVolumes(_settings.MusicVolume, _settings.SfxVolume);
             _ui.Settings.SetShowFps(_settings.ShowFps);
         }
     }

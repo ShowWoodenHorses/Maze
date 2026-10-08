@@ -5,6 +5,7 @@ using Maze.Application.Save;
 using Maze.Application.Services;
 using Maze.Gameplay.Combat;
 using Maze.Gameplay.Player;
+using Maze.Presentation.Audio;
 using Maze.Presentation.UI;
 using UnityEngine;
 using VContainer;
@@ -44,8 +45,23 @@ namespace Maze.Composition
             builder.RegisterInstance(_ui);
             builder.Register<ScreenRouter>(Lifetime.Singleton);
             builder.Register<SettingsPresenter>(Lifetime.Singleton);
+            builder.Register<AppAudioPresenter>(Lifetime.Singleton);
 
             builder.RegisterEntryPoint<ApplicationEntryPoint>();
+            builder.RegisterEntryPoint<AudioTickDriver>();
         }
+    }
+
+    /// <summary>Ticks <see cref="AudioService"/> (fades, music loops) with unscaled time, also while the game is paused.</summary>
+    public sealed class AudioTickDriver : ITickable
+    {
+        private readonly AudioService _audio;
+
+        public AudioTickDriver(AudioService audio)
+        {
+            _audio = audio;
+        }
+
+        public void Tick() => _audio.Tick(Time.unscaledDeltaTime);
     }
 }

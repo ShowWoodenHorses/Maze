@@ -179,7 +179,30 @@ namespace Maze.Editor.Dev
             SetReference(root, "_settings", BuildSettings(parent));
             SetReference(root, "_error", BuildError(parent));
             SetReference(root, "_fpsCounter", BuildFpsCounter(parent)); // last: over every screen
+            AddUiSounds(root);
             return root;
+        }
+
+        /// <summary>
+        /// Every button and toggle gets a <see cref="UiSound"/>: a click; Back for back / close / "No"; silent where the
+        /// screen it opens sounds by itself (pause, resume, map).
+        /// </summary>
+        private static void AddUiSounds(UIRoot root)
+        {
+            foreach (var selectable in root.GetComponentsInChildren<Selectable>(true))
+            {
+                if (!(selectable is Button) && !(selectable is Toggle)) continue;
+                var screen = selectable.GetComponentInParent<UIScreen>(true);
+                var name = selectable.gameObject.name;
+                var kind = UiSoundKind.Click;
+                if (screen is HudScreen && (name == "PauseButton" || name == "MapButton")) kind = UiSoundKind.None;
+                else if (screen is PauseScreen && name == "ResumeButton") kind = UiSoundKind.None;
+                else if (screen is MapScreen && name == "CloseButton") kind = UiSoundKind.None;
+                else if (name == "BackButton" || name == "NoButton") kind = UiSoundKind.Back;
+
+                var sound = selectable.gameObject.AddComponent<UiSound>();
+                sound.Kind = kind;
+            }
         }
 
         private static MainMenuScreen BuildMainMenu(Transform parent)
@@ -651,6 +674,8 @@ namespace Maze.Editor.Dev
             var aimAssist = ToggleRow(shootingPage, "AimAssist", "Auto-aim at zombies");
 
             var otherPage = Page(pages.transform, "OtherPage");
+            var (musicLabel, music) = SliderRow(otherPage, "MusicVolume");
+            var (sfxLabel, sfx) = SliderRow(otherPage, "SfxVolume");
             var showFps = ToggleRow(otherPage, "ShowFps", "Show FPS counter");
 
             var buttons = new GameObject("Buttons", typeof(RectTransform));
@@ -679,6 +704,10 @@ namespace Maze.Editor.Dev
             SetReference(screen, "_aimModeButton", aimMode);
             SetReference(screen, "_aimModeLabel", aimMode.GetComponentInChildren<Text>());
             SetReference(screen, "_aimAssist", aimAssist);
+            SetReference(screen, "_musicVolume", music);
+            SetReference(screen, "_musicVolumeLabel", musicLabel);
+            SetReference(screen, "_sfxVolume", sfx);
+            SetReference(screen, "_sfxVolumeLabel", sfxLabel);
             SetReference(screen, "_showFps", showFps);
             SetReference(screen, "_resetButton", reset);
             SetReference(screen, "_backButton", back);

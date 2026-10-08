@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Maze.Core.Audio;
 using Maze.Core.Definitions;
 using Maze.Core.Level;
 using Maze.Core.Visual;
@@ -84,7 +85,7 @@ namespace Maze.Editor.LevelDesigner
         /// <summary>
         /// Keeps the definitions shared by all levels Addressable at their fixed addresses: <see cref="PlayerDefinition"/>,
         /// <see cref="PlayerVisualDefinition"/> and its prefab, <see cref="CombatVisualDefinition"/> and its prefabs,
-        /// <see cref="WeaponVisualCatalog"/> and the held weapon prefabs.
+        /// <see cref="WeaponVisualCatalog"/> and the held weapon prefabs, <see cref="AudioCatalog"/> and its music clips.
         /// Returns a problem description or null.
         /// </summary>
         public static string SyncShared(AddressableAssetSettings settings)
@@ -115,6 +116,14 @@ namespace Maze.Editor.LevelDesigner
             foreach (var weapon in weapons.Weapons)
                 if (weapon != null)
                     EnsurePrefabAddressable(settings, sharedGroup, weapon.HeldPrefab);
+
+            var audio = EnsureSingleAddressable<AudioCatalog>(settings, sharedGroup, AudioCatalog.Address);
+            if (audio == null)
+                return "Audio catalog is missing: run Maze → Dev → Build Audio or create one (Create → Maze → Audio Catalog). " +
+                       "The game cannot start without it.";
+            // Music is loaded only while it plays: its own entries, not inside the catalog's bundle.
+            EnsurePrefabAddressable(settings, sharedGroup, audio.MenuMusic.Clip);
+            EnsurePrefabAddressable(settings, sharedGroup, audio.LevelMusic.Clip);
 
             EditorUtility.SetDirty(settings);
             return null;

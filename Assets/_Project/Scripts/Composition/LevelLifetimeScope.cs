@@ -14,6 +14,7 @@ using Maze.Gameplay.Spatial;
 using Maze.Gameplay.Visibility;
 using Maze.Gameplay.Weapons;
 using Maze.Gameplay.Zombies;
+using Maze.Presentation.Audio;
 using Maze.Presentation.Map;
 using Maze.Presentation.UI;
 using Maze.Presentation.Visual;
@@ -98,6 +99,8 @@ namespace Maze.Composition
             // After the weapon presenter: the late tick reads the muzzle of the posed gun.
             builder.Register<CombatViewPresenter>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep, ILevelLateTickable, IViewWarmup>();
             builder.Register<ZombieViewPresenter>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep, ILevelLateTickable>();
+            // After the gameplay systems and the zombie views: it listens to them and ticks after the simulation.
+            builder.Register<LevelAudioPresenter>(Lifetime.Singleton).As<ILevelLoadStep, ILevelTickable>();
             builder.Register<FootprintsView>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep, ILevelLateTickable, IViewWarmup>();
             builder.Register<VisionZonesView>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep, ILevelLateTickable, IViewWarmup>();
             builder.Register<NoiseWavesView>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep, ILevelLateTickable, IViewWarmup>();

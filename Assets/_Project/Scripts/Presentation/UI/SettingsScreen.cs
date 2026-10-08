@@ -15,7 +15,7 @@ namespace Maze.Presentation.UI
         /// <summary>Aim directions, auto-aim.</summary>
         Shooting,
 
-        /// <summary>Everything else (FPS counter).</summary>
+        /// <summary>Everything else: music and sound volumes, FPS counter.</summary>
         Other,
     }
 
@@ -48,6 +48,10 @@ namespace Maze.Presentation.UI
         [SerializeField] private Button _aimModeButton;
         [SerializeField] private Text _aimModeLabel;
         [SerializeField] private Toggle _aimAssist;
+        [SerializeField] private Slider _musicVolume;
+        [SerializeField] private Text _musicVolumeLabel;
+        [SerializeField] private Slider _sfxVolume;
+        [SerializeField] private Text _sfxVolumeLabel;
         [SerializeField] private Toggle _showFps;
         [SerializeField] private Button _resetButton;
         [SerializeField] private Button _backButton;
@@ -58,6 +62,9 @@ namespace Maze.Presentation.UI
 
         /// <summary>"Edit button layout": drag the on-screen controls.</summary>
         public event Action EditLayoutClicked;
+
+        /// <summary>(music, sounds) volume sliders moved, 0..1 (not part of the controls).</summary>
+        public event Action<float, float> VolumesChanged;
 
         /// <summary>The "Show FPS counter" toggle was switched (not part of the controls).</summary>
         public event Action<bool> ShowFpsChanged;
@@ -79,9 +86,16 @@ namespace Maze.Presentation.UI
             _leftHanded.onValueChanged.AddListener(_ => OnEdited());
             _aimAssist.onValueChanged.AddListener(_ => OnEdited());
             if (_showFps != null) _showFps.onValueChanged.AddListener(value => ShowFpsChanged?.Invoke(value));
+            foreach (var slider in new[] { _musicVolume, _sfxVolume })
+            {
+                if (slider == null) continue;
+                Range(slider, 0f, 1f);
+                slider.onValueChanged.AddListener(_ => OnVolumesEdited());
+            }
             Bind(_aimModeButton, OnAimModeClicked);
             Bind(_resetButton, () => ResetClicked?.Invoke(Tab));
             Bind(_editLayoutButton, () => EditLayoutClicked?.Invoke());
+            Bind(_backButton, () => BackClicked?.Invoke());
             for (var i = 0; i < _tabButtons.Length; i++)
             {
                 var tab = (SettingsTab)i;
@@ -98,12 +112,19 @@ namespace Maze.Presentation.UI
                 _pages[i].SetActive(i == (int)tab);
             for (var i = 0; i < _tabButtons.Length; i++)
                 _tabButtons[i].targetGraphic.color = i == (int)tab ? ActiveTabColor : TabColor;
-            Bind(_backButton, () => BackClicked?.Invoke());
         }
 
         public void SetShowFps(bool show)
         {
             if (_showFps != null) _showFps.SetIsOnWithoutNotify(show);
+        }
+
+        public void SetVolumes(float music, float sfx)
+        {
+            if (_musicVolume == null || _sfxVolume == null) return;
+            _musicVolume.SetValueWithoutNotify(music);
+            _sfxVolume.SetValueWithoutNotify(sfx);
+            UpdateVolumeLabels();
         }
 
         public void SetValues(ControlsSettings settings)
@@ -167,6 +188,18 @@ namespace Maze.Presentation.UI
                 AimMode.Four => "Aim: 4 directions",
                 _ => "Aim: free",
             };
+        }
+
+        private void OnVolumesEdited()
+        {
+            UpdateVolumeLabels();
+            VolumesChanged?.Invoke(_musicVolume.value, _sfxVolume.value);
+        }
+
+        private void UpdateVolumeLabels()
+        {
+            _musicVolumeLabel.text = "Music volume: " + Percent(_musicVolume.value);
+            _sfxVolumeLabel.text = "Sound volume: " + Percent(_sfxVolume.value);
         }
 
         private static string Percent(float value) => Mathf.RoundToInt(value * 100f) + "%";

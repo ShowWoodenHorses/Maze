@@ -35,6 +35,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2ebc912a5364cd2408461cf7f971fdcc
+    m_Address: Assets/_Project/Music/menu.wav
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 67d413abe225d2d47a78fb336374d015
     m_Address: Assets/_Project/Art/Weapons/Rifle/Auto/SM_Wep_AssaultRifle_01.prefab
     m_ReadOnly: 0
@@ -72,6 +77,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: a4be1ef066a343b479403ae698a6a07c
     m_Address: Assets/_Project/Art/Player/SM_Chr_Hunter_Male_01.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ae2933770e372d449846e0f5db7a246a
+    m_Address: Assets/_Project/Music/game.wav
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -117,6 +127,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: e6e89d136fb41ad488c4568853260c9f
     m_Address: Assets/_Project/Art/Weapons/Melee/SM_Wep_Katana_01.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f7b222a233646a34eafdab65adb2eb76
+    m_Address: Audio/Catalog
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

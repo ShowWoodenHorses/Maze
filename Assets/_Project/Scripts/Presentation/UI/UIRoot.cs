@@ -1,3 +1,4 @@
+using System;
 using Maze.Presentation.UI.Touch;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -38,5 +39,10 @@ namespace Maze.Presentation.UI
         public TouchControls TouchControls => _touchControls;
         public FpsCounter FpsCounter => _fpsCounter;
         public EventSystem EventSystem => _eventSystem;
+
+        /// <summary>A control asked for its sound (<see cref="UiSound"/>).</summary>
+        public event Action<UiSoundKind> SoundRequested;
+
+        public void RequestSound(UiSoundKind kind) => SoundRequested?.Invoke(kind);
     }
 }

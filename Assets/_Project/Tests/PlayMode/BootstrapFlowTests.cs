@@ -43,6 +43,10 @@ namespace Maze.Tests.PlayMode
         private IObjectResolver _container;
         private GameFlow _flow;
         private IAddressablesService _addressables;
+        private AudioService _audio;
+
+        /// <summary>Addressables handles without music (it loads and unloads with the flow, asynchronously).</summary>
+        private int AppHandles => _addressables.ActiveHandleCount - _audio.MusicHandleCount;
 
         [UnitySetUp]
         public IEnumerator SetUp() => Async(async () =>
@@ -57,6 +61,7 @@ namespace Maze.Tests.PlayMode
             _container = scope.Container;
             _flow = _container.Resolve<GameFlow>();
             _addressables = _container.Resolve<IAddressablesService>();
+            _audio = _container.Resolve<AudioService>();
             await WaitFor(() => _flow.State == GameFlowState.MainMenu || _flow.State == GameFlowState.Error);
             Assert.AreEqual(GameFlowState.MainMenu, _flow.State, _flow.ErrorMessage);
         });
@@ -82,16 +87,18 @@ namespace Maze.Tests.PlayMode
         {
             var catalog = _container.Resolve<ILevelCatalog>();
             Assert.Greater(catalog.Levels.Count, 0, "Run Build / Sync for at least one level.");
-            Assert.AreEqual(5, _addressables.ActiveHandleCount,
+            Assert.AreEqual(6, AppHandles,
                 "Only application-wide assets are resident in the menu: level catalog, player definition, player visual, " +
-                "combat visual, weapon visuals.");
+                "combat visual, weapon visuals, audio catalog (music is counted apart).");
+            Assert.IsNotNull(_audio.Catalog, "Audio catalog loaded.");
+            Assert.AreSame(_audio.Catalog.MenuMusic, _audio.CurrentMusic, "Menu music in the menu.");
         }
 
         [UnityTest]
         public IEnumerator StartLevel_BuildsLevelScope_ThenExit_ReleasesEverything() => Async(async () =>
         {
             var levelId = FirstLevelId();
-            var handlesInMenu = _addressables.ActiveHandleCount;
+            var handlesInMenu = AppHandles;
 
             await _flow.StartLevel(levelId);
 
@@ -106,13 +113,13 @@ namespace Maze.Tests.PlayMode
             var grid = levelScope.Container.Resolve<LevelGrid>();
             Assert.AreEqual(level.Geometry.Width, grid.Width);
             Assert.AreEqual(LevelRunState.Running, levelScope.Container.Resolve<LevelRuntime>().State);
-            Assert.Greater(_addressables.ActiveHandleCount, handlesInMenu);
+            Assert.Greater(AppHandles, handlesInMenu);
 
             await _flow.ExitToMenu();
 
             Assert.AreEqual(GameFlowState.MainMenu, _flow.State);
             Assert.IsFalse(SceneManager.GetSceneByName(GameScene).isLoaded, "Game scene must be unloaded.");
-            Assert.AreEqual(handlesInMenu, _addressables.ActiveHandleCount, "Level Addressables must be released.");
+            Assert.AreEqual(handlesInMenu, AppHandles, "Level Addressables must be released.");
         });
 
         [UnityTest]
@@ -275,7 +282,7 @@ namespace Maze.Tests.PlayMode
             if (!catalog.Levels.Any(l => l.LevelId == itemsLevel))
                 Assert.Ignore($"Dev level '{itemsLevel}' (with a ranged weapon) is not in the catalog.");
 
-            var handlesInMenu = _addressables.ActiveHandleCount;
+            var handlesInMenu = AppHandles;
             await _flow.StartLevel(itemsLevel, new LevelLaunchOptions(startIndex: 0));
             Assert.AreEqual(GameFlowState.Playing, _flow.State, _flow.ErrorMessage);
             var container = FindRoot<LevelLifetimeScope>(SceneManager.GetSceneByName(GameScene)).Container;
@@ -305,8 +312,10 @@ namespace Maze.Tests.PlayMode
                 Vector3.Cross(Vector3.ProjectOnPlane(across, Vector3.up), Vector3.up), Vector3.up);
             Assert.Less(Mathf.Abs(chestYaw), 25f, $"Chest turned toward the facing (yaw {chestYaw:F0}).");
 
+            var levelVoices = _audio.PlayingCount(SoundChannel.Level);
             Assert.IsTrue(combat.TryAttack(Vector2.down));
             Assert.AreEqual(1, bullets.Active.Count);
+            Assert.Greater(_audio.PlayingCount(SoundChannel.Level), levelVoices, "The shot sounds.");
             Assert.AreEqual(1, views.ActiveBulletViews, "A bullet view taken from the pool.");
             await UniTask.Yield(PlayerLoopTiming.PostLateUpdate);
             Assert.GreaterOrEqual(views.ActiveEffects, 2, "Muzzle flash and shell shown after the gun was posed.");
@@ -317,7 +326,8 @@ namespace Maze.Tests.PlayMode
             await WaitFor(() => views.ActiveEffects == 0);
 
             await _flow.ExitToMenu();
-            Assert.AreEqual(handlesInMenu, _addressables.ActiveHandleCount, "Combat and held weapon prefabs released with the level.");
+            Assert.AreEqual(handlesInMenu, AppHandles, "Combat and held weapon prefabs released with the level.");
+            Assert.AreEqual(0, _audio.PlayingCount(SoundChannel.Level), "Level sounds stop with the level.");
         });
 
         [UnityTest]
@@ -467,7 +477,7 @@ namespace Maze.Tests.PlayMode
         public IEnumerator Retry_AfterFail_ReloadsLevel_WithSingleLevelScope() => Async(async () =>
         {
             var levelId = FirstLevelId();
-            var handlesInMenu = _addressables.ActiveHandleCount;
+            var handlesInMenu = AppHandles;
             await _flow.StartLevel(levelId);
             var firstRuntime = FindRoot<LevelLifetimeScope>(SceneManager.GetSceneByName(GameScene)).Container.Resolve<LevelRuntime>();
 
@@ -483,13 +493,13 @@ namespace Maze.Tests.PlayMode
             Assert.AreEqual(1, gameScenes, "Only one LevelScope at a time (ТЗ §7).");
 
             await _flow.ExitToMenu();
-            Assert.AreEqual(handlesInMenu, _addressables.ActiveHandleCount);
+            Assert.AreEqual(handlesInMenu, AppHandles);
         });
 
         [UnityTest]
         public IEnumerator ExitToMenu_DuringLoading_LeavesNoLevelBehind() => Async(async () =>
         {
-            var handlesInMenu = _addressables.ActiveHandleCount;
+            var handlesInMenu = AppHandles;
             var loading = _flow.StartLevel(FirstLevelId());
             await _flow.ExitToMenu();
             await loading;
@@ -497,7 +507,7 @@ namespace Maze.Tests.PlayMode
             Assert.AreEqual(GameFlowState.MainMenu, _flow.State);
             Assert.IsFalse(_flow.HasLevel);
             Assert.IsFalse(SceneManager.GetSceneByName(GameScene).isLoaded);
-            Assert.AreEqual(handlesInMenu, _addressables.ActiveHandleCount);
+            Assert.AreEqual(handlesInMenu, AppHandles);
         });
 
         private string FirstLevelId()

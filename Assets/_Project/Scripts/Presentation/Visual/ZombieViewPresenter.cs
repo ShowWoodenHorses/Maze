@@ -68,6 +68,12 @@ namespace Maze.Presentation.Visual
 
         public LevelLoadStage Stage => LevelLoadStage.SpawnZombies;
 
+        /// <summary>(zombie) when its hit reaction shows — for a melee hit, at the clip's contact moment (sounds).</summary>
+        public event Action<ZombieRuntime> HitShown;
+
+        /// <summary>(zombie) when its death shows, after the hit that killed it (sounds).</summary>
+        public event Action<ZombieRuntime> DeathShown;
+
         public UniTask ExecuteAsync(CancellationToken cancellation)
         {
             foreach (var zombie in _zombies.Zombies)
@@ -284,6 +290,7 @@ namespace Maze.Presentation.Visual
 
         private void ShowDeath(ZombieRuntime zombie)
         {
+            DeathShown?.Invoke(zombie);
             if (!_bound.TryGetValue(zombie, out var bound))
                 return;
 
@@ -309,6 +316,7 @@ namespace Maze.Presentation.Visual
 
         private void ShowHit(ZombieRuntime zombie)
         {
+            HitShown?.Invoke(zombie);
             if (!_bound.TryGetValue(zombie, out var bound)) return;
             bound.SetTrigger(Z.HitHash);
             Flash(bound.Flash);

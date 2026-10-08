@@ -181,6 +181,40 @@ namespace Maze.Tests.EditMode.Progress
         }
 
         [Test]
+        public void Volumes_PreviewAppliesAtOnce_SaveWritesOnce_ResetOtherRestoresDefaults()
+        {
+            var settings = new SettingsService(_save);
+            settings.InitializeAsync(CancellationToken.None);
+            var changes = 0;
+            settings.VolumeChanged += () => changes++;
+            var writes = _storage.Writes;
+
+            settings.PreviewVolumes(0.3f, 0.6f);
+            settings.PreviewVolumes(0.3f, 0.6f);
+            settings.PreviewVolumes(0.3f, 5f);
+
+            Assert.AreEqual(2, changes, "Once per real change.");
+            Assert.AreEqual(0.3f, settings.MusicVolume, 1e-5f);
+            Assert.AreEqual(1f, settings.SfxVolume, "Clamped.");
+            Assert.AreEqual(writes, _storage.Writes, "Preview does not write.");
+
+            settings.SavePreviewed();
+            settings.SavePreviewed();
+            Assert.AreEqual(writes + 1, _storage.Writes);
+
+            settings.ShowFps = true;
+            settings.PreviewVolumes(0.1f, 0.2f);
+            settings.ResetOther();
+            Assert.AreEqual(1f, settings.MusicVolume);
+            Assert.AreEqual(1f, settings.SfxVolume);
+            Assert.IsFalse(settings.ShowFps);
+            var save = new SaveService(_storage);
+            save.Load();
+            Assert.AreEqual(1f, save.Data.Settings.MusicVolume, "Reset is saved.");
+            Assert.IsFalse(save.Data.Settings.ShowFps);
+        }
+
+        [Test]
         public void ControlsSettings_PreviewAppliesAtOnce_SaveWritesOnce_Clamped()
         {
             var settings = new SettingsService(_save);
@@ -200,8 +234,8 @@ namespace Maze.Tests.EditMode.Progress
             Assert.AreEqual(ControlsSettings.MaxSize, settings.Controls.Size, "Clamped.");
             Assert.AreEqual(writes, _storage.Writes, "Preview does not write.");
 
-            settings.SaveControls();
-            settings.SaveControls();
+            settings.SavePreviewed();
+            settings.SavePreviewed();
             Assert.AreEqual(writes + 1, _storage.Writes);
 
             var save = new SaveService(_storage);

@@ -68,6 +68,9 @@ namespace Maze.Gameplay.Weapons
         /// <summary>Raised after slots or the active slot changed.</summary>
         public event Action Changed;
 
+        /// <summary>(slot) after the player switched the active slot (not on a pickup).</summary>
+        public event Action<WeaponSlot> Switched;
+
         public WeaponRuntime Get(WeaponSlot slot) => _slots[(int)slot];
 
         /// <summary>Puts the weapon into its slot and makes it active. Returns the replaced weapon (reset) or null.</summary>
@@ -90,6 +93,7 @@ namespace Maze.Gameplay.Weapons
 
             ActiveSlot = slot;
             Changed?.Invoke();
+            Switched?.Invoke(slot);
             return true;
         }
 
