@@ -181,6 +181,92 @@ namespace Maze.Tests.EditMode.Authoring
         }
 
         [Test]
+        public void ClearCell_RemovesObjectsLightsDecor_WallAndDoorBecomeFloor()
+        {
+            LevelEditing.AddMedkit(Level, Room);
+            LevelEditing.AddLight(Level, Room);
+            LevelEditing.SetCellOverride(Level, Room, CellLayer.Decor, new VisualChoice("decor_01"));
+
+            Assert.IsTrue(LevelEditing.ClearCell(Level, Room));
+            Assert.IsFalse(Level.AllEntities().Any(e => e.Position == Room));
+            Assert.IsFalse(Level.Lights.Any(l => l.Cell == Room));
+            Assert.IsTrue(VisualResolver.ResolveDecor(Level, Room).IsEmpty);
+            Assert.IsFalse(LevelEditing.ClearCell(Level, Room), "Nothing left to erase.");
+
+            Assert.IsTrue(LevelEditing.ClearCell(Level, Pillar));
+            Assert.AreEqual(CellType.Floor, Level.Geometry.GetCell(Pillar));
+
+            LevelEditing.SetCellType(Level, Pillar, CellType.Door);
+            Assert.IsTrue(LevelEditing.ClearCell(Level, Pillar));
+            Assert.AreEqual(CellType.Floor, Level.Geometry.GetCell(Pillar));
+            Assert.IsEmpty(Level.Doors);
+        }
+
+        private static void AssertPose(LevelData level, LevelEntityData entity, float x, float z, float height, float yaw)
+        {
+            Assert.IsTrue(level.VisualData.TryGetObjectPlacement(entity.Id, out var p), entity.Id);
+            Assert.AreEqual(x, p.Offset.x, 1e-4f, "x");
+            Assert.AreEqual(z, p.Offset.y, 1e-4f, "z");
+            Assert.AreEqual(height, p.Height, 1e-4f, "height");
+            Assert.AreEqual(yaw, p.Yaw, 1e-3f, "yaw");
+        }
+
+        private static void AssertDecor(LevelData level, GridPosition cell, float x, float z, float yaw)
+        {
+            Assert.IsTrue(level.VisualData.TryGetDecorPlacement(cell, out var p));
+            Assert.AreEqual(x, p.Offset.x, 1e-4f, "decor x");
+            Assert.AreEqual(z, p.Offset.y, 1e-4f, "decor z");
+            Assert.AreEqual(yaw, p.Yaw, 1e-3f, "decor yaw");
+        }
+
+        [Test]
+        public void PickupOnDecor_MovesAndTurnsWithIt_BothWays_StaysInCell()
+        {
+            var medkit = LevelEditing.AddMedkit(Level, Room);
+            LevelEditing.SetCellOverride(Level, Room, CellLayer.Decor, new VisualChoice("decor_01"));
+            Assert.IsTrue(LevelEditing.PutOnDecor(Level, medkit, new UnityEngine.Vector2(0.1f, 0f), 0.8f, 0f));
+            Assert.IsTrue(LevelEditing.IsOnDecor(Level, medkit));
+
+            // Decor shifted and turned 90° clockwise: the pickup (east of its centre) ends up south of it.
+            LevelEditing.SetDecorPlacement(Level, Room, new UnityEngine.Vector2(0.2f, 0f), 0.1f, 90f);
+            AssertPose(Level, medkit, 0.2f, -0.1f, 0.9f, 90f);
+
+            // Pickup shifted: the decor follows; lifting the pickup does not lift the decor.
+            LevelEditing.SetObjectPlacement(Level, medkit, new UnityEngine.Vector2(0.45f, -0.1f), 1f, 90f);
+            AssertDecor(Level, Room, 0.45f, 0f, 90f);
+            Assert.AreEqual(0.1f, Level.VisualData.DecorPlacements.Single(p => p.Cell == Room).Height, 1e-4f);
+
+            // Past the cell edge both stop together instead of being pulled apart.
+            LevelEditing.SetObjectPlacement(Level, medkit, new UnityEngine.Vector2(0.7f, -0.1f), 1f, 90f);
+            AssertPose(Level, medkit, 0.5f, -0.1f, 1f, 90f);
+            AssertDecor(Level, Room, 0.5f, 0f, 90f);
+
+            // Turning the pickup turns the decor around the pickup.
+            LevelEditing.SetObjectPlacement(Level, medkit, new UnityEngine.Vector2(0.2f, 0f), 1f, 180f);
+            AssertDecor(Level, Room, 0.3f, 0f, 180f);
+
+            // Reset of the decor brings the pickup along; detached, it stays.
+            LevelEditing.ResetDecorPlacement(Level, Room);
+            AssertPose(Level, medkit, 0.1f, 0f, 0.9f, 0f);
+            LevelEditing.DetachFromDecor(Level, medkit);
+            Assert.IsFalse(LevelEditing.IsOnDecor(Level, medkit));
+            LevelEditing.SetDecorPlacement(Level, Room, new UnityEngine.Vector2(-0.3f, 0f), 0f, 0f);
+            AssertPose(Level, medkit, 0.1f, 0f, 0.9f, 0f);
+        }
+
+        [Test]
+        public void DecorQuarterTurn_TurnsPickupOnIt()
+        {
+            var medkit = LevelEditing.AddMedkit(Level, Room);
+            LevelEditing.SetCellOverride(Level, Room, CellLayer.Decor, new VisualChoice("decor_01"));
+            LevelEditing.PutOnDecor(Level, medkit, new UnityEngine.Vector2(0f, 0.2f), 0.5f, 0f);
+
+            LevelEditing.SetDecorRotation(Level, Room, 1);
+            Assert.AreEqual(1, VisualResolver.ResolveDecor(Level, Room).Rotation);
+            AssertPose(Level, medkit, 0.2f, 0f, 0.5f, 90f);
+        }
+
+        [Test]
         public void EditedLevel_StaysValid()
         {
             var room2 = new GridPosition(3, 1);

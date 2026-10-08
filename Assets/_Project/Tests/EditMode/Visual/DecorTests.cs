@@ -245,6 +245,40 @@ namespace Maze.Tests.EditMode.Visual
             }
         }
 
+        [Test]
+        public void KeyCell_NoAutoDecor_ManualDecorAllowed()
+        {
+            using (var f = new VisualFixture())
+            {
+                AddDecor(f);
+                f.Level.Generation.DecorDensity = 1f;
+                LevelAuthoring.GenerateNew(f.Level);
+                var floors = FloorCells(f.Level).Where(p => f.Level.AllEntities().All(e => e.Position != p)).ToArray();
+                var cell = floors[0];
+                var next = floors[1];
+                var manual = floors[2];
+                Assert.IsFalse(VisualResolver.ResolveDecor(f.Level, cell).IsEmpty, "Density 1: decor before the key.");
+
+                var key = LevelEditing.AddKey(f.Level, cell);
+                Assert.IsTrue(VisualResolver.ResolveDecor(f.Level, cell).IsEmpty, "The key wins its cell.");
+
+                LevelEditing.Move(f.Level, key, next);
+                Assert.IsFalse(VisualResolver.ResolveDecor(f.Level, cell).IsEmpty, "Auto decor is back where the key left.");
+                Assert.IsTrue(VisualResolver.ResolveDecor(f.Level, next).IsEmpty);
+
+                LevelAuthoring.RegenerateVisuals(f.Level, clearOverrides: true);
+                LevelEditing.PlaceDecor(f.Level);
+                Assert.IsTrue(VisualResolver.ResolveDecor(f.Level, next).IsEmpty, "Regenerate and Place Decor skip key cells.");
+
+                LevelEditing.SetCellOverride(f.Level, manual, CellLayer.Decor, new VisualChoice("decor_barrel"));
+                LevelEditing.Move(f.Level, key, manual);
+                Assert.AreEqual("decor_barrel", VisualResolver.ResolveDecor(f.Level, manual).VariantId, "Decor placed by hand stays.");
+
+                LevelEditing.Remove(f.Level, key);
+                Assert.IsFalse(VisualResolver.ResolveDecor(f.Level, next).IsEmpty);
+            }
+        }
+
         private static VisualSource Resolve(LevelData level, GridPosition cell)
         {
             VisualResolver.ResolveDecor(level, cell, out var source);

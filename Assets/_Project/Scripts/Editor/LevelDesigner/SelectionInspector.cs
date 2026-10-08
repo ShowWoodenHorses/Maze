@@ -117,7 +117,7 @@ namespace Maze.Editor.LevelDesigner
             {
                 var rotation = EditorGUILayout.IntPopup("Decor rotation", current.Rotation, RotationNames, RotationValues);
                 if (rotation != current.Rotation)
-                    Apply("Rotate Decor", () => LevelEditing.SetCellOverride(Level, cell, CellLayer.Decor, new VisualChoice(current.VariantId, rotation)));
+                    Apply("Rotate Decor", () => LevelEditing.SetDecorRotation(Level, cell, rotation));
             }
 
             // Placement (also dragged in the Scene view on the preview). Editing it makes auto decor manual.
@@ -128,6 +128,10 @@ namespace Maze.Editor.LevelDesigner
             var turn = EditorGUILayout.Slider("Decor turn", yaw, 0f, 359.9f);
             if (EditorGUI.EndChangeCheck())
                 Apply("Place Decor", () => LevelEditing.SetDecorPlacement(Level, cell, shift, height, turn));
+
+            var nudge = NudgeButtons();
+            if (nudge != Vector2.zero)
+                Apply("Place Decor", () => LevelEditing.SetDecorPlacement(Level, cell, shift + nudge, height, turn));
 
             if (hasPlacement && GUILayout.Button("Reset decor placement"))
                 Apply("Reset Decor Placement", () => LevelEditing.ResetDecorPlacement(Level, cell));
@@ -297,13 +301,25 @@ namespace Maze.Editor.LevelDesigner
             if (EditorGUI.EndChangeCheck())
                 Apply("Place " + entity.Id, () => LevelEditing.SetObjectPlacement(Level, entity, shift, height, turn));
 
+            var nudge = NudgeButtons();
+            if (nudge != Vector2.zero)
+                Apply("Place " + entity.Id, () => LevelEditing.SetObjectPlacement(Level, entity, shift + nudge, height, turn));
+
+            var onDecor = LevelEditing.IsOnDecor(Level, entity);
+            if (onDecor)
+                EditorGUILayout.HelpBox("On decor: shift and turn move the decor too (and the other way round).", MessageType.None);
+
             EditorGUILayout.BeginHorizontal();
             var decor = VisualResolver.ResolveDecor(Level, entity.Position);
             using (new EditorGUI.DisabledScope(decor.IsEmpty))
             {
-                if (GUILayout.Button(new GUIContent("Put on decor", "Lift onto the top of this cell's decor (e.g. a table).")))
+                if (GUILayout.Button(new GUIContent("Put on decor",
+                        "Lift onto the top of this cell's decor (e.g. a table); from now on it moves and turns with the decor.")))
                     PutOnDecor(entity, decor, hasPlacement ? shift : (Vector2?)null, turn);
             }
+
+            if (onDecor && GUILayout.Button(new GUIContent("Detach", "Keep the pose, stop moving with the decor.")))
+                Apply("Detach " + entity.Id, () => LevelEditing.DetachFromDecor(Level, entity));
 
             using (new EditorGUI.DisabledScope(!hasPlacement))
             {
@@ -326,7 +342,23 @@ namespace Maze.Editor.LevelDesigner
             VisualResolver.ResolveDecorPose(Level, entity.Position, decor, out var decorOffset, out _);
             var top = variant.Height + decorOffset.y;
             var where = shift ?? new Vector2(decorOffset.x, decorOffset.z);
-            Apply("Put " + entity.Id + " on Decor", () => LevelEditing.SetObjectPlacement(Level, entity, where, top, turn));
+            Apply("Put " + entity.Id + " on Decor", () => LevelEditing.PutOnDecor(Level, entity, where, top, turn));
+        }
+
+        /// <summary>The most common fine adjustment: a quarter of a cell along X (East) or Z (North).</summary>
+        private const float NudgeStep = 0.25f;
+
+        /// <summary>Row "X −0.25 | X +0.25 | Z −0.25 | Z +0.25"; returns the shift clicked (zero if none).</summary>
+        private static Vector2 NudgeButtons()
+        {
+            var nudge = Vector2.zero;
+            EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Button("X -0.25")) nudge = new Vector2(-NudgeStep, 0f);
+            if (GUILayout.Button("X +0.25")) nudge = new Vector2(NudgeStep, 0f);
+            if (GUILayout.Button("Z -0.25")) nudge = new Vector2(0f, -NudgeStep);
+            if (GUILayout.Button("Z +0.25")) nudge = new Vector2(0f, NudgeStep);
+            EditorGUILayout.EndHorizontal();
+            return nudge;
         }
 
         // ------------------------------------------------------------ Helpers

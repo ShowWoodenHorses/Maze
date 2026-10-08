@@ -110,6 +110,7 @@ namespace Maze.Core.Visual
         [SerializeField] private Vector2 _offset;
         [SerializeField] private float _height;
         [SerializeField] private float _yaw;
+        [SerializeField] private bool _onDecor;
 
         public ObjectPlacement(string entityId, Vector2 offset, float height, float yaw)
         {
@@ -123,6 +124,12 @@ namespace Maze.Core.Visual
 
         /// <summary>Degrees, clockwise seen from above, [0, 360).</summary>
         public float Yaw => _yaw;
+
+        /// <summary>
+        /// Put on the decor of its cell ("Put on decor"): moved and turned together with it, both ways
+        /// (see <c>LevelEditing.SetObjectPlacement</c> / <c>SetDecorPlacement</c>).
+        /// </summary>
+        public bool OnDecor { get => _onDecor; internal set => _onDecor = value; }
 
         public bool IsValid =>
             !float.IsNaN(_offset.x) && !float.IsNaN(_offset.y) && !float.IsNaN(_height) && !float.IsNaN(_yaw) &&

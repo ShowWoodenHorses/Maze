@@ -352,18 +352,21 @@ namespace Maze.Editor.LevelDesigner
             _state.SelectedCell = zombie.Position;
         }
 
+        /// <summary>Clears the cell to empty floor (see <see cref="LevelEditing.ClearCell"/>); empty cells are skipped.</summary>
         private void Erase(GridPosition cell)
         {
-            var entities = Level.AllEntities().Where(e => e.Position == cell).ToList();
-            if (entities.Count == 0)
+            if (!HasAnythingToErase(cell))
                 return;
 
-            Apply("Erase Objects", () =>
-            {
-                foreach (var entity in entities)
-                    LevelEditing.Remove(Level, entity);
-            });
+            Apply("Erase Cell", () => LevelEditing.ClearCell(Level, cell));
         }
+
+        private bool HasAnythingToErase(GridPosition cell) =>
+            Level.Geometry.IsInside(cell) &&
+            (Level.Geometry.GetCell(cell) != CellType.Floor
+             || Level.AllEntities().Any(e => e.Position == cell)
+             || Level.Lights.Any(l => l.Cell == cell)
+             || !Maze.Core.Visual.VisualResolver.ResolveDecor(Level, cell).IsEmpty);
 
         private void Apply(string undoName, Action change)
         {

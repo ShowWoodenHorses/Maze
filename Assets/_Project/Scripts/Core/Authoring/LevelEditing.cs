@@ -76,10 +76,14 @@ namespace Maze.Core.Authoring
         public static MapFragmentData AddMapFragment(LevelData level, GridPosition position, GridRect region) =>
             Add(level, level.MutableMapFragments, new MapFragmentData(level.CreateUniqueId(MapFragmentData.IdPrefix), position, region));
 
-        /// <summary>Adds a key; if <paramref name="door"/> is given, links it (one key = one door) and colours both.</summary>
+        /// <summary>
+        /// Adds a key; if <paramref name="door"/> is given, links it (one key = one door) and colours both.
+        /// The key wins its cell: auto decor there is removed (decor placed by hand stays).
+        /// </summary>
         public static KeyData AddKey(LevelData level, GridPosition position, DoorData door = null)
         {
             var key = Add(level, level.MutableKeys, new KeyData(level.CreateUniqueId(KeyData.IdPrefix), position));
+            VisualAssigner.AssignDecor(level, position);
             if (door != null)
                 LinkKey(level, door, key);
             return key;
@@ -107,6 +111,7 @@ namespace Maze.Core.Authoring
 
                 case KeyData key:
                     level.MutableKeys.Remove(key);
+                    VisualAssigner.AssignDecor(level, key.Position);
                     foreach (var linked in level.Doors.Where(d => d.KeyId == key.Id).ToList())
                     {
                         linked.KeyId = null;
@@ -128,6 +133,38 @@ namespace Maze.Core.Authoring
             }
 
             level.VisualData.RemoveObject(entity.Id);
+        }
+
+        /// <summary>
+        /// Erase brush: the cell becomes empty floor — its objects (a door opens the passage), light sources and
+        /// decor ("no decor here", so auto placement leaves it empty) are removed, a wall becomes floor.
+        /// Patrol points and fragment regions passing through the cell stay. False when there was nothing to erase.
+        /// </summary>
+        public static bool ClearCell(LevelData level, GridPosition position)
+        {
+            if (!level.Geometry.IsInside(position))
+                return false;
+
+            var changed = false;
+            foreach (var entity in level.AllEntities().Where(e => e.Position == position).ToList())
+            {
+                Remove(level, entity);
+                changed = true;
+            }
+
+            if (level.MutableLights.RemoveAll(light => light.Cell == position) > 0)
+                changed = true;
+
+            if (level.Geometry.GetCell(position) == CellType.Wall)
+                changed |= SetCellType(level, position, CellType.Floor);
+
+            if (!VisualResolver.ResolveDecor(level, position).IsEmpty)
+            {
+                level.VisualData.SetCellOverride(position, CellLayer.Decor, VisualChoice.None);
+                changed = true;
+            }
+
+            return changed;
         }
 
         /// <summary>Moves an object. A door takes its cell type with it (old cell becomes Floor).</summary>
@@ -153,6 +190,12 @@ namespace Maze.Core.Authoring
                 level.VisualData.ClearCellOverride(to, CellLayer.Decor);
                 VisualAssigner.ReassignAround(level, from);
                 VisualAssigner.ReassignAround(level, to);
+            }
+
+            if (entity is KeyData)
+            {
+                VisualAssigner.AssignDecor(level, from);
+                VisualAssigner.AssignDecor(level, to);
             }
 
             VisualAssigner.UpdateOrientation(level, entity);
@@ -286,39 +329,212 @@ namespace Maze.Core.Authoring
         /// <summary>
         /// Moves / lifts / turns the decor of a floor cell (values clamped: shift ≤ half a cell, height
         /// <see cref="DecorPlacement.MinHeight"/>..<see cref="DecorPlacement.MaxHeight"/>). Auto placed decor becomes
-        /// manual (an override with the same variant), so regeneration keeps it. False when the cell has no decor.
+        /// manual (an override with the same variant), so regeneration keeps it. Pickups put on this decor move, lift and
+        /// turn with it (around the decor). False when the cell has no decor.
         /// </summary>
         public static bool SetDecorPlacement(LevelData level, GridPosition cell, UnityEngine.Vector2 offset, float height, float yaw)
         {
-            var decor = VisualResolver.ResolveDecor(level, cell, out var source);
+            var decor = VisualResolver.ResolveDecor(level, cell);
             if (decor.IsEmpty)
                 return false;
 
-            if (source != VisualSource.Override)
-                level.VisualData.SetCellOverride(cell, CellLayer.Decor, decor);
-            level.VisualData.SetDecorPlacement(cell, offset, height, yaw);
+            var before = DecorPose(level, cell, decor);
+            var after = new Pose(offset, height, yaw);
+            var group = new List<(LevelEntityData Entity, Pose Pose)>();
+            foreach (var entity in ObjectsOnDecor(level, cell))
+            {
+                var pose = ObjectPose(level, entity);
+                group.Add((entity, new Pose(Follow(pose.Offset, before, after), pose.Height + after.Height - before.Height,
+                    pose.Yaw + after.Yaw - before.Yaw)));
+            }
+
+            Commit(level, cell, after, group);
             return true;
         }
 
         /// <summary>
         /// Shifts / lifts / turns the view of a pickup (key, medkit, weapon, map fragment) inside its cell; clamped like
-        /// decor. Purely visual. False for other objects.
+        /// decor. Purely visual. A pickup put on decor carries the decor (and other pickups on it) along: same shift,
+        /// same turn around the pickup; lifting it does not lift the decor. False for other objects.
         /// </summary>
         public static bool SetObjectPlacement(LevelData level, LevelEntityData entity, UnityEngine.Vector2 offset, float height, float yaw)
         {
             if (!VisualKinds.IsPlaceable(entity))
                 return false;
 
-            level.VisualData.SetObjectPlacement(entity.Id, offset, height, yaw);
+            if (!IsOnDecor(level, entity))
+            {
+                level.VisualData.SetObjectPlacement(entity.Id, offset, height, yaw);
+                return true;
+            }
+
+            var cell = entity.Position;
+            var before = ObjectPose(level, entity);
+            var after = new Pose(offset, height, yaw);
+            var decor = DecorPose(level, cell, VisualResolver.ResolveDecor(level, cell));
+            var group = new List<(LevelEntityData Entity, Pose Pose)> { (entity, after) };
+            foreach (var other in ObjectsOnDecor(level, cell))
+                if (other != entity)
+                {
+                    var pose = ObjectPose(level, other);
+                    group.Add((other, new Pose(Follow(pose.Offset, before, after), pose.Height, pose.Yaw + after.Yaw - before.Yaw)));
+                }
+
+            var decorAfter = new Pose(Follow(decor.Offset, before, after), decor.Height, decor.Yaw + after.Yaw - before.Yaw);
+            Commit(level, cell, decorAfter, group);
             return true;
         }
 
-        /// <summary>Back to the cell centre on the floor.</summary>
+        /// <summary>
+        /// "Put on decor": the pickup stands at the given pose (the inspector computes the height of the decor's top)
+        /// and from now on moves and turns together with the decor of its cell. False for other objects or no decor.
+        /// </summary>
+        public static bool PutOnDecor(LevelData level, LevelEntityData entity, UnityEngine.Vector2 offset, float height, float yaw)
+        {
+            if (!VisualKinds.IsPlaceable(entity) || VisualResolver.ResolveDecor(level, entity.Position).IsEmpty)
+                return false;
+
+            level.VisualData.SetObjectPlacement(entity.Id, offset, height, yaw);
+            level.VisualData.TryGetObjectPlacement(entity.Id, out var placement);
+            placement.OnDecor = true;
+            return true;
+        }
+
+        /// <summary>The pickup keeps its pose but no longer moves with the decor.</summary>
+        public static bool DetachFromDecor(LevelData level, LevelEntityData entity)
+        {
+            if (!level.VisualData.TryGetObjectPlacement(entity.Id, out var placement) || !placement.OnDecor)
+                return false;
+
+            placement.OnDecor = false;
+            return true;
+        }
+
+        /// <summary>Put on decor and the cell still has decor (a link to removed decor does nothing).</summary>
+        public static bool IsOnDecor(LevelData level, LevelEntityData entity) =>
+            VisualKinds.IsPlaceable(entity) &&
+            level.VisualData.TryGetObjectPlacement(entity.Id, out var placement) && placement.OnDecor &&
+            !VisualResolver.ResolveDecor(level, entity.Position).IsEmpty;
+
+        /// <summary>Back to the cell centre on the floor (also detaches it from decor).</summary>
         public static bool ResetObjectPlacement(LevelData level, LevelEntityData entity) =>
             level.VisualData.ClearObjectPlacement(entity.Id);
 
-        /// <summary>Back to the cell centre and the quarter turn of the choice; the decor stays manual.</summary>
-        public static bool ResetDecorPlacement(LevelData level, GridPosition cell) => level.VisualData.ClearDecorPlacement(cell);
+        /// <summary>
+        /// Back to the cell centre and the quarter turn of the choice; the decor stays manual. Pickups on it follow.
+        /// </summary>
+        public static bool ResetDecorPlacement(LevelData level, GridPosition cell) =>
+            MoveWithDecor(level, cell, () => level.VisualData.ClearDecorPlacement(cell));
+
+        /// <summary>Quarter turn of manual decor without a hand-set placement; pickups on it turn with it.</summary>
+        public static void SetDecorRotation(LevelData level, GridPosition cell, int rotation)
+        {
+            var decor = VisualResolver.ResolveDecor(level, cell);
+            if (!decor.IsEmpty)
+                MoveWithDecor(level, cell,
+                    () => level.VisualData.SetCellOverride(cell, CellLayer.Decor, new VisualChoice(decor.VariantId, rotation)));
+        }
+
+        // ------------------------------------------------------------ Pickups on decor
+
+        /// <summary>Shift (x = East, y = North), height and turn (degrees clockwise from above) in a cell.</summary>
+        private readonly struct Pose
+        {
+            public Pose(UnityEngine.Vector2 offset, float height, float yaw)
+            {
+                Offset = offset;
+                Height = height;
+                Yaw = yaw;
+            }
+
+            public UnityEngine.Vector2 Offset { get; }
+            public float Height { get; }
+            public float Yaw { get; }
+        }
+
+        private static Pose DecorPose(LevelData level, GridPosition cell, VisualChoice decor)
+        {
+            VisualResolver.ResolveDecorPose(level, cell, decor, out var offset, out var yaw);
+            return new Pose(new UnityEngine.Vector2(offset.x, offset.z), offset.y, yaw);
+        }
+
+        private static Pose ObjectPose(LevelData level, LevelEntityData entity)
+        {
+            VisualResolver.ResolveObjectPose(level, entity, VisualResolver.ResolveObject(level, entity), out var offset, out var yaw);
+            return new Pose(new UnityEngine.Vector2(offset.x, offset.z), offset.y, yaw);
+        }
+
+        private static List<LevelEntityData> ObjectsOnDecor(LevelData level, GridPosition cell) =>
+            level.AllEntities().Where(e => e.Position == cell && IsOnDecor(level, e)).ToList();
+
+        /// <summary>
+        /// Where a point rigidly attached to a moved "leader" ends up: it keeps its place relative to the leader,
+        /// turned by the leader's turn (around the leader).
+        /// </summary>
+        private static UnityEngine.Vector2 Follow(UnityEngine.Vector2 point, Pose leaderBefore, Pose leaderAfter)
+        {
+            var radians = (leaderAfter.Yaw - leaderBefore.Yaw) * UnityEngine.Mathf.Deg2Rad;
+            var cos = UnityEngine.Mathf.Cos(radians);
+            var sin = UnityEngine.Mathf.Sin(radians);
+            var local = point - leaderBefore.Offset;
+            // Clockwise from above (North = +y): North turns to East.
+            return leaderAfter.Offset + new UnityEngine.Vector2(local.x * cos + local.y * sin, -local.x * sin + local.y * cos);
+        }
+
+        /// <summary>
+        /// Writes the decor and its pickups as one group, shifted together if needed so that every one stays inside
+        /// the cell (clamping them one by one would pull them apart).
+        /// </summary>
+        private static void Commit(LevelData level, GridPosition cell, Pose decor, List<(LevelEntityData Entity, Pose Pose)> objects)
+        {
+            var offsets = new List<UnityEngine.Vector2> { decor.Offset };
+            offsets.AddRange(objects.Select(o => o.Pose.Offset));
+            var correction = new UnityEngine.Vector2(GroupCorrection(offsets.Select(o => o.x)), GroupCorrection(offsets.Select(o => o.y)));
+
+            var choice = VisualResolver.ResolveDecor(level, cell, out var source);
+            if (source != VisualSource.Override)
+                level.VisualData.SetCellOverride(cell, CellLayer.Decor, choice);
+            level.VisualData.SetDecorPlacement(cell, decor.Offset + correction, decor.Height, decor.Yaw);
+            foreach (var (entity, pose) in objects)
+                level.VisualData.SetObjectPlacement(entity.Id, pose.Offset + correction, pose.Height, pose.Yaw);
+        }
+
+        /// <summary>Smallest shift along one axis that brings all values into ±<see cref="DecorPlacement.MaxOffset"/>.</summary>
+        private static float GroupCorrection(IEnumerable<float> values)
+        {
+            var max = DecorPlacement.MaxOffset;
+            var low = float.MinValue;
+            var high = float.MaxValue;
+            foreach (var value in values)
+            {
+                low = UnityEngine.Mathf.Max(low, -max - value);
+                high = UnityEngine.Mathf.Min(high, max - value);
+            }
+
+            return low > high ? (low + high) * 0.5f : UnityEngine.Mathf.Clamp(0f, low, high);
+        }
+
+        /// <summary>Applies a change of the decor's pose and moves the pickups on it the same way (each clamped).</summary>
+        private static bool MoveWithDecor(LevelData level, GridPosition cell, System.Func<bool> change)
+        {
+            var decor = VisualResolver.ResolveDecor(level, cell);
+            var objects = ObjectsOnDecor(level, cell).Select(e => (Entity: e, Pose: ObjectPose(level, e))).ToList();
+            var before = DecorPose(level, cell, decor);
+            var changed = change();
+            var after = DecorPose(level, cell, VisualResolver.ResolveDecor(level, cell));
+
+            foreach (var (entity, pose) in objects)
+                level.VisualData.SetObjectPlacement(entity.Id, Follow(pose.Offset, before, after),
+                    pose.Height + after.Height - before.Height, pose.Yaw + after.Yaw - before.Yaw);
+            return changed;
+        }
+
+        private static bool MoveWithDecor(LevelData level, GridPosition cell, System.Action change) =>
+            MoveWithDecor(level, cell, () =>
+            {
+                change();
+                return true;
+            });
 
         /// <summary>Recreates the auto placed decor (density, max auto height, VisualSeed); manual decor stays.</summary>
         public static void PlaceDecor(LevelData level) => VisualAssigner.AssignAllDecor(level);

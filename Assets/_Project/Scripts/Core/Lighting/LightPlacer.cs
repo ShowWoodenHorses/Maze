@@ -12,6 +12,9 @@ namespace Maze.Core.Lighting
     /// order and taken while no other light is closer than the spacing given by
     /// <see cref="LevelGenerationSettings.LightDensity"/>; the kind of light is a weighted pick from the theme's
     /// <see cref="Visual.ThemeLighting.LightPresets"/>. Hand-placed lights stay (and keep the others away from them).
+    /// Rules: no auto light in an exit cell; every key with a coloured visual first gets <see cref="KeyLightCount"/>
+    /// lights of its colour within <see cref="KeyLightSteps"/> steps along the floor (a hint for the player; placed
+    /// regardless of density, the other lights keep their spacing from them).
     /// </summary>
     internal static class LightPlacer
     {
@@ -22,6 +25,13 @@ namespace Maze.Core.Lighting
         public const float SparseSpacing = 9f;
         public const float DenseSpacing = 3f;
 
+        /// <summary>Lights in a key's colour around each key and how far (steps along the floor) they may be.</summary>
+        public const int KeyLightCount = 2;
+        public const int KeyLightSteps = 3;
+
+        /// <summary>Preferred distance between the lights of one key (closer only when nothing else fits).</summary>
+        private const float KeyLightGap = 2f;
+
         private static readonly ulong Salt = StableHash.Of("light");
 
         public static void PlaceAll(LevelData level, bool keepManual)
@@ -30,17 +40,16 @@ namespace Maze.Core.Lighting
             lights.RemoveAll(light => light.IsGenerated || !keepManual);
 
             var presets = level.VisualTheme != null ? level.VisualTheme.Lighting.LightPresets : null;
-            var density = level.Generation.LightDensity;
-            if (presets == null || TotalWeight(presets) <= 0f || density <= 0f)
+            if (presets == null || TotalWeight(presets) <= 0f)
             {
                 Visual.VisualAssigner.AssignLights(level);
                 return;
             }
 
-            var spacing = Mathf.Lerp(SparseSpacing, DenseSpacing, Mathf.Clamp01(density));
             var seed = StableHash.Combine(Salt, unchecked((ulong)level.Generation.VisualSeed));
-            var candidates = Candidates(level.Geometry, seed);
-            candidates.Sort((a, b) => a.Key.CompareTo(b.Key));
+            var exits = new HashSet<GridPosition>();
+            foreach (var exit in level.Exits)
+                exits.Add(exit.Position);
 
             var taken = new List<Vector2>();
             var usedCells = new HashSet<GridPosition>();
@@ -50,34 +59,120 @@ namespace Maze.Core.Lighting
                 usedCells.Add(light.Cell);
             }
 
-            foreach (var candidate in candidates)
+            foreach (var key in level.Keys)
+                PlaceKeyLights(level, key, presets, seed, exits, taken, usedCells);
+
+            var density = level.Generation.LightDensity;
+            if (density > 0f)
             {
-                if (usedCells.Contains(candidate.Cell))
-                    continue;
+                var spacing = Mathf.Lerp(SparseSpacing, DenseSpacing, Mathf.Clamp01(density));
+                var candidates = Candidates(level.Geometry, seed, null);
+                candidates.Sort((a, b) => a.Key.CompareTo(b.Key));
 
-                var side = candidate.Side.ToOffset();
-                var offset = new Vector2(side.X, side.Y) * WallOffset;
-                var point = new Vector2(candidate.Cell.X, candidate.Cell.Y) + offset;
-                if (IsNearAny(point, taken, spacing))
-                    continue;
+                foreach (var candidate in candidates)
+                {
+                    if (usedCells.Contains(candidate.Cell) || exits.Contains(candidate.Cell))
+                        continue;
 
-                var preset = Pick(presets, StableHash.Combine(candidate.Key, 1UL));
-                lights.Add(new LightSourceData(level.CreateUniqueId(LightSourceData.IdPrefix), candidate.Cell, offset,
-                    preset.Color, preset.Radius, preset.Intensity, preset.Flicker, isGenerated: true));
-                taken.Add(point);
-                usedCells.Add(candidate.Cell);
+                    var point = candidate.Point;
+                    if (IsNearAny(point, taken, spacing))
+                        continue;
+
+                    var preset = Pick(presets, StableHash.Combine(candidate.Key, 1UL));
+                    Add(level, candidate, preset.Color, preset);
+                    taken.Add(point);
+                    usedCells.Add(candidate.Cell);
+                }
             }
 
             Visual.VisualAssigner.AssignLights(level);
         }
 
-        private static List<Candidate> Candidates(LevelGeometry geometry, ulong seed)
+        /// <summary>
+        /// Lights of the key's colour on walls next to floor cells within <see cref="KeyLightSteps"/> of the key
+        /// (walls and doors bound the search, so they light the key's own corridor). A key without colour gets none.
+        /// </summary>
+        private static void PlaceKeyLights(LevelData level, KeyData key, List<LightPreset> presets, ulong seed,
+            HashSet<GridPosition> exits, List<Vector2> taken, HashSet<GridPosition> usedCells)
+        {
+            if (!TryGetKeyColor(level, key, out var color))
+                return;
+
+            var near = Reachable(level.Geometry, key.Position, KeyLightSteps);
+            var candidates = Candidates(level.Geometry, StableHash.Combine(seed, StableHash.Of(key.Id)), near);
+            candidates.RemoveAll(c => usedCells.Contains(c.Cell) || exits.Contains(c.Cell));
+            candidates.Sort((a, b) => a.Key.CompareTo(b.Key));
+
+            var placed = new List<Vector2>();
+            for (var i = 0; i < KeyLightCount && candidates.Count > 0; i++)
+            {
+                var index = candidates.FindIndex(c => !IsNearAny(c.Point, placed, KeyLightGap));
+                var candidate = candidates[index >= 0 ? index : 0];
+
+                var preset = Pick(presets, StableHash.Combine(candidate.Key, 1UL));
+                Add(level, candidate, color, preset);
+                placed.Add(candidate.Point);
+                taken.Add(candidate.Point);
+                usedCells.Add(candidate.Cell);
+                candidates.RemoveAll(c => c.Cell == candidate.Cell);
+            }
+        }
+
+        /// <summary>Colour of the key's visual, else of its door's; false when neither is coloured.</summary>
+        private static bool TryGetKeyColor(LevelData level, KeyData key, out Color color)
+        {
+            color = default;
+            var theme = level.VisualTheme;
+            if (theme == null)
+                return false;
+
+            string tag = null;
+            var variant = theme.GetSet(Visual.VisualKind.Key)?.FindVariant(Visual.VisualResolver.ResolveObject(level, key).VariantId);
+            if (variant != null && variant.HasColor)
+                tag = variant.ColorTag;
+
+            if (tag == null)
+                foreach (var door in level.Doors)
+                    if (door.KeyId == key.Id)
+                        tag = Visual.VisualAssigner.ResolvedColor(level, door);
+
+            return !string.IsNullOrEmpty(tag) && ColorUtility.TryParseHtmlString(tag, out color);
+        }
+
+        /// <summary>Floor cells reachable from the start in at most the given steps (4 directions, floor only).</summary>
+        private static HashSet<GridPosition> Reachable(LevelGeometry geometry, GridPosition start, int steps)
+        {
+            var result = new HashSet<GridPosition> { start };
+            var frontier = new List<GridPosition> { start };
+            for (var step = 0; step < steps && frontier.Count > 0; step++)
+            {
+                var next = new List<GridPosition>();
+                foreach (var cell in frontier)
+                foreach (var side in DirectionExtensions.All)
+                {
+                    var neighbour = cell + side.ToOffset();
+                    if (geometry.IsInside(neighbour) && geometry.GetCell(neighbour) == CellType.Floor && result.Add(neighbour))
+                        next.Add(neighbour);
+                }
+
+                frontier = next;
+            }
+
+            return result;
+        }
+
+        private static void Add(LevelData level, Candidate candidate, Color color, LightPreset preset) =>
+            level.MutableLights.Add(new LightSourceData(level.CreateUniqueId(LightSourceData.IdPrefix), candidate.Cell,
+                candidate.Offset, color, preset.Radius, preset.Intensity, preset.Flicker, isGenerated: true));
+
+        /// <summary>(Floor cell, wall side) pairs, optionally only in the given cells.</summary>
+        private static List<Candidate> Candidates(LevelGeometry geometry, ulong seed, HashSet<GridPosition> cells)
         {
             var result = new List<Candidate>();
             for (var i = 0; i < geometry.CellCount; i++)
             {
                 var cell = geometry.ToPosition(i);
-                if (geometry.GetCell(cell) != CellType.Floor)
+                if (geometry.GetCell(cell) != CellType.Floor || (cells != null && !cells.Contains(cell)))
                     continue;
 
                 foreach (var side in DirectionExtensions.All)
@@ -138,6 +233,17 @@ namespace Maze.Core.Lighting
             public ulong Key { get; }
             public GridPosition Cell { get; }
             public Direction Side { get; }
+
+            public Vector2 Offset
+            {
+                get
+                {
+                    var side = Side.ToOffset();
+                    return new Vector2(side.X, side.Y) * WallOffset;
+                }
+            }
+
+            public Vector2 Point => new Vector2(Cell.X, Cell.Y) + Offset;
         }
     }
 }

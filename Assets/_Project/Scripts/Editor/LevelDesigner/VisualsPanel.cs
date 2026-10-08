@@ -21,6 +21,9 @@ namespace Maze.Editor.LevelDesigner
         private bool _showLightList;
         private bool _showDecor = true;
 
+        /// <summary>Background of the lights in the selected cell in the Light List.</summary>
+        private static readonly Color SelectedLightRow = new Color(0.24f, 0.48f, 0.90f, 0.35f);
+
         public void OnGUI(LevelDesignerState state)
         {
             var level = state.Level;
@@ -130,7 +133,9 @@ namespace Maze.Editor.LevelDesigner
             LightSourceData toRemove = null;
             foreach (var light in level.Lights)
             {
-                EditorGUILayout.BeginHorizontal();
+                var row = EditorGUILayout.BeginHorizontal();
+                if (state.SelectedCell == light.Cell && Event.current.type == EventType.Repaint)
+                    EditorGUI.DrawRect(row, SelectedLightRow);
                 if (GUILayout.Button(light.Id, EditorStyles.linkLabel, GUILayout.Width(70f)))
                     state.SelectedCell = light.Cell;
                 EditorGUILayout.LabelField(light.IsGenerated ? "auto" : "manual", GUILayout.Width(46f));

@@ -54,16 +54,25 @@ namespace Maze.Core.Visual
             level.VisualData.SetCellAssignment(CellLayer.Decor, index, ChooseDecor(level, position));
         }
 
+        /// <summary>Recreates the auto decor of one cell (e.g. a key came or left); its manual decor stays.</summary>
+        public static void AssignDecor(LevelData level, GridPosition position)
+        {
+            var geometry = level.Geometry;
+            if (geometry.IsInside(position) && level.VisualData.HasCellAssignments(geometry.CellCount))
+                level.VisualData.SetCellAssignment(CellLayer.Decor, geometry.ToIndex(position), ChooseDecor(level, position));
+        }
+
         /// <summary>
         /// Auto decor of a floor cell: present with probability <see cref="LevelGenerationSettings.DecorDensity"/>
         /// (stable per cell and VisualSeed), a weighted General variant not taller than
         /// <see cref="LevelGenerationSettings.MaxAutoDecorHeight"/>, a stable quarter turn. No set default.
+        /// Never in a key's cell — a small key gets lost in a pile of props; only decor placed by hand may be there.
         /// </summary>
         public static VisualChoice ChooseDecor(LevelData level, GridPosition position)
         {
             var theme = level.VisualTheme;
             var geometry = level.Geometry;
-            if (theme == null || !CellLayers.Exists(geometry.GetCell(position), CellLayer.Decor))
+            if (theme == null || !CellLayers.Exists(geometry.GetCell(position), CellLayer.Decor) || HasKey(level, position))
                 return VisualChoice.None;
 
             var settings = level.Generation;
@@ -100,6 +109,14 @@ namespace Maze.Core.Visual
             var key = VisualSelector.ObjectKey(level.Generation.VisualSeed, VisualKind.Light, lightId);
             var variant = VisualSelector.Pick(set, VisualCategory.General, null, key);
             return variant != null ? new VisualChoice(variant.Id) : VisualChoice.None;
+        }
+
+        private static bool HasKey(LevelData level, GridPosition position)
+        {
+            foreach (var key in level.Keys)
+                if (key.Position == position)
+                    return true;
+            return false;
         }
 
         private const ulong DecorChanceSalt = 0x4465636F72UL;

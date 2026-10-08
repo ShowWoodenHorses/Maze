@@ -47,7 +47,7 @@ MonoBehaviour:
       Flicker: 0.6
     - Id: cold_lamp
       Weight: 1
-      Color: {r: 0.62, g: 0.82, b: 1, a: 1}
+      Color: {r: 1, g: 0.7250718, b: 0.3176471, a: 1}
       Radius: 5
       Intensity: 0.9
       Flicker: 0.05

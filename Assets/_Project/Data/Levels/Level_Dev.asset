@@ -2418,6 +2418,7 @@ MonoBehaviour:
       _offset: {x: 0, y: 0}
       _height: 0.581
       _yaw: 30
+      _onDecor: 0
     _objectAssignments:
     - _entityId: exit_1
       _choice:

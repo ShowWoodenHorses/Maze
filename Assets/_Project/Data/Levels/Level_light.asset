@@ -8710,6 +8710,7 @@ MonoBehaviour:
       _offset: {x: 0.25, y: 0}
       _height: 0.581
       _yaw: 132
+      _onDecor: 0
     _objectAssignments:
     - _entityId: exit_1
       _choice:

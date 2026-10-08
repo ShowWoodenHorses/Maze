@@ -13,24 +13,45 @@ MonoBehaviour:
   m_Name: LevelCatalog
   m_EditorClassIdentifier: Maze.Core::Maze.Core.Level.LevelCatalog
   _levels:
-  - _levelId: Level_Dev
-    _address: Levels/Level_Dev
-    _displayName: New Level
-  - _levelId: Level_Items
-    _address: Levels/Level_Items
-    _displayName: New Level
   - _levelId: Level_01
     _address: Levels/Level_01
-    _displayName: New Level
-  - _levelId: Level_weapon
-    _address: Levels/Level_weapon
-    _displayName: New Level
-  - _levelId: Level_light
-    _address: Levels/Level_light
     _displayName: New Level
   - _levelId: Level_02
     _address: Levels/Level_02
     _displayName: New Level
   - _levelId: Level_03
     _address: Levels/Level_03
+    _displayName: New Level
+  - _levelId: Level_04
+    _address: Levels/Level_04
+    _displayName: New Level
+  - _levelId: Level_05
+    _address: Levels/Level_05
+    _displayName: New Level
+  - _levelId: Level_06
+    _address: Levels/Level_06
+    _displayName: New Level
+  - _levelId: Level_07
+    _address: Levels/Level_07
+    _displayName: New Level
+  - _levelId: Level_08
+    _address: Levels/Level_08
+    _displayName: New Level
+  - _levelId: Level_09
+    _address: Levels/Level_09
+    _displayName: New Level
+  - _levelId: Level_10
+    _address: Levels/Level_10
+    _displayName: New Level
+  - _levelId: Level_Dev
+    _address: Levels/Level_Dev
+    _displayName: New Level
+  - _levelId: Level_Items
+    _address: Levels/Level_Items
+    _displayName: New Level
+  - _levelId: Level_weapon
+    _address: Levels/Level_weapon
+    _displayName: New Level
+  - _levelId: Level_light
+    _address: Levels/Level_light
     _displayName: New Level
