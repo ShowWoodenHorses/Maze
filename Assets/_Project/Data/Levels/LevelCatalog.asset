@@ -28,3 +28,9 @@ MonoBehaviour:
   - _levelId: Level_light
     _address: Levels/Level_light
     _displayName: New Level
+  - _levelId: Level_02
+    _address: Levels/Level_02
+    _displayName: New Level
+  - _levelId: Level_03
+    _address: Levels/Level_03
+    _displayName: New Level

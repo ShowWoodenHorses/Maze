@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Maze.Core.Definitions;
 using Maze.Core.Level;
 using Maze.Core.Visual;
@@ -23,8 +24,9 @@ namespace Maze.Editor.Dev
     /// the presenter turns them and the speeds of <see cref="ZombieDefinition"/> into playback multipliers
     /// (<see cref="Maze.Presentation.Visual.LocomotionAnimation"/>). Attacks last 1 s at AttackSpeed = 1.</item>
     /// <item>Every prefab in Art/Zombie gets the controller (no root motion) and the scale; the placeholder theme's
-    /// zombie set gets one variant per prefab tied to a zombie type (<see cref="Looks"/>), the prefabs are made
-    /// Addressable, and zombies of saved levels whose visual no longer fits are reassigned.</item>
+    /// zombie set gets one variant per prefab tied to a zombie type (chosen in the set, see
+    /// <see cref="UpdateZombieSet"/>), the prefabs are made Addressable, and zombies of saved levels whose visual no
+    /// longer fits are reassigned.</item>
     /// </list>
     /// Re-running rebuilds the controller in place (same asset, references stay valid).
     /// </summary>
@@ -53,14 +55,6 @@ namespace Maze.Editor.Dev
         private static readonly string[] Attacks = { "Zombie_attack_1", "Zombie_attack_2", "Zombie_attack_3" };
         private static readonly string[] Looping = { Idle1, Idle2, Walk, Run };
 
-        /// <summary>Prefab in Art/Zombie → zombie type it shows (variant id = "zombie_" + type).</summary>
-        private static readonly (string Prefab, string Definition)[] Looks =
-        {
-            ("Zombie_01", "ZombieWalker"),
-            ("Zombie_02", "ZombieListener"),
-            ("Zombie_03", "ZombieHunter"),
-        };
-
         [MenuItem("Maze/Dev/Build Zombie Animations")]
         public static void Build()
         {
@@ -77,7 +71,7 @@ namespace Maze.Editor.Dev
                 foreach (var path in prefabPaths)
                     SetupPrefab(path, controller, ModelScale);
 
-                var reassigned = UpdateZombieSet();
+                var reassigned = UpdateZombieSet(prefabPaths);
                 AssetDatabase.SaveAssets();
                 Debug.Log($"[Maze] Zombie animations built: {ControllerPath}, {prefabPaths.Length} prefab(s), " +
                           $"{reassigned} zombie visual(s) in levels reassigned.");
@@ -212,30 +206,62 @@ namespace Maze.Editor.Dev
             transition.AddCondition(chasing ? AnimatorConditionMode.If : AnimatorConditionMode.IfNot, 0f, Z.Chasing);
         }
 
-        /// <summary>One variant per look, tied to its zombie type; returns how many saved zombie visuals were reassigned.</summary>
-        private static int UpdateZombieSet()
+        /// <summary>
+        /// One variant per prefab in Art/Zombie. A prefab already in the set keeps its variant (id, weight and the zombie
+        /// type set there by hand); a new one shows a type that has no look yet (else the first type) — reported, so
+        /// the type can be checked in the set. Returns how many saved zombie visuals were reassigned.
+        /// </summary>
+        private static int UpdateZombieSet(string[] prefabPaths)
         {
             var set = AssetDatabase.LoadAssetAtPath<VisualSet>(ZombieSetPath);
             if (set == null)
                 throw new InvalidOperationException($"'{ZombieSetPath}' not found: run Maze → Dev → Create Placeholder Theme first.");
 
+            var types = AssetDatabase.FindAssets("t:ZombieDefinition", new[] { ZombieDataPath })
+                .Select(AssetDatabase.GUIDToAssetPath)
+                .OrderBy(path => path, StringComparer.Ordinal)
+                .Select(AssetDatabase.LoadAssetAtPath<ZombieDefinition>)
+                .Where(type => type != null)
+                .ToList();
+            if (types.Count == 0)
+                throw new InvalidOperationException($"No zombie types in {ZombieDataPath}: run Maze → Dev → Create Placeholder Zombies.");
+
             var settings = AddressableAssetSettingsDefaultObject.GetSettings(true);
             var visualsGroup = settings.FindGroup(LevelDesigner.LevelSync.VisualsGroup) ?? settings.DefaultGroup;
+            var old = set.MutableVariants.Where(variant => variant?.Prefab != null).ToList();
+            var guids = prefabPaths.Select(AssetDatabase.AssetPathToGUID).ToList();
+            var staying = old.Where(variant => guids.Contains(variant.Prefab.AssetGUID)).ToList();
             var variants = set.MutableVariants;
             variants.Clear();
-            foreach (var (prefabName, definitionName) in Looks)
+            foreach (var path in prefabPaths)
             {
-                var prefabPath = $"{ZombieArtPath}/{prefabName}.prefab";
-                var definition = AssetDatabase.LoadAssetAtPath<ZombieDefinition>($"{ZombieDataPath}/{definitionName}.asset");
-                if (AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath) == null || definition == null)
-                    throw new InvalidOperationException($"Missing '{prefabPath}' or zombie type '{definitionName}'.");
-
-                var guid = AssetDatabase.AssetPathToGUID(prefabPath);
+                var guid = AssetDatabase.AssetPathToGUID(path);
                 if (settings.FindAssetEntry(guid) == null)
                     settings.CreateOrMoveEntry(guid, visualsGroup);
-                variants.Add(new VisualVariant("zombie_" + definition.Id, definition: definition,
-                    prefab: new AssetReferenceGameObject(guid)));
+
+                var kept = staying.FirstOrDefault(variant => variant.Prefab.AssetGUID == guid);
+                if (kept != null)
+                {
+                    if (kept.Definition == null)
+                        Debug.LogWarning($"[Maze] Zombie look '{kept.Id}' ({path}) has no zombie type: set Definition in {ZombieSetPath}.");
+                    variants.Add(kept);
+                    continue;
+                }
+
+                var name = System.IO.Path.GetFileNameWithoutExtension(path);
+                var type = types.FirstOrDefault(t => staying.All(v => v.Definition != t) && variants.All(v => v.Definition != t)) ?? types[0];
+                var id = WeaponsBuilder.IdOf(name);
+                if (!id.StartsWith("zombie", StringComparison.Ordinal)) id = "zombie_" + id;
+                var unique = id;
+                for (var n = 2; variants.Concat(staying).Any(v => v.Id == unique); n++) unique = $"{id}_{n}";
+                variants.Add(new VisualVariant(unique, definition: type, prefab: new AssetReferenceGameObject(guid)));
+                Debug.LogWarning($"[Maze] New zombie look '{unique}' ({path}) shows the type '{type.name}': check it " +
+                                 $"(Definition of the variant) in {ZombieSetPath}, then run Build Zombie Animations again.");
             }
+
+            foreach (var type in types)
+                if (variants.All(variant => variant.Definition != type))
+                    Debug.LogWarning($"[Maze] Zombie type '{type.name}' has no look: such zombies are invisible in game.");
 
             set.DefaultVariantId = null;
             EditorUtility.SetDirty(set);

@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Maze.Core.Definitions;
 using Maze.Core.Visual;
 using Maze.Presentation.Visual;
@@ -31,7 +32,6 @@ namespace Maze.Editor.Dev
     internal static class PlayerAnimationsBuilder
     {
         private const string PlayerArtPath = "Assets/_Project/Art/Player";
-        private const string PrefabPath = PlayerArtPath + "/SM_Chr_Hunter_Male_01.prefab";
         private const string ControllerPath = PlayerArtPath + "/Player.controller";
         private const string MaskPath = PlayerArtPath + "/PlayerUpperBody.mask";
         private const string PlayerVisualPath = "Assets/_Project/Data/Player/PlayerVisual.asset";
@@ -67,11 +67,12 @@ namespace Maze.Editor.Dev
             {
                 CharacterAnimationUtility.ImportClips("Player_", name => Array.IndexOf(Looping, name) >= 0);
                 var mask = CreateUpperBodyMask();
-                var controller = CreateController(mask);
-                var prefab = SetupPrefab(controller);
+                var prefabPath = PlayerPrefabPath();
+                var controller = CreateController(mask, prefabPath);
+                var prefab = SetupPrefab(prefabPath, controller);
                 AssignToPlayerVisual(prefab);
                 AssetDatabase.SaveAssets();
-                Debug.Log($"[Maze] Player animations built: {ControllerPath}, prefab {PrefabPath}.");
+                Debug.Log($"[Maze] Player animations built: {ControllerPath}, prefab {prefabPath}.");
             }
             catch (Exception e)
             {
@@ -96,7 +97,27 @@ namespace Maze.Editor.Dev
             return mask;
         }
 
-        private static AnimatorController CreateController(AvatarMask upperBodyMask)
+        /// <summary>
+        /// The player model prefab: the prefab right in Art/Player (not in subfolders). When there are several, the
+        /// one <see cref="PlayerVisualDefinition"/> already uses; to switch models, leave only the new one there.
+        /// </summary>
+        public static string PlayerPrefabPath()
+        {
+            var prefabs = AssetDatabase.FindAssets("t:Prefab", new[] { PlayerArtPath })
+                .Select(AssetDatabase.GUIDToAssetPath)
+                .Where(path => System.IO.Path.GetDirectoryName(path)?.Replace('\\', '/') == PlayerArtPath)
+                .ToList();
+            if (prefabs.Count == 1) return prefabs[0];
+            if (prefabs.Count == 0)
+                throw new InvalidOperationException($"No player model prefab in {PlayerArtPath}.");
+
+            var current = AssetDatabase.LoadAssetAtPath<PlayerVisualDefinition>(PlayerVisualPath)?.Prefab?.AssetGUID;
+            var used = prefabs.FirstOrDefault(path => AssetDatabase.AssetPathToGUID(path) == current);
+            return used ?? throw new InvalidOperationException(
+                $"Several prefabs in {PlayerArtPath} ({string.Join(", ", prefabs)}): leave only the player model there.");
+        }
+
+        private static AnimatorController CreateController(AvatarMask upperBodyMask, string prefabPath)
         {
             var controller = CreateOrClearController(ControllerPath);
 
@@ -106,7 +127,7 @@ namespace Maze.Editor.Dev
             controller.AddParameter(P.AttackIndex, AnimatorControllerParameterType.Int);
             AddFloat(controller, P.AttackSpeed, 1f);
             // Data for the views, not driven: when each attack clip hits.
-            var model = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath);
+            var model = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
             for (var i = 0; i < Attacks.Length; i++)
             {
                 var (moment, sweep) = MeasureSwing(model, LoadClip(Attacks[i]));
@@ -121,19 +142,19 @@ namespace Maze.Editor.Dev
             controller.AddParameter(P.Use, AnimatorControllerParameterType.Trigger);
             controller.AddParameter(P.Dead, AnimatorControllerParameterType.Bool);
 
-            BuildBaseLayer(controller);
+            BuildBaseLayer(controller, prefabPath);
             BuildUpperBodyLayer(controller, upperBodyMask);
             EditorUtility.SetDirty(controller);
             return controller;
         }
 
-        private static void BuildBaseLayer(AnimatorController controller)
+        private static void BuildBaseLayer(AnimatorController controller, string prefabPath)
         {
             var machine = controller.layers[0].stateMachine;
             var definition = AssetDatabase.LoadAssetAtPath<PlayerDefinition>(PlayerDefinitionPath);
             var moveSpeed = definition != null ? definition.MoveSpeed : 3.5f;
             // Runs keep up with MoveSpeed as far as LocomotionAnimation allows (feet slide less).
-            var model = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath);
+            var model = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
             float RunTimeScale(string run) => LocomotionAnimation.Playback(moveSpeed, MeasureGroundSpeed(model, LoadClip(run), ModelScale));
             var unarmed = AddLocomotion(controller, "Unarmed", UnarmedIdle, UnarmedRun, RunTimeScale(UnarmedRun), new Vector3(300f, 0f));
             var melee = AddLocomotion(controller, "Melee", MeleeIdle, MeleeRun, RunTimeScale(MeleeRun), new Vector3(300f, 100f));
@@ -259,10 +280,10 @@ namespace Maze.Editor.Dev
             return transition;
         }
 
-        private static GameObject SetupPrefab(AnimatorController controller)
+        private static GameObject SetupPrefab(string prefabPath, AnimatorController controller)
         {
-            CharacterAnimationUtility.SetupPrefab(PrefabPath, controller, ModelScale);
-            return AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath);
+            CharacterAnimationUtility.SetupPrefab(prefabPath, controller, ModelScale);
+            return AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
         }
 
         private static void AssignToPlayerVisual(GameObject prefab)

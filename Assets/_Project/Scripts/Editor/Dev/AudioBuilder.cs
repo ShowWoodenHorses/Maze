@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Maze.Core.Audio;
+using Maze.Core.Definitions;
 using UnityEditor;
 using UnityEditor.AddressableAssets;
 using UnityEngine;
@@ -14,6 +15,7 @@ namespace Maze.Editor.Dev
     /// <summary>
     /// Maze → Dev → Build Audio: import settings of the sounds (<c>Sounds/</c>) and music (<c>Music/</c>), and the
     /// <see cref="AudioCatalog"/> filled from file names (a cue gets every file matching its pattern, in name order).
+    /// Weapon sound groups come from the folders under Sounds/Weapon (<see cref="FillWeaponSounds"/>).
     /// Rerun after adding or renaming sound files. Tuning in the catalog (volumes, ranges, pitch…) is kept; only the
     /// clips are replaced. The catalog and the music are made Addressable (group Maze Shared).
     /// </summary>
@@ -23,6 +25,11 @@ namespace Maze.Editor.Dev
         private const string MusicFolder = "Assets/_Project/Music";
         private const string CatalogFolder = "Assets/_Project/Data/Audio";
         private const string CatalogPath = CatalogFolder + "/AudioCatalog.asset";
+
+        /// <summary>Folders right under it are weapon sound groups (see <see cref="FillWeaponSounds"/>).</summary>
+        internal const string WeaponGroupsFolder = SoundsFolder + "/Weapon";
+        private static readonly Regex AttackFile = new Regex(@"^attack\d*$", RegexOptions.IgnoreCase);
+        private static readonly Regex ReloadFile = new Regex(@"^reload\d*$", RegexOptions.IgnoreCase);
 
         /// <summary>Clips up to this long are decompressed on load (cheap to play often); longer ones stay compressed.</summary>
         private const float DecompressMaxLength = 3f;
@@ -38,7 +45,6 @@ namespace Maze.Editor.Dev
 
             ("Weapon", @"^melee-attack\d*$", c => c.MeleeSwing),
             ("Weapon", @"^rifle_attack\d*$", c => c.Shot),
-            ("Weapon", @"^shot_silenced\d*$", c => c.ShotSilenced),
             ("Weapon", @"^reload$", c => c.ReloadMagazine),
             ("Weapon", @"^rifle_one_reload$", c => c.ReloadSingle),
             ("Weapon", @"^bullet\d*$", c => c.BulletImpact),
@@ -116,6 +122,8 @@ namespace Maze.Editor.Dev
                 if (matches.Count == 0) empty.Add($"{folder}/{pattern}");
             }
 
+            FillWeaponSounds(catalog, sounds, used);
+
             foreach (var (name, track, volume, overlap) in Music)
             {
                 var path = music.FirstOrDefault(p => string.Equals(Path.GetFileNameWithoutExtension(p), name, StringComparison.OrdinalIgnoreCase));
@@ -151,6 +159,60 @@ namespace Maze.Editor.Dev
             if (problem != null) Debug.LogWarning("[Maze] " + problem);
             Debug.Log($"[Maze] Audio built: {CatalogPath}, {sounds.Count} sound file(s), {music.Count} music file(s), " +
                       $"{reimported} reimported.");
+        }
+
+        /// <summary>
+        /// Sound groups of weapons: every folder right under <see cref="WeaponGroupsFolder"/> is a group (its name),
+        /// files <c>attack*</c> its shot or swing, <c>reload*</c> its reload. An existing group keeps its tuning; a new
+        /// one starts from the common sounds of the weapons using it. Groups whose folder is gone are removed.
+        /// </summary>
+        private static void FillWeaponSounds(AudioCatalog catalog, List<string> sounds, HashSet<string> used)
+        {
+            var definitions = AssetDatabase.FindAssets("t:WeaponDefinition")
+                .Select(guid => AssetDatabase.LoadAssetAtPath<WeaponDefinition>(AssetDatabase.GUIDToAssetPath(guid)))
+                .Where(definition => definition != null)
+                .ToList();
+
+            var folders = sounds
+                .Where(p => string.Equals(Path.GetDirectoryName(Path.GetDirectoryName(p))?.Replace('\\', '/'),
+                    WeaponGroupsFolder, StringComparison.OrdinalIgnoreCase))
+                .GroupBy(p => Path.GetFileName(Path.GetDirectoryName(p)), StringComparer.OrdinalIgnoreCase)
+                .OrderBy(g => g.Key, StringComparer.OrdinalIgnoreCase);
+
+            var groups = new List<WeaponSound>();
+            foreach (var folder in folders)
+            {
+                var name = folder.Key;
+                var users = definitions.Where(d => string.Equals(d.SoundGroup, name, StringComparison.OrdinalIgnoreCase)).ToList();
+                var sound = catalog.FindWeaponSound(name);
+                if (sound == null)
+                {
+                    var melee = users.Count > 0 && users.All(d => d.Slot == WeaponSlot.Melee);
+                    var automatic = users.Count > 0 && users.All(d => d.FireMode == FireMode.Automatic);
+                    sound = new WeaponSound(name, (melee ? catalog.MeleeSwing : catalog.Shot).CopyTuning(),
+                        (automatic ? catalog.ReloadMagazine : catalog.ReloadSingle).CopyTuning());
+                }
+
+                var attack = folder.Where(p => AttackFile.IsMatch(Path.GetFileNameWithoutExtension(p))).ToList();
+                var reload = folder.Where(p => ReloadFile.IsMatch(Path.GetFileNameWithoutExtension(p))).ToList();
+                sound.Attack.Clips = attack.Select(AssetDatabase.LoadAssetAtPath<AudioClip>).ToArray();
+                sound.Reload.Clips = reload.Select(AssetDatabase.LoadAssetAtPath<AudioClip>).ToArray();
+                used.UnionWith(attack);
+                used.UnionWith(reload);
+                groups.Add(sound);
+
+                if (users.Count == 0)
+                    Debug.LogWarning($"[Maze] Build Audio: no weapon uses the sound group '{name}' (set it in the Sound field " +
+                                     "of a weapon definition, or name the folder by a weapon id).");
+            }
+
+            foreach (var definition in definitions)
+                if (!string.IsNullOrEmpty(definition.Sound) && groups.All(g => !string.Equals(g.Group, definition.Sound, StringComparison.OrdinalIgnoreCase)))
+                    Debug.LogWarning($"[Maze] Build Audio: weapon '{definition.name}' uses the sound group '{definition.Sound}', " +
+                                     $"but there is no folder {WeaponGroupsFolder}/{definition.Sound}: it plays the common sounds.");
+
+            catalog.MutableWeaponSounds.Clear();
+            catalog.MutableWeaponSounds.AddRange(groups);
         }
 
         private static AudioCatalog LoadOrCreateCatalog()

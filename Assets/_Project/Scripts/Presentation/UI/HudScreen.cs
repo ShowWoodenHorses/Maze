@@ -101,7 +101,8 @@ namespace Maze.Presentation.UI
         /// </summary>
         public static bool IsTouchAvailable => UnityEngine.Application.isMobilePlatform;
 
-        private static bool TouchShown => IsTouchAvailable || _touchSeen;
+        /// <summary>The on-screen controls are used: a mobile platform, or a touch was seen (desktop touchscreen).</summary>
+        public static bool TouchShown => IsTouchAvailable || _touchSeen;
 
         private void Awake()
         {

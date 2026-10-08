@@ -96,15 +96,23 @@ MonoBehaviour:
     _range: 0
     _maxVoices: 4
     _minInterval: 0
-  _shotSilenced:
-    _clips:
-    - {fileID: 8300000, guid: 5587993326d6a3940afbdaca413a7e4b, type: 3}
-    _volume: 0.5
-    _pitch: {x: 0.95, y: 1.05}
-    _range: 0
-    _maxVoices: 4
-    _minInterval: 0
-  _silencedWeapons: []
+  _weaponSounds:
+  - _group: silenced
+    _attack:
+      _clips:
+      - {fileID: 8300000, guid: 5587993326d6a3940afbdaca413a7e4b, type: 3}
+      _volume: 0.5
+      _pitch: {x: 0.95, y: 1.05}
+      _range: 0
+      _maxVoices: 4
+      _minInterval: 0
+    _reload:
+      _clips: []
+      _volume: 0.6
+      _pitch: {x: 1, y: 1}
+      _range: 0
+      _maxVoices: 1
+      _minInterval: 0
   _reloadMagazine:
     _clips:
     - {fileID: 8300000, guid: 767e49557b8d23b4dac6b8880d30d303, type: 3}
@@ -299,7 +307,7 @@ MonoBehaviour:
   _torchLoop:
     _clips:
     - {fileID: 8300000, guid: 044491aba8b03aa48940a25d4dd8ade6, type: 3}
-    _volume: 0.7
+    _volume: 0.45
     _pitch: {x: 1, y: 1}
     _range: 5
     _maxVoices: 3

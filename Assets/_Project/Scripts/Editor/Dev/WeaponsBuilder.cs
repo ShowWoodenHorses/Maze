@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using Maze.Core.Definitions;
 using Maze.Core.Level;
 using Maze.Core.Visual;
@@ -13,10 +15,13 @@ namespace Maze.Editor.Dev
 {
     /// <summary>
     /// Maze → Dev → Build Weapons: the weapons of the game from the models in Art/Weapons (Synty: pivot at the grip,
-    /// pointing along +Z).
+    /// pointing along +Z). Every prefab there (except Pickups) is a weapon; its folders tell the kind: under a
+    /// <c>Melee</c> folder — melee, otherwise a gun, automatic when a folder on its path is <c>Auto</c>.
     /// <list type="number">
-    /// <item><see cref="WeaponDefinition"/> per model in Data/Weapons (<see cref="Weapons"/>). A new definition gets
-    /// draft values; an existing one keeps them (tune in the asset).</item>
+    /// <item><see cref="WeaponDefinition"/> per model in Data/Weapons. A model already in <see cref="WeaponVisualCatalog"/>
+    /// keeps its definition; a new one gets <c>Data/Weapons/&lt;name&gt;.asset</c> (name = prefab name without
+    /// <c>SM_Wep_</c>) with draft values of its kind (<see cref="DraftFor"/>). Values are tuned in the asset and never
+    /// overwritten.</item>
     /// <item>Held prefab = the model + <see cref="WeaponModel"/> with a Muzzle (guns) or Tip (melee) mark at the far
     /// end of the mesh; <see cref="WeaponVisualCatalog"/> (Data/Weapons/WeaponVisuals, "Weapons/Visual") maps
     /// definitions to them.</item>
@@ -33,10 +38,12 @@ namespace Maze.Editor.Dev
     {
         private const string ModelsPath = "Assets/_Project/Art/Weapons";
         private const string PickupsPath = ModelsPath + "/Pickups";
+        private const string MeleeFolder = "Melee";
+        private const string AutomaticFolder = "Auto";
+        private const string ModelPrefix = "SM_Wep_";
         private const string DataPath = "Assets/_Project/Data/Weapons";
         private const string CatalogPath = DataPath + "/WeaponVisuals.asset";
         private const string WeaponSetPath = "Assets/_Project/Data/Themes/PlaceholderWeaponSet.asset";
-        private const string PlayerPrefabPath = "Assets/_Project/Art/Player/SM_Chr_Hunter_Male_01.prefab";
 
         /// <summary>Same as the characters, so a weapon on the floor is as big as in the hands.</summary>
         private const float PickupScale = 0.75f;
@@ -49,40 +56,17 @@ namespace Maze.Editor.Dev
 
         private sealed class Weapon
         {
-            public string Asset, Id, Model;
-            public WeaponSlot Slot;
-            public float Damage, AttackSpeed = 1f, MeleeRange = 1.2f, MeleeArc = 100f, FireInterval = 0.3f, ReloadTime = 1.5f,
-                ProjectileSpeed = 20f, SoundRadius = 4f;
-            public int Magazine = 10;
-            public FireMode Mode;
+            public string ModelPath;
+            public WeaponDefinition Definition;
         }
-
-        /// <summary>Draft values: zombies have 30 HP; the player's anims fit any cooldown.</summary>
-        private static readonly Weapon[] Weapons =
-        {
-            Melee("Bat", "bat", "Melee/SM_Wep_Bat_Wood_01", damage: 12f, attackSpeed: 1.2f, range: 1.3f, arc: 100f, sound: 4f),
-            Melee("Crowbar", "crowbar", "Melee/SM_Wep_Crowbar_01", damage: 10f, attackSpeed: 1.4f, range: 1.2f, arc: 90f, sound: 3f),
-            Melee("FireAxe", "fire_axe", "Melee/SM_Wep_FireAxe_01", damage: 25f, attackSpeed: 0.7f, range: 1.4f, arc: 110f, sound: 5f),
-            Melee("Katana", "katana", "Melee/SM_Wep_Katana_01", damage: 15f, attackSpeed: 1.5f, range: 1.4f, arc: 120f, sound: 3f),
-            Gun("SubMachineGun", "smg", "Rifle/Auto/SM_Wep_SubMGun_02", FireMode.Automatic, damage: 6f, interval: 0.08f, magazine: 30, reload: 1.6f, speed: 22f, sound: 3f),
-            Gun("AssaultRifle01", "assault_rifle_01", "Rifle/Auto/SM_Wep_AssaultRifle_01", FireMode.Automatic, damage: 9f, interval: 0.12f, magazine: 30, reload: 2f, speed: 25f, sound: 8f),
-            Gun("AssaultRifle03", "assault_rifle_03", "Rifle/Auto/SM_Wep_AssaultRifle_03", FireMode.Automatic, damage: 10f, interval: 0.14f, magazine: 25, reload: 2f, speed: 25f, sound: 8f),
-            Gun("HuntingRifle", "hunting_rifle", "Rifle/SM_Wep_HuntingRifle_Clean_01", FireMode.Single, damage: 25f, interval: 0.9f, magazine: 5, reload: 2.2f, speed: 30f, sound: 9f),
-            Gun("SniperRifle", "sniper_rifle", "Rifle/SM_Wep_SniperRifle_01", FireMode.Single, damage: 40f, interval: 1.4f, magazine: 5, reload: 2.6f, speed: 35f, sound: 10f),
-            Gun("RevolverRifle", "revolver_rifle", "Rifle/SM_Wep_Hybrid_03", FireMode.Single, damage: 18f, interval: 0.5f, magazine: 6, reload: 2f, speed: 28f, sound: 7f),
-        };
-
-        /// <summary>Placeholder definitions of earlier versions, renamed in place (GUID kept, levels stay linked).</summary>
-        private static readonly (string From, string To)[] Renames = { ("Knife", "Katana"), ("Pistol", "HuntingRifle") };
 
         [MenuItem("Maze/Dev/Build Weapons")]
         public static void Build()
         {
             try
             {
-                RenameOldDefinitions();
-                var definitions = new Dictionary<Weapon, WeaponDefinition>();
                 var catalog = LoadOrCreate<WeaponVisualCatalog>(CatalogPath);
+                var weapons = CollectWeapons(catalog, out var created);
                 var icons = new Dictionary<WeaponDefinition, Sprite>();
                 foreach (var old in catalog.MutableWeapons)
                     if (old?.Definition != null && old.Icon != null) icons[old.Definition] = old.Icon;
@@ -97,38 +81,40 @@ namespace Maze.Editor.Dev
                 var visualsGroup = settings.FindGroup(LevelDesigner.LevelSync.VisualsGroup) ?? settings.DefaultGroup;
                 EnsureFolder(PickupsPath);
 
-                foreach (var weapon in Weapons)
+                var pickups = new HashSet<string>();
+                foreach (var weapon in weapons)
                 {
-                    var definition = DefinitionFor(weapon);
-                    definitions[weapon] = definition;
-
-                    var heldPath = $"{ModelsPath}/{weapon.Model}.prefab";
-                    if (AssetDatabase.LoadAssetAtPath<GameObject>(heldPath) == null)
-                        throw new InvalidOperationException($"Weapon model '{heldPath}' not found.");
-                    MarkModel(heldPath, weapon.Slot);
+                    var definition = weapon.Definition;
+                    MarkModel(weapon.ModelPath, definition.Slot);
                     icons.TryGetValue(definition, out var icon);
-                    catalog.MutableWeapons.Add(new WeaponVisualDefinition(definition, Reference(heldPath), icon));
+                    catalog.MutableWeapons.Add(new WeaponVisualDefinition(definition, Reference(weapon.ModelPath), icon));
 
-                    var pickupPath = BuildPickup(heldPath);
+                    var pickupPath = BuildPickup(weapon.ModelPath);
+                    pickups.Add(pickupPath);
                     var pickupGuid = AssetDatabase.AssetPathToGUID(pickupPath);
                     if (settings.FindAssetEntry(pickupGuid) == null)
                         settings.CreateOrMoveEntry(pickupGuid, visualsGroup);
-                    set.MutableVariants.Add(new VisualVariant("weapon_" + weapon.Id, definition: definition,
+                    set.MutableVariants.Add(new VisualVariant("weapon_" + definition.Id, definition: definition,
                         prefab: new AssetReferenceGameObject(pickupGuid)));
                 }
 
+                var removedPickups = DeleteUnusedPickups(pickups, settings);
                 EditorUtility.SetDirty(catalog);
                 EditorUtility.SetDirty(set);
                 EditorUtility.SetDirty(settings);
-                RigPlayer();
-                MarkGrips();
+                var playerPrefab = PlayerAnimationsBuilder.PlayerPrefabPath();
+                RigPlayer(playerPrefab);
+                MarkGrips(playerPrefab, weapons);
                 var reassigned = ReassignLevels(set);
                 var problem = LevelDesigner.LevelSync.SyncShared(settings);
                 if (problem != null) Debug.LogWarning("[Maze] " + problem);
                 AssetDatabase.SaveAssets();
                 UiIconsBuilder.BuildWeaponIcons(catalog); // Models may have changed.
-                Debug.Log($"[Maze] Weapons built: {Weapons.Length} definition(s), held and pickup prefabs, player rig; " +
-                          $"{reassigned} weapon visual(s) in levels reassigned.");
+                WarnUnusedDefinitions(weapons);
+                var news = created.Count > 0 ? $" ({string.Join(", ", created)}: draft values, tune them in {DataPath})" : "";
+                var removed = removedPickups > 0 ? $", {removedPickups} unused removed" : "";
+                Debug.Log($"[Maze] Weapons built: {weapons.Count} weapon(s), {created.Count} new{news}; held and pickup " +
+                          $"prefabs{removed}, player rig; {reassigned} weapon visual(s) in levels reassigned.");
             }
             catch (Exception e)
             {
@@ -137,48 +123,194 @@ namespace Maze.Editor.Dev
             }
         }
 
-        private static Weapon Melee(string asset, string id, string model, float damage, float attackSpeed, float range,
-            float arc, float sound) =>
-            new Weapon
-            {
-                Asset = asset, Id = id, Model = model, Slot = WeaponSlot.Melee, Damage = damage, AttackSpeed = attackSpeed,
-                MeleeRange = range, MeleeArc = arc, SoundRadius = sound,
-            };
-
-        private static Weapon Gun(string asset, string id, string model, FireMode mode, float damage, float interval, int magazine,
-            float reload, float speed, float sound) =>
-            new Weapon
-            {
-                Asset = asset, Id = id, Model = model, Slot = WeaponSlot.Ranged, Mode = mode, Damage = damage,
-                FireInterval = interval, Magazine = magazine, ReloadTime = reload, ProjectileSpeed = speed, SoundRadius = sound,
-            };
-
-        private static void RenameOldDefinitions()
+        /// <summary>
+        /// Every prefab under <see cref="ModelsPath"/> except pickups: the catalog's ones first in its order, new ones
+        /// after them by path. A model in the catalog keeps its definition; a new one gets one by its name.
+        /// </summary>
+        private static List<Weapon> CollectWeapons(WeaponVisualCatalog catalog, out List<string> created)
         {
-            foreach (var (from, to) in Renames)
+            var order = new List<string>();
+            var known = new Dictionary<string, WeaponDefinition>();
+            foreach (var entry in catalog.MutableWeapons)
             {
-                var fromPath = $"{DataPath}/{from}.asset";
-                if (AssetDatabase.LoadAssetAtPath<WeaponDefinition>(fromPath) == null ||
-                    AssetDatabase.LoadAssetAtPath<WeaponDefinition>($"{DataPath}/{to}.asset") != null)
-                    continue;
-                var error = AssetDatabase.RenameAsset(fromPath, to);
-                if (!string.IsNullOrEmpty(error))
-                    throw new InvalidOperationException($"Renaming '{fromPath}' failed: {error}");
+                var guid = entry?.HeldPrefab?.AssetGUID;
+                if (entry?.Definition == null || string.IsNullOrEmpty(guid) || known.ContainsKey(guid)) continue;
+                known[guid] = entry.Definition;
+                order.Add(guid);
             }
+
+            int Rank(string path)
+            {
+                var index = order.IndexOf(AssetDatabase.AssetPathToGUID(path));
+                return index < 0 ? int.MaxValue : index;
+            }
+
+            var models = AssetDatabase.FindAssets("t:Prefab", new[] { ModelsPath })
+                .Select(AssetDatabase.GUIDToAssetPath)
+                .Where(path => !path.StartsWith(PickupsPath + "/", StringComparison.Ordinal))
+                .OrderBy(Rank)
+                .ThenBy(path => path, StringComparer.Ordinal)
+                .ToList();
+            if (models.Count == 0)
+                throw new InvalidOperationException($"No weapon models in {ModelsPath}.");
+
+            created = new List<string>();
+            var weapons = new List<Weapon>();
+            var ids = new Dictionary<string, string>();
+            foreach (var path in models)
+            {
+                var slot = SlotOf(path);
+                if (!known.TryGetValue(AssetDatabase.AssetPathToGUID(path), out var definition))
+                {
+                    definition = DefinitionFor(path, slot, out var isNew);
+                    if (isNew) created.Add(definition.name);
+                }
+
+                if (definition.Slot != slot)
+                    Debug.LogWarning($"[Maze] Weapon '{definition.name}' is {definition.Slot}, but its model '{path}' lies in " +
+                                     $"a {slot} folder: the definition stays {definition.Slot}.");
+                if (ids.TryGetValue(definition.Id, out var other))
+                    throw new InvalidOperationException($"Weapons '{other}' and '{path}' have the same id '{definition.Id}': " +
+                                                        "change the id in one of the definitions.");
+                ids[definition.Id] = path;
+                weapons.Add(new Weapon { ModelPath = path, Definition = definition });
+            }
+
+            return weapons;
         }
 
-        /// <summary>The definition asset; a new one (or a renamed one with another id) gets the draft values.</summary>
-        private static WeaponDefinition DefinitionFor(Weapon weapon)
+        private static WeaponSlot SlotOf(string modelPath) =>
+            HasFolder(modelPath, MeleeFolder) ? WeaponSlot.Melee : WeaponSlot.Ranged;
+
+        /// <summary>Whether a folder between <see cref="ModelsPath"/> and the file is <paramref name="folder"/>.</summary>
+        private static bool HasFolder(string modelPath, string folder)
         {
-            var definition = LoadOrCreate<WeaponDefinition>($"{DataPath}/{weapon.Asset}.asset");
-            if (definition.Id == weapon.Id && definition.Slot == weapon.Slot)
+            var parts = modelPath.Substring(ModelsPath.Length + 1).Split('/');
+            for (var i = 0; i < parts.Length - 1; i++)
+                if (string.Equals(parts[i], folder, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            return false;
+        }
+
+        /// <summary>
+        /// Data/Weapons/&lt;name&gt;.asset for a model not in the catalog. An existing asset of that name is used as it
+        /// is (only an empty id is filled in); a new one gets the draft values of the model's kind.
+        /// </summary>
+        private static WeaponDefinition DefinitionFor(string modelPath, WeaponSlot slot, out bool isNew)
+        {
+            var name = System.IO.Path.GetFileNameWithoutExtension(modelPath);
+            if (name.StartsWith(ModelPrefix, StringComparison.Ordinal)) name = name.Substring(ModelPrefix.Length);
+            var path = $"{DataPath}/{name}.asset";
+            var definition = AssetDatabase.LoadAssetAtPath<WeaponDefinition>(path);
+            isNew = definition == null;
+            if (!isNew && !string.IsNullOrEmpty(definition.Id))
                 return definition;
 
-            definition.Configure(weapon.Id, weapon.Slot, weapon.Magazine);
-            definition.ConfigureCombat(weapon.Damage, weapon.AttackSpeed, weapon.FireInterval, weapon.ReloadTime, weapon.Mode,
-                weapon.ProjectileSpeed, weapon.MeleeRange, weapon.MeleeArc, weapon.SoundRadius);
+            if (isNew)
+            {
+                definition = ScriptableObject.CreateInstance<WeaponDefinition>();
+                AssetDatabase.CreateAsset(definition, path);
+            }
+
+            var draft = DraftFor(slot, HasFolder(modelPath, AutomaticFolder));
+            definition.Configure(IdOf(name), slot, draft.Magazine);
+            definition.ConfigureCombat(draft.Damage, draft.AttackSpeed, draft.FireInterval, draft.ReloadTime, draft.Mode,
+                draft.ProjectileSpeed, draft.MeleeRange, draft.MeleeArc, draft.SoundRadius);
             EditorUtility.SetDirty(definition);
             return definition;
+        }
+
+        private struct Draft
+        {
+            public float Damage, AttackSpeed, MeleeRange, MeleeArc, FireInterval, ReloadTime, ProjectileSpeed, SoundRadius;
+            public int Magazine;
+            public FireMode Mode;
+        }
+
+        /// <summary>Starting values of a new weapon by kind: zombies have 30 HP; the player's anims fit any cooldown.</summary>
+        private static Draft DraftFor(WeaponSlot slot, bool automatic)
+        {
+            var draft = new Draft
+            {
+                AttackSpeed = 1f, MeleeRange = 1.2f, MeleeArc = 100f, FireInterval = 0.3f, ReloadTime = 2f,
+                ProjectileSpeed = 25f, Magazine = 10, Mode = FireMode.Single,
+            };
+            if (slot == WeaponSlot.Melee)
+            {
+                draft.Damage = 12f;
+                draft.AttackSpeed = 1.2f;
+                draft.MeleeRange = 1.3f;
+                draft.SoundRadius = 4f;
+            }
+            else if (automatic)
+            {
+                draft.Mode = FireMode.Automatic;
+                draft.Damage = 8f;
+                draft.FireInterval = 0.12f;
+                draft.Magazine = 30;
+                draft.SoundRadius = 7f;
+            }
+            else
+            {
+                draft.Damage = 20f;
+                draft.FireInterval = 0.7f;
+                draft.Magazine = 6;
+                draft.ProjectileSpeed = 28f;
+                draft.SoundRadius = 8f;
+            }
+
+            return draft;
+        }
+
+        /// <summary>Weapon id from an asset name: "FireAxe_01" → "fire_axe_01".</summary>
+        internal static string IdOf(string name)
+        {
+            var id = new StringBuilder();
+            for (var i = 0; i < name.Length; i++)
+            {
+                var c = name[i];
+                if (!char.IsLetterOrDigit(c))
+                {
+                    if (id.Length > 0 && id[id.Length - 1] != '_') id.Append('_');
+                    continue;
+                }
+
+                if (char.IsUpper(c) && i > 0 && char.IsLower(name[i - 1]) && id.Length > 0 && id[id.Length - 1] != '_')
+                    id.Append('_');
+                id.Append(char.ToLowerInvariant(c));
+            }
+
+            return id.ToString().Trim('_');
+        }
+
+        /// <summary>
+        /// Pickup prefabs no weapon uses any more (a renamed or removed model) leave Pickups and Addressables, so they do
+        /// not ship: the folder is this builder's own.
+        /// </summary>
+        private static int DeleteUnusedPickups(HashSet<string> used, UnityEditor.AddressableAssets.Settings.AddressableAssetSettings settings)
+        {
+            var removed = 0;
+            foreach (var guid in AssetDatabase.FindAssets("t:Prefab", new[] { PickupsPath }))
+            {
+                var path = AssetDatabase.GUIDToAssetPath(guid);
+                if (used.Contains(path)) continue;
+                settings.RemoveAssetEntry(guid);
+                if (AssetDatabase.DeleteAsset(path)) removed++;
+            }
+
+            return removed;
+        }
+
+        /// <summary>Definitions in Data/Weapons without a model have no look in game: reported.</summary>
+        private static void WarnUnusedDefinitions(List<Weapon> weapons)
+        {
+            foreach (var guid in AssetDatabase.FindAssets("t:WeaponDefinition", new[] { DataPath }))
+            {
+                var definition = AssetDatabase.LoadAssetAtPath<WeaponDefinition>(AssetDatabase.GUIDToAssetPath(guid));
+                if (definition != null && weapons.All(weapon => weapon.Definition != definition))
+                    Debug.LogWarning($"[Maze] Weapon definition '{definition.name}' has no model in {ModelsPath}, so it has " +
+                                     "no look in game: delete it or put its model back.");
+            }
         }
 
         /// <summary>Adds <see cref="WeaponModel"/> with a mark at the far (+Z) end of the mesh: Muzzle for guns, Tip for melee.</summary>
@@ -299,9 +431,9 @@ namespace Maze.Editor.Dev
         /// space: the grip runs along the knuckles toward the index finger (blade above the thumb), edge toward the
         /// fingers. The Synty hand has a thumb, an index and one merged finger.
         /// </summary>
-        private static void RigPlayer()
+        private static void RigPlayer(string playerPrefab)
         {
-            var root = PrefabUtility.LoadPrefabContents(PlayerPrefabPath);
+            var root = PrefabUtility.LoadPrefabContents(playerPrefab);
             try
             {
                 var animator = root.GetComponent<Animator>();
@@ -331,7 +463,7 @@ namespace Maze.Editor.Dev
                 serialized.FindProperty("_palmRight").objectReferenceValue = palmRight;
                 serialized.FindProperty("_palmLeft").objectReferenceValue = palmLeft;
                 serialized.ApplyModifiedPropertiesWithoutUndo();
-                PrefabUtility.SaveAsPrefabAsset(root, PlayerPrefabPath);
+                PrefabUtility.SaveAsPrefabAsset(root, playerPrefab);
             }
             finally
             {
@@ -340,19 +472,19 @@ namespace Maze.Editor.Dev
         }
 
         /// <summary>Grip_L of every gun: the left palm relative to the gun, in the shooting pose, posed as in game.</summary>
-        private static void MarkGrips()
+        private static void MarkGrips(string playerPrefab, List<Weapon> weapons)
         {
-            var player = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(PlayerPrefabPath));
+            var player = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(playerPrefab));
             try
             {
                 var rig = player.GetComponent<CharacterWeaponRig>();
                 var clip = CharacterAnimationUtility.LoadClip(GripPoseClip);
                 clip.SampleAnimation(player, clip.length * GripPoseTime);
 
-                foreach (var weapon in Weapons)
+                foreach (var weapon in weapons)
                 {
-                    if (weapon.Slot != WeaponSlot.Ranged) continue;
-                    var path = $"{ModelsPath}/{weapon.Model}.prefab";
+                    if (weapon.Definition.Slot != WeaponSlot.Ranged) continue;
+                    var path = weapon.ModelPath;
 
                     var gun = (GameObject)UnityEngine.Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(path), rig.PalmRight, false);
                     gun.transform.localPosition = Vector3.zero;

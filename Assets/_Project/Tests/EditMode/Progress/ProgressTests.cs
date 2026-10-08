@@ -277,7 +277,7 @@ namespace Maze.Tests.EditMode.Progress
         }
 
         [Test]
-        public void Version2Save_AttackButtonsBecomeOneCluster_PlacesReset_StickAndUseKept()
+        public void Version2Save_AttackClusterAndUsePlacesReset_StickKept()
         {
             const string moved = "{\"Moved\":true,\"Position\":{\"x\":0.3,\"y\":0.4},\"Scale\":1.2}";
             _storage.Json = "{\"Version\":2,\"Settings\":{\"Controls\":{\"Size\":1,\"Opacity\":0.6,\"Layout\":{" +
@@ -289,8 +289,22 @@ namespace Maze.Tests.EditMode.Progress
             Assert.AreEqual(TouchPlacement.Default, layout.Melee);
             Assert.AreEqual(TouchPlacement.Default, layout.Ranged);
             Assert.IsTrue(layout.Stick.Moved);
-            Assert.IsTrue(layout.Use.Moved);
+            Assert.AreEqual(TouchPlacement.Default, layout.Use, "v4: Use has a new built-in place.");
             Assert.AreEqual(SaveData.CurrentVersion, _save.Data.Version);
+        }
+
+        [Test]
+        public void Version3Save_OnlyUsePlaceReset()
+        {
+            const string moved = "{\"Moved\":true,\"Position\":{\"x\":0.3,\"y\":0.4},\"Scale\":1.2}";
+            _storage.Json = "{\"Version\":3,\"Settings\":{\"Controls\":{\"Size\":1,\"Opacity\":0.6,\"Layout\":{" +
+                            $"\"Stick\":{moved},\"Attack\":{moved},\"Use\":{moved}" + "}}}}";
+            _save.Load();
+
+            var layout = _save.Data.Settings.Controls.Layout;
+            Assert.IsTrue(layout.Attack.Moved, "The cluster's place (v3) is kept.");
+            Assert.IsTrue(layout.Stick.Moved);
+            Assert.AreEqual(TouchPlacement.Default, layout.Use);
         }
 
         [Test]

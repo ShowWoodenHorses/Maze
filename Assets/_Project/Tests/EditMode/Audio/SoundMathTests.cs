@@ -1,5 +1,6 @@
 using Maze.Core.Audio;
 using Maze.Core.Common;
+using Maze.Core.Definitions;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -62,23 +63,32 @@ namespace Maze.Tests.EditMode.Audio
         }
 
         [Test]
-        public void Catalog_SilencedWeapons_AndZombiePitch_ById()
+        public void Catalog_WeaponSoundGroups_AndZombiePitch_ById()
         {
             var catalog = ScriptableObject.CreateInstance<AudioCatalog>();
+            var clip = AudioClip.Create("shot", 100, 1, 44100, false);
+            var weapon = ScriptableObject.CreateInstance<WeaponDefinition>();
             try
             {
-                catalog.MutableSilencedWeapons.Add("pistol_silenced");
+                var attack = new SoundCue { Clips = new[] { clip } };
+                catalog.MutableWeaponSounds.Add(new WeaponSound("silenced", attack, new SoundCue()));
                 catalog.MutableZombieVoices.Add(new ZombieVoice { ZombieId = "hunter", Pitch = 0.9f });
 
-                Assert.IsTrue(catalog.IsSilenced("pistol_silenced"));
-                Assert.IsFalse(catalog.IsSilenced("smg"));
-                Assert.IsFalse(catalog.IsSilenced(null));
+                weapon.Configure("hunting_rifle", WeaponSlot.Ranged);
+                Assert.AreEqual("hunting_rifle", weapon.SoundGroup, "No group set = the id.");
+                Assert.IsNull(catalog.WeaponAttack(weapon.SoundGroup), "No such group = the common sound.");
+                weapon.SetSound("Silenced");
+                Assert.AreSame(attack, catalog.WeaponAttack(weapon.SoundGroup), "Group names ignore case.");
+                Assert.IsNull(catalog.WeaponReload(weapon.SoundGroup), "A group without reload files = the common reload.");
+                Assert.IsNull(catalog.WeaponAttack(null));
                 Assert.AreEqual(0.9f, catalog.ZombiePitch("hunter"));
                 Assert.AreEqual(1f, catalog.ZombiePitch("walker"), "Not listed = normal pitch.");
             }
             finally
             {
                 Object.DestroyImmediate(catalog);
+                Object.DestroyImmediate(clip);
+                Object.DestroyImmediate(weapon);
             }
         }
     }

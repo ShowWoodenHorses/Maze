@@ -13,9 +13,10 @@ namespace Maze.Application.Save
     {
         /// <summary>
         /// 2: aim settings in <see cref="ControlsSettings"/>. 3: Attack, Melee and Ranged are one cluster on screen
-        /// (placed as <see cref="TouchElement.Attack"/>); their old separate places are dropped.
+        /// (placed as <see cref="TouchElement.Attack"/>); their old separate places are dropped. 4: Use got a new
+        /// built-in place left of the cluster; a place saved near the old Attack button would overlap it — dropped.
         /// </summary>
-        public const int CurrentVersion = 3;
+        public const int CurrentVersion = 4;
 
         public int Version = CurrentVersion;
 
@@ -50,6 +51,7 @@ namespace Maze.Application.Save
                 Settings.Controls.Layout.Melee = TouchPlacement.Default;
                 Settings.Controls.Layout.Ranged = TouchPlacement.Default;
             }
+            if (Version < 4) Settings.Controls.Layout.Use = TouchPlacement.Default;
             Version = CurrentVersion;
             UnlockedLevels.RemoveAll(string.IsNullOrEmpty);
             LevelStars.RemoveAll(record => record == null || string.IsNullOrEmpty(record.LevelId));

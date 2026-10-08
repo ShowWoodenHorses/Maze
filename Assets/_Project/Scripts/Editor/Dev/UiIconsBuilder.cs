@@ -473,7 +473,8 @@ namespace Maze.Editor.Dev
 
                 EditorUtility.SetDirty(catalog);
                 AssetDatabase.SaveAssets();
-                Debug.Log($"[Maze] Weapon icons built: {built}.");
+                var removed = DeleteUnusedWeaponIcons(catalog);
+                Debug.Log($"[Maze] Weapon icons built: {built}" + (removed > 0 ? $", {removed} unused removed." : "."));
             }
             finally
             {
@@ -482,6 +483,28 @@ namespace Maze.Editor.Dev
                 RenderTexture.ReleaseTemporary(target);
                 EditorSceneManager.ClosePreviewScene(scene);
             }
+        }
+
+        /// <summary>
+        /// Icons in <see cref="WeaponFolder"/> no catalog weapon uses (a removed weapon, a changed id): the folder is
+        /// this builder's own, so they go.
+        /// </summary>
+        private static int DeleteUnusedWeaponIcons(WeaponVisualCatalog catalog)
+        {
+            var used = new HashSet<string>();
+            foreach (var weapon in catalog.MutableWeapons)
+                if (weapon?.Icon != null)
+                    used.Add(AssetDatabase.GetAssetPath(weapon.Icon));
+
+            var removed = 0;
+            foreach (var guid in AssetDatabase.FindAssets("t:Texture2D", new[] { WeaponFolder }))
+            {
+                var path = AssetDatabase.GUIDToAssetPath(guid);
+                if (used.Contains(path) || !AssetDatabase.DeleteAsset(path)) continue;
+                removed++;
+            }
+
+            return removed;
         }
 
         private static void SceneManager_Move(GameObject go, UnityEngine.SceneManagement.Scene scene) =>

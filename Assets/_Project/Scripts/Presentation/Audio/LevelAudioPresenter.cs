@@ -168,9 +168,8 @@ namespace Maze.Presentation.Audio
 
         private void OnAttacked(WeaponRuntime weapon, Vector2 direction)
         {
-            SoundCue cue;
-            if (weapon.Slot == WeaponSlot.Melee) cue = Catalog.MeleeSwing;
-            else cue = Catalog.IsSilenced(weapon.Definition.Id) ? Catalog.ShotSilenced : Catalog.Shot;
+            var cue = Catalog.WeaponAttack(weapon.Definition.SoundGroup) ??
+                      (weapon.Slot == WeaponSlot.Melee ? Catalog.MeleeSwing : Catalog.Shot);
             PlayAt(cue, _player.Position);
         }
 
@@ -278,7 +277,8 @@ namespace Maze.Presentation.Audio
         }
 
         private SoundCue ReloadCue(WeaponRuntime weapon) =>
-            weapon.Definition.FireMode == FireMode.Automatic ? Catalog.ReloadMagazine : Catalog.ReloadSingle;
+            Catalog.WeaponReload(weapon.Definition.SoundGroup) ??
+            (weapon.Definition.FireMode == FireMode.Automatic ? Catalog.ReloadMagazine : Catalog.ReloadSingle);
 
         // ------------------------------------------------------------------ Zombies
 

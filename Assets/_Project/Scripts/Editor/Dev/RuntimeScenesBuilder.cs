@@ -771,7 +771,8 @@ namespace Maze.Editor.Dev
             }
 
             // Use: a circle on the left of the cluster, its own layout element.
-            var useShape = Shape(area, "UseButton", BottomRight, new Vector2(-395f, 85f), new Vector2(110f, 110f), true);
+            // Left of the Melee slot, clear of its icon also when the controls are scaled up.
+            var useShape = Shape(area, "UseButton", BottomRight, new Vector2(-430f, 140f), new Vector2(110f, 110f), true);
             useShape.Kind = UiShapeKind.Capsule;
             AddTouchButton(useShape.gameObject, "<Gamepad>/buttonWest");
             var useIcon = Icon(useShape.transform, "Icon", icons.Door, Center, Vector2.zero, 54f);
@@ -1510,14 +1511,21 @@ namespace Maze.Editor.Dev
         private static Slider StyledSlider(Transform parent, string name, float width, float height)
         {
             var root = Rect(parent, name, Center, Vector2.zero, new Vector2(width, height));
-            var track = Shape(root, "Track", Center, Vector2.zero, Vector2.zero, true);
+            // Invisible touch zone over the whole slider and beyond it (a finger rarely hits the thin line or the handle):
+            // a press anywhere moves the handle there and drags from it.
+            var hit = Shape(root, "HitArea", Center, Vector2.zero, Vector2.zero, true);
+            Stretch(hit.rectTransform);
+            hit.rectTransform.offsetMin = new Vector2(-16f, -18f);
+            hit.rectTransform.offsetMax = new Vector2(16f, 18f);
+            hit.Fill = Color.clear;
+            hit.StrokeWidth = 0f;
+            var track = Shape(root, "Track", Center, Vector2.zero, Vector2.zero);
             var trackRect = track.rectTransform;
             trackRect.anchorMin = new Vector2(0f, 0.5f);
             trackRect.anchorMax = new Vector2(1f, 0.5f);
             trackRect.sizeDelta = new Vector2(0f, 2f);
             track.StrokeWidth = 0f;
             track.Fill = Fade(_style.Line, 0.35f);
-            track.HitPadding = height * 0.5f; // The thin track is easy to tap.
 
             var fillArea = Rect(root, "Fill Area", Center, Vector2.zero, Vector2.zero);
             fillArea.anchorMin = new Vector2(0f, 0.5f);

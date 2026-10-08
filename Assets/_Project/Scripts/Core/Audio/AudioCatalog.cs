@@ -34,6 +34,32 @@ namespace Maze.Core.Audio
     }
 
     /// <summary>
+    /// Own sounds of a group of weapons (<c>WeaponDefinition.SoundGroup</c>): files of <c>Sounds/Weapon/&lt;group&gt;/</c>.
+    /// An empty cue falls back to the common one (melee swing / shot, magazine / single reload).
+    /// </summary>
+    [Serializable]
+    public sealed class WeaponSound
+    {
+        [Tooltip("Folder name under Sounds/Weapon; weapons pick it by their Sound field (or id).")]
+        [SerializeField] private string _group;
+        [Tooltip("Files attack*: the shot or swing.")]
+        [SerializeField] private SoundCue _attack = new SoundCue(0.5f, 0f, 4, new Vector2(0.95f, 1.05f));
+        [Tooltip("Files reload*.")]
+        [SerializeField] private SoundCue _reload = new SoundCue(0.7f, 0f, 1, Vector2.one);
+
+        public WeaponSound(string group, SoundCue attack, SoundCue reload)
+        {
+            _group = group;
+            _attack = attack ?? new SoundCue();
+            _reload = reload ?? new SoundCue();
+        }
+
+        public string Group => _group;
+        public SoundCue Attack => _attack;
+        public SoundCue Reload => _reload;
+    }
+
+    /// <summary>
     /// Every sound and music track of the game (ТЗ §71), Addressable at <see cref="Address"/> and resident for the
     /// application lifetime (music clips are loaded only while they play). Display only: gameplay never reads it.
     /// Filled by Maze → Dev → Build Audio, which keeps the tuning (volumes, ranges…) on rebuild.
@@ -61,12 +87,12 @@ namespace Maze.Core.Audio
         [SerializeField] private SoundCue _playerDeath = new SoundCue(1f, 0f, 1, Vector2.one);
 
         [Header("Weapons")]
+        [Tooltip("Common swing of melee weapons without their own sound group.")]
         [SerializeField] private SoundCue _meleeSwing = new SoundCue(0.9f, 0f, 2, new Vector2(0.9f, 1.1f));
+        [Tooltip("Common shot of guns without their own sound group.")]
         [SerializeField] private SoundCue _shot = new SoundCue(0.5f, 0f, 4, new Vector2(0.95f, 1.05f));
-        [Tooltip("Weapons with a silencer: the ids below.")]
-        [SerializeField] private SoundCue _shotSilenced = new SoundCue(0.5f, 0f, 4, new Vector2(0.95f, 1.05f));
-        [Tooltip("WeaponDefinition ids of weapons with a silencer (they use Shot Silenced).")]
-        [SerializeField] private List<string> _silencedWeapons = new List<string>();
+        [Tooltip("Sound groups (Sounds/Weapon/<group>/): weapons whose Sound (or id) names one use its sounds.")]
+        [SerializeField] private List<WeaponSound> _weaponSounds = new List<WeaponSound>();
         [Tooltip("Automatic weapons: a magazine change.")]
         [SerializeField] private SoundCue _reloadMagazine = new SoundCue(0.7f, 0f, 1, Vector2.one);
         [Tooltip("Single-shot weapons.")]
@@ -153,8 +179,7 @@ namespace Maze.Core.Audio
 
         public SoundCue MeleeSwing => _meleeSwing;
         public SoundCue Shot => _shot;
-        public SoundCue ShotSilenced => _shotSilenced;
-        public IReadOnlyList<string> SilencedWeapons => _silencedWeapons;
+        public IReadOnlyList<WeaponSound> WeaponSounds => _weaponSounds;
         public SoundCue ReloadMagazine => _reloadMagazine;
         public SoundCue ReloadSingle => _reloadSingle;
         public SoundCue SwitchWeapon => _switchWeapon;
@@ -203,18 +228,26 @@ namespace Maze.Core.Audio
         public float StarInterval => _starInterval;
         public float StarPitchStep => _starPitchStep;
 
-        internal List<string> MutableSilencedWeapons => _silencedWeapons;
+        internal List<WeaponSound> MutableWeaponSounds => _weaponSounds;
         internal List<ZombieVoice> MutableZombieVoices => _zombieVoices;
 
-        /// <summary>Weapon ids are compared, not definitions (copies of one definition may live in several bundles).</summary>
-        public bool IsSilenced(string weaponId)
+        /// <summary>The group's attack sound, or null when it has none (play the common one).</summary>
+        public SoundCue WeaponAttack(string group) => NonEmpty(FindWeaponSound(group)?.Attack);
+
+        /// <summary>The group's reload sound, or null when it has none (play the common one).</summary>
+        public SoundCue WeaponReload(string group) => NonEmpty(FindWeaponSound(group)?.Reload);
+
+        /// <summary>By name, not by definition (copies of one definition may live in several bundles).</summary>
+        public WeaponSound FindWeaponSound(string group)
         {
-            if (string.IsNullOrEmpty(weaponId)) return false;
-            foreach (var id in _silencedWeapons)
-                if (string.Equals(id, weaponId, StringComparison.Ordinal))
-                    return true;
-            return false;
+            if (string.IsNullOrEmpty(group)) return null;
+            foreach (var sound in _weaponSounds)
+                if (sound != null && string.Equals(sound.Group, group, StringComparison.OrdinalIgnoreCase))
+                    return sound;
+            return null;
         }
+
+        private static SoundCue NonEmpty(SoundCue cue) => cue == null || cue.IsEmpty ? null : cue;
 
         /// <summary>Voice pitch of a zombie type; 1 when it is not listed.</summary>
         public float ZombiePitch(string zombieId)
@@ -229,8 +262,14 @@ namespace Maze.Core.Audio
         public IEnumerable<SoundCue> AllCues()
         {
             yield return _footstep; yield return _footstepWalk; yield return _playerHurt; yield return _playerDeath;
-            yield return _meleeSwing; yield return _shot; yield return _shotSilenced; yield return _reloadMagazine;
+            yield return _meleeSwing; yield return _shot; yield return _reloadMagazine;
             yield return _reloadSingle; yield return _switchWeapon; yield return _bulletImpact;
+            foreach (var sound in _weaponSounds)
+            {
+                if (sound == null) continue;
+                yield return sound.Attack;
+                yield return sound.Reload;
+            }
             yield return _pickupKey; yield return _pickupMedkit; yield return _pickupWeapon; yield return _pickupMapFragment;
             yield return _doorOpen; yield return _doorClose; yield return _doorUnlock; yield return _doorLocked;
             yield return _zombieGroan; yield return _zombieRoar; yield return _zombieAttack; yield return _zombieHurt;

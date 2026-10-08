@@ -43,6 +43,9 @@ namespace Maze.Core.Audio
             _minInterval = minInterval;
         }
 
+        /// <summary>A cue with the same tuning and no clips (a new sound starts from an existing one's settings).</summary>
+        internal SoundCue CopyTuning() => new SoundCue(_volume, _range, _maxVoices, _pitch, _minInterval);
+
         public AudioClip[] Clips { get => _clips; internal set => _clips = value ?? Array.Empty<AudioClip>(); }
         public float Volume { get => _volume; internal set => _volume = value; }
         public float PitchMin => Mathf.Min(_pitch.x, _pitch.y);

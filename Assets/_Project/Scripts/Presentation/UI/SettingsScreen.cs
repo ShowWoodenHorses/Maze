@@ -114,8 +114,23 @@ namespace Maze.Presentation.UI
             ShowTab(SettingsTab.Controls);
         }
 
+        /// <summary>
+        /// The Controls tab is all about the on-screen controls (stick, size, layout): release builds without them
+        /// (desktop, no touch seen) do not show it. The editor and development builds keep it for testing.
+        /// </summary>
+        private static bool ControlsTabShown => HudScreen.TouchShown || Debug.isDebugBuild;
+
+        private void OnEnable()
+        {
+            var controls = (int)SettingsTab.Controls;
+            if (controls < _tabButtons.Length && _tabButtons[controls] != null)
+                _tabButtons[controls].gameObject.SetActive(ControlsTabShown);
+            if (Tab == SettingsTab.Controls && !ControlsTabShown) ShowTab(SettingsTab.Shooting);
+        }
+
         public void ShowTab(SettingsTab tab)
         {
+            if (tab == SettingsTab.Controls && !ControlsTabShown) tab = SettingsTab.Shooting;
             Tab = tab;
             for (var i = 0; i < _pages.Length; i++)
                 _pages[i].SetActive(i == (int)tab);
