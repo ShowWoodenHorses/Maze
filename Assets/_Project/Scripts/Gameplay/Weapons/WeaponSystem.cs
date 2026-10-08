@@ -36,6 +36,11 @@ namespace Maze.Gameplay.Weapons
 
         public bool IsReloading => ReloadRemaining > 0f;
 
+        /// <summary>0..1 share of the reload done; 0 when not reloading.</summary>
+        public float ReloadProgress => IsReloading && Definition.ReloadTime > 0f
+            ? 1f - Math.Min(1f, ReloadRemaining / Definition.ReloadTime)
+            : 0f;
+
         /// <summary>Fully ready: a lying weapon is always ready when picked up (ТЗ §67).</summary>
         public void Reset()
         {

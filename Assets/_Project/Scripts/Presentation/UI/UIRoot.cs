@@ -9,6 +9,7 @@ namespace Maze.Presentation.UI
     public sealed class UIRoot : MonoBehaviour
     {
         [SerializeField] private MainMenuScreen _mainMenu;
+        [SerializeField] private LevelSelectScreen _levelSelect;
         [SerializeField] private LoadingScreen _loading;
         [SerializeField] private ErrorScreen _error;
         [SerializeField] private HudScreen _hud;
@@ -28,6 +29,7 @@ namespace Maze.Presentation.UI
         [SerializeField] private EventSystem _eventSystem;
 
         public MainMenuScreen MainMenu => _mainMenu;
+        public LevelSelectScreen LevelSelect => _levelSelect;
         public LoadingScreen Loading => _loading;
         public ErrorScreen Error => _error;
         public HudScreen Hud => _hud;

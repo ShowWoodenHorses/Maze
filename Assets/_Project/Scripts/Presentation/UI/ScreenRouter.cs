@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
 using Cysharp.Threading.Tasks;
 using Maze.Application.Flow;
 using Maze.Application.Levels;
@@ -12,7 +11,8 @@ namespace Maze.Presentation.UI
 {
     /// <summary>
     /// Presenter of the application screens: shows the screen matching <see cref="GameFlow.State"/>
-    /// and turns screen events into GameFlow commands.
+    /// and turns screen events into GameFlow commands. The level select is part of the main menu state: Play opens it
+    /// over the menu, Back returns.
     /// </summary>
     public sealed class ScreenRouter : IDisposable
     {
@@ -20,7 +20,8 @@ namespace Maze.Presentation.UI
         private readonly ILevelCatalog _catalog;
         private readonly UIRoot _ui;
         private readonly IProgressService _progress;
-        private readonly StringBuilder _text = new StringBuilder();
+        private readonly List<LevelTileData> _tiles = new List<LevelTileData>();
+        private bool _levelSelectOpen;
         private bool _initialized;
 
         public ScreenRouter(GameFlow flow, ILevelCatalog catalog, UIRoot ui, IProgressService progress)
@@ -37,8 +38,10 @@ namespace Maze.Presentation.UI
             _initialized = true;
 
             _flow.StateChanged += Show;
-            _ui.MainMenu.LevelSelected += OnLevelSelected;
+            _ui.MainMenu.PlayClicked += OnPlayClicked;
             _ui.MainMenu.DebugResetProgressClicked += OnResetProgressRequested;
+            _ui.LevelSelect.LevelSelected += OnLevelSelected;
+            _ui.LevelSelect.BackClicked += OnLevelSelectBack;
             _ui.Error.BackClicked += OnMenuRequested;
             _ui.Hud.PauseClicked += _flow.PauseGameplay;
             _ui.Hud.MapClicked += _flow.OpenMap;
@@ -50,6 +53,7 @@ namespace Maze.Presentation.UI
             _ui.Pause.DebugFailClicked += _flow.FailLevel;
             _ui.Result.RetryClicked += OnRetryRequested;
             _ui.Result.MenuClicked += OnMenuRequested;
+            _ui.Result.NextClicked += OnNextRequested;
             _ui.ConfirmExit.YesClicked += OnFinishLevelConfirmed;
             _ui.ConfirmExit.NoClicked += OnFinishLevelDeclined;
 
@@ -64,8 +68,10 @@ namespace Maze.Presentation.UI
             _flow.StateChanged -= Show;
             if (_ui == null) return; // Scene already destroyed on application quit.
 
-            _ui.MainMenu.LevelSelected -= OnLevelSelected;
+            _ui.MainMenu.PlayClicked -= OnPlayClicked;
             _ui.MainMenu.DebugResetProgressClicked -= OnResetProgressRequested;
+            _ui.LevelSelect.LevelSelected -= OnLevelSelected;
+            _ui.LevelSelect.BackClicked -= OnLevelSelectBack;
             _ui.Error.BackClicked -= OnMenuRequested;
             _ui.Hud.PauseClicked -= _flow.PauseGameplay;
             _ui.Hud.MapClicked -= _flow.OpenMap;
@@ -77,6 +83,7 @@ namespace Maze.Presentation.UI
             _ui.Pause.DebugFailClicked -= _flow.FailLevel;
             _ui.Result.RetryClicked -= OnRetryRequested;
             _ui.Result.MenuClicked -= OnMenuRequested;
+            _ui.Result.NextClicked -= OnNextRequested;
             _ui.ConfirmExit.YesClicked -= OnFinishLevelConfirmed;
             _ui.ConfirmExit.NoClicked -= OnFinishLevelDeclined;
         }
@@ -91,16 +98,19 @@ namespace Maze.Presentation.UI
             var result = state == GameFlowState.Completed || state == GameFlowState.Failed;
             var error = state == GameFlowState.Error;
 
-            if (menu) RefreshMainMenu();
+            if (!menu) _levelSelectOpen = false;
+            if (menu) RefreshMenus();
             if (inLevel) _ui.Hud.SetLevelName(DisplayNameOf(_flow.CurrentLevelId));
             if (result)
             {
-                _ui.Result.SetTitle(state == GameFlowState.Completed ? "Level complete" : "Level failed");
-                _ui.Result.SetDetails(DescribeResult(_flow.LastResult));
+                var completed = state == GameFlowState.Completed;
+                _ui.Result.SetResult(completed, _flow.LastResult, DisplayNameOf(_flow.CurrentLevelId),
+                    completed && NextLevelId() != null);
             }
             if (error) _ui.Error.SetMessage(_flow.ErrorMessage);
 
-            _ui.MainMenu.SetVisible(menu);
+            _ui.MainMenu.SetVisible(menu && !_levelSelectOpen);
+            _ui.LevelSelect.SetVisible(menu && _levelSelectOpen);
             _ui.Loading.SetVisible(loading);
             _ui.Hud.SetVisible(inLevel);
             _ui.Pause.SetVisible(state == GameFlowState.Paused);
@@ -111,53 +121,42 @@ namespace Maze.Presentation.UI
         }
 
         /// <summary>
-        /// Level buttons with best stars. Locked levels are disabled; development builds (and the editor) still let
-        /// you start them so any level can be tested.
+        /// Totals for the main menu and the level tiles with best stars. Locked levels are disabled; development builds
+        /// (and the editor) still let you start them so any level can be tested.
         /// </summary>
-        private void RefreshMainMenu()
+        private void RefreshMenus()
         {
             var levels = _catalog.Levels;
-            var list = new List<LevelListItem>(levels.Count);
+            _tiles.Clear();
             var totalStars = 0;
-            foreach (var entry in levels)
+            for (var i = 0; i < levels.Count; i++)
             {
-                var name = string.IsNullOrEmpty(entry.DisplayName) ? entry.LevelId : entry.DisplayName;
+                var entry = levels[i];
                 var stars = _progress.GetStars(entry.LevelId);
                 totalStars += stars;
                 var unlocked = _progress.IsUnlocked(entry.LevelId);
-
-                string label;
-                if (!unlocked) label = Debug.isDebugBuild ? $"{name}   (locked, debug)" : $"{name}   (locked)";
-                else label = $"{name}   {StarsText(stars)}";
-                list.Add(new LevelListItem(entry.LevelId, label, unlocked || Debug.isDebugBuild));
+                _tiles.Add(new LevelTileData(entry.LevelId, i + 1, stars, unlocked, unlocked || Debug.isDebugBuild));
             }
 
-            _ui.MainMenu.SetLevels(list);
-            _ui.MainMenu.SetSummary(levels.Count == 0
-                ? string.Empty
-                : $"Stars: {totalStars}/{levels.Count * LevelResult.MaxStars}    Zombies killed: {_progress.TotalKills}");
+            var maxStars = levels.Count * LevelResult.MaxStars;
+            _ui.MainMenu.SetSummary(totalStars, maxStars, _progress.TotalKills);
+            _ui.MainMenu.SetPlayable(levels.Count > 0);
+            _ui.LevelSelect.SetLevels(_tiles, totalStars, maxStars);
         }
 
-        private string DescribeResult(LevelResult? lastResult)
+        /// <summary>The level after the current one in the catalog, if it is open (completing opens it).</summary>
+        private string NextLevelId()
         {
-            if (!lastResult.HasValue) return string.Empty;
-            var result = lastResult.Value;
+            var levels = _catalog.Levels;
+            for (var i = 0; i + 1 < levels.Count; i++)
+            {
+                if (levels[i].LevelId != _flow.CurrentLevelId) continue;
+                var next = levels[i + 1].LevelId;
+                return _progress.IsUnlocked(next) || Debug.isDebugBuild ? next : null;
+            }
 
-            _text.Clear();
-            if (result.Completed)
-                _text.Append(StarsText(result.Stars)).Append('\n');
-            _text.Append(Check(result.Completed)).Append(" Exit reached\n");
-            _text.Append(Check(result.Completed && result.AllZombiesKilled)).Append(" Zombies killed: ")
-                .Append(result.Kills).Append('/').Append(result.TotalZombies).Append('\n');
-            _text.Append(Check(result.Completed && result.AllFragmentsCollected)).Append(" Map fragments: ")
-                .Append(result.Fragments).Append('/').Append(result.TotalFragments);
-            return _text.ToString();
+            return null;
         }
-
-        /// <summary>The built-in UI font has no star glyph, so stars are written as a count.</summary>
-        private static string StarsText(int stars) => $"Stars: {stars}/{LevelResult.MaxStars}";
-
-        private static string Check(bool done) => done ? "[x]" : "[ ]";
 
         private string DisplayNameOf(string levelId)
         {
@@ -165,14 +164,33 @@ namespace Maze.Presentation.UI
             return entry != null && !string.IsNullOrEmpty(entry.DisplayName) ? entry.DisplayName : levelId;
         }
 
+        private void OnPlayClicked()
+        {
+            if (_flow.State != GameFlowState.MainMenu) return;
+            _levelSelectOpen = true;
+            Show(_flow.State);
+        }
+
+        private void OnLevelSelectBack()
+        {
+            _levelSelectOpen = false;
+            Show(_flow.State);
+        }
+
         private void OnLevelSelected(string levelId) => _flow.StartLevel(levelId).Forget();
 
         private void OnRetryRequested() => _flow.RetryLevel().Forget();
 
+        private void OnNextRequested()
+        {
+            var next = NextLevelId();
+            if (next != null) _flow.StartLevel(next).Forget();
+        }
+
         private void OnResetProgressRequested()
         {
             _progress.ResetProgress();
-            if (_flow.State == GameFlowState.MainMenu) RefreshMainMenu();
+            if (_flow.State == GameFlowState.MainMenu) RefreshMenus();
         }
 
         private void OnMenuRequested() => _flow.ExitToMenu().Forget();

@@ -7,6 +7,7 @@
         "Maze.Application",
         "UniTask",
         "UnityEngine.UI",
+        "Unity.TextMeshPro",
         "Unity.Addressables",
         "Unity.ResourceManager",
         "Unity.InputSystem"

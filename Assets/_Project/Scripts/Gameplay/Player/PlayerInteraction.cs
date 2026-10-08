@@ -23,6 +23,14 @@ namespace Maze.Gameplay.Player
         DoorBlocked = 5,
     }
 
+    /// <summary>What Interact would act on now (for the Use button).</summary>
+    public enum InteractionTarget
+    {
+        None = 0,
+        Weapon = 1,
+        Door = 2,
+    }
+
     /// <summary>
     /// The Interact action (ТЗ §63 Interaction, §64 "door" button, §67 weapon pickup). Order:
     /// 1) a weapon lying in the player's cell is picked up;
@@ -60,6 +68,17 @@ namespace Maze.Gameplay.Player
         {
             if (_player.IsSpawned && _input.WasPressed(PlayerAction.Interact))
                 Interact();
+        }
+
+        /// <summary>What <see cref="Interact"/> would use now (same order); cheap, no allocations.</summary>
+        public InteractionTarget CurrentTarget()
+        {
+            if (!_player.IsSpawned) return InteractionTarget.None;
+            var here = _pickups.At(_player.Cell);
+            for (var i = 0; i < here.Count; i++)
+                if (here[i].Kind == PickupKind.Weapon)
+                    return InteractionTarget.Weapon;
+            return FindDoor() != null ? InteractionTarget.Door : InteractionTarget.None;
         }
 
         /// <summary>Performs the Interact action now. False when there was nothing to interact with.</summary>

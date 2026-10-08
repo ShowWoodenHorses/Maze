@@ -12,6 +12,7 @@
         "Unity.ResourceManager",
         "Unity.InputSystem",
         "UnityEngine.UI",
+        "Unity.TextMeshPro",
         "VContainer",
         "UniTask"
     ],

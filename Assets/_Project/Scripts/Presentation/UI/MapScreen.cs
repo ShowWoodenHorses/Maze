@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Maze.Presentation.Map;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -16,7 +17,7 @@ namespace Maze.Presentation.UI
     {
         [SerializeField] private RawImage _image;
         [SerializeField] private AspectRatioFitter _fitter;
-        [SerializeField] private Text _caption;
+        [SerializeField] private TMP_Text _caption;
         [SerializeField] private Button _closeButton;
         [SerializeField] private MapIconSet _icons;
         [SerializeField] private Toggle _showPlayer;

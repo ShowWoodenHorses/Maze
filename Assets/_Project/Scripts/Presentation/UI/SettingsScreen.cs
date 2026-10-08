@@ -1,6 +1,8 @@
 using System;
 using Maze.Application.Save;
 using Maze.Gameplay.Combat;
+using Maze.Presentation.UI.Style;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -20,38 +22,41 @@ namespace Maze.Presentation.UI
     }
 
     /// <summary>
-    /// Settings, opened from the main menu and the pause screen: tabs (<see cref="SettingsTab"/>), one page shown at a
-    /// time; "Reset to defaults" resets the shown page. Changes apply at once.
+    /// Settings, opened from the main menu and the pause screen: tabs (<see cref="SettingsTab"/>; the open one in the
+    /// accent, underlined), one page shown at a time, rows "caption — control" with the value on the right; aim
+    /// directions are three segments. "Reset tab" resets the shown page. Changes apply at once.
     /// </summary>
     public sealed class SettingsScreen : UIScreen
     {
-        private static readonly Color TabColor = new Color(0.22f, 0.24f, 0.28f, 1f);
-        private static readonly Color ActiveTabColor = new Color(0.42f, 0.46f, 0.55f, 1f);
+        [SerializeField] private UiStyle _style;
 
         [Tooltip("In SettingsTab order.")]
         [SerializeField] private Button[] _tabButtons;
+        [Tooltip("Tab captions, in SettingsTab order.")]
+        [SerializeField] private TMP_Text[] _tabLabels;
+        [Tooltip("Underlines of the open tab, in SettingsTab order.")]
+        [SerializeField] private GameObject[] _tabUnderlines;
         [Tooltip("In SettingsTab order.")]
         [SerializeField] private GameObject[] _pages;
 
         [SerializeField] private Slider _deadZone;
-        [SerializeField] private Text _deadZoneLabel;
+        [SerializeField] private TMP_Text _deadZoneLabel;
         [SerializeField] private Slider _sensitivity;
-        [SerializeField] private Text _sensitivityLabel;
+        [SerializeField] private TMP_Text _sensitivityLabel;
         [SerializeField] private Slider _size;
-        [SerializeField] private Text _sizeLabel;
+        [SerializeField] private TMP_Text _sizeLabel;
         [SerializeField] private Slider _opacity;
-        [SerializeField] private Text _opacityLabel;
+        [SerializeField] private TMP_Text _opacityLabel;
         [SerializeField] private Toggle _floatingStick;
         [SerializeField] private Toggle _leftHanded;
         [SerializeField] private Button _editLayoutButton;
-        [Tooltip("Cycles Free / 8 / 4 aim directions.")]
-        [SerializeField] private Button _aimModeButton;
-        [SerializeField] private Text _aimModeLabel;
+        [Tooltip("Aim direction segments: Free, Eight, Four (AimMode order); the chosen one in the accent.")]
+        [SerializeField] private UiButton[] _aimButtons;
         [SerializeField] private Toggle _aimAssist;
         [SerializeField] private Slider _musicVolume;
-        [SerializeField] private Text _musicVolumeLabel;
+        [SerializeField] private TMP_Text _musicVolumeLabel;
         [SerializeField] private Slider _sfxVolume;
-        [SerializeField] private Text _sfxVolumeLabel;
+        [SerializeField] private TMP_Text _sfxVolumeLabel;
         [SerializeField] private Toggle _showFps;
         [SerializeField] private Button _resetButton;
         [SerializeField] private Button _backButton;
@@ -92,7 +97,11 @@ namespace Maze.Presentation.UI
                 Range(slider, 0f, 1f);
                 slider.onValueChanged.AddListener(_ => OnVolumesEdited());
             }
-            Bind(_aimModeButton, OnAimModeClicked);
+            for (var i = 0; i < _aimButtons.Length; i++)
+            {
+                var mode = (AimMode)i;
+                Bind(_aimButtons[i], () => OnAimModeClicked(mode));
+            }
             Bind(_resetButton, () => ResetClicked?.Invoke(Tab));
             Bind(_editLayoutButton, () => EditLayoutClicked?.Invoke());
             Bind(_backButton, () => BackClicked?.Invoke());
@@ -110,8 +119,10 @@ namespace Maze.Presentation.UI
             Tab = tab;
             for (var i = 0; i < _pages.Length; i++)
                 _pages[i].SetActive(i == (int)tab);
-            for (var i = 0; i < _tabButtons.Length; i++)
-                _tabButtons[i].targetGraphic.color = i == (int)tab ? ActiveTabColor : TabColor;
+            for (var i = 0; i < _tabLabels.Length; i++)
+                _tabLabels[i].color = i == (int)tab ? _style.Accent : _style.MutedText;
+            for (var i = 0; i < _tabUnderlines.Length; i++)
+                _tabUnderlines[i].SetActive(i == (int)tab);
         }
 
         public void SetShowFps(bool show)
@@ -157,14 +168,10 @@ namespace Maze.Presentation.UI
             return settings;
         }
 
-        private void OnAimModeClicked()
+        private void OnAimModeClicked(AimMode mode)
         {
-            _aimMode = _aimMode switch
-            {
-                AimMode.Free => AimMode.Eight,
-                AimMode.Eight => AimMode.Four,
-                _ => AimMode.Free,
-            };
+            if (_aimMode == mode) return;
+            _aimMode = mode;
             OnEdited();
         }
 
@@ -178,16 +185,12 @@ namespace Maze.Presentation.UI
 
         private void UpdateLabels(ControlsSettings settings)
         {
-            _deadZoneLabel.text = "Stick dead zone: " + Percent(settings.StickDeadZone);
-            _sensitivityLabel.text = "Stick sensitivity: " + Percent(settings.StickSensitivity);
-            _sizeLabel.text = "Controls size: " + Percent(settings.Size);
-            _opacityLabel.text = "Controls opacity: " + Percent(settings.Opacity);
-            _aimModeLabel.text = settings.AimMode switch
-            {
-                AimMode.Eight => "Aim: 8 directions",
-                AimMode.Four => "Aim: 4 directions",
-                _ => "Aim: free",
-            };
+            _deadZoneLabel.text = Percent(settings.StickDeadZone);
+            _sensitivityLabel.text = Percent(settings.StickSensitivity);
+            _sizeLabel.text = Percent(settings.Size);
+            _opacityLabel.text = Percent(settings.Opacity);
+            for (var i = 0; i < _aimButtons.Length; i++)
+                _aimButtons[i].Accent = i == (int)settings.AimMode;
         }
 
         private void OnVolumesEdited()
@@ -198,8 +201,8 @@ namespace Maze.Presentation.UI
 
         private void UpdateVolumeLabels()
         {
-            _musicVolumeLabel.text = "Music volume: " + Percent(_musicVolume.value);
-            _sfxVolumeLabel.text = "Sound volume: " + Percent(_sfxVolume.value);
+            _musicVolumeLabel.text = Percent(_musicVolume.value);
+            _sfxVolumeLabel.text = Percent(_sfxVolume.value);
         }
 
         private static string Percent(float value) => Mathf.RoundToInt(value * 100f) + "%";

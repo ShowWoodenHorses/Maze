@@ -5,8 +5,11 @@ using Maze.Application.Save;
 using Maze.Composition;
 using Maze.Presentation.Map;
 using Maze.Presentation.UI;
+using Maze.Presentation.UI.Shapes;
+using Maze.Presentation.UI.Style;
 using Maze.Presentation.UI.Touch;
 using Maze.Presentation.Visual;
+using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -30,13 +33,15 @@ namespace Maze.Editor.Dev
         public const string BootstrapPath = ScenesFolder + "/Bootstrap.unity";
         public const string GamePath = ScenesFolder + "/Game.unity";
 
-        private static readonly Color Background = new Color(0.08f, 0.09f, 0.11f, 1f);
-        private static readonly Color Dim = new Color(0f, 0f, 0f, 0.65f);
-        private static readonly Color Panel = new Color(0.16f, 0.17f, 0.2f, 0.95f);
-        private static readonly Color ButtonColor = new Color(0.27f, 0.29f, 0.34f, 1f);
-        private static readonly Color TextColor = new Color(0.92f, 0.92f, 0.92f, 1f);
+        /// <summary>Ground of the menu screens (under the backdrop picture) and of the game camera before a level.</summary>
+        private static readonly Color Background = new Color(0.098f, 0.09f, 0.078f, 1f);
 
-        private static Font _font;
+        /// <summary>Over the paused level: pause, result, "Finish level?".</summary>
+        private static readonly Color Dim = new Color(0f, 0f, 0f, 0.62f);
+
+        private static readonly Color MapBackground = new Color(0.07f, 0.066f, 0.06f, 1f);
+
+        private static UiStyle _style;
 
         [MenuItem("Maze/Dev/Build Runtime Scenes")]
         public static void Build()
@@ -65,7 +70,8 @@ namespace Maze.Editor.Dev
             if (!AssetDatabase.IsValidFolder(ScenesFolder))
                 AssetDatabase.CreateFolder("Assets/_Project", "Scenes");
 
-            _font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            _style = AssetDatabase.LoadAssetAtPath<UiStyle>(UiStyleBuilder.StylePath);
+            if (_style == null || _style.Font == null) _style = UiStyleBuilder.Build();
 
             BuildGameScene();
             BuildBootstrapScene();
@@ -170,6 +176,7 @@ namespace Maze.Editor.Dev
             var parent = canvasObject.transform;
 
             SetReference(root, "_mainMenu", BuildMainMenu(parent));
+            SetReference(root, "_levelSelect", BuildLevelSelect(parent));
             SetReference(root, "_loading", BuildLoading(parent));
             SetReference(root, "_hud", BuildHud(parent));
             SetReference(root, "_pause", BuildPause(parent));
@@ -205,44 +212,165 @@ namespace Maze.Editor.Dev
             }
         }
 
+        /// <summary>
+        /// Main menu (mock-up, minimal): the title with an ornament line on the left, PLAY (accent) and SETTINGS under
+        /// it; total stars and kills at the bottom left; debug reset and the version at the bottom right.
+        /// </summary>
         private static MainMenuScreen BuildMainMenu(Transform parent)
         {
             var screen = Screen<MainMenuScreen>(parent, "MainMenuScreen", Background);
-            var column = Column(screen.transform, 520f, 24f);
-            Label(column, "Title", "MAZE", 72, FontStyle.Bold, 110f);
-            Label(column, "Subtitle", "Select a level", 28, FontStyle.Normal, 50f);
+            Backdrop(screen.transform);
+            var icons = UiIcons();
+            var area = SafeArea(screen.transform);
 
-            var list = new GameObject("LevelList", typeof(RectTransform));
-            list.transform.SetParent(column, false);
-            var listLayout = list.AddComponent<VerticalLayoutGroup>();
-            listLayout.spacing = 12f;
-            listLayout.childControlWidth = true;
-            listLayout.childControlHeight = true;
-            listLayout.childForceExpandHeight = false;
-            list.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            Text(area, "Title", "MAZE", 168f, true, TopLeft, TopLeft, new Vector2(160f, -150f), new Vector2(900f, 170f),
+                TextAlignmentOptions.TopLeft, spacing: 30f);
+            OrnamentLine(area, TopLeft, new Vector2(172f, -350f), 560f);
 
-            var template = Button(list.transform, "LevelButtonTemplate", "Level");
-            template.gameObject.SetActive(false);
-            var empty = Label(column, "EmptyLabel", "No levels yet: run Build / Sync in Maze > Level Designer.", 24,
-                FontStyle.Italic, 60f);
-            var summary = Label(column, "Summary", "", 24, FontStyle.Normal, 40f);
-            var settings = Button(column, "SettingsButton", "Settings");
-            var reset = Button(column, "DebugResetProgressButton", "Debug: reset progress");
+            var buttons = new GameObject("Buttons", typeof(RectTransform)).GetComponent<RectTransform>();
+            buttons.SetParent(area, false);
+            buttons.anchorMin = buttons.anchorMax = buttons.pivot = TopLeft;
+            buttons.anchoredPosition = new Vector2(168f, -420f);
+            buttons.sizeDelta = new Vector2(500f, 0f);
+            var layout = buttons.gameObject.AddComponent<VerticalLayoutGroup>();
+            layout.spacing = 24f;
+            layout.childControlWidth = layout.childControlHeight = true;
+            layout.childForceExpandHeight = false;
+            buttons.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            var play = TextButton(buttons, "PlayButton", "PLAY", true, icons.ChevronRight, 92f);
+            var settings = TextButton(buttons, "SettingsButton", "SETTINGS", false, icons.Settings, 92f);
 
-            SetReference(screen, "_levelList", list.GetComponent<RectTransform>());
-            SetReference(screen, "_levelButtonTemplate", template);
-            SetReference(screen, "_emptyLabel", empty);
-            SetReference(screen, "_summary", summary);
+            var summary = Row(area, "Summary", Vector2.zero, new Vector2(170f, 70f), 44f, Vector2.zero);
+            var stars = Counter(summary, "Stars", icons.StarFilled, out var starsText);
+            stars.transform.Find("Icon").GetComponent<Image>().color = _style.Accent;
+            Counter(summary, "Kills", icons.Skull, out var killsText);
+
+            var reset = LinkButton(area, "DebugResetProgressButton", "DEBUG: RESET PROGRESS", new Vector2(1f, 0f),
+                new Vector2(-64f, 100f), 380f);
+            var version = Text(area, "Version", "v0.1", 24f, true, new Vector2(1f, 0f), new Vector2(1f, 0f),
+                new Vector2(-64f, 52f), new Vector2(140f, 36f), TextAlignmentOptions.BottomRight, _style.MutedText, 6f);
+
+            SetReference(screen, "_playButton", play);
             SetReference(screen, "_settingsButton", settings);
+            SetReference(screen, "_summary", summary.gameObject);
+            SetReference(screen, "_stars", starsText);
+            SetReference(screen, "_kills", killsText);
+            SetReference(screen, "_version", version);
             SetReference(screen, "_debugResetProgressButton", reset);
             return screen;
+        }
+
+        /// <summary>
+        /// Level select (user's spec): back, title and total stars at the top; ten tiles in two rows of five (number,
+        /// padlock when locked, three star slots under completed ones); arrows, page diamonds and the range at the
+        /// bottom. The screen itself takes horizontal swipes.
+        /// </summary>
+        private static LevelSelectScreen BuildLevelSelect(Transform parent)
+        {
+            var screen = Screen<LevelSelectScreen>(parent, "LevelSelectScreen", Background);
+            Backdrop(screen.transform);
+            var icons = UiIcons();
+            var area = SafeArea(screen.transform);
+
+            var back = RoundButton(area, "BackButton", icons.ChevronLeft, TopLeft, new Vector2(100f, -90f), 84f, 36f);
+            Text(area, "Title", "SELECT LEVEL", 46f, true, TopLeft, new Vector2(0f, 0.5f), new Vector2(172f, -90f),
+                new Vector2(700f, 60f), TextAlignmentOptions.MidlineLeft, spacing: 16f);
+            var total = Row(area, "TotalStars", new Vector2(1f, 1f), new Vector2(-64f, -90f), 10f, new Vector2(1f, 0.5f));
+            var totalCounter = Counter(total, "Stars", icons.StarFilled, out var totalText);
+            totalCounter.transform.Find("Icon").GetComponent<Image>().color = _style.Accent;
+
+            var gridRect = Rect(area, "Grid", Center, new Vector2(0f, 30f), new Vector2(1058f, 414f));
+            var gridGroup = gridRect.gameObject.AddComponent<CanvasGroup>();
+            var grid = gridRect.gameObject.AddComponent<GridLayoutGroup>();
+            grid.cellSize = new Vector2(170f, 190f);
+            grid.spacing = new Vector2(52f, 34f);
+            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            grid.constraintCount = 5;
+            grid.childAlignment = TextAnchor.UpperCenter;
+            var tiles = new List<Object>();
+            for (var i = 0; i < LevelPages.PerPage; i++)
+                tiles.Add(LevelTileView(gridRect, i, icons));
+
+            var empty = Text(area, "EmptyLabel", "No levels yet: run Build / Sync in the Level Designer.", 30f, false,
+                Center, Center, new Vector2(0f, 30f), new Vector2(1200f, 60f), TextAlignmentOptions.Center, _style.MutedText);
+            empty.gameObject.SetActive(false);
+
+            var previous = RoundButton(area, "PreviousButton", icons.ChevronLeft, new Vector2(0.5f, 0f), new Vector2(-250f, 96f), 76f, 32f);
+            var next = RoundButton(area, "NextButton", icons.ChevronRight, new Vector2(0.5f, 0f), new Vector2(250f, 96f), 76f, 32f);
+            var dots = Row(area, "Dots", new Vector2(0.5f, 0f), new Vector2(-70f, 96f), 18f, new Vector2(0.5f, 0.5f));
+            dots.GetComponent<HorizontalLayoutGroup>().childAlignment = TextAnchor.MiddleCenter;
+            var dotTemplate = Shape(dots, "DotTemplate", Center, Vector2.zero, new Vector2(13f, 13f));
+            dotTemplate.rectTransform.localRotation = Quaternion.Euler(0f, 0f, 45f);
+            dotTemplate.Fill = Color.clear;
+            var dotLayout = dotTemplate.gameObject.AddComponent<LayoutElement>();
+            dotLayout.preferredWidth = dotLayout.preferredHeight = 13f;
+            var range = Text(area, "Range", "1 - 10", 30f, true, new Vector2(0.5f, 0f), new Vector2(0f, 0.5f),
+                new Vector2(40f, 96f), new Vector2(170f, 44f), TextAlignmentOptions.MidlineLeft, spacing: 8f);
+
+            SetReference(screen, "_style", _style);
+            SetReference(screen, "_backButton", back);
+            SetReference(screen, "_totalStars", totalText);
+            SetReferences(screen, "_tiles", tiles);
+            SetReference(screen, "_grid", gridGroup);
+            SetReference(screen, "_previousButton", previous);
+            SetReference(screen, "_nextButton", next);
+            SetReference(screen, "_range", range);
+            SetReference(screen, "_dots", dots);
+            SetReference(screen, "_dotTemplate", dotTemplate);
+            SetReference(screen, "_emptyLabel", empty);
+            return screen;
+        }
+
+        /// <summary>One tile (a grid cell): the button with the number and padlock, the star slots under it.</summary>
+        private static LevelTile LevelTileView(RectTransform grid, int index, UiIconSet icons)
+        {
+            var holder = new GameObject("Tile" + index, typeof(RectTransform), typeof(CanvasGroup));
+            holder.transform.SetParent(grid, false);
+
+            var body = Shape(holder.transform, "Button", Center, Vector2.zero, Vector2.zero, true);
+            body.CornerRadius = 3f;
+            var bodyRect = body.rectTransform;
+            bodyRect.anchorMin = new Vector2(0f, 0.22f);
+            bodyRect.anchorMax = Vector2.one;
+            bodyRect.offsetMin = bodyRect.offsetMax = Vector2.zero;
+            var number = Text(bodyRect, "Number", (index + 1).ToString(), 72f, true, Center, Center, new Vector2(0f, 10f),
+                new Vector2(160f, 90f), TextAlignmentOptions.Center);
+            var padlock = Icon(bodyRect, "Lock", icons.Lock, new Vector2(0.5f, 0f), new Vector2(0f, 26f), 30f);
+            var button = MakeButton(body, false, number, padlock);
+
+            var stars = new GameObject("Stars", typeof(RectTransform)).GetComponent<RectTransform>();
+            stars.SetParent(holder.transform, false);
+            stars.anchorMin = Vector2.zero;
+            stars.anchorMax = new Vector2(1f, 0.17f);
+            stars.offsetMin = stars.offsetMax = Vector2.zero;
+            var starsLayout = stars.gameObject.AddComponent<HorizontalLayoutGroup>();
+            starsLayout.spacing = 6f;
+            starsLayout.childAlignment = TextAnchor.MiddleCenter;
+            starsLayout.childControlWidth = starsLayout.childControlHeight = false;
+            var starImages = new List<Object>();
+            for (var i = 0; i < 3; i++)
+                starImages.Add(Icon(stars, "Star" + i, icons.Star, Center, Vector2.zero, 32f));
+
+            var tile = body.gameObject.AddComponent<LevelTile>();
+            SetReference(tile, "_style", _style);
+            SetReference(tile, "_button", button);
+            SetReference(tile, "_number", number);
+            SetReference(tile, "_lock", padlock.gameObject);
+            SetReference(tile, "_group", holder.GetComponent<CanvasGroup>());
+            SetReference(tile, "_stars", stars.gameObject);
+            SetReferences(tile, "_starImages", starImages);
+            SetReference(tile, "_star", icons.Star);
+            SetReference(tile, "_starFilled", icons.StarFilled);
+            return tile;
         }
 
         private static LoadingScreen BuildLoading(Transform parent)
         {
             var screen = Screen<LoadingScreen>(parent, "LoadingScreen", Background);
-            var column = Column(screen.transform, 600f, 0f);
-            Label(column, "Label", "Loading...", 40, FontStyle.Normal, 80f);
+            Backdrop(screen.transform);
+            Text(screen.transform, "Label", "LOADING", 40f, true, Center, Center, new Vector2(0f, 6f), new Vector2(600f, 60f),
+                TextAlignmentOptions.Center, spacing: 24f);
+            OrnamentLine(screen.transform, Center, new Vector2(-200f, -40f), 400f);
             return screen;
         }
 
@@ -260,45 +388,241 @@ namespace Maze.Editor.Dev
             damageFlash.raycastTarget = false;
             damageFlash.enabled = false;
 
-            var levelName = Label(screen.transform, "LevelName", "Level", 30, FontStyle.Bold, 60f);
-            levelName.alignment = TextAnchor.MiddleLeft;
-            var nameRect = levelName.rectTransform;
-            nameRect.anchorMin = nameRect.anchorMax = nameRect.pivot = new Vector2(0f, 1f);
-            nameRect.anchoredPosition = new Vector2(32f, -24f);
-            nameRect.sizeDelta = new Vector2(800f, 60f);
+            var icons = UiIcons();
+            var root = screen.transform;
 
-            var pause = Button(screen.transform, "PauseButton", "II");
-            var pauseRect = pause.GetComponent<RectTransform>();
-            pauseRect.anchorMin = pauseRect.anchorMax = pauseRect.pivot = new Vector2(1f, 1f);
-            pauseRect.anchoredPosition = new Vector2(-32f, -24f);
-            pauseRect.sizeDelta = new Vector2(90f, 90f);
+            // Top left: heart ring, level name and HP number, the arrow-tipped bar.
+            var heartRing = Shape(root, "HeartRing", TopLeft, new Vector2(82f, -78f), new Vector2(84f, 84f));
+            heartRing.Kind = UiShapeKind.Capsule;
+            heartRing.Fill = Fade(_style.Fill, 0.5f / _style.Fill.a);
+            var heartFill = Icon(heartRing.transform, "HeartFill", icons.HeartFill, Center, Vector2.zero, 42f);
+            heartFill.color = _style.Health;
+            Icon(heartRing.transform, "Heart", icons.Heart, Center, Vector2.zero, 42f);
 
-            var map = Button(screen.transform, "MapButton", "Map");
-            var mapRect = map.GetComponent<RectTransform>();
-            mapRect.anchorMin = mapRect.anchorMax = mapRect.pivot = new Vector2(1f, 1f);
-            mapRect.anchoredPosition = new Vector2(-138f, -24f);
-            mapRect.sizeDelta = new Vector2(120f, 90f);
+            var levelName = Text(root, "LevelName", "LEVEL", 30f, true, TopLeft, TopLeft, new Vector2(146f, -36f),
+                new Vector2(330f, 38f), TextAlignmentOptions.BottomLeft, spacing: 10f);
+            var health = Text(root, "Health", "100 / 100", 28f, false, TopLeft, new Vector2(1f, 1f), new Vector2(622f, -36f),
+                new Vector2(160f, 38f), TextAlignmentOptions.BottomRight);
 
-            var status = Label(screen.transform, "Status", "", 24, FontStyle.Normal, 120f);
-            status.alignment = TextAnchor.UpperLeft;
-            var statusRect = status.rectTransform;
-            statusRect.anchorMin = statusRect.anchorMax = statusRect.pivot = new Vector2(0f, 1f);
-            statusRect.anchoredPosition = new Vector2(32f, -90f);
-            statusRect.sizeDelta = new Vector2(800f, 120f);
+            var frame = Shape(root, "HealthFrame", TopLeft, new Vector2(146f + 238f, -94f), new Vector2(476f, 16f));
+            frame.Kind = UiShapeKind.Arrow;
+            frame.CornerRadius = 13f;
+            frame.Fill = Color.clear;
+            frame.StrokeWidth = _style.ThinStroke + 0.5f;
+            var bar = Rect(frame.transform, "Bar", Center, Vector2.zero, Vector2.zero);
+            bar.anchorMin = Vector2.zero;
+            bar.anchorMax = Vector2.one;
+            bar.offsetMin = new Vector2(4f, 4f);
+            bar.offsetMax = new Vector2(-15f, -4f);
+            var trail = BarFill(bar, "Trail", Fade(_style.Text, 0.6f));
+            var fill = BarFill(bar, "Fill", _style.Health);
 
-            var message = Label(screen.transform, "Message", "", 30, FontStyle.Bold, 60f);
-            var messageRect = message.rectTransform;
-            messageRect.anchorMin = messageRect.anchorMax = messageRect.pivot = new Vector2(0.5f, 0.5f);
-            messageRect.anchoredPosition = new Vector2(0f, -160f);
-            messageRect.sizeDelta = new Vector2(900f, 60f);
+            // Under it: fragments, zombies killed, keys.
+            var stats = Row(root, "Stats", TopLeft, new Vector2(52f, -128f), 30f);
+            var fragments = Counter(stats, "Fragments", icons.Fragment, out var fragmentsText);
+            var kills = Counter(stats, "Kills", icons.Skull, out var killsText);
+            var keys = new GameObject("Keys", typeof(RectTransform));
+            keys.transform.SetParent(stats, false);
+            var keysLayout = keys.AddComponent<HorizontalLayoutGroup>();
+            keysLayout.spacing = 6f;
+            keysLayout.childControlWidth = keysLayout.childControlHeight = true;
+            keysLayout.childForceExpandWidth = keysLayout.childForceExpandHeight = false;
+            var keyTemplate = new GameObject("KeyTemplate", typeof(RectTransform)).AddComponent<Image>();
+            keyTemplate.transform.SetParent(keys.transform, false);
+            keyTemplate.sprite = icons.Key;
+            keyTemplate.preserveAspect = true;
+            keyTemplate.raycastTarget = false;
+            var keyLayout = keyTemplate.gameObject.AddComponent<LayoutElement>();
+            keyLayout.preferredWidth = keyLayout.preferredHeight = 36f;
+            keyTemplate.gameObject.SetActive(false); // Cloned per carried key.
 
+            // Top centre: the message between diamonds.
+            var messageRow = Row(root, "MessageRow", new Vector2(0.5f, 1f), new Vector2(0f, -176f), 14f, new Vector2(0.5f, 1f));
+            messageRow.GetComponent<HorizontalLayoutGroup>().childAlignment = TextAnchor.MiddleCenter;
+            Ornament(messageRow, false);
+            var message = Text(messageRow, "Message", "", 32f, false, Center, Center, Vector2.zero, new Vector2(10f, 40f),
+                TextAlignmentOptions.Center);
+            message.textWrappingMode = TextWrappingModes.NoWrap;
+            var messageFitter = message.gameObject.AddComponent<LayoutElement>();
+            messageFitter.minHeight = 40f;
+            Ornament(messageRow, true);
+            messageRow.gameObject.SetActive(false); // Shown with a message.
+
+            // Top right: Map and Pause.
+            var pause = RoundButton(root, "PauseButton", icons.Pause, new Vector2(1f, 1f), new Vector2(-82f, -78f), 84f, 40f);
+            var map = RoundButton(root, "MapButton", icons.Map, new Vector2(1f, 1f), new Vector2(-190f, -78f), 84f, 40f);
+
+            // Bottom right (no on-screen controls): weapon slots, keys 1 and 2.
+            var weaponPanel = Rect(root, "WeaponPanel", new Vector2(1f, 0f), new Vector2(-40f - 158f, 40f + 55f),
+                new Vector2(316f, 110f));
+            var meleeSlot = WeaponSlot(weaponPanel, "MeleeSlot", new Vector2(-79f, 0f), "1", icons.Melee);
+            var rangedSlot = WeaponSlot(weaponPanel, "RangedSlot", new Vector2(79f, 0f), "2", icons.Ranged);
+
+            SetReference(screen, "_style", _style);
             SetReference(screen, "_levelName", levelName);
-            SetReference(screen, "_status", status);
+            SetReference(screen, "_healthText", health);
+            SetReference(screen, "_healthFrame", frame);
+            SetReference(screen, "_heartRing", heartRing);
+            SetReference(screen, "_healthFill", fill);
+            SetReference(screen, "_healthTrail", trail);
+            SetReference(screen, "_fragments", fragments);
+            SetReference(screen, "_fragmentsText", fragmentsText);
+            SetReference(screen, "_kills", kills);
+            SetReference(screen, "_killsText", killsText);
+            SetReference(screen, "_keys", keys.GetComponent<RectTransform>());
+            SetReference(screen, "_keyTemplate", keyTemplate);
+            SetReference(screen, "_messageRow", messageRow.gameObject);
             SetReference(screen, "_message", message);
             SetReference(screen, "_pauseButton", pause);
             SetReference(screen, "_mapButton", map);
+            SetReference(screen, "_weaponPanel", weaponPanel.gameObject);
+            SetReference(screen, "_meleeSlot", meleeSlot);
+            SetReference(screen, "_rangedSlot", rangedSlot);
             SetReference(screen, "_damageFlash", damageFlash);
             return screen;
+        }
+
+        private static readonly Vector2 TopLeft = new Vector2(0f, 1f);
+
+        /// <summary>A bar part filling its parent from the left; the screen sets its right anchor.</summary>
+        private static RectTransform BarFill(RectTransform bar, string name, Color color)
+        {
+            var shape = Shape(bar, name, Center, Vector2.zero, Vector2.zero);
+            shape.StrokeWidth = 0f;
+            shape.Fill = color;
+            var rect = shape.rectTransform;
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.offsetMin = rect.offsetMax = Vector2.zero;
+            return rect;
+        }
+
+        /// <summary>Icon and a number, side by side (in a row layout).</summary>
+        private static GameObject Counter(Transform row, string name, Sprite icon, out TMP_Text text)
+        {
+            var go = new GameObject(name, typeof(RectTransform));
+            go.transform.SetParent(row, false);
+            var layout = go.AddComponent<HorizontalLayoutGroup>();
+            layout.spacing = 8f;
+            layout.childAlignment = TextAnchor.MiddleLeft;
+            layout.childControlWidth = layout.childControlHeight = true;
+            layout.childForceExpandWidth = layout.childForceExpandHeight = false;
+            var image = Icon(go.transform, "Icon", icon, Center, Vector2.zero, 34f);
+            var imageLayout = image.gameObject.AddComponent<LayoutElement>();
+            imageLayout.preferredWidth = imageLayout.preferredHeight = 34f;
+            text = Text(go.transform, "Text", "0/0", 28f, false, Center, Center, Vector2.zero, new Vector2(10f, 34f),
+                TextAlignmentOptions.MidlineLeft);
+            text.textWrappingMode = TextWrappingModes.NoWrap;
+            return go;
+        }
+
+        /// <summary>A line and a diamond (mirrored after the text when <paramref name="after"/>).</summary>
+        private static void Ornament(Transform row, bool after)
+        {
+            var line = Shape(row, after ? "LineAfter" : "LineBefore", Center, Vector2.zero, new Vector2(96f, 1.5f));
+            line.StrokeWidth = 0f;
+            line.Fill = Fade(_style.Line, 0.6f);
+            var lineLayout = line.gameObject.AddComponent<LayoutElement>();
+            lineLayout.preferredWidth = 96f;
+            lineLayout.preferredHeight = 1.5f;
+
+            var holder = new GameObject(after ? "DiamondAfter" : "DiamondBefore", typeof(RectTransform));
+            holder.transform.SetParent(row, false);
+            var holderLayout = holder.AddComponent<LayoutElement>();
+            holderLayout.preferredWidth = holderLayout.preferredHeight = 16f;
+            var diamond = Shape(holder.transform, "Diamond", Center, Vector2.zero, new Vector2(11f, 11f));
+            diamond.rectTransform.localRotation = Quaternion.Euler(0f, 0f, 45f);
+            diamond.Fill = Color.clear;
+            diamond.Stroke = _style.Accent;
+            if (after) line.transform.SetAsLastSibling();
+        }
+
+        /// <summary>A row of children laid out left to right, sized by its content.</summary>
+        private static Transform Row(Transform parent, string name, Vector2 anchor, Vector2 position, float spacing,
+            Vector2? pivot = null)
+        {
+            var rect = Rect(parent, name, anchor, position, new Vector2(10f, 40f));
+            rect.pivot = pivot ?? new Vector2(0f, 1f);
+            var layout = rect.gameObject.AddComponent<HorizontalLayoutGroup>();
+            layout.spacing = spacing;
+            layout.childAlignment = TextAnchor.MiddleLeft;
+            layout.childControlWidth = layout.childControlHeight = true;
+            layout.childForceExpandWidth = layout.childForceExpandHeight = false;
+            var fitter = rect.gameObject.AddComponent<ContentSizeFitter>();
+            fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            return rect;
+        }
+
+        private static HudWeaponSlot WeaponSlot(Transform parent, string name, Vector2 position, string hint, Sprite fallback)
+        {
+            var frame = Shape(parent, name, Center, position, new Vector2(150f, 110f));
+            frame.CornerRadius = 3f;
+            var icon = Icon(frame.transform, "Icon", fallback, Center, new Vector2(0f, 8f), 84f);
+            var ammo = Text(frame.transform, "Ammo", "", 24f, false, new Vector2(1f, 0f), new Vector2(1f, 0f),
+                new Vector2(-10f, 8f), new Vector2(110f, 28f), TextAlignmentOptions.BottomRight);
+            var hintText = Text(frame.transform, "Hint", hint, 22f, true, TopLeft, TopLeft, new Vector2(10f, -6f),
+                new Vector2(30f, 26f), TextAlignmentOptions.TopLeft);
+            var reload = BarFill((RectTransform)frame.transform, "Reload", _style.Accent);
+            reload.offsetMin = new Vector2(6f, 4f);
+            reload.anchorMax = new Vector2(0f, 0f);
+            reload.offsetMax = new Vector2(0f, 7f);
+            reload.gameObject.SetActive(false);
+
+            var slot = frame.gameObject.AddComponent<HudWeaponSlot>();
+            SetReference(slot, "_style", _style);
+            SetReference(slot, "_frame", frame);
+            SetReference(slot, "_icon", icon);
+            SetReference(slot, "_fallbackIcon", fallback);
+            SetReference(slot, "_ammo", ammo);
+            SetReference(slot, "_hint", hintText);
+            SetReference(slot, "_reload", reload);
+            return slot;
+        }
+
+        /// <summary>Text placed by anchor and pivot (no layout).</summary>
+        private static TMP_Text Text(Transform parent, string name, string text, float size, bool bold, Vector2 anchor,
+            Vector2 pivot, Vector2 position, Vector2 box, TextAlignmentOptions alignment, Color? color = null,
+            float spacing = 0f)
+        {
+            var rect = Rect(parent, name, anchor, position, box);
+            rect.pivot = pivot;
+            var label = rect.gameObject.AddComponent<TextMeshProUGUI>();
+            label.font = bold ? _style.BoldFont : _style.Font;
+            label.text = text;
+            label.fontSize = size;
+            label.characterSpacing = spacing;
+            label.alignment = alignment;
+            label.color = color ?? _style.Text;
+            label.raycastTarget = false;
+            return label;
+        }
+
+        /// <summary>Round icon button (HUD, back buttons).</summary>
+        private static UiButton RoundButton(Transform parent, string name, Sprite icon, Vector2 anchor, Vector2 position,
+            float diameter, float iconSize)
+        {
+            var body = Shape(parent, name, anchor, position, new Vector2(diameter, diameter), true);
+            body.Kind = UiShapeKind.Capsule;
+            var image = Icon(body.transform, "Icon", icon, Center, Vector2.zero, iconSize);
+            return MakeButton(body, false, image);
+        }
+
+        /// <summary>Turns a shape into a <see cref="UiButton"/> painting it and its content by state.</summary>
+        private static UiButton MakeButton(UiShape body, bool accent, params Graphic[] content)
+        {
+            body.raycastTarget = true;
+            var button = body.gameObject.AddComponent<UiButton>();
+            button.transition = Selectable.Transition.None;
+            button.targetGraphic = body;
+            SetReference(button, "_style", _style);
+            SetReference(button, "_body", body);
+            SetReferences(button, "_content", content.Cast<Object>().ToList());
+            var serialized = new SerializedObject(button);
+            serialized.FindProperty("_accent").boolValue = accent;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            button.Repaint();
+            return button;
         }
 
         /// <summary>
@@ -318,7 +642,6 @@ namespace Maze.Editor.Dev
             canvas.sortingOrder = -1;
             go.AddComponent<GraphicRaycaster>();
             var controls = go.AddComponent<TouchControls>();
-            var knobSprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd");
 
             // Layout editing: under the controls, over the application UI (the canvas goes on top then).
             var editBackground = new GameObject("EditBackground", typeof(RectTransform));
@@ -341,47 +664,197 @@ namespace Maze.Editor.Dev
             zone.offsetMin = zone.offsetMax = Vector2.zero;
             zone.gameObject.AddComponent<Image>().color = Color.clear; // Catches touches, draws nothing visible.
 
-            var ring = Rect(zone, "Ring", Vector2.zero, new Vector2(230f, 230f), new Vector2(240f, 240f));
-            var ringImage = ring.gameObject.AddComponent<Image>();
-            ringImage.sprite = knobSprite;
-            ringImage.color = new Color(1f, 1f, 1f, 0.2f); // Its touches go up to the zone (the stick) or a layout handle.
-            var knob = Rect(ring, "Knob", new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(110f, 110f));
-            var knobImage = knob.gameObject.AddComponent<Image>();
-            knobImage.sprite = knobSprite;
-            knobImage.color = new Color(1f, 1f, 1f, 0.75f);
-            knobImage.raycastTarget = false;
+            // Stick: thin ring, an inner hairline, the knob, aim-mode diamonds around (TouchStickMarks).
+            var ringShape = Shape(zone, "Ring", Vector2.zero, new Vector2(230f, 230f), new Vector2(240f, 240f), true);
+            ringShape.Kind = UiShapeKind.Capsule;
+            ringShape.Fill = Fade(_style.Fill, 0.35f / _style.Fill.a);
+            var ring = ringShape.rectTransform; // Its touches go up to the zone (the stick) or a layout handle.
+            var hairline = SectorShape(ring, "Hairline", Center, Vector2.zero, 106.5f, 108f, 0f, 360f);
+            hairline.StrokeWidth = 0f;
+            hairline.Fill = Fade(_style.Line, 0.25f);
+            var knobShape = Shape(ring, "Knob", Center, Vector2.zero, new Vector2(92f, 92f));
+            knobShape.Kind = UiShapeKind.Capsule;
+            knobShape.Fill = _style.PressedFill;
+            var knob = knobShape.rectTransform;
+            var marks = ring.gameObject.AddComponent<TouchStickMarks>();
+            var markShapes = new List<Object>();
+            for (var i = 0; i < 8; i++)
+            {
+                var angle = i * 45f * Mathf.Deg2Rad;
+                var mark = Shape(ring, "Mark" + i, Center, new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * 136f,
+                    new Vector2(12f, 12f));
+                mark.rectTransform.localRotation = Quaternion.Euler(0f, 0f, 45f);
+                mark.Fill = Color.clear;
+                markShapes.Add(mark);
+            }
+
+            SetReference(marks, "_style", _style);
+            SetReferences(marks, "_marks", markShapes);
 
             var stick = zone.gameObject.AddComponent<TouchStick>();
             SetReference(stick, "_ring", ring);
             SetReference(stick, "_knob", knob);
+            SetReference(stick, "_marks", marks);
             var serializedStick = new SerializedObject(stick);
             serializedStick.FindProperty("_restFromCorner").vector2Value = new Vector2(230f, 230f);
             serializedStick.FindProperty("_radius").floatValue = 100f;
             serializedStick.ApplyModifiedPropertiesWithoutUndo();
 
-            // In TouchElement order.
-            var mirrored = new List<RectTransform>
-            {
-                zone,
-                TouchButton(content, "Attack", "<Gamepad>/buttonSouth", new Vector2(-200f, 200f), 170f, 32, knobSprite),
-                TouchButton(content, "Use", "<Gamepad>/buttonWest", new Vector2(-200f, 410f), 110f, 26, knobSprite),
-                TouchButton(content, "Melee", "<Gamepad>/leftShoulder", new Vector2(-400f, 140f), 100f, 24, knobSprite),
-                TouchButton(content, "Ranged", "<Gamepad>/rightShoulder", new Vector2(-400f, 300f), 100f, 24, knobSprite),
-            };
+            var (cluster, clusterRoot, use) = BuildAttackCluster(content);
+
+            // In TouchElement order (Melee and Ranged are part of the Attack cluster).
+            var mirrored = new List<RectTransform> { zone, clusterRoot, use };
 
             var editor = BuildTouchLayoutEditor(go.transform, controls, editBackground);
             AddLayoutHandle(ring.gameObject, TouchElement.Stick, editor);
-            for (var i = 1; i < mirrored.Count; i++)
-                AddLayoutHandle(mirrored[i].gameObject, (TouchElement)i, editor);
+            AddLayoutHandle(clusterRoot.gameObject, TouchElement.Attack, editor);
+            AddLayoutHandle(use.gameObject, TouchElement.Use, editor);
 
             SetReference(controls, "_canvas", canvas);
             SetReference(controls, "_group", group);
             SetReference(controls, "_stick", stick);
             SetReference(controls, "_area", content);
             SetReference(controls, "_editor", editor);
+            SetReference(controls, "_cluster", cluster);
+            SetReference(controls, "_marks", marks);
             SetReferences(controls, "_mirrored", mirrored.Cast<Object>().ToList());
             go.SetActive(false); // The HUD shows it on touch devices.
             return controls;
+        }
+
+        private static readonly Vector2 Center = new Vector2(0.5f, 0.5f);
+        private static readonly Vector2 BottomRight = new Vector2(1f, 0f);
+
+        /// <summary>
+        /// The attack cluster (design mock-up): Attack is a quarter circle (radius 175, 0.1 mm units) with its right
+        /// angle at the cluster's bottom-right corner, 4 mm from the safe area's corner; Ranged (top) and Melee (left)
+        /// are ring sectors 190–270 along its arc with magazine ticks outside and the reload arc inside; Use is a circle
+        /// apart on the left. Content (shapes, icons) is anchored at the corner and mirrored for left-handers.
+        /// </summary>
+        private static (TouchAttackCluster Cluster, RectTransform Root, RectTransform Use) BuildAttackCluster(RectTransform area)
+        {
+            const float radius = 175f, inner = 190f, outer = 270f, rangedStart = 93f, meleeStart = 137f, sweep = 40f;
+            const float tickRadius = 284f, size = 300f;
+            var icons = UiIcons();
+
+            var root = Rect(area, "AttackCluster", BottomRight, new Vector2(-40f - size * 0.5f, 40f + size * 0.5f),
+                new Vector2(size, size));
+            var content = Rect(root, "Content", Center, Vector2.zero, Vector2.zero);
+            Stretch(content);
+
+            var attack = SectorShape(content, "AttackButton", BottomRight, Vector2.zero, 0f, radius, 90f, 90f, true);
+            AddTouchButton(attack.gameObject, "<Gamepad>/buttonSouth");
+            var arc = SectorShape(content, "AttackHairline", BottomRight, Vector2.zero, radius - 11.5f, radius - 10f, 90f, 90f);
+            arc.StrokeWidth = 0f;
+            arc.Fill = Fade(_style.Line, 0.25f);
+            Icon(content, "AttackIcon", icons.Attack, BottomRight, new Vector2(-74f, 74f), 62f);
+
+            var ranged = SectorShape(content, "RangedButton", BottomRight, Vector2.zero, inner, outer, rangedStart, sweep, true);
+            AddTouchButton(ranged.gameObject, "<Gamepad>/rightShoulder");
+            var melee = SectorShape(content, "MeleeButton", BottomRight, Vector2.zero, inner, outer, meleeStart, sweep, true);
+            AddTouchButton(melee.gameObject, "<Gamepad>/leftShoulder");
+            var rangedIcon = Icon(content, "RangedIcon", icons.Ranged, BottomRight, Polar(rangedStart + sweep * 0.5f, 230f), 86f);
+            var meleeIcon = Icon(content, "MeleeIcon", icons.Melee, BottomRight, Polar(meleeStart + sweep * 0.5f, 230f), 80f);
+
+            var reload = SectorShape(content, "Reload", BottomRight, Vector2.zero, 180f, 184.5f, rangedStart, sweep);
+            reload.StrokeWidth = 0f;
+            reload.Fill = _style.Accent;
+            reload.enabled = false;
+
+            var ticks = new List<Object>();
+            for (var i = 0; i < 12; i++)
+            {
+                var tick = Shape(content, "Tick" + i, BottomRight, Vector2.zero, new Vector2(3.5f, 13f));
+                tick.StrokeWidth = 0f;
+                tick.gameObject.SetActive(false);
+                ticks.Add(tick);
+            }
+
+            // Use: a circle on the left of the cluster, its own layout element.
+            var useShape = Shape(area, "UseButton", BottomRight, new Vector2(-395f, 85f), new Vector2(110f, 110f), true);
+            useShape.Kind = UiShapeKind.Capsule;
+            AddTouchButton(useShape.gameObject, "<Gamepad>/buttonWest");
+            var useIcon = Icon(useShape.transform, "Icon", icons.Door, Center, Vector2.zero, 54f);
+
+            var cluster = root.gameObject.AddComponent<TouchAttackCluster>();
+            SetReference(cluster, "_style", _style);
+            SetReference(cluster, "_content", content);
+            SetReference(cluster, "_attack", attack);
+            SetReference(cluster, "_melee", melee);
+            SetReference(cluster, "_ranged", ranged);
+            SetReference(cluster, "_meleeIcon", meleeIcon);
+            SetReference(cluster, "_rangedIcon", rangedIcon);
+            SetReference(cluster, "_reload", reload);
+            SetReferences(cluster, "_ticks", ticks);
+            SetReference(cluster, "_use", useShape);
+            SetReference(cluster, "_useIcon", useIcon);
+            SetReference(cluster, "_doorIcon", icons.Door);
+            SetReference(cluster, "_pickUpIcon", icons.PickUp);
+            SetReference(cluster, "_meleeIconFallback", icons.Melee);
+            SetReference(cluster, "_rangedIconFallback", icons.Ranged);
+            var serialized = new SerializedObject(cluster);
+            serialized.FindProperty("_center").vector2Value = Vector2.zero;
+            serialized.FindProperty("_tickRadius").floatValue = tickRadius;
+            serialized.FindProperty("_rangedStart").floatValue = rangedStart;
+            serialized.FindProperty("_rangedSweep").floatValue = sweep;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            return (cluster, root, useShape.rectTransform);
+        }
+
+        private static void AddTouchButton(GameObject target, string controlPath)
+        {
+            target.AddComponent<OnScreenButton>().controlPath = controlPath;
+            target.AddComponent<TouchPress>();
+        }
+
+        private static Vector2 Polar(float degrees, float distance)
+        {
+            var a = degrees * Mathf.Deg2Rad;
+            return new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * distance;
+        }
+
+        private static Color Fade(Color color, float alpha)
+        {
+            color.a *= alpha;
+            return color;
+        }
+
+        private static UiIconSet UiIcons()
+        {
+            var icons = AssetDatabase.LoadAssetAtPath<UiIconSet>(UiIconsBuilder.SetPath);
+            return icons != null ? icons : UiIconsBuilder.Build();
+        }
+
+        /// <summary>A shape in the standard look (dark fill, light outline); clicks only when <paramref name="raycast"/>.</summary>
+        private static UiShape Shape(Transform parent, string name, Vector2 anchor, Vector2 position, Vector2 size,
+            bool raycast = false)
+        {
+            var rect = Rect(parent, name, anchor, position, size);
+            var shape = rect.gameObject.AddComponent<UiShape>();
+            _style.Paint(shape);
+            shape.raycastTarget = raycast;
+            return shape;
+        }
+
+        /// <summary>A sector whose centre is at <paramref name="center"/> from the anchor; its rect is its bounds.</summary>
+        private static UiShape SectorShape(Transform parent, string name, Vector2 anchor, Vector2 center, float inner,
+            float outer, float start, float sweep, bool raycast = false)
+        {
+            var bounds = UiShapeMath.SectorBounds(inner, outer, start, sweep);
+            var shape = Shape(parent, name, anchor, center + bounds.center, bounds.size, raycast);
+            shape.SetSector(new Vector2(-bounds.xMin / bounds.width, -bounds.yMin / bounds.height), inner, outer, start, sweep);
+            return shape;
+        }
+
+        private static Image Icon(Transform parent, string name, Sprite sprite, Vector2 anchor, Vector2 position, float size)
+        {
+            var rect = Rect(parent, name, anchor, position, new Vector2(size, size));
+            var image = rect.gameObject.AddComponent<Image>();
+            image.sprite = sprite;
+            image.preserveAspect = true;
+            image.raycastTarget = false;
+            image.color = _style.Text;
+            return image;
         }
 
         private static void AddLayoutHandle(GameObject target, TouchElement element, TouchLayoutEditor editor)
@@ -405,23 +878,30 @@ namespace Maze.Editor.Dev
             Stretch(panel.GetComponent<RectTransform>());
             panel.AddComponent<SafeAreaFitter>();
 
-            var bar = Column(panel.transform, 640f, 8f, Panel);
-            var barRect = (RectTransform)bar;
-            barRect.anchorMin = barRect.anchorMax = barRect.pivot = new Vector2(0.5f, 1f);
-            barRect.anchoredPosition = new Vector2(0f, -10f);
-            var barLayout = bar.GetComponent<VerticalLayoutGroup>();
-            barLayout.padding = new RectOffset(16, 16, 12, 12);
+            // Accent frame around the selected control; placed by the editor every frame.
+            var selection = Shape(panel.transform, "Selection", Center, Vector2.zero, new Vector2(100f, 100f));
+            selection.Fill = Color.clear;
+            selection.Stroke = _style.Accent;
+            selection.StrokeWidth = 3f;
+            selection.CornerRadius = 10f;
 
-            Label(bar, "Hint", "Drag the stick and buttons. Tap one to resize it.", 24, FontStyle.Normal, 32f);
+            var bar = PanelBox(panel.transform, "Toolbar", new Vector2(0.5f, 1f), new Vector2(0f, -12f), 660f,
+                new RectOffset(22, 22, 14, 16), 8f);
+
+            Text(bar, "Hint", "Drag the stick and buttons. Tap one to resize it.", 22f, false, Center, Center, Vector2.zero,
+                new Vector2(600f, 30f), TextAlignmentOptions.Center, _style.MutedText).gameObject
+                .AddComponent<LayoutElement>().preferredHeight = 30f;
 
             var row = new GameObject("Row", typeof(RectTransform));
             row.transform.SetParent(bar, false);
             var rowLayout = row.AddComponent<HorizontalLayoutGroup>();
             rowLayout.spacing = 16f;
+            rowLayout.childAlignment = TextAnchor.MiddleLeft;
             rowLayout.childControlWidth = true;
             rowLayout.childControlHeight = true;
             rowLayout.childForceExpandWidth = false;
-            row.AddComponent<LayoutElement>().preferredHeight = 80f;
+            rowLayout.childForceExpandHeight = false;
+            row.AddComponent<LayoutElement>().preferredHeight = 72f;
 
             var sizeColumn = new GameObject("Size", typeof(RectTransform));
             sizeColumn.transform.SetParent(row.transform, false);
@@ -430,21 +910,20 @@ namespace Maze.Editor.Dev
             sizeLayout.childControlHeight = true;
             sizeLayout.childForceExpandHeight = false;
             sizeColumn.AddComponent<LayoutElement>().flexibleWidth = 1f;
-            var (sizeLabel, size) = SliderRow(sizeColumn.transform, "Size");
-            sizeLabel.fontSize = 24;
-            var handle = (RectTransform)size.transform.Find("Handle Slide Area/Handle");
-            if (handle != null) handle.sizeDelta = new Vector2(36f, 0f);
+            var sizeLabel = Text(sizeColumn.transform, "SizeLabel", "Size", 22f, true, Center, Center, Vector2.zero,
+                new Vector2(200f, 28f), TextAlignmentOptions.MidlineLeft, spacing: 2f);
+            sizeLabel.gameObject.AddComponent<LayoutElement>().preferredHeight = 28f;
+            var size = StyledSlider(sizeColumn.transform, "SizeSlider", 300f, 34f);
+            size.gameObject.AddComponent<LayoutElement>().preferredHeight = 34f;
 
-            var reset = Button(row.transform, "ResetLayoutButton", "Reset layout");
-            var done = Button(row.transform, "DoneButton", "Done");
+            var reset = TextButton(row.transform, "ResetLayoutButton", "RESET", false, null, 60f, 22f);
+            var done = TextButton(row.transform, "DoneButton", "DONE", true, null, 60f, 22f);
             foreach (var button in new[] { reset, done })
-            {
-                button.GetComponent<LayoutElement>().preferredWidth = 170f;
-                button.GetComponentInChildren<Text>().fontSize = 26;
-            }
+                button.GetComponent<LayoutElement>().preferredWidth = 140f;
 
             var editor = panel.AddComponent<TouchLayoutEditor>();
             SetReference(editor, "_controls", controls);
+            SetReference(editor, "_selection", selection.rectTransform);
             SetReference(editor, "_background", background);
             SetReference(editor, "_size", size);
             SetReference(editor, "_sizeLabel", sizeLabel);
@@ -452,21 +931,6 @@ namespace Maze.Editor.Dev
             SetReference(editor, "_doneButton", done);
             panel.SetActive(false);
             return editor;
-        }
-
-        private static RectTransform TouchButton(Transform parent, string label, string controlPath, Vector2 fromBottomRight,
-            float size, int fontSize, Sprite sprite)
-        {
-            var rect = Rect(parent, label + "Button", new Vector2(1f, 0f), fromBottomRight, new Vector2(size, size));
-            var image = rect.gameObject.AddComponent<Image>();
-            image.sprite = sprite;
-            image.color = new Color(1f, 1f, 1f, 0.5f);
-            rect.gameObject.AddComponent<OnScreenButton>().controlPath = controlPath;
-
-            var text = Label(rect, "Text", label, fontSize, FontStyle.Bold, size);
-            text.horizontalOverflow = HorizontalWrapMode.Overflow;
-            Stretch(text.rectTransform);
-            return rect;
         }
 
         private static RectTransform Rect(Transform parent, string name, Vector2 anchor, Vector2 position, Vector2 size)
@@ -480,13 +944,16 @@ namespace Maze.Editor.Dev
             return rect;
         }
 
+
         private static ConfirmExitScreen BuildConfirmExit(Transform parent)
         {
             var screen = Screen<ConfirmExitScreen>(parent, "ConfirmExitScreen", Dim);
-            var column = Column(screen.transform, 520f, 16f, Panel);
-            Label(column, "Title", "Finish level?", 44, FontStyle.Bold, 90f);
-            var yes = Button(column, "YesButton", "Yes");
-            var no = Button(column, "NoButton", "No");
+            var panel = PanelBox(screen.transform, "Panel", Center, Vector2.zero, 660f, new RectOffset(56, 56, 52, 56), 34f);
+            SetReference(screen.GetComponent<UiAppear>(), "_panel", panel);
+            Heading(panel, "Title", "FINISH LEVEL?", 54f);
+            var row = ButtonRow(panel, "Buttons", 20f, 86f);
+            var no = TextButton(row, "NoButton", "NO", false, null, 86f);
+            var yes = TextButton(row, "YesButton", "YES", true, null, 86f);
 
             SetReference(screen, "_yesButton", yes);
             SetReference(screen, "_noButton", no);
@@ -496,87 +963,113 @@ namespace Maze.Editor.Dev
         private static PauseScreen BuildPause(Transform parent)
         {
             var screen = Screen<PauseScreen>(parent, "PauseScreen", Dim);
-            var column = Column(screen.transform, 480f, 16f, Panel);
-            Label(column, "Title", "Paused", 48, FontStyle.Bold, 90f);
-            var resume = Button(column, "ResumeButton", "Resume");
-            var retry = Button(column, "RetryButton", "Restart level");
-            var settings = Button(column, "SettingsButton", "Settings");
-            var exit = Button(column, "ExitButton", "Exit to menu");
+            var icons = UiIcons();
+            var panel = PanelBox(screen.transform, "Panel", Center, Vector2.zero, 660f, new RectOffset(56, 56, 48, 56), 18f);
+            SetReference(screen.GetComponent<UiAppear>(), "_panel", panel);
+            Heading(panel, "Title", "PAUSED", 58f);
+            var resume = TextButton(panel, "ResumeButton", "RESUME", true, icons.Resume, 86f);
+            var retry = TextButton(panel, "RetryButton", "RESTART LEVEL", false, icons.Retry, 86f);
+            var settings = TextButton(panel, "SettingsButton", "SETTINGS", false, icons.Settings, 86f);
+            var exit = TextButton(panel, "ExitButton", "EXIT TO MENU", false, icons.Exit, 86f);
 
-            var debugGroup = new GameObject("DebugGroup", typeof(RectTransform));
-            debugGroup.transform.SetParent(column, false);
-            var debugLayout = debugGroup.AddComponent<HorizontalLayoutGroup>();
-            debugLayout.spacing = 12f;
-            debugLayout.childControlWidth = true;
-            debugLayout.childControlHeight = true;
-            debugGroup.AddComponent<LayoutElement>().preferredHeight = 60f;
-            var complete = Button(debugGroup.transform, "DebugCompleteButton", "Debug: complete");
-            var fail = Button(debugGroup.transform, "DebugFailButton", "Debug: fail");
+            var debugGroup = ButtonRow(panel, "DebugGroup", 14f, 56f);
+            var complete = TextButton(debugGroup, "DebugCompleteButton", "DEBUG: COMPLETE", false, null, 56f, 20f);
+            var fail = TextButton(debugGroup, "DebugFailButton", "DEBUG: FAIL", false, null, 56f, 20f);
 
             SetReference(screen, "_resumeButton", resume);
             SetReference(screen, "_retryButton", retry);
             SetReference(screen, "_settingsButton", settings);
             SetReference(screen, "_exitButton", exit);
-            SetReference(screen, "_debugGroup", debugGroup);
+            SetReference(screen, "_debugGroup", debugGroup.gameObject);
             SetReference(screen, "_debugCompleteButton", complete);
             SetReference(screen, "_debugFailButton", fail);
             return screen;
         }
 
-        private static Toggle MapToggle(Transform parent, string name, string text, float x)
-        {
-            var toggle = ToggleRow(parent, name, text);
-            var rect = (RectTransform)toggle.transform;
-            rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(0f, 1f);
-            rect.anchoredPosition = new Vector2(x, -42f);
-            rect.sizeDelta = new Vector2(210f, 54f);
-            toggle.GetComponentInChildren<Text>().horizontalOverflow = HorizontalWrapMode.Overflow;
-            return toggle;
-        }
-
+        /// <summary>
+        /// Result (mock-up): the title and level name, three star slots with what each is for, a hairline, then Menu,
+        /// Retry and Next (shown after a win when there is a next level).
+        /// </summary>
         private static ResultScreen BuildResult(Transform parent)
         {
             var screen = Screen<ResultScreen>(parent, "ResultScreen", Dim);
-            var column = Column(screen.transform, 480f, 16f, Panel);
-            var title = Label(column, "Title", "Level complete", 48, FontStyle.Bold, 90f);
-            var details = Label(column, "Details", "", 28, FontStyle.Normal, 170f);
-            details.alignment = TextAnchor.UpperLeft;
-            var retry = Button(column, "RetryButton", "Play again");
-            var menu = Button(column, "MenuButton", "Main menu");
+            var icons = UiIcons();
+            var panel = PanelBox(screen.transform, "Panel", Center, Vector2.zero, 940f, new RectOffset(64, 64, 52, 56), 24f);
+            SetReference(screen.GetComponent<UiAppear>(), "_panel", panel);
+            var title = Heading(panel, "Title", "LEVEL COMPLETE", 62f);
+            var levelName = Text(panel, "LevelName", "", 28f, true, Center, Center, Vector2.zero, new Vector2(600f, 34f),
+                TextAlignmentOptions.Center, _style.MutedText, 10f);
+            levelName.gameObject.AddComponent<LayoutElement>().preferredHeight = 34f;
 
+            var starsRow = new GameObject("Stars", typeof(RectTransform));
+            starsRow.transform.SetParent(panel, false);
+            var starsLayout = starsRow.AddComponent<HorizontalLayoutGroup>();
+            starsLayout.spacing = 40f;
+            starsLayout.childAlignment = TextAnchor.MiddleCenter;
+            starsLayout.childControlWidth = starsLayout.childControlHeight = true;
+            starsLayout.childForceExpandWidth = starsLayout.childForceExpandHeight = false;
+            starsRow.AddComponent<LayoutElement>().preferredHeight = 170f;
+            var stars = new List<Object>();
+            var labels = new List<Object>();
+            for (var i = 0; i < 3; i++)
+            {
+                var column = new GameObject("Star" + i, typeof(RectTransform));
+                column.transform.SetParent(starsRow.transform, false);
+                var columnLayout = column.AddComponent<VerticalLayoutGroup>();
+                columnLayout.spacing = 14f;
+                columnLayout.childAlignment = TextAnchor.UpperCenter;
+                columnLayout.childControlWidth = columnLayout.childControlHeight = true;
+                columnLayout.childForceExpandWidth = columnLayout.childForceExpandHeight = false;
+                var columnElement = column.AddComponent<LayoutElement>();
+                columnElement.preferredWidth = 230f;
+                var holder = new GameObject("Holder", typeof(RectTransform));
+                holder.transform.SetParent(column.transform, false);
+                var holderLayout = holder.AddComponent<LayoutElement>();
+                holderLayout.preferredWidth = holderLayout.preferredHeight = 108f;
+                stars.Add(Icon(holder.transform, "Icon", icons.Star, Center, Vector2.zero, 108f));
+                var label = Text(column.transform, "Label", "", 26f, true, Center, Center, Vector2.zero, new Vector2(230f, 34f),
+                    TextAlignmentOptions.Center, spacing: 6f);
+                label.gameObject.AddComponent<LayoutElement>().preferredHeight = 34f;
+                labels.Add(label);
+            }
+
+            Hairline(panel, 0.2f);
+            var row = ButtonRow(panel, "Buttons", 18f, 86f);
+            var menu = TextButton(row, "MenuButton", "MENU", false, icons.Menu, 86f);
+            var retry = TextButton(row, "RetryButton", "RETRY", false, icons.Retry, 86f);
+            var next = TextButton(row, "NextButton", "NEXT", true, icons.ChevronRight, 86f);
+
+            SetReference(screen, "_style", _style);
             SetReference(screen, "_title", title);
-            SetReference(screen, "_details", details);
+            SetReference(screen, "_levelName", levelName);
+            SetReferences(screen, "_stars", stars);
+            SetReferences(screen, "_starLabels", labels);
+            SetReference(screen, "_star", icons.Star);
+            SetReference(screen, "_starFilled", icons.StarFilled);
             SetReference(screen, "_retryButton", retry);
             SetReference(screen, "_menuButton", menu);
+            SetReference(screen, "_nextButton", next);
             return screen;
         }
 
         /// <summary>ТЗ §60: fullscreen map; the texture (one pixel per cell) is set by the level's MapPresenter.</summary>
         private static MapScreen BuildMap(Transform parent)
         {
-            var screen = Screen<MapScreen>(parent, "MapScreen", Background);
+            var screen = Screen<MapScreen>(parent, "MapScreen", MapBackground);
+            var icons = UiIcons();
 
-            var caption = Label(screen.transform, "Caption", "Map", 30, FontStyle.Bold, 60f);
-            var captionRect = caption.rectTransform;
-            captionRect.anchorMin = new Vector2(0f, 1f);
-            captionRect.anchorMax = new Vector2(1f, 1f);
-            captionRect.pivot = new Vector2(0.5f, 1f);
-            captionRect.anchoredPosition = new Vector2(0f, -24f);
-            captionRect.sizeDelta = new Vector2(-300f, 60f);
-
-            var close = Button(screen.transform, "CloseButton", "Close");
-            var closeRect = close.GetComponent<RectTransform>();
-            closeRect.anchorMin = closeRect.anchorMax = closeRect.pivot = new Vector2(1f, 1f);
-            closeRect.anchoredPosition = new Vector2(-32f, -24f);
-            closeRect.sizeDelta = new Vector2(180f, 90f);
+            var caption = Text(screen.transform, "Caption", "MAP", 40f, true, new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f),
+                new Vector2(0f, -90f), new Vector2(900f, 56f), TextAlignmentOptions.Center, spacing: 14f);
+            var close = RoundButton(screen.transform, "CloseButton", icons.Close, new Vector2(1f, 1f), new Vector2(-100f, -90f),
+                84f, 34f);
 
             // Area below the caption; the image keeps the level's aspect ratio inside it.
             var area = new GameObject("MapArea", typeof(RectTransform));
             area.transform.SetParent(screen.transform, false);
             var areaRect = area.GetComponent<RectTransform>();
             Stretch(areaRect);
-            areaRect.offsetMin = new Vector2(32f, 32f);
-            areaRect.offsetMax = new Vector2(-32f, -130f);
+            areaRect.offsetMin = new Vector2(40f, 40f);
+            areaRect.offsetMax = new Vector2(-40f, -160f);
 
             var imageObject = new GameObject("MapImage", typeof(RectTransform));
             imageObject.transform.SetParent(area.transform, false);
@@ -586,14 +1079,14 @@ namespace Maze.Editor.Dev
             fitter.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
             fitter.aspectRatio = 1f;
 
-            // Icon switches at the top left (the caption is centred).
-            var showPlayer = MapToggle(screen.transform, "ShowPlayer", "Player", 32f);
-            var showFragments = MapToggle(screen.transform, "ShowFragments", "Map pieces", 252f);
+            // Icon switches at the top left (the caption is centred). Direct children named "<name>Toggle" (tests).
+            var showPlayer = LabeledSwitch(screen.transform, "ShowPlayer", "PLAYER", TopLeft, new Vector2(60f, -90f));
+            var showFragments = LabeledSwitch(screen.transform, "ShowFragments", "MAP PIECES", TopLeft, new Vector2(330f, -90f));
 
-            var icons = AssetDatabase.LoadAssetAtPath<MapIconSet>(MapIconsBuilder.SetPath);
-            if (icons == null) icons = MapIconsBuilder.Build();
+            var mapIcons = AssetDatabase.LoadAssetAtPath<MapIconSet>(MapIconsBuilder.SetPath);
+            if (mapIcons == null) mapIcons = MapIconsBuilder.Build();
 
-            SetReference(screen, "_icons", icons);
+            SetReference(screen, "_icons", mapIcons);
             SetReference(screen, "_showPlayer", showPlayer);
             SetReference(screen, "_showFragments", showFragments);
             SetReference(screen, "_image", image);
@@ -604,9 +1097,8 @@ namespace Maze.Editor.Dev
         }
 
         /// <summary>
-        /// Small FPS text on the left of the safe area, under the HUD status and above the stick (corners may be cut off
-        /// on some devices), over every screen; ignores touches. Hidden until
-        /// the setting switches it on.
+        /// Small FPS text on the left of the safe area, under the HUD counters and above the stick (corners may be cut
+        /// off on some devices), over every screen; ignores touches. Hidden until the setting switches it on.
         /// </summary>
         private static FpsCounter BuildFpsCounter(Transform parent)
         {
@@ -615,16 +1107,9 @@ namespace Maze.Editor.Dev
             Stretch(area.GetComponent<RectTransform>());
             area.AddComponent<SafeAreaFitter>();
 
-            var label = Label(area.transform, "Text", "FPS -", 22, FontStyle.Bold, 30f);
-            label.alignment = TextAnchor.UpperLeft;
-            label.color = new Color(1f, 1f, 1f, 0.85f);
-            var shadow = label.gameObject.AddComponent<Shadow>();
-            shadow.effectColor = new Color(0f, 0f, 0f, 0.8f);
-            var rect = label.rectTransform;
-            // Left, under the HUD status (ends at -210) and above the stick zone; inset like the HUD texts.
-            rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(0f, 1f);
-            rect.anchoredPosition = new Vector2(32f, -220f);
-            rect.sizeDelta = new Vector2(200f, 30f);
+            // Left, under the HUD counters (they end at about -165) and above the stick zone.
+            var label = Text(area.transform, "Text", "FPS -", 22f, true, TopLeft, TopLeft, new Vector2(56f, -182f),
+                new Vector2(200f, 28f), TextAlignmentOptions.TopLeft, _style.MutedText, 4f);
 
             var counter = area.AddComponent<FpsCounter>();
             SetReference(counter, "_text", label);
@@ -633,62 +1118,95 @@ namespace Maze.Editor.Dev
         }
 
         /// <summary>
-        /// Settings: an overlay over the main menu or the pause screen. Tabs Controls / Shooting / Other (SettingsTab
-        /// order), one page at a time; the pages area keeps the height of the tallest page.
+        /// Settings (mock-up): an opaque screen over the main menu or the pause. Back and the title at the top; tabs
+        /// Controls / Shooting / Other (SettingsTab order) with the open one underlined in the accent; rows "caption —
+        /// control (value)"; Reset tab at the bottom right.
         /// </summary>
         private static SettingsScreen BuildSettings(Transform parent)
         {
-            var screen = Screen<SettingsScreen>(parent, "SettingsScreen", Dim);
-            // Opaque: the main menu text must not show through.
-            var column = Column(screen.transform, 680f, 6f, new Color(Panel.r, Panel.g, Panel.b, 1f));
-            Label(column, "Title", "Settings", 40, FontStyle.Bold, 56f);
+            var screen = Screen<SettingsScreen>(parent, "SettingsScreen", Background);
+            Backdrop(screen.transform);
+            var icons = UiIcons();
+            var area = SafeArea(screen.transform);
 
-            var tabs = Row(column, "Tabs", 64f);
-            var tabButtons = new List<Object>
+            var back = RoundButton(area, "BackButton", icons.ChevronLeft, TopLeft, new Vector2(100f, -90f), 84f, 36f);
+            Text(area, "Title", "SETTINGS", 46f, true, TopLeft, new Vector2(0f, 0.5f), new Vector2(172f, -90f),
+                new Vector2(600f, 60f), TextAlignmentOptions.MidlineLeft, spacing: 16f);
+
+            var column = new GameObject("Content", typeof(RectTransform)).GetComponent<RectTransform>();
+            column.SetParent(area, false);
+            column.anchorMin = column.anchorMax = column.pivot = new Vector2(0.5f, 1f);
+            column.anchoredPosition = new Vector2(0f, -170f);
+            column.sizeDelta = new Vector2(1180f, 0f);
+            var columnLayout = column.gameObject.AddComponent<VerticalLayoutGroup>();
+            columnLayout.childControlWidth = columnLayout.childControlHeight = true;
+            columnLayout.childForceExpandHeight = false;
+            column.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            var tabs = new GameObject("Tabs", typeof(RectTransform));
+            tabs.transform.SetParent(column, false);
+            var tabsLayout = tabs.AddComponent<HorizontalLayoutGroup>();
+            tabsLayout.spacing = 48f;
+            tabsLayout.childAlignment = TextAnchor.LowerLeft;
+            tabsLayout.childControlWidth = tabsLayout.childControlHeight = true;
+            tabsLayout.childForceExpandWidth = tabsLayout.childForceExpandHeight = false;
+            tabs.AddComponent<LayoutElement>().preferredHeight = 66f;
+            var tabButtons = new List<Object>();
+            var tabLabels = new List<Object>();
+            var tabUnderlines = new List<Object>();
+            foreach (var (name, caption) in new[] { ("ControlsTab", "CONTROLS"), ("ShootingTab", "SHOOTING"), ("OtherTab", "OTHER") })
             {
-                Button(tabs, "ControlsTab", "Controls"),
-                Button(tabs, "ShootingTab", "Shooting"),
-                Button(tabs, "OtherTab", "Other"),
-            };
+                var (button, label, underline) = TabButton(tabs.transform, name, caption);
+                tabButtons.Add(button);
+                tabLabels.Add(label);
+                tabUnderlines.Add(underline);
+            }
+
+            Hairline(column, 0.2f);
 
             var pages = new GameObject("Pages", typeof(RectTransform));
             pages.transform.SetParent(column, false);
             var pagesLayout = pages.AddComponent<VerticalLayoutGroup>();
-            pagesLayout.childControlWidth = true;
-            pagesLayout.childControlHeight = true;
+            pagesLayout.childControlWidth = pagesLayout.childControlHeight = true;
             pagesLayout.childForceExpandHeight = false;
             pagesLayout.padding = new RectOffset(0, 0, 10, 0);
-            pages.AddComponent<LayoutElement>().minHeight = 562f; // The Controls page with the top padding.
 
             var controlsPage = Page(pages.transform, "ControlsPage");
-            var (deadZoneLabel, deadZone) = SliderRow(controlsPage, "DeadZone");
-            var (sensitivityLabel, sensitivity) = SliderRow(controlsPage, "Sensitivity");
-            var (sizeLabel, size) = SliderRow(controlsPage, "Size");
-            var (opacityLabel, opacity) = SliderRow(controlsPage, "Opacity");
-            var floating = ToggleRow(controlsPage, "FloatingStick", "Floating stick (appears under the thumb)");
-            var leftHanded = ToggleRow(controlsPage, "LeftHanded", "Left-handed layout");
-            var editLayout = Button(controlsPage, "EditLayoutButton", "Edit button layout");
+            var (deadZone, deadZoneLabel) = SliderSetting(controlsPage, "DeadZone", "Stick dead zone");
+            var (sensitivity, sensitivityLabel) = SliderSetting(controlsPage, "Sensitivity", "Stick response");
+            var (size, sizeLabel) = SliderSetting(controlsPage, "Size", "Controls size");
+            var (opacity, opacityLabel) = SliderSetting(controlsPage, "Opacity", "Controls opacity");
+            var floating = SwitchSetting(controlsPage, "FloatingStick", "Floating stick (appears under the thumb)");
+            var leftHanded = SwitchSetting(controlsPage, "LeftHanded", "Left-handed layout");
+            var editLayout = ButtonSetting(controlsPage, "EditLayoutButton", "Button layout", "EDIT");
 
             var shootingPage = Page(pages.transform, "ShootingPage");
-            var aimMode = Button(shootingPage, "AimModeButton", "Aim");
-            var aimAssist = ToggleRow(shootingPage, "AimAssist", "Auto-aim at zombies");
+            var aimRow = SettingRow(shootingPage, "AimMode", "Aim directions");
+            var aimButtons = new List<Object>();
+            foreach (var (name, caption) in new[] { ("AimFreeButton", "FREE"), ("AimEightButton", "EIGHT"), ("AimFourButton", "FOUR") })
+            {
+                var segment = TextButton(aimRow, name, caption, false, null, 60f, 24f);
+                segment.GetComponent<LayoutElement>().preferredWidth = 150f;
+                aimButtons.Add(segment);
+            }
+
+            var aimAssist = SwitchSetting(shootingPage, "AimAssist", "Auto-aim at zombies");
 
             var otherPage = Page(pages.transform, "OtherPage");
-            var (musicLabel, music) = SliderRow(otherPage, "MusicVolume");
-            var (sfxLabel, sfx) = SliderRow(otherPage, "SfxVolume");
-            var showFps = ToggleRow(otherPage, "ShowFps", "Show FPS counter");
+            var (music, musicLabel) = SliderSetting(otherPage, "MusicVolume", "Music");
+            var (sfx, sfxLabel) = SliderSetting(otherPage, "SfxVolume", "Sound");
+            var showFps = SwitchSetting(otherPage, "ShowFps", "Show FPS counter");
 
-            var buttons = new GameObject("Buttons", typeof(RectTransform));
-            buttons.transform.SetParent(column, false);
-            var buttonsLayout = buttons.AddComponent<HorizontalLayoutGroup>();
-            buttonsLayout.spacing = 12f;
-            buttonsLayout.childControlWidth = true;
-            buttonsLayout.childControlHeight = true;
-            buttons.AddComponent<LayoutElement>().preferredHeight = 72f;
-            var reset = Button(buttons.transform, "ResetButton", "Reset to defaults");
-            var back = Button(buttons.transform, "BackButton", "Back");
+            var reset = TextButton(area, "ResetButton", "RESET TAB", false, icons.Retry, 76f, 26f);
+            var resetRect = (RectTransform)reset.transform;
+            resetRect.anchorMin = resetRect.anchorMax = resetRect.pivot = new Vector2(1f, 0f);
+            resetRect.anchoredPosition = new Vector2(-64f, 56f);
+            resetRect.sizeDelta = new Vector2(300f, 76f);
 
+            SetReference(screen, "_style", _style);
             SetReferences(screen, "_tabButtons", tabButtons);
+            SetReferences(screen, "_tabLabels", tabLabels);
+            SetReferences(screen, "_tabUnderlines", tabUnderlines);
             SetReferences(screen, "_pages", new List<Object> { controlsPage.gameObject, shootingPage.gameObject, otherPage.gameObject });
             SetReference(screen, "_editLayoutButton", editLayout);
             SetReference(screen, "_deadZone", deadZone);
@@ -701,8 +1219,7 @@ namespace Maze.Editor.Dev
             SetReference(screen, "_opacityLabel", opacityLabel);
             SetReference(screen, "_floatingStick", floating);
             SetReference(screen, "_leftHanded", leftHanded);
-            SetReference(screen, "_aimModeButton", aimMode);
-            SetReference(screen, "_aimModeLabel", aimMode.GetComponentInChildren<Text>());
+            SetReferences(screen, "_aimButtons", aimButtons);
             SetReference(screen, "_aimAssist", aimAssist);
             SetReference(screen, "_musicVolume", music);
             SetReference(screen, "_musicVolumeLabel", musicLabel);
@@ -717,11 +1234,14 @@ namespace Maze.Editor.Dev
         private static ErrorScreen BuildError(Transform parent)
         {
             var screen = Screen<ErrorScreen>(parent, "ErrorScreen", Background);
-            var column = Column(screen.transform, 900f, 16f, Panel);
-            Label(column, "Title", "Something went wrong", 44, FontStyle.Bold, 80f);
-            var message = Label(column, "Message", "Error", 24, FontStyle.Normal, 220f);
-            message.alignment = TextAnchor.UpperLeft;
-            var back = Button(column, "BackButton", "Back to menu");
+            Backdrop(screen.transform);
+            var panel = PanelBox(screen.transform, "Panel", Center, Vector2.zero, 980f, new RectOffset(60, 60, 52, 56), 24f);
+            SetReference(screen.GetComponent<UiAppear>(), "_panel", panel);
+            Heading(panel, "Title", "SOMETHING WENT WRONG", 46f);
+            var message = Text(panel, "Message", "Error", 26f, false, Center, Center, Vector2.zero, new Vector2(860f, 220f),
+                TextAlignmentOptions.TopLeft, _style.MutedText);
+            message.gameObject.AddComponent<LayoutElement>().preferredHeight = 220f;
+            var back = TextButton(panel, "BackButton", "BACK TO MENU", true, icons: null, height: 86f);
 
             SetReference(screen, "_message", message);
             SetReference(screen, "_backButton", back);
@@ -737,43 +1257,182 @@ namespace Maze.Editor.Dev
             Stretch(go.GetComponent<RectTransform>());
             go.AddComponent<Image>().color = background;
             var screen = go.AddComponent<T>();
+            go.AddComponent<UiAppear>(); // Fades in when shown (adds its CanvasGroup).
             go.SetActive(false); // ScreenRouter shows the right one.
             return screen;
         }
 
-        private static Transform Column(Transform parent, float width, float spacing, Color? background = null)
+        /// <summary>The menu background picture (faint maze, torch glow, vignette), covering the screen.</summary>
+        private static void Backdrop(Transform screen)
         {
-            var go = new GameObject("Column", typeof(RectTransform));
-            go.transform.SetParent(parent, false);
-            var rect = go.GetComponent<RectTransform>();
-            rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(0.5f, 0.5f);
-            rect.sizeDelta = new Vector2(width, 0f);
+            var rect = Rect(screen, "Backdrop", Center, Vector2.zero, new Vector2(1920f, 1080f));
+            rect.SetAsFirstSibling();
+            var image = rect.gameObject.AddComponent<RawImage>();
+            image.texture = UiIcons().Backdrop;
+            image.raycastTarget = false;
+            var fitter = rect.gameObject.AddComponent<AspectRatioFitter>();
+            fitter.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent;
+            fitter.aspectRatio = 16f / 9f;
+        }
 
-            if (background.HasValue)
-                go.AddComponent<Image>().color = background.Value;
+        /// <summary>A child following the safe area (notches, rounded corners).</summary>
+        private static RectTransform SafeArea(Transform screen)
+        {
+            var rect = new GameObject("SafeArea", typeof(RectTransform)).GetComponent<RectTransform>();
+            rect.SetParent(screen, false);
+            Stretch(rect);
+            rect.gameObject.AddComponent<SafeAreaFitter>();
+            return rect;
+        }
 
-            var layout = go.AddComponent<VerticalLayoutGroup>();
+        /// <summary>A diamond in the accent, a line, a diamond in the line colour; <paramref name="start"/> is the left end.</summary>
+        private static void OrnamentLine(Transform parent, Vector2 anchor, Vector2 start, float width)
+        {
+            var holder = Rect(parent, "Ornament", anchor, start, new Vector2(width, 16f));
+            holder.pivot = new Vector2(0f, 0.5f);
+            holder.anchoredPosition = start;
+            var left = Shape(holder, "DiamondLeft", new Vector2(0f, 0.5f), new Vector2(7f, 0f), new Vector2(11f, 11f));
+            left.rectTransform.localRotation = Quaternion.Euler(0f, 0f, 45f);
+            left.Fill = Color.clear;
+            left.Stroke = _style.Accent;
+            var line = Shape(holder, "Line", new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(width - 44f, 1.5f));
+            line.StrokeWidth = 0f;
+            line.Fill = Fade(_style.Line, 0.6f);
+            var right = Shape(holder, "DiamondRight", new Vector2(1f, 0.5f), new Vector2(-7f, 0f), new Vector2(11f, 11f));
+            right.rectTransform.localRotation = Quaternion.Euler(0f, 0f, 45f);
+            right.Fill = Color.clear;
+        }
+
+        /// <summary>
+        /// A panel (dark fill, thin outline, a diamond on the top and bottom edges) laying its children out top to bottom,
+        /// as tall as they need. The anchor is also the pivot.
+        /// </summary>
+        private static Transform PanelBox(Transform parent, string name, Vector2 anchor, Vector2 position, float width,
+            RectOffset padding, float spacing)
+        {
+            var shape = Shape(parent, name, anchor, position, new Vector2(width, 100f));
+            shape.rectTransform.pivot = anchor;
+            shape.Fill = new Color(0.055f, 0.051f, 0.047f, 0.93f);
+            shape.Stroke = Fade(_style.Line, 0.8f);
+            shape.CornerRadius = 2f;
+            shape.raycastTarget = true; // Clicks on the panel do not fall through.
+            var layout = shape.gameObject.AddComponent<VerticalLayoutGroup>();
+            layout.padding = padding;
             layout.spacing = spacing;
-            layout.padding = background.HasValue ? new RectOffset(32, 32, 32, 32) : new RectOffset();
             layout.childAlignment = TextAnchor.UpperCenter;
-            layout.childControlWidth = true;
-            layout.childControlHeight = true;
+            layout.childControlWidth = layout.childControlHeight = true;
             layout.childForceExpandHeight = false;
-            go.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-            return go.transform;
+            shape.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            foreach (var top in new[] { true, false })
+            {
+                var diamond = Shape(shape.transform, top ? "DiamondTop" : "DiamondBottom", new Vector2(0.5f, top ? 1f : 0f),
+                    Vector2.zero, new Vector2(13f, 13f));
+                diamond.rectTransform.localRotation = Quaternion.Euler(0f, 0f, 45f);
+                diamond.Fill = Background;
+                diamond.Stroke = Fade(_style.Line, 0.9f);
+                diamond.gameObject.AddComponent<LayoutElement>().ignoreLayout = true;
+            }
+
+            return shape.transform;
+        }
+
+        private static TMP_Text Heading(Transform parent, string name, string text, float size)
+        {
+            var label = Text(parent, name, text, size, true, Center, Center, Vector2.zero, new Vector2(800f, size * 1.3f),
+                TextAlignmentOptions.Center, spacing: size * 0.25f);
+            label.gameObject.AddComponent<LayoutElement>().preferredHeight = size * 1.3f;
+            return label;
+        }
+
+        private static void Hairline(Transform parent, float alpha)
+        {
+            var line = Shape(parent, "Hairline", Center, Vector2.zero, new Vector2(100f, 1.5f));
+            line.StrokeWidth = 0f;
+            line.Fill = Fade(_style.Line, alpha);
+            line.gameObject.AddComponent<LayoutElement>().preferredHeight = 1.5f;
         }
 
         /// <summary>Equal-width children side by side.</summary>
-        private static Transform Row(Transform parent, string name, float height)
+        private static Transform ButtonRow(Transform parent, string name, float spacing, float height)
         {
             var go = new GameObject(name, typeof(RectTransform));
             go.transform.SetParent(parent, false);
             var layout = go.AddComponent<HorizontalLayoutGroup>();
-            layout.spacing = 8f;
-            layout.childControlWidth = true;
-            layout.childControlHeight = true;
+            layout.spacing = spacing;
+            layout.childControlWidth = layout.childControlHeight = true;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = false;
             go.AddComponent<LayoutElement>().preferredHeight = height;
             return go.transform;
+        }
+
+        /// <summary>
+        /// A button with a caption (bold, spaced) and an optional icon on the right; in the accent for the main action.
+        /// Sized by its layout (preferred height <paramref name="height"/>).
+        /// </summary>
+        private static UiButton TextButton(Transform parent, string name, string text, bool accent, Sprite icons,
+            float height, float fontSize = 30f)
+        {
+            var body = Shape(parent, name, Center, Vector2.zero, new Vector2(300f, height), true);
+            body.CornerRadius = 2f;
+            body.gameObject.AddComponent<LayoutElement>().preferredHeight = height;
+            var label = Text(body.transform, "Label", text, fontSize, true, Center, Center, Vector2.zero, Vector2.zero,
+                icons != null ? TextAlignmentOptions.MidlineLeft : TextAlignmentOptions.Center, spacing: fontSize * 0.45f);
+            label.textWrappingMode = TextWrappingModes.NoWrap;
+            var labelRect = label.rectTransform;
+            Stretch(labelRect);
+            if (icons == null) return MakeButton(body, accent, label);
+
+            labelRect.offsetMin = new Vector2(30f, 0f);
+            labelRect.offsetMax = new Vector2(-70f, 0f);
+            var icon = Icon(body.transform, "Icon", icons, new Vector2(1f, 0.5f), new Vector2(-38f, 0f), fontSize * 1.1f);
+            return MakeButton(body, accent, label, icon);
+        }
+
+        /// <summary>Small underlined text that works as a button (debug actions).</summary>
+        private static Button LinkButton(Transform parent, string name, string text, Vector2 anchor, Vector2 position, float width)
+        {
+            var label = Text(parent, name, text, 22f, true, anchor, new Vector2(1f, 0f), position, new Vector2(width, 34f),
+                TextAlignmentOptions.BottomRight, _style.MutedText, 4f);
+            label.fontStyle = FontStyles.Underline;
+            label.raycastTarget = true;
+            var button = label.gameObject.AddComponent<Button>();
+            button.targetGraphic = label;
+            var colors = button.colors;
+            colors.highlightedColor = new Color(1.15f, 1.15f, 1.15f, 1f);
+            colors.pressedColor = new Color(0.8f, 0.8f, 0.8f, 1f);
+            button.colors = colors;
+            return button;
+        }
+
+        /// <summary>A settings tab: caption and an accent underline (shown for the open tab).</summary>
+        private static (Button Button, TMP_Text Label, GameObject Underline) TabButton(Transform parent, string name, string text)
+        {
+            var hit = Shape(parent, name, Center, Vector2.zero, new Vector2(240f, 66f), true);
+            hit.Fill = Color.clear;
+            hit.StrokeWidth = 0f;
+            var element = hit.gameObject.AddComponent<LayoutElement>();
+            element.preferredWidth = 240f;
+            element.preferredHeight = 66f;
+            var label = Text(hit.transform, "Label", text, 30f, true, Center, Center, Vector2.zero, Vector2.zero,
+                TextAlignmentOptions.MidlineLeft, _style.MutedText, 12f);
+            Stretch(label.rectTransform);
+            var underline = Shape(hit.transform, "Underline", new Vector2(0f, 0f), Vector2.zero, new Vector2(0f, 3f));
+            var underlineRect = underline.rectTransform;
+            underlineRect.anchorMin = new Vector2(0f, 0f);
+            underlineRect.anchorMax = new Vector2(1f, 0f);
+            underlineRect.pivot = new Vector2(0.5f, 0f);
+            underlineRect.anchoredPosition = Vector2.zero;
+            underlineRect.sizeDelta = new Vector2(-50f, 3f);
+            underlineRect.offsetMin = new Vector2(0f, 0f);
+            underlineRect.offsetMax = new Vector2(-60f, 3f);
+            underline.StrokeWidth = 0f;
+            underline.Fill = _style.Accent;
+            var button = hit.gameObject.AddComponent<Button>();
+            button.transition = Selectable.Transition.None;
+            button.targetGraphic = hit;
+            return (button, label, underline.gameObject);
         }
 
         /// <summary>A settings page: rows top to bottom.</summary>
@@ -782,7 +1441,6 @@ namespace Maze.Editor.Dev
             var go = new GameObject(name, typeof(RectTransform));
             go.transform.SetParent(parent, false);
             var layout = go.AddComponent<VerticalLayoutGroup>();
-            layout.spacing = 6f;
             layout.childAlignment = TextAnchor.UpperCenter;
             layout.childControlWidth = true;
             layout.childControlHeight = true;
@@ -790,81 +1448,158 @@ namespace Maze.Editor.Dev
             return go.transform;
         }
 
-        private static Text Label(Transform parent, string name, string text, int size, FontStyle style, float height)
+        /// <summary>A settings row: the caption on the left; controls added to it go to the right. A faint line under it.</summary>
+        private static Transform SettingRow(Transform page, string name, string caption)
         {
-            var go = new GameObject(name, typeof(RectTransform));
-            go.transform.SetParent(parent, false);
-            var label = go.AddComponent<Text>();
-            label.font = _font;
-            label.text = text;
-            label.fontSize = size;
-            label.fontStyle = style;
-            label.color = TextColor;
-            label.alignment = TextAnchor.MiddleCenter;
-            label.raycastTarget = false;
-            go.AddComponent<LayoutElement>().preferredHeight = height;
-            return label;
+            var row = new GameObject(name + "Row", typeof(RectTransform));
+            row.transform.SetParent(page, false);
+            var layout = row.AddComponent<HorizontalLayoutGroup>();
+            layout.spacing = 16f;
+            layout.childAlignment = TextAnchor.MiddleLeft;
+            layout.childControlWidth = layout.childControlHeight = true;
+            layout.childForceExpandWidth = layout.childForceExpandHeight = false;
+            row.AddComponent<LayoutElement>().preferredHeight = 80f;
+
+            var label = Text(row.transform, "Caption", caption, 30f, false, Center, Center, Vector2.zero, new Vector2(10f, 40f),
+                TextAlignmentOptions.MidlineLeft);
+            label.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1f;
+
+            var line = Shape(row.transform, "Line", new Vector2(0.5f, 0f), Vector2.zero, new Vector2(0f, 1f));
+            line.rectTransform.anchorMin = new Vector2(0f, 0f);
+            line.rectTransform.anchorMax = new Vector2(1f, 0f);
+            line.rectTransform.sizeDelta = new Vector2(0f, 1f);
+            line.StrokeWidth = 0f;
+            line.Fill = Fade(_style.Line, 0.1f);
+            line.gameObject.AddComponent<LayoutElement>().ignoreLayout = true;
+            return row.transform;
         }
 
-        private static Button Button(Transform parent, string name, string text)
+        /// <summary>Slider and its value on the right (the screen writes the value text).</summary>
+        private static (Slider Slider, TMP_Text Value) SliderSetting(Transform page, string name, string caption)
         {
-            var go = new GameObject(name, typeof(RectTransform));
-            go.transform.SetParent(parent, false);
-            var image = go.AddComponent<Image>();
-            image.color = ButtonColor;
-            var button = go.AddComponent<Button>();
-            button.targetGraphic = image;
-            go.AddComponent<LayoutElement>().preferredHeight = 72f;
+            var row = SettingRow(page, name, caption);
+            var slider = StyledSlider(row, name + "Slider", 480f, 40f);
+            var element = slider.gameObject.AddComponent<LayoutElement>();
+            element.preferredWidth = 480f;
+            element.preferredHeight = 40f;
+            var value = Text(row, name + "Value", "0%", 28f, true, Center, Center, Vector2.zero, new Vector2(110f, 40f),
+                TextAlignmentOptions.MidlineRight);
+            value.gameObject.AddComponent<LayoutElement>().preferredWidth = 110f;
+            return (slider, value);
+        }
 
-            var label = Label(go.transform, "Text", text, 30, FontStyle.Normal, 72f);
-            Stretch(label.rectTransform);
+        private static Toggle SwitchSetting(Transform page, string name, string caption)
+        {
+            var row = SettingRow(page, name, caption);
+            var toggle = Switch(row, name + "Toggle");
+            var element = toggle.gameObject.AddComponent<LayoutElement>();
+            element.preferredWidth = 88f;
+            element.preferredHeight = 44f;
+            return toggle;
+        }
+
+        private static UiButton ButtonSetting(Transform page, string name, string caption, string text)
+        {
+            var row = SettingRow(page, name, caption);
+            var button = TextButton(row, name, text, false, null, 60f, 24f);
+            button.GetComponent<LayoutElement>().preferredWidth = 180f;
             return button;
         }
 
-        private static DefaultControls.Resources ControlResources() => new DefaultControls.Resources
+        /// <summary>A thin track, the accent fill and a diamond handle (uGUI Slider, look only here).</summary>
+        private static Slider StyledSlider(Transform parent, string name, float width, float height)
         {
-            standard = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd"),
-            background = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Background.psd"),
-            knob = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd"),
-            checkmark = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Checkmark.psd"),
-        };
+            var root = Rect(parent, name, Center, Vector2.zero, new Vector2(width, height));
+            var track = Shape(root, "Track", Center, Vector2.zero, Vector2.zero, true);
+            var trackRect = track.rectTransform;
+            trackRect.anchorMin = new Vector2(0f, 0.5f);
+            trackRect.anchorMax = new Vector2(1f, 0.5f);
+            trackRect.sizeDelta = new Vector2(0f, 2f);
+            track.StrokeWidth = 0f;
+            track.Fill = Fade(_style.Line, 0.35f);
+            track.HitPadding = height * 0.5f; // The thin track is easy to tap.
 
-        /// <summary>A caption (its text is set by the screen) above a slider.</summary>
-        private static (Text, Slider) SliderRow(Transform parent, string name)
-        {
-            var label = Label(parent, name + "Label", name, 26, FontStyle.Normal, 38f);
-            label.alignment = TextAnchor.MiddleLeft;
-            var go = DefaultControls.CreateSlider(ControlResources());
-            go.name = name + "Slider";
-            go.transform.SetParent(parent, false);
-            go.AddComponent<LayoutElement>().preferredHeight = 40f;
-            return (label, go.GetComponent<Slider>());
+            var fillArea = Rect(root, "Fill Area", Center, Vector2.zero, Vector2.zero);
+            fillArea.anchorMin = new Vector2(0f, 0.5f);
+            fillArea.anchorMax = new Vector2(1f, 0.5f);
+            fillArea.sizeDelta = new Vector2(0f, 5f);
+            var fill = Shape(fillArea, "Fill", Center, Vector2.zero, Vector2.zero);
+            fill.rectTransform.anchorMin = Vector2.zero;
+            fill.rectTransform.anchorMax = new Vector2(0f, 1f);
+            fill.rectTransform.sizeDelta = Vector2.zero;
+            fill.StrokeWidth = 0f;
+            fill.Fill = _style.Accent;
+
+            var handleArea = Rect(root, "Handle Slide Area", Center, Vector2.zero, Vector2.zero);
+            Stretch(handleArea);
+            // The slider stretches its handle over the area's height: the diamond is a fixed-size child of it.
+            var handle = Rect(handleArea, "Handle", Center, Vector2.zero, new Vector2(22f, 0f));
+            var diamond = Shape(handle, "Diamond", Center, Vector2.zero, new Vector2(22f, 22f), true);
+            diamond.rectTransform.localRotation = Quaternion.Euler(0f, 0f, 45f);
+            diamond.Fill = Background;
+            diamond.Stroke = _style.Accent;
+            diamond.StrokeWidth = 2f;
+            diamond.HitPadding = 12f;
+
+            var slider = root.gameObject.AddComponent<Slider>();
+            slider.fillRect = fill.rectTransform;
+            slider.handleRect = handle;
+            slider.targetGraphic = diamond;
+            slider.transition = Selectable.Transition.None;
+            slider.direction = Slider.Direction.LeftToRight;
+            return slider;
         }
 
-        private static Toggle ToggleRow(Transform parent, string name, string text)
+        /// <summary>A pill switch (uGUI Toggle) painted by <see cref="UiSwitch"/>.</summary>
+        private static Toggle Switch(Transform parent, string name)
         {
-            var go = DefaultControls.CreateToggle(ControlResources());
-            go.name = name + "Toggle";
-            go.transform.SetParent(parent, false);
-            go.AddComponent<LayoutElement>().preferredHeight = 54f;
-            var toggle = go.GetComponent<Toggle>();
-
-            var box = (RectTransform)go.transform.Find("Background");
-            box.anchorMin = box.anchorMax = box.pivot = new Vector2(0f, 0.5f);
-            box.anchoredPosition = Vector2.zero;
-            box.sizeDelta = new Vector2(44f, 44f);
-            Stretch((RectTransform)box.Find("Checkmark"));
-
-            var label = go.transform.Find("Label").GetComponent<Text>();
-            label.font = _font;
-            label.text = text;
-            label.fontSize = 26;
-            label.color = TextColor;
-            label.alignment = TextAnchor.MiddleLeft;
-            var labelRect = label.rectTransform;
-            Stretch(labelRect);
-            labelRect.offsetMin = new Vector2(60f, 0f);
+            var pill = Shape(parent, name, Center, Vector2.zero, new Vector2(88f, 44f), true);
+            pill.Kind = UiShapeKind.Capsule;
+            pill.Fill = Color.clear;
+            pill.StrokeWidth = 2f;
+            pill.HitPadding = 10f;
+            var knob = Shape(pill.transform, "Knob", Center, new Vector2(-22f, 0f), new Vector2(28f, 28f));
+            knob.Kind = UiShapeKind.Capsule;
+            AttachSwitch(pill.gameObject, pill, knob, new Vector2(-22f, 22f));
+            var toggle = pill.GetComponent<Toggle>();
+            toggle.targetGraphic = pill;
             return toggle;
+        }
+
+        /// <summary>A switch with a caption on its right, placed absolutely (map screen).</summary>
+        private static Toggle LabeledSwitch(Transform parent, string name, string caption, Vector2 anchor, Vector2 position)
+        {
+            var hit = Shape(parent, name + "Toggle", anchor, position, new Vector2(250f, 60f), true);
+            hit.rectTransform.pivot = new Vector2(0f, 0.5f);
+            hit.rectTransform.anchoredPosition = position;
+            hit.Fill = Color.clear;
+            hit.StrokeWidth = 0f;
+            var pill = Shape(hit.transform, "Pill", new Vector2(0f, 0.5f), new Vector2(44f, 0f), new Vector2(88f, 44f));
+            pill.Kind = UiShapeKind.Capsule;
+            pill.Fill = Color.clear;
+            pill.StrokeWidth = 2f;
+            var knob = Shape(pill.transform, "Knob", Center, new Vector2(-22f, 0f), new Vector2(28f, 28f));
+            knob.Kind = UiShapeKind.Capsule;
+            Text(hit.transform, "Label", caption, 26f, true, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(104f, 0f),
+                new Vector2(150f, 40f), TextAlignmentOptions.MidlineLeft, spacing: 8f).textWrappingMode = TextWrappingModes.NoWrap;
+            AttachSwitch(hit.gameObject, pill, knob, new Vector2(-22f, 22f));
+            var toggle = hit.GetComponent<Toggle>();
+            toggle.targetGraphic = hit;
+            return toggle;
+        }
+
+        private static void AttachSwitch(GameObject target, UiShape pill, UiShape knob, Vector2 knobX)
+        {
+            var toggle = target.AddComponent<Toggle>();
+            toggle.transition = Selectable.Transition.None;
+            toggle.graphic = null;
+            var view = target.AddComponent<UiSwitch>();
+            SetReference(view, "_style", _style);
+            SetReference(view, "_pill", pill);
+            SetReference(view, "_knob", knob);
+            var serialized = new SerializedObject(view);
+            serialized.FindProperty("_knobX").vector2Value = knobX;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 
         private static void Stretch(RectTransform rect)

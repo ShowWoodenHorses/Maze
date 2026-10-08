@@ -1,4 +1,5 @@
 using System;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -6,7 +7,7 @@ namespace Maze.Presentation.UI
 {
     public sealed class ErrorScreen : UIScreen
     {
-        [SerializeField] private Text _message;
+        [SerializeField] private TMP_Text _message;
         [SerializeField] private Button _backButton;
 
         public event Action BackClicked;

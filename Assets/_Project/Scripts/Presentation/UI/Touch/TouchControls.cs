@@ -27,8 +27,12 @@ namespace Maze.Presentation.UI.Touch
         [Tooltip("Safe area the controls live in (layout positions are relative to it).")]
         [SerializeField] private RectTransform _area;
 
-        [Tooltip("Stick zone and buttons in TouchElement order (the zone stands for the stick); mirrored horizontally for the left-handed layout.")]
+        [Tooltip("Stick zone, attack cluster and Use in TouchElement order (the zone stands for the stick, the cluster " +
+                 "for Attack with its Melee and Ranged slots); mirrored horizontally for the left-handed layout.")]
         [SerializeField] private RectTransform[] _mirrored;
+
+        [SerializeField] private TouchAttackCluster _cluster;
+        [SerializeField] private TouchStickMarks _marks;
 
         [Tooltip("Height (canvas units) the layout needs.")]
         [SerializeField] private float _designHeight = 540f;
@@ -46,6 +50,7 @@ namespace Maze.Presentation.UI.Touch
         private int _normalSortingOrder;
         private Vector2 _appliedAreaSize;
         private OnScreenButton[] _buttons;
+        private TouchPress[] _presses;
         private TouchLayoutHandle[] _handles;
 
         public TouchLayoutEditor LayoutEditor => _editor;
@@ -67,11 +72,25 @@ namespace Maze.Presentation.UI.Touch
             _size = settings.Size;
             if (_group != null) _group.alpha = settings.Opacity;
             SetLeftHanded(settings.LeftHanded);
+            if (_cluster != null) _cluster.SetMirrored(settings.LeftHanded);
+            if (_marks != null) _marks.SetMode(settings.AimMode);
             UpdateScale();
             if (_stick != null)
                 _stick.Configure(settings.StickDeadZone, StickResponse.ExponentFor(settings.StickSensitivity),
                     settings.FloatingStick, settings.LeftHanded);
             ApplyLayout();
+        }
+
+        /// <summary>Weapon slots of the attack cluster (icons, active slot, ammo, reload).</summary>
+        public void SetWeapons(in WeaponSlotState melee, in WeaponSlotState ranged)
+        {
+            if (_cluster != null) _cluster.SetWeapons(melee, ranged);
+        }
+
+        /// <summary>What Use would do now (lights the button).</summary>
+        public void SetUse(UseTarget target)
+        {
+            if (_cluster != null) _cluster.SetUse(target);
         }
 
         /// <summary>Layout editing: shown over the UI, input off, drag handles on.</summary>
@@ -87,6 +106,8 @@ namespace Maze.Presentation.UI.Touch
             }
 
             foreach (var button in _buttons) button.enabled = !editing;
+            // Pressed looks also catch the pointer: off, so drags reach the layout handles above them.
+            foreach (var press in _presses) press.enabled = !editing;
             if (_stick != null) _stick.enabled = !editing;
             foreach (var handle in _handles) handle.enabled = editing;
             // The stick zone (where the stick may go) is invisible in play, faintly drawn while editing.
@@ -161,9 +182,8 @@ namespace Maze.Presentation.UI.Touch
         private void CacheComponents()
         {
             if (_buttons != null) return;
-            _buttons = new OnScreenButton[_mirrored.Length - 1];
-            for (var i = 1; i < _mirrored.Length; i++)
-                _buttons[i - 1] = _mirrored[i].GetComponent<OnScreenButton>();
+            _buttons = GetComponentsInChildren<OnScreenButton>(true);
+            _presses = GetComponentsInChildren<TouchPress>(true);
             _handles = GetComponentsInChildren<TouchLayoutHandle>(true);
         }
 

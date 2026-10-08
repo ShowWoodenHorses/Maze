@@ -83,6 +83,9 @@ namespace Maze.Editor.Dev
                 RenameOldDefinitions();
                 var definitions = new Dictionary<Weapon, WeaponDefinition>();
                 var catalog = LoadOrCreate<WeaponVisualCatalog>(CatalogPath);
+                var icons = new Dictionary<WeaponDefinition, Sprite>();
+                foreach (var old in catalog.MutableWeapons)
+                    if (old?.Definition != null && old.Icon != null) icons[old.Definition] = old.Icon;
                 catalog.MutableWeapons.Clear();
                 var set = AssetDatabase.LoadAssetAtPath<VisualSet>(WeaponSetPath);
                 if (set == null)
@@ -103,7 +106,8 @@ namespace Maze.Editor.Dev
                     if (AssetDatabase.LoadAssetAtPath<GameObject>(heldPath) == null)
                         throw new InvalidOperationException($"Weapon model '{heldPath}' not found.");
                     MarkModel(heldPath, weapon.Slot);
-                    catalog.MutableWeapons.Add(new WeaponVisualDefinition(definition, Reference(heldPath)));
+                    icons.TryGetValue(definition, out var icon);
+                    catalog.MutableWeapons.Add(new WeaponVisualDefinition(definition, Reference(heldPath), icon));
 
                     var pickupPath = BuildPickup(heldPath);
                     var pickupGuid = AssetDatabase.AssetPathToGUID(pickupPath);
@@ -122,6 +126,7 @@ namespace Maze.Editor.Dev
                 var problem = LevelDesigner.LevelSync.SyncShared(settings);
                 if (problem != null) Debug.LogWarning("[Maze] " + problem);
                 AssetDatabase.SaveAssets();
+                UiIconsBuilder.BuildWeaponIcons(catalog); // Models may have changed.
                 Debug.Log($"[Maze] Weapons built: {Weapons.Length} definition(s), held and pickup prefabs, player rig; " +
                           $"{reassigned} weapon visual(s) in levels reassigned.");
             }

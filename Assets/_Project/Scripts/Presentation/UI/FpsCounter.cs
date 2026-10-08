@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -15,7 +16,7 @@ namespace Maze.Presentation.UI
 
         private static string[] _texts;
 
-        [SerializeField] private Text _text;
+        [SerializeField] private TMP_Text _text;
 
         private float _elapsed;
         private int _frames;

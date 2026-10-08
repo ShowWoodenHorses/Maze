@@ -123,7 +123,10 @@ namespace Maze.Presentation.Audio
             }
         }
 
-        /// <summary>Jingle after a short pause (the death or exit sound first), then a sound per star, pitch rising.</summary>
+        /// <summary>
+        /// Jingle after a short pause (the death or exit sound first), then a sound per star, pitch rising; each sound
+        /// reveals its star on the result screen.
+        /// </summary>
         private async UniTaskVoid PlayResultAsync(bool completed, int stars, CancellationToken cancellation)
         {
             var catalog = Catalog;
@@ -134,6 +137,7 @@ namespace Maze.Presentation.Audio
             {
                 if (await Delay(catalog.StarInterval, cancellation)) return;
                 _audio.Play(catalog.Star, SoundChannel.Interface, 1f, 0f, 1f + catalog.StarPitchStep * i);
+                _ui.Result.RevealNextStar(); // The star appears with its sound.
             }
         }
 

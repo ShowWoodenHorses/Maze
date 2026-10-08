@@ -277,6 +277,23 @@ namespace Maze.Tests.EditMode.Progress
         }
 
         [Test]
+        public void Version2Save_AttackButtonsBecomeOneCluster_PlacesReset_StickAndUseKept()
+        {
+            const string moved = "{\"Moved\":true,\"Position\":{\"x\":0.3,\"y\":0.4},\"Scale\":1.2}";
+            _storage.Json = "{\"Version\":2,\"Settings\":{\"Controls\":{\"Size\":1,\"Opacity\":0.6,\"Layout\":{" +
+                            $"\"Stick\":{moved},\"Attack\":{moved},\"Use\":{moved},\"Melee\":{moved},\"Ranged\":{moved}" + "}}}}";
+            _save.Load();
+
+            var layout = _save.Data.Settings.Controls.Layout;
+            Assert.AreEqual(TouchPlacement.Default, layout.Attack, "The cluster starts at its built-in place.");
+            Assert.AreEqual(TouchPlacement.Default, layout.Melee);
+            Assert.AreEqual(TouchPlacement.Default, layout.Ranged);
+            Assert.IsTrue(layout.Stick.Moved);
+            Assert.IsTrue(layout.Use.Moved);
+            Assert.AreEqual(SaveData.CurrentVersion, _save.Data.Version);
+        }
+
+        [Test]
         public void ResetTouchControls_KeepsAim_ResetAim_KeepsTouchControls()
         {
             var settings = new SettingsService(_save);

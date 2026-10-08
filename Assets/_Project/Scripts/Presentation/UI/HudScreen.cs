@@ -1,24 +1,68 @@
 using System;
+using System.Collections.Generic;
+using Maze.Presentation.UI.Shapes;
+using Maze.Presentation.UI.Style;
 using Maze.Presentation.UI.Touch;
+using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 namespace Maze.Presentation.UI
 {
+    /// <summary>
+    /// In-level HUD (design mock-up). Top left: a ring with a heart, the level name, HP as a number and a thin bar in an
+    /// arrow-tipped frame — a light "trail" shows the lost part for a moment, low health turns the frame red and makes
+    /// it pulse; under it map fragments, zombies killed and the carried keys in their doors' colours. Top centre: a
+    /// short message between diamonds. Top right: Map and Pause. Weapon slots: the on-screen cluster on touch devices,
+    /// small slots at the bottom right otherwise. A red pulse at the screen edges when hurt.
+    /// </summary>
     public sealed class HudScreen : UIScreen
     {
         private const float MessageSeconds = 2f;
+        private const float LowHealth = 0.3f;
+        private const float TrailDelay = 0.35f;
+        private const float TrailSpeed = 0.9f;
+        private const float LowPulseSpeed = 5f;
 
-        [SerializeField] private Text _levelName;
-        [SerializeField] private Text _status;
-        [SerializeField] private Text _message;
+        [SerializeField] private UiStyle _style;
+        [SerializeField] private TMP_Text _levelName;
+
+        [Header("Health")]
+        [SerializeField] private TMP_Text _healthText;
+        [SerializeField] private UiShape _healthFrame;
+        [SerializeField] private UiShape _heartRing;
+
+        [Tooltip("Bar fill; its right anchor is the health share.")]
+        [SerializeField] private RectTransform _healthFill;
+
+        [Tooltip("Light part behind the fill that follows it down after a hit.")]
+        [SerializeField] private RectTransform _healthTrail;
+
+        [Header("Counters")]
+        [SerializeField] private GameObject _fragments;
+        [SerializeField] private TMP_Text _fragmentsText;
+        [SerializeField] private GameObject _kills;
+        [SerializeField] private TMP_Text _killsText;
+        [SerializeField] private RectTransform _keys;
+        [SerializeField] private Image _keyTemplate;
+
+        [Header("Message")]
+        [SerializeField] private GameObject _messageRow;
+        [SerializeField] private TMP_Text _message;
+
+        [Header("Buttons")]
         [SerializeField] private Button _pauseButton;
         [SerializeField] private Button _mapButton;
 
         [Tooltip("On-screen stick and buttons (ТЗ §64, Android): a separate canvas, shown while the HUD is. " +
                  "They drive gamepad controls through the Input System.")]
         [SerializeField] private TouchControls _touchControls;
+
+        [Tooltip("Weapon slots for devices without the on-screen controls.")]
+        [SerializeField] private GameObject _weaponPanel;
+        [SerializeField] private HudWeaponSlot _meleeSlot;
+        [SerializeField] private HudWeaponSlot _rangedSlot;
 
         [Header("Damage pulse")]
         [Tooltip("Full-screen image under the HUD: red at the screen edges when the player is hurt. Its texture is made on start.")]
@@ -30,9 +74,20 @@ namespace Maze.Presentation.UI
         private const int VignetteSize = 64;
         private const float DamageRise = 0.06f;
 
+        private readonly List<Image> _keyImages = new List<Image>();
         private float _messageHideTime;
         private float _damageElapsed = float.MaxValue;
         private Texture2D _vignette;
+        private int _health = -1;
+        private int _maxHealth = -1;
+        private float _healthShare = 1f;
+        private float _trailShare = 1f;
+        private float _trailWait;
+        private bool _low;
+        private int _fragmentsShown = -1;
+        private int _fragmentsTotal = -1;
+        private int _killsShown = -1;
+        private int _killsTotal = -1;
 
         /// <summary>A real touch was seen on a platform that is not mobile (e.g. a desktop browser on a touchscreen).</summary>
         private static bool _touchSeen;
@@ -46,10 +101,14 @@ namespace Maze.Presentation.UI
         /// </summary>
         public static bool IsTouchAvailable => UnityEngine.Application.isMobilePlatform;
 
+        private static bool TouchShown => IsTouchAvailable || _touchSeen;
+
         private void Awake()
         {
             Bind(_pauseButton, () => PauseClicked?.Invoke());
             Bind(_mapButton, () => MapClicked?.Invoke());
+            if (_keyTemplate != null) _keyTemplate.gameObject.SetActive(false);
+            if (_messageRow != null) _messageRow.SetActive(false);
 
             if (_damageFlash != null)
             {
@@ -84,11 +143,151 @@ namespace Maze.Presentation.UI
                 }
             }
 
-            if (_message != null && _message.text.Length > 0 && Time.unscaledTime >= _messageHideTime)
-                _message.text = string.Empty;
+            if (_messageRow != null && _messageRow.activeSelf && Time.unscaledTime >= _messageHideTime)
+                _messageRow.SetActive(false);
 
+            UpdateHealthBar(Time.unscaledDeltaTime);
             UpdateDamagePulse();
         }
+
+        // ---- health ----
+
+        public void SetHealth(int current, int max)
+        {
+            if (current == _health && max == _maxHealth) return;
+            var first = _health < 0;
+            var hurt = !first && current < _health;
+            _health = current;
+            _maxHealth = max;
+            _healthShare = max > 0 ? Mathf.Clamp01(current / (float)max) : 0f;
+            if (_healthText != null) _healthText.text = current + " / " + max;
+
+            if (hurt) _trailWait = TrailDelay;
+            else _trailShare = _healthShare; // Healed or first shown: no trail.
+            SetShare(_healthFill, _healthShare);
+            SetShare(_healthTrail, _trailShare);
+
+            _low = _healthShare <= LowHealth && current > 0;
+            PaintHealth(1f);
+        }
+
+        private void UpdateHealthBar(float deltaTime)
+        {
+            if (_trailShare > _healthShare)
+            {
+                if (_trailWait > 0f) _trailWait -= deltaTime;
+                else
+                {
+                    _trailShare = Mathf.MoveTowards(_trailShare, _healthShare, TrailSpeed * deltaTime);
+                    SetShare(_healthTrail, _trailShare);
+                }
+            }
+
+            if (_low) PaintHealth(0.55f + 0.45f * Mathf.Abs(Mathf.Sin(Time.unscaledTime * LowPulseSpeed)));
+        }
+
+        private void PaintHealth(float pulse)
+        {
+            if (_style == null) return;
+            var frame = _low ? _style.Danger : _style.Line;
+            frame.a *= _low ? pulse : 1f;
+            if (_healthFrame != null) _healthFrame.Stroke = frame;
+            if (_heartRing != null) _heartRing.Stroke = _low ? frame : _style.Line;
+            if (_healthText != null) _healthText.color = _low ? _style.Danger : _style.Text;
+        }
+
+        private static void SetShare(RectTransform bar, float share)
+        {
+            if (bar == null) return;
+            var max = bar.anchorMax;
+            if (Mathf.Approximately(max.x, share)) return;
+            bar.anchorMax = new Vector2(share, max.y);
+        }
+
+        // ---- counters ----
+
+        /// <summary>Map fragments; hidden when the level has none.</summary>
+        public void SetFragments(int collected, int total)
+        {
+            if (collected == _fragmentsShown && total == _fragmentsTotal) return;
+            _fragmentsShown = collected;
+            _fragmentsTotal = total;
+            if (_fragments != null) _fragments.SetActive(total > 0);
+            if (_fragmentsText != null) _fragmentsText.text = collected + "/" + total;
+        }
+
+        /// <summary>Zombies killed; hidden when the level has none.</summary>
+        public void SetKills(int killed, int total)
+        {
+            if (killed == _killsShown && total == _killsTotal) return;
+            _killsShown = killed;
+            _killsTotal = total;
+            if (_kills != null) _kills.SetActive(total > 0);
+            if (_killsText != null) _killsText.text = killed + "/" + total;
+        }
+
+        /// <summary>One key icon per carried key, in its door's colour.</summary>
+        public void SetKeys(IReadOnlyList<Color> colors)
+        {
+            if (_keyTemplate == null) return;
+            while (_keyImages.Count < colors.Count)
+            {
+                var image = Instantiate(_keyTemplate, _keys);
+                image.gameObject.name = "Key" + _keyImages.Count;
+                _keyImages.Add(image);
+            }
+
+            for (var i = 0; i < _keyImages.Count; i++)
+            {
+                var shown = i < colors.Count;
+                _keyImages[i].gameObject.SetActive(shown);
+                if (shown) _keyImages[i].color = colors[i];
+            }
+        }
+
+        // ---- weapons, message ----
+
+        /// <summary>Weapon slots shown where there are no on-screen controls.</summary>
+        public void SetWeapons(in WeaponSlotState melee, in WeaponSlotState ranged)
+        {
+            if (_weaponPanel == null || !_weaponPanel.activeSelf) return;
+            _meleeSlot.Set(melee);
+            _rangedSlot.Set(ranged);
+        }
+
+        /// <summary>A short message (e.g. "Locked: needs the red key") that disappears by itself.</summary>
+        public void ShowMessage(string message)
+        {
+            if (_message == null) return;
+            _message.text = message;
+            if (_messageRow != null) _messageRow.SetActive(!string.IsNullOrEmpty(message));
+            _messageHideTime = Time.unscaledTime + MessageSeconds;
+        }
+
+        public void SetLevelName(string levelName)
+        {
+            if (_levelName != null) _levelName.text = string.IsNullOrEmpty(levelName) ? string.Empty : levelName.ToUpperInvariant();
+        }
+
+        public void ClearLevelInfo()
+        {
+            _health = _maxHealth = -1;
+            _fragmentsShown = _fragmentsTotal = _killsShown = _killsTotal = -1;
+            _low = false;
+            SetKeys(Array.Empty<Color>());
+            if (_messageRow != null) _messageRow.SetActive(false);
+            _damageElapsed = float.MaxValue;
+            if (_damageFlash != null) _damageFlash.enabled = false;
+        }
+
+        private void RefreshTouchControls()
+        {
+            var touch = isActiveAndEnabled && TouchShown;
+            if (_touchControls != null) _touchControls.SetShown(touch);
+            if (_weaponPanel != null) _weaponPanel.SetActive(!TouchShown);
+        }
+
+        // ---- damage pulse ----
 
         /// <summary>A red pulse at the screen edges (the player was hurt). Restarts if already shown.</summary>
         public void PulseDamage()
@@ -143,36 +342,6 @@ namespace Maze.Presentation.UI
             texture.SetPixels32(pixels);
             texture.Apply(false, true);
             return texture;
-        }
-
-        private void RefreshTouchControls()
-        {
-            if (_touchControls != null)
-                _touchControls.SetShown(isActiveAndEnabled && (IsTouchAvailable || _touchSeen));
-        }
-
-        public void SetLevelName(string levelName) => _levelName.text = levelName;
-
-        /// <summary>HP, weapons, keys.</summary>
-        public void SetStatus(string status)
-        {
-            if (_status != null) _status.text = status;
-        }
-
-        /// <summary>A short message (e.g. "Locked: needs the red key") that disappears by itself.</summary>
-        public void ShowMessage(string message)
-        {
-            if (_message == null) return;
-            _message.text = message;
-            _messageHideTime = Time.unscaledTime + MessageSeconds;
-        }
-
-        public void ClearLevelInfo()
-        {
-            SetStatus(string.Empty);
-            if (_message != null) _message.text = string.Empty;
-            _damageElapsed = float.MaxValue;
-            if (_damageFlash != null) _damageFlash.enabled = false;
         }
     }
 }

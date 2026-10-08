@@ -26,6 +26,9 @@ namespace Maze.Presentation.UI.Touch
         [SerializeField] private RectTransform _ring;
         [SerializeField] private RectTransform _knob;
 
+        [Tooltip("Aim-mode marks around the ring; the one the stick points at lights up.")]
+        [SerializeField] private TouchStickMarks _marks;
+
         [Tooltip("Ring centre at rest, from the zone's bottom outer corner (canvas units).")]
         [SerializeField] private Vector2 _restFromCorner = new Vector2(220f, 220f);
 
@@ -128,12 +131,14 @@ namespace Maze.Presentation.UI.Touch
             var offset = (point - _ring.anchoredPosition) / _scale;
             if (_knob != null) _knob.anchoredPosition = Vector2.ClampMagnitude(offset, _radius);
             SendValueToControl(StickResponse.Shape(offset / _radius, _deadZone, _exponent));
+            if (_marks != null) _marks.Point(Vector2.ClampMagnitude(offset / _radius, 1f));
         }
 
         private void Release()
         {
             _pointerId = NoPointer;
             ResetToRest();
+            if (_marks != null) _marks.Point(Vector2.zero);
         }
 
         private void ResetToRest()

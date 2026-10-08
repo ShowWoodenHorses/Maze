@@ -93,7 +93,7 @@ namespace Maze.Composition
             builder.Register<LevelLightMap>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep>();
             builder.Register<DoorViewPresenter>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep>();
             builder.Register<PickupViewPresenter>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep>();
-            builder.Register<HudPresenter>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep>();
+            builder.Register<HudPresenter>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep, ILevelLateTickable>();
             builder.Register<MapPresenter>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep>();
             builder.Register<PlayerViewPresenter>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep, ILevelLateTickable>();
             builder.Register<PlayerWeaponPresenter>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep, ILevelLateTickable, IViewWarmup>();

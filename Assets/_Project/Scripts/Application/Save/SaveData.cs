@@ -11,8 +11,11 @@ namespace Maze.Application.Save
     [Serializable]
     public sealed class SaveData
     {
-        /// <summary>2: aim settings in <see cref="ControlsSettings"/>.</summary>
-        public const int CurrentVersion = 2;
+        /// <summary>
+        /// 2: aim settings in <see cref="ControlsSettings"/>. 3: Attack, Melee and Ranged are one cluster on screen
+        /// (placed as <see cref="TouchElement.Attack"/>); their old separate places are dropped.
+        /// </summary>
+        public const int CurrentVersion = 3;
 
         public int Version = CurrentVersion;
 
@@ -40,6 +43,12 @@ namespace Maze.Application.Save
                 var defaults = ControlsSettings.Default;
                 Settings.Controls.AimMode = defaults.AimMode;
                 Settings.Controls.AimAssist = defaults.AimAssist;
+            }
+            if (Version < 3)
+            {
+                Settings.Controls.Layout.Attack = TouchPlacement.Default;
+                Settings.Controls.Layout.Melee = TouchPlacement.Default;
+                Settings.Controls.Layout.Ranged = TouchPlacement.Default;
             }
             Version = CurrentVersion;
             UnlockedLevels.RemoveAll(string.IsNullOrEmpty);

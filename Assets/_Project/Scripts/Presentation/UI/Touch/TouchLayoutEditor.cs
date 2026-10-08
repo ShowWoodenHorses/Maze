@@ -1,5 +1,6 @@
 using System;
 using Maze.Application.Save;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -15,23 +16,25 @@ namespace Maze.Presentation.UI.Touch
     /// </summary>
     public sealed class TouchLayoutEditor : MonoBehaviour
     {
-        private static readonly Color Selected = new Color(1f, 0.8f, 0.25f, 0.9f);
+        private const float SelectionPadding = 12f;
 
         [SerializeField] private TouchControls _controls;
+
+        [Tooltip("Accent frame drawn around the selected control (follows it).")]
+        [SerializeField] private RectTransform _selection;
 
         [Tooltip("Full-screen dim behind the controls while editing; a tap on it clears the selection.")]
         [SerializeField] private GameObject _background;
 
         [SerializeField] private Slider _size;
-        [SerializeField] private Text _sizeLabel;
+        [SerializeField] private TMP_Text _sizeLabel;
         [SerializeField] private Button _resetButton;
         [SerializeField] private Button _doneButton;
 
         private TouchLayout _layout;
         private TouchElement _selected;
-        private Image _highlighted;
-        private Color _highlightedColor;
         private Vector2 _grabOffset;
+        private readonly Vector3[] _corners = new Vector3[4];
 
         /// <summary>The edited layout (right-handed, normalized); raised on every move, resize and reset.</summary>
         public event Action<TouchLayout> Changed;
@@ -64,7 +67,6 @@ namespace Maze.Presentation.UI.Touch
         {
             if (!IsEditing) return;
             IsEditing = false;
-            ClearHighlight();
             _controls.SetEditing(false);
             if (_background != null) _background.SetActive(false);
             gameObject.SetActive(false);
@@ -113,26 +115,26 @@ namespace Maze.Presentation.UI.Touch
         private void Select(TouchElement element)
         {
             _selected = element;
-            ClearHighlight();
-            _highlighted = _controls.ElementRect(element).GetComponent<Image>();
-            if (_highlighted != null)
-            {
-                _highlightedColor = _highlighted.color;
-                _highlighted.color = Selected;
-            }
-
             _size.SetValueWithoutNotify(_layout[element].Scale);
             UpdateSizeLabel();
         }
 
-        private void ClearHighlight()
+        private void LateUpdate()
         {
-            if (_highlighted != null) _highlighted.color = _highlightedColor;
-            _highlighted = null;
+            // The frame follows the selected control (it moves and scales while dragged or resized).
+            if (!IsEditing || _selection == null || !(_selection.parent is RectTransform parent)) return;
+            _controls.ElementRect(_selected).GetWorldCorners(_corners);
+            var min = (Vector2)parent.InverseTransformPoint(_corners[0]);
+            var max = (Vector2)parent.InverseTransformPoint(_corners[2]);
+            _selection.anchorMin = _selection.anchorMax = new Vector2(0.5f, 0.5f);
+            _selection.anchoredPosition = (min + max) * 0.5f - parent.rect.center;
+            _selection.sizeDelta = new Vector2(Mathf.Abs(max.x - min.x), Mathf.Abs(max.y - min.y)) +
+                                   Vector2.one * (SelectionPadding * 2f);
         }
 
         private void UpdateSizeLabel() =>
-            _sizeLabel.text = _selected + " size: " + Mathf.RoundToInt(_layout[_selected].Scale * 100f) + "%";
+            _sizeLabel.text = (_selected == TouchElement.Attack ? "Attack and weapons" : _selected.ToString()) +
+                              " size: " + Mathf.RoundToInt(_layout[_selected].Scale * 100f) + "%";
 
         /// <summary>Pointer position normalized to the controls' safe area.</summary>
         private bool ToArea(PointerEventData eventData, out Vector2 point)

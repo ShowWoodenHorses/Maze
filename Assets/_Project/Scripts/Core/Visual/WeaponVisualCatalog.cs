@@ -17,14 +17,25 @@ namespace Maze.Core.Visual
         [SerializeField] private WeaponDefinition _definition;
         [SerializeField] private AssetReferenceGameObject _heldPrefab;
 
-        public WeaponVisualDefinition(WeaponDefinition definition, AssetReferenceGameObject heldPrefab)
+        [Tooltip("White silhouette for the HUD weapon slots (Maze → Dev → Build UI Icons).")]
+        [SerializeField] private Sprite _icon;
+
+        public WeaponVisualDefinition(WeaponDefinition definition, AssetReferenceGameObject heldPrefab, Sprite icon = null)
         {
             _definition = definition;
             _heldPrefab = heldPrefab;
+            _icon = icon;
         }
 
         public WeaponDefinition Definition => _definition;
         public AssetReferenceGameObject HeldPrefab => _heldPrefab;
+
+        /// <summary>Silhouette for the HUD; null until icons are built.</summary>
+        public Sprite Icon
+        {
+            get => _icon;
+            internal set => _icon = value;
+        }
     }
 
     /// <summary>Held looks of all weapons, shared by every level, Addressable at <see cref="Address"/>.</summary>
