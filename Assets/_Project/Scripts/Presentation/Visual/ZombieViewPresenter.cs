@@ -74,6 +74,12 @@ namespace Maze.Presentation.Visual
         /// <summary>(zombie) when its death shows, after the hit that killed it (sounds).</summary>
         public event Action<ZombieRuntime> DeathShown;
 
+        /// <summary>
+        /// (zombie, damage, health after it) together with <see cref="HitShown"/> / <see cref="DeathShown"/>: health bars
+        /// and damage numbers show the hit when it shows, not when gameplay dealt it.
+        /// </summary>
+        public event Action<ZombieRuntime, float, float> DamageShown;
+
         public UniTask ExecuteAsync(CancellationToken cancellation)
         {
             foreach (var zombie in _zombies.Zombies)
@@ -219,10 +225,11 @@ namespace Maze.Presentation.Visual
         private void OnDied(ZombieRuntime zombie)
         {
             zombie.Damaged -= OnDamaged;
-            _reactions.Add(new Reaction { Zombie = zombie, Died = true });
+            _reactions.Add(new Reaction { Zombie = zombie, Died = true, Damage = zombie.LastDamage, HealthAfter = 0f });
         }
 
-        private void OnDamaged(ZombieRuntime zombie, float damage) => _reactions.Add(new Reaction { Zombie = zombie });
+        private void OnDamaged(ZombieRuntime zombie, float damage) =>
+            _reactions.Add(new Reaction { Zombie = zombie, Damage = damage, HealthAfter = zombie.Health });
 
         /// <summary>Raised after the melee damage was dealt (this tick): those reactions wait for the clip's hit.</summary>
         private void OnPlayerAttacked(WeaponRuntime weapon, Vector2 direction)
@@ -275,6 +282,7 @@ namespace Maze.Presentation.Visual
                 }
 
                 _reactions.RemoveAt(i);
+                DamageShown?.Invoke(reaction.Zombie, reaction.Damage, reaction.HealthAfter);
                 if (reaction.Died) ShowDeath(reaction.Zombie);
                 else ShowHit(reaction.Zombie);
             }
@@ -332,6 +340,8 @@ namespace Maze.Presentation.Visual
         {
             public ZombieRuntime Zombie;
             public bool Died;
+            public float Damage;
+            public float HealthAfter;
             /// <summary>Hit by the player's melee attack: waits for the attack clip's hit.</summary>
             public bool Melee;
             public bool Timed;

@@ -380,14 +380,30 @@ namespace Maze.Tests.PlayMode
             Assert.Greater(footprints.AliveCount, 0, "The patrolling zombie leaves prints, also out of the player's sight.");
             Assert.AreEqual(2, container.Resolve<VisionZonesView>().ZoneCount, "Walker and Hunter have vision zones, Listener none.");
 
+            // Health bars and numbers (Maze → Dev → Build Damage Numbers).
+            var feedback = container.Resolve<CombatFeedbackView>();
+            var health = container.Resolve<Maze.Gameplay.Player.PlayerHealth>();
+            zombies.Zombies[1].ApplyDamage(5f, Vector2.right);
+            health.Damage(7);
+            await UniTask.Yield(PlayerLoopTiming.PostLateUpdate);
+            health.HealToFull();
+            await UniTask.Yield(PlayerLoopTiming.PostLateUpdate);
+            Assert.AreEqual(1, feedback.ActiveBars, "The damaged zombie shows its bar.");
+            CollectionAssert.AreEquivalent(new[] { "5", "7", "+7" }, feedback.NumberTexts());
+            Assert.Greater(feedback.DrawnQuads, 0, "The player's numbers are always drawn.");
+            await UniTask.Delay(TimeSpan.FromSeconds(container.Resolve<CombatVisualDefinition>().Feedback.NumberLifetime + 0.2f));
+            Assert.AreEqual(0, feedback.ActiveNumbers, "Numbers live briefly.");
+
             var victim = zombies.Zombies[0];
             victim.ApplyDamage(10000f, Vector2.right);
             Assert.AreEqual(1, zombies.KilledCount);
             await UniTask.Yield(PlayerLoopTiming.PostLateUpdate); // hit reactions are shown in the late tick
+            CollectionAssert.AreEqual(new[] { "999" }, feedback.NumberTexts(), "The killing hit shows its number.");
             if (views.TryGet(victim.Id, out var corpse) && corpse.GameObject.GetComponentInChildren<Animator>() is { } animator)
                 Assert.IsTrue(animator.GetBool(ZombieAnimatorParameters.Dead), "The corpse plays the death.");
             await UniTask.Delay(TimeSpan.FromSeconds(ZombieViewPresenter.CorpseTime + 0.5f));
             Assert.IsFalse(views.TryGet(victim.Id, out _), "Killed zombie's view is removed after the death animation.");
+            Assert.AreEqual(0, feedback.ActiveBars, "The bar goes some seconds after the last hit.");
 
             await _flow.ExitToMenu();
         });

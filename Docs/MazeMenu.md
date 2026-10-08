@@ -233,6 +233,13 @@
 → `Data/Combat/CombatVisual`. Цвета и параметры частиц — в коде билдера.
 Запускать: после правок эффектов в `CombatEffectsBuilder.cs`.
 
+#### Build Damage Numbers
+Атлас цифр для полосок здоровья и всплывающих цифр урона/лечения: вырезает «0–9», «+», «-» из SDF-атласа жирного
+шрифта UI (`UiStyle.BoldFont`, Rajdhani Bold) в маленькую текстуру `Art/Effects/fx_digits.png`, материал
+`Art/Effects/fx_overhead.mat` (`Maze/Overhead`) и раскладку глифов → `Data/Combat/CombatVisual` (раздел
+**Health bars and numbers**). Цвета, размеры и тайминги там же — правятся в инспекторе, при пересборке сохраняются.
+Запускать: после смены шрифта UI (Build UI Style) или если `fx_digits`/`fx_overhead` удалены.
+
 #### Build Awareness Visuals
 Материалы зон зрения зомби (`fx_vision_zone`) и колец шума (`fx_noise_ring`) → `Awareness` темы-заглушки.
 Цвета и тайминги на теме сохраняются.

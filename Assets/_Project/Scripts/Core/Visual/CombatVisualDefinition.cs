@@ -49,6 +49,9 @@ namespace Maze.Core.Visual
 
         [SerializeField, Min(0.02f)] private float _hitFlashTime = 0.15f;
 
+        [Header("Health bars and numbers")]
+        [SerializeField] private CombatFeedback _feedback = new CombatFeedback();
+
         public AssetReferenceGameObject Bullet { get => _bullet; internal set => _bullet = value; }
         public float TracerLength { get => _tracerLength; internal set => _tracerLength = value; }
         public AssetReferenceGameObject MuzzleFlash { get => _muzzleFlash; internal set => _muzzleFlash = value; }
@@ -60,6 +63,7 @@ namespace Maze.Core.Visual
         public Color HitFlashColor => _hitFlashColor;
         public Color PlayerHitFlashColor => _playerHitFlashColor;
         public float HitFlashTime => _hitFlashTime;
+        public CombatFeedback Feedback => _feedback ??= new CombatFeedback();
 
         /// <summary>Every prefab reference (some may be empty).</summary>
         public IEnumerable<AssetReferenceGameObject> Prefabs

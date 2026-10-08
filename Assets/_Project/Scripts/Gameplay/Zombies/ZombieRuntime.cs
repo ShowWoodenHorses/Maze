@@ -59,6 +59,9 @@ namespace Maze.Gameplay.Zombies
         public Vector2 Facing { get; internal set; }
         public float Radius => BodyRadius;
         public float Health { get; private set; }
+
+        /// <summary>Damage of the last hit as dealt (not cut to the HP left) — also of the killing one.</summary>
+        public float LastDamage { get; private set; }
         public ZombieState State { get; internal set; }
         public bool IsAlive => State != ZombieState.Dead;
 
@@ -78,6 +81,7 @@ namespace Maze.Gameplay.Zombies
             if (!IsAlive || amount <= 0f)
                 return;
 
+            LastDamage = amount;
             Health = Mathf.Max(0f, Health - amount);
             if (Health > 0f)
             {

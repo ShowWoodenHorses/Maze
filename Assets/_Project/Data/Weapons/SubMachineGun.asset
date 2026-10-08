@@ -16,6 +16,7 @@ MonoBehaviour:
   _slot: 1
   _damage: 6
   _soundRadius: 3
+  _sound: silenced
   _attackSpeed: 1
   _meleeRange: 1.2
   _meleeArc: 100
