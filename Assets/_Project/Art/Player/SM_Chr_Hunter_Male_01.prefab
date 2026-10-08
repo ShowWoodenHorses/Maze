@@ -1897,7 +1897,8 @@ MonoBehaviour:
   _palmRight: {fileID: 951852388942334972}
   _palmLeft: {fileID: 1749563456431327318}
   _bodyYaw: 20
-  _maxTwist: 40
+  _maxTwist: 20
+  _aimBarrel: 1
   _blendTime: 0.15
 --- !u!1 &1856413123109530
 GameObject:

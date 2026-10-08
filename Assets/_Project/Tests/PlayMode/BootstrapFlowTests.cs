@@ -310,7 +310,15 @@ namespace Maze.Tests.PlayMode
                          animator.GetBoneTransform(HumanBodyBones.LeftUpperArm).position;
             var chestYaw = Vector3.SignedAngle(playerView.transform.forward,
                 Vector3.Cross(Vector3.ProjectOnPlane(across, Vector3.up), Vector3.up), Vector3.up);
-            Assert.Less(Mathf.Abs(chestYaw), 25f, $"Chest turned toward the facing (yaw {chestYaw:F0}).");
+            if (rig.MaxTwist > 0f)
+                Assert.Less(Mathf.Abs(chestYaw), 25f, $"Chest turned toward the facing (yaw {chestYaw:F0}).");
+            // The barrel once the rifle stance has blended in (the animator's transition from the pickup).
+            await UniTask.Delay(TimeSpan.FromSeconds(0.6f));
+            await UniTask.Yield(PlayerLoopTiming.PostLateUpdate);
+            var barrelYaw = Vector3.SignedAngle(playerView.transform.forward,
+                Vector3.ProjectOnPlane(held.GetComponent<WeaponModel>().Muzzle.forward, Vector3.up), Vector3.up);
+            if (rig.AimBarrelWeight >= 1f && rig.MaxTwist <= 0f)
+                Assert.Less(Mathf.Abs(barrelYaw), 12f, $"Barrel turned toward the line of fire (yaw {barrelYaw:F0}; the clip: about -23).");
 
             var levelVoices = _audio.PlayingCount(SoundChannel.Level);
             Assert.IsTrue(combat.TryAttack(Vector2.down));

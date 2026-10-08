@@ -14,7 +14,9 @@ namespace Maze.Presentation.Visual
     /// <list type="number">
     /// <item>the rifle clips stand bladed (chest 40–55° to the right of where the character faces): the spine is turned
     /// toward the facing down to <see cref="_bodyYaw"/>, at most <see cref="_maxTwist"/>, legs untouched;</item>
-    /// <item>the gun and the right hand keep the clip's direction (the barrel still points where the clip aims);</item>
+    /// <item>the gun and the right hand keep the clip's direction (the barrel still points where the clip aims), then the
+    /// right wrist turns the barrel toward the facing by <see cref="_aimBarrel"/> (the rifle clips point it ~23° left in
+    /// the stance, ~7° left at best in the shot);</item>
     /// <item>the left hand is pulled onto the gun's <see cref="WeaponModel.GripLeft"/> (<see cref="TwoBoneIK"/>); if the
     /// grip is out of the arm's reach, the gun is turned about the right palm just enough (<see cref="BringIntoReach"/>); except
     /// in states tagged <see cref="PlayerAnimatorParameters.NoHandIKTag"/> (reload, hit, use).</item>
@@ -37,6 +39,10 @@ namespace Maze.Presentation.Visual
         [Tooltip("Largest spine turn with a gun, degrees (the legs stay as in the clip).")]
         [SerializeField, Range(0f, 60f)] private float _maxTwist = 40f;
 
+        [Tooltip("Turns a gun's barrel toward the facing (the line of fire) by the wrist, around the vertical: 0 = as in the " +
+                 "clip, 1 = exactly along the facing. The left hand follows the gun.")]
+        [SerializeField, Range(0f, 1f)] private float _aimBarrel;
+
         [Tooltip("Seconds to blend the gun pose and the left hand IK in or out.")]
         [SerializeField, Min(0f)] private float _blendTime = 0.15f;
 
@@ -58,6 +64,12 @@ namespace Maze.Presentation.Visual
         public Transform PalmLeft => _palmLeft;
 
         public bool IsValid => _meleeSocket != null && _palmRight != null && _palmLeft != null;
+
+        /// <summary>Largest spine turn with a gun, degrees; 0 = the chest stays as in the clip (for tests).</summary>
+        public float MaxTwist => _maxTwist;
+
+        /// <summary>How far the barrel is turned from the clip's direction to the facing, 0..1 (for tests).</summary>
+        public float AimBarrelWeight => _aimBarrel;
 
         /// <summary>Current blend of the left hand IK, 0..1 (for tests).</summary>
         public float HandWeight => _handWeight;
@@ -101,6 +113,8 @@ namespace Maze.Presentation.Visual
 
             _rightHand.rotation = Quaternion.Slerp(_rightHand.rotation, clipRightHand, _poseWeight);
             gun.rotation = Quaternion.Slerp(TwoHandedRotation(), clipGun, _poseWeight);
+            if (_aimBarrel > 0f)
+                AimBarrel(gun, _aimBarrel * _poseWeight);
 
             if (_handWeight <= 0f) return;
             // Hand rotation that puts the palm on the mark, and where the hand must be for that.
@@ -146,6 +160,25 @@ namespace Maze.Presentation.Visual
             return current > wanted
                 ? Quaternion.AngleAxis((current - wanted) * _handWeight, axis.normalized)
                 : Quaternion.identity;
+        }
+
+        /// <summary>
+        /// Turns the right wrist around the vertical so that the barrel (the gun's +Z) points <paramref name="weight"/> of
+        /// the way to the facing; the gun, a child of the right palm, turns with it.
+        /// </summary>
+        private void AimBarrel(Transform gun, float weight)
+        {
+            var up = transform.up;
+            var barrel = Vector3.ProjectOnPlane(gun.forward, up);
+            if (barrel.sqrMagnitude < 1e-6f) return;
+
+            var yaw = Vector3.SignedAngle(barrel, transform.forward, up) * weight;
+            if (Mathf.Abs(yaw) < 0.01f) return;
+
+            var gunRotation = gun.rotation;
+            var turn = Quaternion.AngleAxis(yaw, up);
+            _rightHand.rotation = turn * _rightHand.rotation;
+            gun.rotation = turn * gunRotation; // Exact even if the gun is not a child of the hand.
         }
 
         /// <summary>Turns the chest toward the facing by the part of its yaw beyond <see cref="_bodyYaw"/>.</summary>
