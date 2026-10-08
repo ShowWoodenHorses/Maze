@@ -15,6 +15,11 @@ MonoBehaviour:
   m_GroupName: Maze Shared
   m_GUID: 3103d1cbfedb1f14f8c9d647de458c62
   m_SerializeEntries:
+  - m_GUID: 028230155977b4c499c5b3a05839884c
+    m_Address: Assets/_Project/Data/Localization/Texts_es.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 1bcb3a52cf5e4a846a3e14607b358298
     m_Address: Assets/_Project/Art/Effects/fx_hit_star.prefab
     m_ReadOnly: 0
@@ -37,6 +42,21 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 2ebc912a5364cd2408461cf7f971fdcc
     m_Address: Assets/_Project/Music/menu.wav
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3028039187233b14186282895b133e1b
+    m_Address: Assets/_Project/Data/Localization/Texts_tr.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 373f07124d1c81d4b8e32b798c9db6ea
+    m_Address: Assets/_Project/Data/Localization/Texts_ru.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 55fa078d516f4d34ca6b4a50fb509587
+    m_Address: Assets/_Project/Data/Localization/Texts_de.asset
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -65,8 +85,18 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 875b97da7466a3b48a5d39442e984bd7
+    m_Address: Localization/Languages
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8e692d55281b90b43a27979a894927c2
     m_Address: Assets/_Project/Art/Weapons/Rifle/SM_Wep_SniperRifle_01.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9744d57c36b976149a90a0edaafb09b3
+    m_Address: Assets/_Project/Data/Localization/Texts_en.asset
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

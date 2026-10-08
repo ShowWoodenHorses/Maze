@@ -10,6 +10,7 @@ using Maze.Gameplay.Doors;
 using Maze.Gameplay.Level;
 using Maze.Gameplay.Map;
 using Maze.Gameplay.Player;
+using Maze.Presentation.Localization;
 using Maze.Presentation.UI;
 using Maze.Presentation.Visual;
 using UnityEngine;
@@ -33,6 +34,7 @@ namespace Maze.Presentation.Map
         private readonly PlayerSystem _player;
         private readonly DoorSystem _doors;
         private readonly SettingsService _settings;
+        private readonly LocalizationService _texts;
         private readonly List<MapIcon> _icons = new List<MapIcon>();
         private readonly Dictionary<string, Color> _pairColors = new Dictionary<string, Color>(StringComparer.Ordinal);
         private Texture2D _texture;
@@ -40,8 +42,9 @@ namespace Maze.Presentation.Map
         private bool _bound;
 
         public MapPresenter(UIRoot ui, LevelData level, LevelGrid grid, MapSystem map, PlayerSystem player,
-            DoorSystem doors, SettingsService settings)
+            DoorSystem doors, SettingsService settings, LocalizationService texts)
         {
+            _texts = texts;
             _ui = ui;
             _level = level;
             _grid = grid;
@@ -83,6 +86,7 @@ namespace Maze.Presentation.Map
                 _ui.Map.Opened += RefreshIcons;
                 _ui.Map.ShowPlayerChanged += OnShowPlayerChanged;
                 _ui.Map.ShowFragmentsChanged += OnShowFragmentsChanged;
+                _texts.LanguageChanged += Redraw; // The caption (rare: settings from the pause screen).
                 _bound = true;
             }
 
@@ -97,6 +101,7 @@ namespace Maze.Presentation.Map
             if (_bound)
             {
                 _map.FragmentCollected -= OnFragmentCollected;
+                _texts.LanguageChanged -= Redraw;
                 if (_ui != null && _ui.Map != null)
                 {
                     _ui.Map.Opened -= RefreshIcons;
@@ -141,9 +146,9 @@ namespace Maze.Presentation.Map
 
         private string Caption()
         {
-            if (_map.TotalCount == 0) return "This level has no map";
-            if (_map.CollectedCount == 0) return $"No map fragments found yet (0/{_map.TotalCount})";
-            return $"Map fragments: {_map.CollectedCount}/{_map.TotalCount}";
+            if (_map.TotalCount == 0) return _texts.Get(TextKeys.MapNone);
+            if (_map.CollectedCount == 0) return _texts.Format(TextKeys.MapNoneFound, _map.TotalCount);
+            return _texts.Format(TextKeys.MapCount, _map.CollectedCount, _map.TotalCount);
         }
 
         private void RefreshIcons()

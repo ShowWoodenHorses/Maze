@@ -4,7 +4,9 @@ using Cysharp.Threading.Tasks;
 using Maze.Application.Flow;
 using Maze.Application.Levels;
 using Maze.Application.Save;
+using Maze.Application.Services;
 using Maze.Gameplay.Level;
+using Maze.Presentation.Localization;
 using UnityEngine;
 
 namespace Maze.Presentation.UI
@@ -20,12 +22,15 @@ namespace Maze.Presentation.UI
         private readonly ILevelCatalog _catalog;
         private readonly UIRoot _ui;
         private readonly IProgressService _progress;
+        private readonly LocalizationService _texts;
         private readonly List<LevelTileData> _tiles = new List<LevelTileData>();
         private bool _levelSelectOpen;
         private bool _initialized;
 
-        public ScreenRouter(GameFlow flow, ILevelCatalog catalog, UIRoot ui, IProgressService progress)
+        public ScreenRouter(GameFlow flow, ILevelCatalog catalog, UIRoot ui, IProgressService progress,
+            LocalizationService texts)
         {
+            _texts = texts;
             _progress = progress;
             _flow = flow;
             _catalog = catalog;
@@ -38,6 +43,7 @@ namespace Maze.Presentation.UI
             _initialized = true;
 
             _flow.StateChanged += Show;
+            _texts.LanguageChanged += OnLanguageChanged;
             _ui.MainMenu.PlayClicked += OnPlayClicked;
             _ui.MainMenu.DebugResetProgressClicked += OnResetProgressRequested;
             _ui.LevelSelect.LevelSelected += OnLevelSelected;
@@ -66,6 +72,7 @@ namespace Maze.Presentation.UI
             _initialized = false;
 
             _flow.StateChanged -= Show;
+            _texts.LanguageChanged -= OnLanguageChanged;
             if (_ui == null) return; // Scene already destroyed on application quit.
 
             _ui.MainMenu.PlayClicked -= OnPlayClicked;
@@ -100,11 +107,11 @@ namespace Maze.Presentation.UI
 
             if (!menu) _levelSelectOpen = false;
             if (menu) RefreshMenus();
-            if (inLevel) _ui.Hud.SetLevelName(DisplayNameOf(_flow.CurrentLevelId));
+            if (inLevel) _ui.Hud.SetLevelName(LevelCaption(_flow.CurrentLevelId));
             if (result)
             {
                 var completed = state == GameFlowState.Completed;
-                _ui.Result.SetResult(completed, _flow.LastResult, DisplayNameOf(_flow.CurrentLevelId),
+                _ui.Result.SetResult(completed, _flow.LastResult, LevelCaption(_flow.CurrentLevelId),
                     completed && NextLevelId() != null);
             }
             if (error) _ui.Error.SetMessage(_flow.ErrorMessage);
@@ -158,10 +165,24 @@ namespace Maze.Presentation.UI
             return null;
         }
 
-        private string DisplayNameOf(string levelId)
+        /// <summary>
+        /// "LEVEL 3": levels are shown by their place in the catalog (the display name of a level is for development
+        /// only, decided by the user); a level outside the catalog (tests) — by its id.
+        /// </summary>
+        private string LevelCaption(string levelId)
         {
-            var entry = levelId != null ? _catalog.Find(levelId) : null;
-            return entry != null && !string.IsNullOrEmpty(entry.DisplayName) ? entry.DisplayName : levelId;
+            var levels = _catalog.Levels;
+            for (var i = 0; i < levels.Count; i++)
+                if (levels[i].LevelId == levelId) return _texts.Format(TextKeys.HudLevel, i + 1);
+            return levelId ?? string.Empty;
+        }
+
+        /// <summary>The language can change only over the menu or the pause screen (settings): the HUD caption.</summary>
+        private void OnLanguageChanged()
+        {
+            var state = _flow.State;
+            if (state == GameFlowState.Paused || state == GameFlowState.Playing || state == GameFlowState.ExitConfirmation)
+                _ui.Hud.SetLevelName(LevelCaption(_flow.CurrentLevelId));
         }
 
         private void OnPlayClicked()

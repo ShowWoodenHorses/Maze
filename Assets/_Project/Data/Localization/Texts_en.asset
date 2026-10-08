@@ -1,0 +1,188 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2440f53a5c7a5764999ebb8b0ba4a2e4, type: 3}
+  m_Name: Texts_en
+  m_EditorClassIdentifier: Maze.Core::Maze.Core.Localization.LocalizationTable
+  _language: en
+  _keys:
+  - language.name
+  - common.settings
+  - common.yes
+  - common.no
+  - format.percent
+  - menu.play
+  - menu.reset_progress
+  - level_select.title
+  - level_select.empty
+  - loading
+  - hud.level
+  - hud.reload
+  - hud.weapon_here
+  - hud.weapon_taken
+  - hud.fragment_found
+  - hud.locked
+  - hud.locked.red
+  - hud.locked.blue
+  - hud.locked.green
+  - hud.locked.yellow
+  - hud.door_unlocked
+  - hud.door_blocked
+  - weapon.assault_rifle_01
+  - weapon.assault_rifle_03
+  - weapon.bat
+  - weapon.crowbar
+  - weapon.fire_axe
+  - weapon.hunting_rifle
+  - weapon.katana
+  - weapon.revolver_rifle
+  - weapon.sniper_rifle
+  - weapon.smg
+  - confirm_exit.title
+  - pause.title
+  - pause.resume
+  - pause.restart
+  - pause.exit
+  - pause.debug_complete
+  - pause.debug_fail
+  - result.complete
+  - result.failed
+  - result.exit_found
+  - result.no_exit
+  - result.zombies
+  - result.map
+  - result.menu
+  - result.retry
+  - result.next
+  - error.title
+  - error.back
+  - map.player
+  - map.pieces
+  - map.none
+  - map.none_found
+  - map.count
+  - settings.tab.controls
+  - settings.tab.shooting
+  - settings.tab.other
+  - settings.dead_zone
+  - settings.stick_response
+  - settings.controls_size
+  - settings.controls_opacity
+  - settings.floating_stick
+  - settings.left_handed
+  - settings.button_layout
+  - settings.edit
+  - settings.aim_mode
+  - settings.aim.free
+  - settings.aim.eight
+  - settings.aim.four
+  - settings.aim_assist
+  - settings.music
+  - settings.sound
+  - settings.show_fps
+  - settings.language
+  - settings.reset_tab
+  - layout.hint
+  - layout.size
+  - layout.element.stick
+  - layout.element.attack
+  - layout.element.use
+  - layout.element.melee
+  - layout.element.ranged
+  - layout.reset
+  - layout.done
+  _texts:
+  - English
+  - SETTINGS
+  - YES
+  - NO
+  - '{0}%'
+  - PLAY
+  - 'DEBUG: RESET PROGRESS'
+  - SELECT LEVEL
+  - 'No levels yet: run Build / Sync in the Level Designer.'
+  - LOADING
+  - LEVEL {0}
+  - RELOAD
+  - '{0}: press Use to pick up'
+  - Picked up {0}
+  - Map fragment {0}/{1} found
+  - 'Locked: needs a key'
+  - 'Locked: needs the red key'
+  - 'Locked: needs the blue key'
+  - 'Locked: needs the green key'
+  - 'Locked: needs the yellow key'
+  - Door unlocked
+  - Something is in the doorway
+  - Assault rifle
+  - Battle rifle
+  - Bat
+  - Crowbar
+  - Fire axe
+  - Hunting rifle
+  - Katana
+  - Revolver rifle
+  - Sniper rifle
+  - Silenced SMG
+  - FINISH LEVEL?
+  - PAUSED
+  - RESUME
+  - RESTART LEVEL
+  - EXIT TO MENU
+  - 'DEBUG: COMPLETE'
+  - 'DEBUG: FAIL'
+  - LEVEL COMPLETE
+  - LEVEL FAILED
+  - EXIT FOUND
+  - NO EXIT
+  - ZOMBIES {0}/{1}
+  - MAP {0}/{1}
+  - MENU
+  - RETRY
+  - NEXT
+  - SOMETHING WENT WRONG
+  - BACK TO MENU
+  - PLAYER
+  - MAP PIECES
+  - This level has no map
+  - No map fragments found yet (0/{0})
+  - 'Map fragments: {0}/{1}'
+  - CONTROLS
+  - SHOOTING
+  - OTHER
+  - Stick dead zone
+  - Stick response
+  - Controls size
+  - Controls opacity
+  - Floating stick (appears under the thumb)
+  - Left-handed layout
+  - Button layout
+  - EDIT
+  - Aim directions
+  - FREE
+  - EIGHT
+  - FOUR
+  - Auto-aim at zombies
+  - Music
+  - Sound
+  - Show FPS counter
+  - Language
+  - RESET TAB
+  - Drag the stick and buttons. Tap one to resize it.
+  - '{0} size: {1}'
+  - Stick
+  - Attack and weapons
+  - Use
+  - Melee
+  - Ranged
+  - RESET
+  - DONE
+  _missing: []

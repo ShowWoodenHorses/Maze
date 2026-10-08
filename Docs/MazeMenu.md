@@ -124,6 +124,23 @@
 Сначала подготовить ассет его билдером (Decor / Weapons / Light Fixtures / Exits …), затем
 **Maze → Dev → Collect Used Third-Party Assets**. Делать **до коммита**: папка `Import` не в git.
 
+### Изменить или добавить текст игры (локализация)
+Все тексты UI — в таблице `Data/Localization/Strings.tsv`: строка на ключ, колонка на язык (`en ru tr es de`), колонки
+разделены **табуляцией** (удобно править в Google Sheets / Excel и сохранять как TSV, UTF-8). Первая колонка (`en`) —
+базовый язык: пустая ячейка другого языка берёт её текст (в редакторе и dev-сборке вместо него виден ключ). Тексты,
+которые на экране заглавными, и в таблице пишутся заглавными (турецкое i/İ код не переведёт). `{0}`, `{1}` — значения;
+у всех языков набор `{n}` должен совпадать.
+1. Поправить текст в таблице.
+2. **Maze → Dev → Build Localization** — таблицы языков, проверка, атласы шрифтов под новые символы.
+
+**Новый текст в коде** — ключ-константа в `TextKeys` + строка в таблице; статичная подпись в `RuntimeScenesBuilder` —
+`Loc(TextKeys.…)` вместо литерала (затем Build Runtime Scenes). **Новое оружие** — строка `weapon.<id>`, **новый цвет
+ключа** — `hud.locked.<цвет>` (Build Localization напомнит о пропусках).
+
+**Добавить язык** — колонка с кодом языка, в ней строки `language.name` (название на самом языке) и `language.system`
+(имена `SystemLanguage` через запятую — для автовыбора при первом запуске), затем Build Localization. Буквы, которых нет
+в Rajdhani, берутся из Exo 2 (кириллица); для других алфавитов (греческий, CJK …) нужен свой fallback-шрифт в `UiStyleBuilder`.
+
 ### Поменяли вёрстку UI в коде
 **Maze → Dev → Build Runtime Scenes** — сцены Bootstrap и Game пересоздаются из `RuntimeScenesBuilder`.
 
@@ -258,11 +275,20 @@ Build Combat Effects). Подстроенные числа темы сохран
 
 ### UI
 
+#### Build Localization
+Из `Data/Localization/Strings.tsv` делает таблицу на язык (`Texts_<код>.asset`) и каталог языков `Languages.asset`
+(всё Addressable, группа Maze Shared; в памяти игры — только выбранный язык), проверяет таблицу: ключи из `TextKeys`,
+которых нет в таблице, и разные `{n}` у языков — ошибки (ничего не пишется); неиспользуемые ключи, непереведённые
+тексты, оружие без названия, цвет ключа без сообщения — предупреждения. Затем запускает Build UI Style (атласы шрифтов
+под символы всех языков). Отчёт — в консоли.
+Запускать: после правки таблицы переводов.
+
 #### Build UI Style
-Общий материал фигур `Art/UI/UIShape.mat`, шрифты Rajdhani SemiBold/Bold (статические SDF-атласы, только ASCII),
-`Data/UI/UiStyle.asset` (палитра, толщины линий — существующие значения сохраняются). Делает Rajdhani шрифтом TMP
-по умолчанию и убирает образцовый шрифт и эмодзи TMP из `Resources`.
-Запускать: после смены шрифта/набора символов или на чистом проекте.
+Общий материал фигур `Art/UI/UIShape.mat`, шрифты и `Data/UI/UiStyle.asset` (палитра, толщины линий — существующие
+значения сохраняются). Шрифты — статические SDF-атласы только с нужными символами (ASCII + все символы таблицы
+переводов): Rajdhani SemiBold/Bold — латиница всех языков, их fallback Exo 2 SemiBold/Bold (`Art/Fonts/Exo2`) —
+остальное (кириллица). Делает Rajdhani шрифтом TMP по умолчанию и убирает образцовый шрифт и эмодзи TMP из `Resources`.
+Запускать: на чистом проекте или после смены шрифтов (после правки текстов его запускает Build Localization).
 
 #### Build UI Icons
 Рисует линейные иконки UI (`Art/UI/Icons`) → `Data/UI/UiIcons.asset`, фон меню (процедурный лабиринт) и силуэты оружия
@@ -321,3 +347,4 @@ Build Weapons и Build Zombie Animations (и Build Light Fixtures для наб�
 - Билдеры персонажей → затем **Extract Character Meshes**.
 - Новые модели объектов → **Convert Object Materials to Maze Lit** (Light Fixtures и Exits делают это сами).
 - Что-то из `Import` → в конце **Collect Used Third-Party Assets**.
+- Правка `Strings.tsv` → **Build Localization** (сама запускает Build UI Style). Новая подпись в `RuntimeScenesBuilder` → ещё **Build Runtime Scenes**.

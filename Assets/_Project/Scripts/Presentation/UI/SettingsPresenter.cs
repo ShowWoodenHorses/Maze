@@ -1,4 +1,5 @@
 using System;
+using Cysharp.Threading.Tasks;
 using Maze.Application.Flow;
 using Maze.Application.Save;
 using Maze.Application.Services;
@@ -17,12 +18,14 @@ namespace Maze.Presentation.UI
         private readonly SettingsService _settings;
         private readonly GameFlow _flow;
         private readonly UIRoot _ui;
+        private readonly LocalizationService _texts;
         private bool _initialized;
 
         private TouchLayoutEditor LayoutEditor => _ui.TouchControls != null ? _ui.TouchControls.LayoutEditor : null;
 
-        public SettingsPresenter(SettingsService settings, GameFlow flow, UIRoot ui)
+        public SettingsPresenter(SettingsService settings, GameFlow flow, UIRoot ui, LocalizationService texts)
         {
+            _texts = texts;
             _settings = settings;
             _flow = flow;
             _ui = ui;
@@ -44,6 +47,8 @@ namespace Maze.Presentation.UI
             _ui.Settings.ResetClicked += OnReset;
             _ui.Settings.BackClicked += Close;
             _ui.Settings.EditLayoutClicked += BeginLayoutEdit;
+            _ui.Settings.LanguageStepped += OnLanguageStepped;
+            _texts.LanguageChanged += ShowLanguage;
             if (LayoutEditor != null)
             {
                 LayoutEditor.Changed += OnLayoutEdited;
@@ -62,6 +67,7 @@ namespace Maze.Presentation.UI
             _settings.SavePreviewed();
             _settings.ControlsChanged -= ApplyControls;
             _settings.ShowFpsChanged -= ApplyShowFps;
+            _texts.LanguageChanged -= ShowLanguage;
             _flow.StateChanged -= OnStateChanged;
             if (_ui == null) return; // Scene already destroyed on application quit.
 
@@ -73,6 +79,7 @@ namespace Maze.Presentation.UI
             _ui.Settings.ShowFpsChanged -= OnShowFpsEdited;
             _ui.Settings.VolumesChanged -= OnVolumesEdited;
             _ui.Settings.EditLayoutClicked -= BeginLayoutEdit;
+            _ui.Settings.LanguageStepped -= OnLanguageStepped;
             if (LayoutEditor != null)
             {
                 LayoutEditor.Changed -= OnLayoutEdited;
@@ -96,7 +103,22 @@ namespace Maze.Presentation.UI
             _ui.Settings.SetValues(_settings.Controls);
             _ui.Settings.SetVolumes(_settings.MusicVolume, _settings.SfxVolume);
             _ui.Settings.SetShowFps(_settings.ShowFps);
+            ShowLanguage();
             _ui.Settings.SetVisible(true);
+        }
+
+        private void ShowLanguage()
+        {
+            var index = _texts.LanguageIndex;
+            _ui.Settings.SetLanguage(index >= 0 ? _texts.Languages[index].NativeName : string.Empty);
+        }
+
+        /// <summary>Arrows cycle through the languages; the screen shows the new name once its texts are loaded.</summary>
+        private void OnLanguageStepped(int step)
+        {
+            var count = _texts.Languages.Count;
+            if (count < 2 || _texts.LanguageIndex < 0) return;
+            _texts.SetLanguageAsync(((_texts.LanguageIndex + step) % count + count) % count).Forget();
         }
 
         private void Close()

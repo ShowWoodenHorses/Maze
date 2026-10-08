@@ -1,4 +1,5 @@
 using System;
+using Maze.Application.Services;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -16,6 +17,14 @@ namespace Maze.Presentation.UI
         {
             if (gameObject.activeSelf != visible)
                 gameObject.SetActive(visible);
+        }
+
+        /// <summary>
+        /// The language changed (also once at start-up): screens that compose texts themselves keep
+        /// <paramref name="texts"/> and refresh what they show. Static captions are <see cref="Localization.LocalizedText"/>.
+        /// </summary>
+        public virtual void ApplyLanguage(LocalizationService texts)
+        {
         }
 
         protected static void Bind(Button button, Action action)

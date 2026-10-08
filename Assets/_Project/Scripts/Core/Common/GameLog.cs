@@ -15,6 +15,7 @@ namespace Maze.Core.Common
         Save,
         Gameplay,
         Visual,
+        Localization,
     }
 
     /// <summary>

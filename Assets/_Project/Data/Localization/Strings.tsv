@@ -1,0 +1,98 @@
+# Translation table: key, then a column per language (the first, en, is the base: it fills untranslated cells).
+# Columns are separated by TABs. After editing run Maze -> Dev -> Build Localization. Texts shown in capitals are
+# written in capitals here (Turkish i/I cannot be upper-cased by code). {0}, {1} are values; \n is a line break.
+key	en	ru	tr	es	de
+language.name	English	Русский	Türkçe	Español	Deutsch
+language.system	English	Russian	Turkish	Spanish	German
+# Shared
+common.settings	SETTINGS	НАСТРОЙКИ	AYARLAR	AJUSTES	EINSTELLUNGEN
+common.yes	YES	ДА	EVET	SÍ	JA
+common.no	NO	НЕТ	HAYIR	NO	NEIN
+format.percent	{0}%	{0}%	%{0}	{0} %	{0} %
+# Main menu, level select, loading
+menu.play	PLAY	ИГРАТЬ	OYNA	JUGAR	SPIELEN
+menu.reset_progress	DEBUG: RESET PROGRESS	DEBUG: СБРОС ПРОГРЕССА	DEBUG: İLERLEMEYİ SIFIRLA	DEBUG: REINICIAR PROGRESO	DEBUG: FORTSCHRITT ZURÜCKSETZEN
+level_select.title	SELECT LEVEL	ВЫБОР УРОВНЯ	BÖLÜM SEÇ	ELIGE NIVEL	LEVEL WÄHLEN
+level_select.empty	No levels yet: run Build / Sync in the Level Designer.	Уровней пока нет: выполните Build / Sync в Level Designer.	Henüz bölüm yok: Level Designer'da Build / Sync çalıştırın.	Aún no hay niveles: ejecuta Build / Sync en el Level Designer.	Noch keine Level: Build / Sync im Level Designer ausführen.
+loading	LOADING	ЗАГРУЗКА	YÜKLENİYOR	CARGANDO	LADEN
+# HUD
+hud.level	LEVEL {0}	УРОВЕНЬ {0}	BÖLÜM {0}	NIVEL {0}	LEVEL {0}
+hud.reload	RELOAD	ПЕРЕЗАРЯДКА	DOLDURMA	RECARGA	NACHLADEN
+hud.weapon_here	{0}: press Use to pick up	{0}: нажмите «Действие», чтобы взять	{0}: almak için Kullan'a basın	{0}: pulsa Usar para recoger	{0}: zum Aufheben „Benutzen“ drücken
+hud.weapon_taken	Picked up {0}	Подобрано: {0}	Alındı: {0}	Recogido: {0}	Aufgehoben: {0}
+hud.fragment_found	Map fragment {0}/{1} found	Найден фрагмент карты {0}/{1}	Harita parçası bulundu {0}/{1}	Fragmento de mapa encontrado {0}/{1}	Kartenteil gefunden {0}/{1}
+hud.locked	Locked: needs a key	Заперто: нужен ключ	Kilitli: anahtar gerekli	Cerrada: necesitas una llave	Verschlossen: Schlüssel nötig
+hud.locked.red	Locked: needs the red key	Заперто: нужен красный ключ	Kilitli: kırmızı anahtar gerekli	Cerrada: necesitas la llave roja	Verschlossen: roter Schlüssel nötig
+hud.locked.blue	Locked: needs the blue key	Заперто: нужен синий ключ	Kilitli: mavi anahtar gerekli	Cerrada: necesitas la llave azul	Verschlossen: blauer Schlüssel nötig
+hud.locked.green	Locked: needs the green key	Заперто: нужен зелёный ключ	Kilitli: yeşil anahtar gerekli	Cerrada: necesitas la llave verde	Verschlossen: grüner Schlüssel nötig
+hud.locked.yellow	Locked: needs the yellow key	Заперто: нужен жёлтый ключ	Kilitli: sarı anahtar gerekli	Cerrada: necesitas la llave amarilla	Verschlossen: gelber Schlüssel nötig
+hud.door_unlocked	Door unlocked	Дверь отперта	Kapının kilidi açıldı	Puerta desbloqueada	Tür aufgeschlossen
+hud.door_blocked	Something is in the doorway	Что-то мешает в проёме	Kapı aralığında bir şey var	Algo bloquea la puerta	Etwas steht in der Tür
+# Weapons (by definition id)
+weapon.assault_rifle_01	Assault rifle	Штурмовая винтовка	Saldırı tüfeği	Fusil de asalto	Sturmgewehr
+weapon.assault_rifle_03	Battle rifle	Боевая винтовка	Muharebe tüfeği	Fusil de combate	Kampfgewehr
+weapon.bat	Bat	Бита	Sopa	Bate	Schläger
+weapon.crowbar	Crowbar	Монтировка	Levye	Palanca	Brecheisen
+weapon.fire_axe	Fire axe	Пожарный топор	Yangın baltası	Hacha de bombero	Feuerwehraxt
+weapon.hunting_rifle	Hunting rifle	Охотничья винтовка	Av tüfeği	Rifle de caza	Jagdgewehr
+weapon.katana	Katana	Катана	Katana	Katana	Katana
+weapon.revolver_rifle	Revolver rifle	Револьверная винтовка	Revolver tüfek	Rifle revólver	Revolvergewehr
+weapon.sniper_rifle	Sniper rifle	Снайперская винтовка	Keskin nişancı tüfeği	Rifle de francotirador	Scharfschützengewehr
+weapon.smg	Silenced SMG	Пистолет-пулемёт с глушителем	Susturuculu hafif makineli	Subfusil con silenciador	MP mit Schalldämpfer
+# Finish level, pause, result, error
+confirm_exit.title	FINISH LEVEL?	ЗАВЕРШИТЬ УРОВЕНЬ?	BÖLÜMÜ BİTİR?	¿TERMINAR NIVEL?	LEVEL BEENDEN?
+pause.title	PAUSED	ПАУЗА	DURAKLATILDI	PAUSA	PAUSE
+pause.resume	RESUME	ПРОДОЛЖИТЬ	DEVAM ET	CONTINUAR	WEITER
+pause.restart	RESTART LEVEL	НАЧАТЬ ЗАНОВО	YENİDEN BAŞLAT	REINICIAR NIVEL	NEU STARTEN
+pause.exit	EXIT TO MENU	ВЫЙТИ В МЕНЮ	MENÜYE DÖN	SALIR AL MENÚ	ZUM MENÜ
+pause.debug_complete	DEBUG: COMPLETE	DEBUG: ПРОЙТИ	DEBUG: TAMAMLA	DEBUG: COMPLETAR	DEBUG: ABSCHLIESSEN
+pause.debug_fail	DEBUG: FAIL	DEBUG: ПРОВАЛ	DEBUG: KAYBET	DEBUG: FALLAR	DEBUG: SCHEITERN
+result.complete	LEVEL COMPLETE	УРОВЕНЬ ПРОЙДЕН	BÖLÜM TAMAMLANDI	NIVEL COMPLETADO	LEVEL GESCHAFFT
+result.failed	LEVEL FAILED	УРОВЕНЬ ПРОВАЛЕН	BÖLÜM BAŞARISIZ	NIVEL FALLIDO	LEVEL GESCHEITERT
+result.exit_found	EXIT FOUND	ВЫХОД НАЙДЕН	ÇIKIŞ BULUNDU	SALIDA ENCONTRADA	AUSGANG GEFUNDEN
+result.no_exit	NO EXIT	ВЫХОД НЕ НАЙДЕН	ÇIKIŞ BULUNAMADI	SIN SALIDA	KEIN AUSGANG
+result.zombies	ZOMBIES {0}/{1}	ЗОМБИ {0}/{1}	ZOMBİLER {0}/{1}	ZOMBIS {0}/{1}	ZOMBIES {0}/{1}
+result.map	MAP {0}/{1}	КАРТА {0}/{1}	HARİTA {0}/{1}	MAPA {0}/{1}	KARTE {0}/{1}
+result.menu	MENU	МЕНЮ	MENÜ	MENÚ	MENÜ
+result.retry	RETRY	ЕЩЁ РАЗ	TEKRAR	REPETIR	NOCHMAL
+result.next	NEXT	ДАЛЕЕ	SONRAKİ	SIGUIENTE	WEITER
+error.title	SOMETHING WENT WRONG	ЧТО-ТО ПОШЛО НЕ ТАК	BİR ŞEYLER TERS GİTTİ	ALGO SALIÓ MAL	ETWAS IST SCHIEFGELAUFEN
+error.back	BACK TO MENU	В МЕНЮ	MENÜYE DÖN	VOLVER AL MENÚ	ZURÜCK ZUM MENÜ
+# Map
+map.player	PLAYER	ИГРОК	OYUNCU	JUGADOR	SPIELER
+map.pieces	MAP PIECES	ЧАСТИ КАРТЫ	HARİTA PARÇALARI	PIEZAS DEL MAPA	KARTENTEILE
+map.none	This level has no map	На этом уровне нет карты	Bu bölümde harita yok	Este nivel no tiene mapa	Dieses Level hat keine Karte
+map.none_found	No map fragments found yet (0/{0})	Фрагменты карты ещё не найдены (0/{0})	Henüz harita parçası bulunamadı (0/{0})	Aún no hay fragmentos del mapa (0/{0})	Noch keine Kartenteile gefunden (0/{0})
+map.count	Map fragments: {0}/{1}	Фрагменты карты: {0}/{1}	Harita parçaları: {0}/{1}	Fragmentos del mapa: {0}/{1}	Kartenteile: {0}/{1}
+# Settings
+settings.tab.controls	CONTROLS	УПРАВЛЕНИЕ	KONTROLLER	CONTROLES	STEUERUNG
+settings.tab.shooting	SHOOTING	СТРЕЛЬБА	ATIŞ	DISPARO	SCHIESSEN
+settings.tab.other	OTHER	ПРОЧЕЕ	DİĞER	OTROS	SONSTIGES
+settings.dead_zone	Stick dead zone	Мёртвая зона стика	Çubuk ölü bölgesi	Zona muerta del stick	Totzone des Sticks
+settings.stick_response	Stick response	Отклик стика	Çubuk tepkisi	Respuesta del stick	Stick-Reaktion
+settings.controls_size	Controls size	Размер кнопок	Kontrol boyutu	Tamaño de los controles	Größe der Steuerung
+settings.controls_opacity	Controls opacity	Видимость кнопок	Kontrol opaklığı	Opacidad de los controles	Deckkraft der Steuerung
+settings.floating_stick	Floating stick (appears under the thumb)	Плавающий стик (появляется под пальцем)	Kayan çubuk (başparmağın altında belirir)	Stick flotante (aparece bajo el pulgar)	Schwebender Stick (erscheint unter dem Daumen)
+settings.left_handed	Left-handed layout	Раскладка для левши	Solak düzeni	Diseño para zurdos	Linkshänder-Layout
+settings.button_layout	Button layout	Расположение кнопок	Düğme düzeni	Disposición de botones	Tastenanordnung
+settings.edit	EDIT	ИЗМЕНИТЬ	DÜZENLE	EDITAR	ÄNDERN
+settings.aim_mode	Aim directions	Направления прицела	Nişan yönleri	Direcciones de apuntado	Zielrichtungen
+settings.aim.free	FREE	ЛЮБЫЕ	SERBEST	LIBRE	FREI
+settings.aim.eight	EIGHT	ВОСЕМЬ	SEKİZ	OCHO	ACHT
+settings.aim.four	FOUR	ЧЕТЫРЕ	DÖRT	CUATRO	VIER
+settings.aim_assist	Auto-aim at zombies	Автоприцел по зомби	Zombilere otomatik nişan	Apuntado automático a zombis	Automatisches Zielen auf Zombies
+settings.music	Music	Музыка	Müzik	Música	Musik
+settings.sound	Sound	Звуки	Ses	Sonido	Sound
+settings.show_fps	Show FPS counter	Показывать FPS	FPS sayacını göster	Mostrar contador de FPS	FPS-Zähler anzeigen
+settings.language	Language	Язык	Dil	Idioma	Sprache
+settings.reset_tab	RESET TAB	СБРОСИТЬ ВКЛАДКУ	SEKMEYİ SIFIRLA	RESTABLECER PESTAÑA	TAB ZURÜCKSETZEN
+# Touch layout editor
+layout.hint	Drag the stick and buttons. Tap one to resize it.	Перетаскивайте стик и кнопки. Нажмите на кнопку, чтобы изменить её размер.	Çubuğu ve düğmeleri sürükleyin. Boyutunu değiştirmek için birine dokunun.	Arrastra el stick y los botones. Toca uno para cambiar su tamaño.	Stick und Tasten ziehen. Antippen, um die Größe zu ändern.
+layout.size	{0} size: {1}	{0}: размер {1}	{0} boyutu: {1}	{0}: tamaño {1}	{0}: Größe {1}
+layout.element.stick	Stick	Стик	Çubuk	Stick	Stick
+layout.element.attack	Attack and weapons	Атака и оружие	Saldırı ve silahlar	Ataque y armas	Angriff und Waffen
+layout.element.use	Use	Действие	Kullan	Usar	Benutzen
+layout.element.melee	Melee	Ближний бой	Yakın dövüş	Cuerpo a cuerpo	Nahkampf
+layout.element.ranged	Ranged	Дальний бой	Uzak menzil	A distancia	Fernkampf
+layout.reset	RESET	СБРОС	SIFIRLA	RESTABLECER	ZURÜCKSETZEN
+layout.done	DONE	ГОТОВО	TAMAM	LISTO	FERTIG

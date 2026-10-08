@@ -87,6 +87,19 @@ namespace Maze.Application.Services
             set => SetFlag(ref _save.Data.Settings.MapHideFragments, !value);
         }
 
+        /// <summary>Language code chosen by the player or on the first start; empty before that. Saved at once.</summary>
+        public string Language
+        {
+            get => _save.Data.Settings.Language;
+            set
+            {
+                value ??= string.Empty;
+                if (_save.Data.Settings.Language == value) return;
+                _save.Data.Settings.Language = value;
+                _save.Save();
+            }
+        }
+
         /// <summary>Raised when <see cref="Controls"/> change (also once after loading).</summary>
         public event Action ControlsChanged;
 

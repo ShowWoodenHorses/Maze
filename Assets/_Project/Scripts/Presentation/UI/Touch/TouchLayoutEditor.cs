@@ -1,5 +1,7 @@
 using System;
 using Maze.Application.Save;
+using Maze.Application.Services;
+using Maze.Presentation.Localization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -34,6 +36,7 @@ namespace Maze.Presentation.UI.Touch
         private TouchLayout _layout;
         private TouchElement _selected;
         private Vector2 _grabOffset;
+        private LocalizationService _texts;
         private readonly Vector3[] _corners = new Vector3[4];
 
         /// <summary>The edited layout (right-handed, normalized); raised on every move, resize and reset.</summary>
@@ -132,9 +135,25 @@ namespace Maze.Presentation.UI.Touch
                                    Vector2.one * (SelectionPadding * 2f);
         }
 
-        private void UpdateSizeLabel() =>
-            _sizeLabel.text = (_selected == TouchElement.Attack ? "Attack and weapons" : _selected.ToString()) +
-                              " size: " + Mathf.RoundToInt(_layout[_selected].Scale * 100f) + "%";
+        /// <summary>The language changed (also once at start-up): the size caption is composed here.</summary>
+        public void ApplyLanguage(LocalizationService texts)
+        {
+            _texts = texts;
+            if (IsEditing) UpdateSizeLabel();
+        }
+
+        private void UpdateSizeLabel()
+        {
+            var percent = Mathf.RoundToInt(_layout[_selected].Scale * 100f);
+            if (_texts == null)
+            {
+                _sizeLabel.text = _selected + ": " + percent + "%";
+                return;
+            }
+
+            var element = _texts.Get(TextKeys.LayoutElementPrefix + _selected.ToString().ToLowerInvariant());
+            _sizeLabel.text = _texts.Format(TextKeys.LayoutSize, element, _texts.Format(TextKeys.Percent, percent));
+        }
 
         /// <summary>Pointer position normalized to the controls' safe area.</summary>
         private bool ToArea(PointerEventData eventData, out Vector2 point)

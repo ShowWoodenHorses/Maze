@@ -3,6 +3,8 @@ using System.IO;
 using System.Linq;
 using Maze.Application.Save;
 using Maze.Composition;
+using Maze.Core.Localization;
+using Maze.Presentation.Localization;
 using Maze.Presentation.Map;
 using Maze.Presentation.UI;
 using Maze.Presentation.UI.Shapes;
@@ -43,6 +45,13 @@ namespace Maze.Editor.Dev
 
         private static UiStyle _style;
 
+        /// <summary>Base-language texts for <see cref="Loc"/>; captions made from keys, for <see cref="UIRoot"/>.</summary>
+        private static LocalizationSource _strings;
+        private static readonly List<LocalizedText> Localized = new List<LocalizedText>();
+
+        /// <summary>Marks a caption argument of the helpers below as a key: <see cref="Text"/> localizes it.</summary>
+        private const char KeyMark = '\u0001';
+
         [MenuItem("Maze/Dev/Build Runtime Scenes")]
         public static void Build()
         {
@@ -72,6 +81,10 @@ namespace Maze.Editor.Dev
 
             _style = AssetDatabase.LoadAssetAtPath<UiStyle>(UiStyleBuilder.StylePath);
             if (_style == null || _style.Font == null) _style = UiStyleBuilder.Build();
+            _strings = File.Exists(LocalizationBuilder.SourcePath)
+                ? LocalizationSource.Parse(File.ReadAllText(LocalizationBuilder.SourcePath, System.Text.Encoding.UTF8))
+                : null;
+            Localized.Clear();
 
             BuildGameScene();
             BuildBootstrapScene();
@@ -140,6 +153,7 @@ namespace Maze.Editor.Dev
             SetReference(ui, "_eventSystem", eventSystem.GetComponent<EventSystem>());
             var touch = BuildTouchControls();
             SetReference(ui, "_touchControls", touch);
+            SetReferences(ui, "_localizedTexts", Localized.Cast<Object>().ToList());
             SetReference(ui.Hud, "_touchControls", touch);
 
             var scopeObject = new GameObject("ProjectLifetimeScope");
@@ -237,15 +251,15 @@ namespace Maze.Editor.Dev
             layout.childControlWidth = layout.childControlHeight = true;
             layout.childForceExpandHeight = false;
             buttons.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-            var play = TextButton(buttons, "PlayButton", "PLAY", true, icons.ChevronRight, 92f);
-            var settings = TextButton(buttons, "SettingsButton", "SETTINGS", false, icons.Settings, 92f);
+            var play = TextButton(buttons, "PlayButton", Loc(TextKeys.MenuPlay), true, icons.ChevronRight, 92f);
+            var settings = TextButton(buttons, "SettingsButton", Loc(TextKeys.Settings), false, icons.Settings, 92f);
 
             var summary = Row(area, "Summary", Vector2.zero, new Vector2(170f, 70f), 44f, Vector2.zero);
             var stars = Counter(summary, "Stars", icons.StarFilled, out var starsText);
             stars.transform.Find("Icon").GetComponent<Image>().color = _style.Accent;
             Counter(summary, "Kills", icons.Skull, out var killsText);
 
-            var reset = LinkButton(area, "DebugResetProgressButton", "DEBUG: RESET PROGRESS", new Vector2(1f, 0f),
+            var reset = LinkButton(area, "DebugResetProgressButton", Loc(TextKeys.MenuResetProgress), new Vector2(1f, 0f),
                 new Vector2(-64f, 100f), 380f);
             var version = Text(area, "Version", "v0.1", 24f, true, new Vector2(1f, 0f), new Vector2(1f, 0f),
                 new Vector2(-64f, 52f), new Vector2(140f, 36f), TextAlignmentOptions.BottomRight, _style.MutedText, 6f);
@@ -273,7 +287,7 @@ namespace Maze.Editor.Dev
             var area = SafeArea(screen.transform);
 
             var back = RoundButton(area, "BackButton", icons.ChevronLeft, TopLeft, new Vector2(100f, -90f), 84f, 36f);
-            Text(area, "Title", "SELECT LEVEL", 46f, true, TopLeft, new Vector2(0f, 0.5f), new Vector2(172f, -90f),
+            Text(area, "Title", Loc(TextKeys.LevelSelectTitle), 46f, true, TopLeft, new Vector2(0f, 0.5f), new Vector2(172f, -90f),
                 new Vector2(700f, 60f), TextAlignmentOptions.MidlineLeft, spacing: 16f);
             var total = Row(area, "TotalStars", new Vector2(1f, 1f), new Vector2(-64f, -90f), 10f, new Vector2(1f, 0.5f));
             var totalCounter = Counter(total, "Stars", icons.StarFilled, out var totalText);
@@ -291,7 +305,7 @@ namespace Maze.Editor.Dev
             for (var i = 0; i < LevelPages.PerPage; i++)
                 tiles.Add(LevelTileView(gridRect, i, icons));
 
-            var empty = Text(area, "EmptyLabel", "No levels yet: run Build / Sync in the Level Designer.", 30f, false,
+            var empty = Text(area, "EmptyLabel", Loc(TextKeys.LevelSelectEmpty), 30f, false,
                 Center, Center, new Vector2(0f, 30f), new Vector2(1200f, 60f), TextAlignmentOptions.Center, _style.MutedText);
             empty.gameObject.SetActive(false);
 
@@ -368,7 +382,7 @@ namespace Maze.Editor.Dev
         {
             var screen = Screen<LoadingScreen>(parent, "LoadingScreen", Background);
             Backdrop(screen.transform);
-            Text(screen.transform, "Label", "LOADING", 40f, true, Center, Center, new Vector2(0f, 6f), new Vector2(600f, 60f),
+            Text(screen.transform, "Label", Loc(TextKeys.Loading), 40f, true, Center, Center, new Vector2(0f, 6f), new Vector2(600f, 60f),
                 TextAlignmentOptions.Center, spacing: 24f);
             OrnamentLine(screen.transform, Center, new Vector2(-200f, -40f), 400f);
             return screen;
@@ -561,6 +575,8 @@ namespace Maze.Editor.Dev
             var icon = Icon(frame.transform, "Icon", fallback, Center, new Vector2(0f, 8f), 84f);
             var ammo = Text(frame.transform, "Ammo", "", 24f, false, new Vector2(1f, 0f), new Vector2(1f, 0f),
                 new Vector2(-10f, 8f), new Vector2(110f, 28f), TextAlignmentOptions.BottomRight);
+            ammo.textWrappingMode = TextWrappingModes.NoWrap;
+            AutoSize(ammo, 0.6f);
             var hintText = Text(frame.transform, "Hint", hint, 22f, true, TopLeft, TopLeft, new Vector2(10f, -6f),
                 new Vector2(30f, 26f), TextAlignmentOptions.TopLeft);
             var reload = BarFill((RectTransform)frame.transform, "Reload", _style.Accent);
@@ -580,21 +596,56 @@ namespace Maze.Editor.Dev
             return slot;
         }
 
-        /// <summary>Text placed by anchor and pivot (no layout).</summary>
+        /// <summary>A caption by key (<see cref="TextKeys"/>) for any helper taking a text: see <see cref="Text"/>.</summary>
+        private static string Loc(string key) => KeyMark + key;
+
+        /// <summary>
+        /// Text placed by anchor and pivot (no layout). A <see cref="Loc"/> text gets the base-language text from the
+        /// translation table and a <see cref="LocalizedText"/> with its key (listed in <see cref="UIRoot"/>).
+        /// </summary>
         private static TMP_Text Text(Transform parent, string name, string text, float size, bool bold, Vector2 anchor,
             Vector2 pivot, Vector2 position, Vector2 box, TextAlignmentOptions alignment, Color? color = null,
             float spacing = 0f)
         {
+            string key = null;
+            if (!string.IsNullOrEmpty(text) && text[0] == KeyMark)
+            {
+                key = text.Substring(1);
+                text = _strings?.Find(key, _strings.Languages[0]) ?? key;
+            }
+
             var rect = Rect(parent, name, anchor, position, box);
             rect.pivot = pivot;
             var label = rect.gameObject.AddComponent<TextMeshProUGUI>();
             label.font = bold ? _style.BoldFont : _style.Font;
             label.text = text;
+            if (key != null)
+            {
+                var localized = rect.gameObject.AddComponent<LocalizedText>();
+                var serialized = new SerializedObject(localized);
+                serialized.FindProperty("_key").stringValue = key;
+                serialized.FindProperty("_text").objectReferenceValue = label;
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+                Localized.Add(localized);
+            }
+
             label.fontSize = size;
             label.characterSpacing = spacing;
             label.alignment = alignment;
             label.color = color ?? _style.Text;
             label.raycastTarget = false;
+            return label;
+        }
+
+        /// <summary>
+        /// Long translations shrink the text down to <paramref name="min"/> of its size instead of overflowing its box
+        /// (TextMeshPro re-fits only when the text changes).
+        /// </summary>
+        private static TMP_Text AutoSize(TMP_Text label, float min = 0.7f)
+        {
+            label.enableAutoSizing = true;
+            label.fontSizeMax = label.fontSize;
+            label.fontSizeMin = Mathf.Round(label.fontSize * min);
             return label;
         }
 
@@ -889,9 +940,10 @@ namespace Maze.Editor.Dev
             var bar = PanelBox(panel.transform, "Toolbar", new Vector2(0.5f, 1f), new Vector2(0f, -12f), 660f,
                 new RectOffset(22, 22, 14, 16), 8f);
 
-            Text(bar, "Hint", "Drag the stick and buttons. Tap one to resize it.", 22f, false, Center, Center, Vector2.zero,
-                new Vector2(600f, 30f), TextAlignmentOptions.Center, _style.MutedText).gameObject
-                .AddComponent<LayoutElement>().preferredHeight = 30f;
+            // Two lines for longer translations.
+            AutoSize(Text(bar, "Hint", Loc(TextKeys.LayoutHint), 22f, false, Center, Center, Vector2.zero,
+                new Vector2(600f, 56f), TextAlignmentOptions.Center, _style.MutedText), 0.8f).gameObject
+                .AddComponent<LayoutElement>().preferredHeight = 56f;
 
             var row = new GameObject("Row", typeof(RectTransform));
             row.transform.SetParent(bar, false);
@@ -913,12 +965,14 @@ namespace Maze.Editor.Dev
             sizeColumn.AddComponent<LayoutElement>().flexibleWidth = 1f;
             var sizeLabel = Text(sizeColumn.transform, "SizeLabel", "Size", 22f, true, Center, Center, Vector2.zero,
                 new Vector2(200f, 28f), TextAlignmentOptions.MidlineLeft, spacing: 2f);
+            sizeLabel.textWrappingMode = TextWrappingModes.NoWrap;
+            AutoSize(sizeLabel);
             sizeLabel.gameObject.AddComponent<LayoutElement>().preferredHeight = 28f;
             var size = StyledSlider(sizeColumn.transform, "SizeSlider", 300f, 34f);
             size.gameObject.AddComponent<LayoutElement>().preferredHeight = 34f;
 
-            var reset = TextButton(row.transform, "ResetLayoutButton", "RESET", false, null, 60f, 22f);
-            var done = TextButton(row.transform, "DoneButton", "DONE", true, null, 60f, 22f);
+            var reset = TextButton(row.transform, "ResetLayoutButton", Loc(TextKeys.LayoutReset), false, null, 60f, 22f);
+            var done = TextButton(row.transform, "DoneButton", Loc(TextKeys.LayoutDone), true, null, 60f, 22f);
             foreach (var button in new[] { reset, done })
                 button.GetComponent<LayoutElement>().preferredWidth = 140f;
 
@@ -951,10 +1005,10 @@ namespace Maze.Editor.Dev
             var screen = Screen<ConfirmExitScreen>(parent, "ConfirmExitScreen", Dim);
             var panel = PanelBox(screen.transform, "Panel", Center, Vector2.zero, 660f, new RectOffset(56, 56, 52, 56), 34f);
             SetReference(screen.GetComponent<UiAppear>(), "_panel", panel);
-            Heading(panel, "Title", "FINISH LEVEL?", 54f);
+            Heading(panel, "Title", Loc(TextKeys.ConfirmExitTitle), 54f);
             var row = ButtonRow(panel, "Buttons", 20f, 86f);
-            var no = TextButton(row, "NoButton", "NO", false, null, 86f);
-            var yes = TextButton(row, "YesButton", "YES", true, null, 86f);
+            var no = TextButton(row, "NoButton", Loc(TextKeys.No), false, null, 86f);
+            var yes = TextButton(row, "YesButton", Loc(TextKeys.Yes), true, null, 86f);
 
             SetReference(screen, "_yesButton", yes);
             SetReference(screen, "_noButton", no);
@@ -967,15 +1021,15 @@ namespace Maze.Editor.Dev
             var icons = UiIcons();
             var panel = PanelBox(screen.transform, "Panel", Center, Vector2.zero, 660f, new RectOffset(56, 56, 48, 56), 18f);
             SetReference(screen.GetComponent<UiAppear>(), "_panel", panel);
-            Heading(panel, "Title", "PAUSED", 58f);
-            var resume = TextButton(panel, "ResumeButton", "RESUME", true, icons.Resume, 86f);
-            var retry = TextButton(panel, "RetryButton", "RESTART LEVEL", false, icons.Retry, 86f);
-            var settings = TextButton(panel, "SettingsButton", "SETTINGS", false, icons.Settings, 86f);
-            var exit = TextButton(panel, "ExitButton", "EXIT TO MENU", false, icons.Exit, 86f);
+            Heading(panel, "Title", Loc(TextKeys.PauseTitle), 58f);
+            var resume = TextButton(panel, "ResumeButton", Loc(TextKeys.PauseResume), true, icons.Resume, 86f);
+            var retry = TextButton(panel, "RetryButton", Loc(TextKeys.PauseRestart), false, icons.Retry, 86f);
+            var settings = TextButton(panel, "SettingsButton", Loc(TextKeys.Settings), false, icons.Settings, 86f);
+            var exit = TextButton(panel, "ExitButton", Loc(TextKeys.PauseExit), false, icons.Exit, 86f);
 
             var debugGroup = ButtonRow(panel, "DebugGroup", 14f, 56f);
-            var complete = TextButton(debugGroup, "DebugCompleteButton", "DEBUG: COMPLETE", false, null, 56f, 20f);
-            var fail = TextButton(debugGroup, "DebugFailButton", "DEBUG: FAIL", false, null, 56f, 20f);
+            var complete = TextButton(debugGroup, "DebugCompleteButton", Loc(TextKeys.PauseDebugComplete), false, null, 56f, 20f);
+            var fail = TextButton(debugGroup, "DebugFailButton", Loc(TextKeys.PauseDebugFail), false, null, 56f, 20f);
 
             SetReference(screen, "_resumeButton", resume);
             SetReference(screen, "_retryButton", retry);
@@ -1022,7 +1076,8 @@ namespace Maze.Editor.Dev
                 columnLayout.childControlWidth = columnLayout.childControlHeight = true;
                 columnLayout.childForceExpandWidth = columnLayout.childForceExpandHeight = false;
                 var columnElement = column.AddComponent<LayoutElement>();
-                columnElement.preferredWidth = 230f;
+                // (940 − 2 × 64 padding − 2 × 40 spacing) / 3: the label has this width whatever its text.
+                columnElement.preferredWidth = 244f;
                 var holder = new GameObject("Holder", typeof(RectTransform));
                 holder.transform.SetParent(column.transform, false);
                 var holderLayout = holder.AddComponent<LayoutElement>();
@@ -1030,15 +1085,19 @@ namespace Maze.Editor.Dev
                 stars.Add(Icon(holder.transform, "Icon", icons.Star, Center, Vector2.zero, 108f));
                 var label = Text(column.transform, "Label", "", 26f, true, Center, Center, Vector2.zero, new Vector2(230f, 34f),
                     TextAlignmentOptions.Center, spacing: 6f);
-                label.gameObject.AddComponent<LayoutElement>().preferredHeight = 34f;
+                label.textWrappingMode = TextWrappingModes.NoWrap;
+                AutoSize(label);
+                var labelElement = label.gameObject.AddComponent<LayoutElement>();
+                labelElement.preferredHeight = 34f;
+                labelElement.preferredWidth = 244f;
                 labels.Add(label);
             }
 
             Hairline(panel, 0.2f);
             var row = ButtonRow(panel, "Buttons", 18f, 86f);
-            var menu = TextButton(row, "MenuButton", "MENU", false, icons.Menu, 86f);
-            var retry = TextButton(row, "RetryButton", "RETRY", false, icons.Retry, 86f);
-            var next = TextButton(row, "NextButton", "NEXT", true, icons.ChevronRight, 86f);
+            var menu = TextButton(row, "MenuButton", Loc(TextKeys.ResultMenu), false, icons.Menu, 86f);
+            var retry = TextButton(row, "RetryButton", Loc(TextKeys.ResultRetry), false, icons.Retry, 86f);
+            var next = TextButton(row, "NextButton", Loc(TextKeys.ResultNext), true, icons.ChevronRight, 86f);
 
             SetReference(screen, "_style", _style);
             SetReference(screen, "_title", title);
@@ -1059,8 +1118,11 @@ namespace Maze.Editor.Dev
             var screen = Screen<MapScreen>(parent, "MapScreen", MapBackground);
             var icons = UiIcons();
 
+            // Narrower than the gap between the switches on the left and Close on the right, also at 4:3.
             var caption = Text(screen.transform, "Caption", "MAP", 40f, true, new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f),
-                new Vector2(0f, -90f), new Vector2(900f, 56f), TextAlignmentOptions.Center, spacing: 14f);
+                new Vector2(0f, -90f), new Vector2(680f, 56f), TextAlignmentOptions.Center, spacing: 8f);
+            caption.textWrappingMode = TextWrappingModes.NoWrap;
+            AutoSize(caption, 0.6f);
             var close = RoundButton(screen.transform, "CloseButton", icons.Close, new Vector2(1f, 1f), new Vector2(-100f, -90f),
                 84f, 34f);
 
@@ -1080,9 +1142,9 @@ namespace Maze.Editor.Dev
             fitter.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
             fitter.aspectRatio = 1f;
 
-            // Icon switches at the top left (the caption is centred). Direct children named "<name>Toggle" (tests).
-            var showPlayer = LabeledSwitch(screen.transform, "ShowPlayer", "PLAYER", TopLeft, new Vector2(60f, -90f));
-            var showFragments = LabeledSwitch(screen.transform, "ShowFragments", "MAP PIECES", TopLeft, new Vector2(330f, -90f));
+            // Icon switches stacked at the top left (the caption is centred). Direct children named "<name>Toggle" (tests).
+            var showPlayer = LabeledSwitch(screen.transform, "ShowPlayer", Loc(TextKeys.MapPlayer), TopLeft, new Vector2(60f, -60f));
+            var showFragments = LabeledSwitch(screen.transform, "ShowFragments", Loc(TextKeys.MapPieces), TopLeft, new Vector2(60f, -124f));
 
             var mapIcons = AssetDatabase.LoadAssetAtPath<MapIconSet>(MapIconsBuilder.SetPath);
             if (mapIcons == null) mapIcons = MapIconsBuilder.Build();
@@ -1131,7 +1193,7 @@ namespace Maze.Editor.Dev
             var area = SafeArea(screen.transform);
 
             var back = RoundButton(area, "BackButton", icons.ChevronLeft, TopLeft, new Vector2(100f, -90f), 84f, 36f);
-            Text(area, "Title", "SETTINGS", 46f, true, TopLeft, new Vector2(0f, 0.5f), new Vector2(172f, -90f),
+            Text(area, "Title", Loc(TextKeys.Settings), 46f, true, TopLeft, new Vector2(0f, 0.5f), new Vector2(172f, -90f),
                 new Vector2(600f, 60f), TextAlignmentOptions.MidlineLeft, spacing: 16f);
 
             var column = new GameObject("Content", typeof(RectTransform)).GetComponent<RectTransform>();
@@ -1155,7 +1217,7 @@ namespace Maze.Editor.Dev
             var tabButtons = new List<Object>();
             var tabLabels = new List<Object>();
             var tabUnderlines = new List<Object>();
-            foreach (var (name, caption) in new[] { ("ControlsTab", "CONTROLS"), ("ShootingTab", "SHOOTING"), ("OtherTab", "OTHER") })
+            foreach (var (name, caption) in new[] { ("ControlsTab", Loc(TextKeys.SettingsTabControls)), ("ShootingTab", Loc(TextKeys.SettingsTabShooting)), ("OtherTab", Loc(TextKeys.SettingsTabOther)) })
             {
                 var (button, label, underline) = TabButton(tabs.transform, name, caption);
                 tabButtons.Add(button);
@@ -1173,36 +1235,37 @@ namespace Maze.Editor.Dev
             pagesLayout.padding = new RectOffset(0, 0, 10, 0);
 
             var controlsPage = Page(pages.transform, "ControlsPage");
-            var (deadZone, deadZoneLabel) = SliderSetting(controlsPage, "DeadZone", "Stick dead zone");
-            var (sensitivity, sensitivityLabel) = SliderSetting(controlsPage, "Sensitivity", "Stick response");
-            var (size, sizeLabel) = SliderSetting(controlsPage, "Size", "Controls size");
-            var (opacity, opacityLabel) = SliderSetting(controlsPage, "Opacity", "Controls opacity");
-            var floating = SwitchSetting(controlsPage, "FloatingStick", "Floating stick (appears under the thumb)");
-            var leftHanded = SwitchSetting(controlsPage, "LeftHanded", "Left-handed layout");
-            var editLayout = ButtonSetting(controlsPage, "EditLayoutButton", "Button layout", "EDIT");
+            var (deadZone, deadZoneLabel) = SliderSetting(controlsPage, "DeadZone", Loc(TextKeys.SettingsDeadZone));
+            var (sensitivity, sensitivityLabel) = SliderSetting(controlsPage, "Sensitivity", Loc(TextKeys.SettingsStickResponse));
+            var (size, sizeLabel) = SliderSetting(controlsPage, "Size", Loc(TextKeys.SettingsControlsSize));
+            var (opacity, opacityLabel) = SliderSetting(controlsPage, "Opacity", Loc(TextKeys.SettingsControlsOpacity));
+            var floating = SwitchSetting(controlsPage, "FloatingStick", Loc(TextKeys.SettingsFloatingStick));
+            var leftHanded = SwitchSetting(controlsPage, "LeftHanded", Loc(TextKeys.SettingsLeftHanded));
+            var editLayout = ButtonSetting(controlsPage, "EditLayoutButton", Loc(TextKeys.SettingsButtonLayout), Loc(TextKeys.SettingsEdit));
 
             var shootingPage = Page(pages.transform, "ShootingPage");
-            var aimRow = SettingRow(shootingPage, "AimMode", "Aim directions");
+            var aimRow = SettingRow(shootingPage, "AimMode", Loc(TextKeys.SettingsAimMode));
             var aimButtons = new List<Object>();
-            foreach (var (name, caption) in new[] { ("AimFreeButton", "FREE"), ("AimEightButton", "EIGHT"), ("AimFourButton", "FOUR") })
+            foreach (var (name, caption) in new[] { ("AimFreeButton", Loc(TextKeys.SettingsAimFree)), ("AimEightButton", Loc(TextKeys.SettingsAimEight)), ("AimFourButton", Loc(TextKeys.SettingsAimFour)) })
             {
                 var segment = TextButton(aimRow, name, caption, false, null, 60f, 24f);
                 segment.GetComponent<LayoutElement>().preferredWidth = 150f;
                 aimButtons.Add(segment);
             }
 
-            var aimAssist = SwitchSetting(shootingPage, "AimAssist", "Auto-aim at zombies");
+            var aimAssist = SwitchSetting(shootingPage, "AimAssist", Loc(TextKeys.SettingsAimAssist));
 
             var otherPage = Page(pages.transform, "OtherPage");
-            var (music, musicLabel) = SliderSetting(otherPage, "MusicVolume", "Music");
-            var (sfx, sfxLabel) = SliderSetting(otherPage, "SfxVolume", "Sound");
-            var showFps = SwitchSetting(otherPage, "ShowFps", "Show FPS counter");
+            var (languagePrevious, languageName, languageNext) = StepperSetting(otherPage, "Language", Loc(TextKeys.SettingsLanguage));
+            var (music, musicLabel) = SliderSetting(otherPage, "MusicVolume", Loc(TextKeys.SettingsMusic));
+            var (sfx, sfxLabel) = SliderSetting(otherPage, "SfxVolume", Loc(TextKeys.SettingsSound));
+            var showFps = SwitchSetting(otherPage, "ShowFps", Loc(TextKeys.SettingsShowFps));
 
-            var reset = TextButton(area, "ResetButton", "RESET TAB", false, icons.Retry, 76f, 26f);
+            var reset = TextButton(area, "ResetButton", Loc(TextKeys.SettingsResetTab), false, icons.Retry, 76f, 26f);
             var resetRect = (RectTransform)reset.transform;
             resetRect.anchorMin = resetRect.anchorMax = resetRect.pivot = new Vector2(1f, 0f);
             resetRect.anchoredPosition = new Vector2(-64f, 56f);
-            resetRect.sizeDelta = new Vector2(300f, 76f);
+            resetRect.sizeDelta = new Vector2(400f, 76f);
 
             SetReference(screen, "_style", _style);
             SetReferences(screen, "_tabButtons", tabButtons);
@@ -1210,6 +1273,9 @@ namespace Maze.Editor.Dev
             SetReferences(screen, "_tabUnderlines", tabUnderlines);
             SetReferences(screen, "_pages", new List<Object> { controlsPage.gameObject, shootingPage.gameObject, otherPage.gameObject });
             SetReference(screen, "_editLayoutButton", editLayout);
+            SetReference(screen, "_languageName", languageName);
+            SetReference(screen, "_languagePrevious", languagePrevious);
+            SetReference(screen, "_languageNext", languageNext);
             SetReference(screen, "_deadZone", deadZone);
             SetReference(screen, "_deadZoneLabel", deadZoneLabel);
             SetReference(screen, "_sensitivity", sensitivity);
@@ -1238,11 +1304,11 @@ namespace Maze.Editor.Dev
             Backdrop(screen.transform);
             var panel = PanelBox(screen.transform, "Panel", Center, Vector2.zero, 980f, new RectOffset(60, 60, 52, 56), 24f);
             SetReference(screen.GetComponent<UiAppear>(), "_panel", panel);
-            Heading(panel, "Title", "SOMETHING WENT WRONG", 46f);
+            Heading(panel, "Title", Loc(TextKeys.ErrorTitle), 46f);
             var message = Text(panel, "Message", "Error", 26f, false, Center, Center, Vector2.zero, new Vector2(860f, 220f),
                 TextAlignmentOptions.TopLeft, _style.MutedText);
             message.gameObject.AddComponent<LayoutElement>().preferredHeight = 220f;
-            var back = TextButton(panel, "BackButton", "BACK TO MENU", true, icons: null, height: 86f);
+            var back = TextButton(panel, "BackButton", Loc(TextKeys.ErrorBack), true, icons: null, height: 86f);
 
             SetReference(screen, "_message", message);
             SetReference(screen, "_backButton", back);
@@ -1342,6 +1408,8 @@ namespace Maze.Editor.Dev
         {
             var label = Text(parent, name, text, size, true, Center, Center, Vector2.zero, new Vector2(800f, size * 1.3f),
                 TextAlignmentOptions.Center, spacing: size * 0.25f);
+            label.textWrappingMode = TextWrappingModes.NoWrap;
+            AutoSize(label);
             label.gameObject.AddComponent<LayoutElement>().preferredHeight = size * 1.3f;
             return label;
         }
@@ -1381,6 +1449,7 @@ namespace Maze.Editor.Dev
             var label = Text(body.transform, "Label", text, fontSize, true, Center, Center, Vector2.zero, Vector2.zero,
                 icons != null ? TextAlignmentOptions.MidlineLeft : TextAlignmentOptions.Center, spacing: fontSize * 0.45f);
             label.textWrappingMode = TextWrappingModes.NoWrap;
+            AutoSize(label);
             var labelRect = label.rectTransform;
             Stretch(labelRect);
             if (icons == null) return MakeButton(body, accent, label);
@@ -1507,6 +1576,23 @@ namespace Maze.Editor.Dev
             return button;
         }
 
+        /// <summary>Value between round previous / next arrows (the screen writes the value text).</summary>
+        private static (UiButton Previous, TMP_Text Value, UiButton Next) StepperSetting(Transform page, string name, string caption)
+        {
+            var icons = UiIcons();
+            var row = SettingRow(page, name, caption);
+            var previous = RoundButton(row, name + "PreviousButton", icons.ChevronLeft, Center, Vector2.zero, 56f, 24f);
+            previous.gameObject.AddComponent<LayoutElement>().preferredWidth = 56f;
+            previous.GetComponent<LayoutElement>().preferredHeight = 56f;
+            var value = Text(row, name + "Value", "", 28f, true, Center, Center, Vector2.zero, new Vector2(260f, 40f),
+                TextAlignmentOptions.Center);
+            value.gameObject.AddComponent<LayoutElement>().preferredWidth = 260f;
+            var next = RoundButton(row, name + "NextButton", icons.ChevronRight, Center, Vector2.zero, 56f, 24f);
+            next.gameObject.AddComponent<LayoutElement>().preferredWidth = 56f;
+            next.GetComponent<LayoutElement>().preferredHeight = 56f;
+            return (previous, value, next);
+        }
+
         /// <summary>A thin track, the accent fill and a diamond handle (uGUI Slider, look only here).</summary>
         private static Slider StyledSlider(Transform parent, string name, float width, float height)
         {
@@ -1577,7 +1663,7 @@ namespace Maze.Editor.Dev
         /// <summary>A switch with a caption on its right, placed absolutely (map screen).</summary>
         private static Toggle LabeledSwitch(Transform parent, string name, string caption, Vector2 anchor, Vector2 position)
         {
-            var hit = Shape(parent, name + "Toggle", anchor, position, new Vector2(250f, 60f), true);
+            var hit = Shape(parent, name + "Toggle", anchor, position, new Vector2(350f, 60f), true);
             hit.rectTransform.pivot = new Vector2(0f, 0.5f);
             hit.rectTransform.anchoredPosition = position;
             hit.Fill = Color.clear;
@@ -1588,8 +1674,10 @@ namespace Maze.Editor.Dev
             pill.StrokeWidth = 2f;
             var knob = Shape(pill.transform, "Knob", Center, new Vector2(-22f, 0f), new Vector2(28f, 28f));
             knob.Kind = UiShapeKind.Capsule;
-            Text(hit.transform, "Label", caption, 26f, true, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(104f, 0f),
-                new Vector2(150f, 40f), TextAlignmentOptions.MidlineLeft, spacing: 8f).textWrappingMode = TextWrappingModes.NoWrap;
+            var label = Text(hit.transform, "Label", caption, 26f, true, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f),
+                new Vector2(104f, 0f), new Vector2(246f, 40f), TextAlignmentOptions.MidlineLeft, spacing: 6f);
+            label.textWrappingMode = TextWrappingModes.NoWrap;
+            AutoSize(label);
             AttachSwitch(hit.gameObject, pill, knob, new Vector2(-22f, 22f));
             var toggle = hit.GetComponent<Toggle>();
             toggle.targetGraphic = hit;

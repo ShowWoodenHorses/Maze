@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using Maze.Application.Services;
 using Maze.Core.Definitions;
 using Maze.Core.Grid;
 using Maze.Core.Level;
@@ -13,6 +14,7 @@ using Maze.Gameplay.Pickups;
 using Maze.Gameplay.Player;
 using Maze.Gameplay.Weapons;
 using Maze.Gameplay.Zombies;
+using Maze.Presentation.Localization;
 using Maze.Presentation.Visual;
 using UnityEngine;
 
@@ -38,14 +40,16 @@ namespace Maze.Presentation.UI
         private readonly PickupSystem _pickups;
         private readonly ZombieSystem _zombies;
         private readonly WeaponVisualCatalog _visuals;
+        private readonly LocalizationService _texts;
         private readonly List<Color> _keyColors = new List<Color>();
         private int _lastHealth;
         private bool _bound;
 
         public HudPresenter(UIRoot ui, LevelData level, PlayerHealth health, PlayerInventory inventory,
             WeaponSystem weapons, PlayerInteraction interaction, MapSystem map, PlayerSystem player,
-            PickupSystem pickups, ZombieSystem zombies, WeaponVisualCatalog visuals)
+            PickupSystem pickups, ZombieSystem zombies, WeaponVisualCatalog visuals, LocalizationService texts)
         {
+            _texts = texts;
             _ui = ui;
             _level = level;
             _health = health;
@@ -166,7 +170,7 @@ namespace Maze.Presentation.UI
             foreach (var pickup in _pickups.At(to))
                 if (pickup.Kind == PickupKind.Weapon)
                 {
-                    _ui.Hud.ShowMessage($"{WeaponName(pickup.Weapon)}: press Use to pick up");
+                    _ui.Hud.ShowMessage(_texts.Format(TextKeys.HudWeaponHere, WeaponName(pickup.Weapon.Definition)));
                     return;
                 }
         }
@@ -174,7 +178,7 @@ namespace Maze.Presentation.UI
         private void OnFragmentCollected(MapFragmentData fragment)
         {
             RefreshCounters();
-            _ui.Hud.ShowMessage($"Map fragment {_map.CollectedCount}/{_map.TotalCount} found");
+            _ui.Hud.ShowMessage(_texts.Format(TextKeys.HudFragmentFound, _map.CollectedCount, _map.TotalCount));
         }
 
         private void OnInteracted(InteractionResult result, DoorData door)
@@ -182,26 +186,30 @@ namespace Maze.Presentation.UI
             switch (result)
             {
                 case InteractionResult.DoorLocked:
+                    // Per colour ("hud.locked.red"): the colour word agrees with "key" differently in every language.
                     var color = VisualColorTags.TagOf(_level, VisualKind.Door, door);
-                    _ui.Hud.ShowMessage(color != null ? $"Locked: needs the {color} key" : "Locked: needs a key");
+                    var key = color != null ? TextKeys.HudLockedPrefix + color : null;
+                    _ui.Hud.ShowMessage(_texts.Get(key != null && _texts.Has(key) ? key : TextKeys.HudLocked));
                     break;
                 case InteractionResult.DoorUnlocked:
-                    _ui.Hud.ShowMessage("Door unlocked");
+                    _ui.Hud.ShowMessage(_texts.Get(TextKeys.HudDoorUnlocked));
                     break;
                 case InteractionResult.DoorBlocked:
-                    _ui.Hud.ShowMessage("Something is in the doorway");
+                    _ui.Hud.ShowMessage(_texts.Get(TextKeys.HudDoorBlocked));
                     break;
                 case InteractionResult.WeaponTaken:
                     if (_weapons.Active != null)
-                        _ui.Hud.ShowMessage($"Picked up {WeaponName(_weapons.Active)}");
+                        _ui.Hud.ShowMessage(_texts.Format(TextKeys.HudWeaponTaken, WeaponName(_weapons.Active.Definition)));
                     break;
             }
         }
 
-        private static string WeaponName(WeaponRuntime weapon)
+        /// <summary>"weapon.&lt;id&gt;" from the table; without a text — the id with spaces.</summary>
+        private string WeaponName(WeaponDefinition weapon)
         {
-            var id = string.IsNullOrEmpty(weapon.Definition.Id) ? weapon.Definition.name : weapon.Definition.Id;
-            return id.Replace('_', ' ');
+            var id = string.IsNullOrEmpty(weapon.Id) ? weapon.name : weapon.Id;
+            var key = TextKeys.WeaponPrefix + id;
+            return _texts.Has(key) ? _texts.Get(key) : id.Replace('_', ' ');
         }
     }
 }

@@ -1,4 +1,6 @@
 using System;
+using Maze.Application.Services;
+using Maze.Presentation.Localization;
 using Maze.Presentation.UI.Touch;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -28,6 +30,9 @@ namespace Maze.Presentation.UI
         [Tooltip("The scene's EventSystem: tells whether the pointer is over the UI (clicks there are not attacks).")]
         [SerializeField] private EventSystem _eventSystem;
 
+        [Tooltip("Every static caption of the Bootstrap scene (both canvases), filled by RuntimeScenesBuilder.")]
+        [SerializeField] private LocalizedText[] _localizedTexts = Array.Empty<LocalizedText>();
+
         public MainMenuScreen MainMenu => _mainMenu;
         public LevelSelectScreen LevelSelect => _levelSelect;
         public LoadingScreen Loading => _loading;
@@ -46,5 +51,18 @@ namespace Maze.Presentation.UI
         public event Action<UiSoundKind> SoundRequested;
 
         public void RequestSound(UiSoundKind kind) => SoundRequested?.Invoke(kind);
+
+        /// <summary>Static captions take the texts of the current language; screens get them for their own texts.</summary>
+        public void ApplyLanguage(LocalizationService texts)
+        {
+            foreach (var text in _localizedTexts)
+                if (text != null) text.Apply(texts);
+
+            UIScreen[] screens = { _mainMenu, _levelSelect, _loading, _error, _hud, _pause, _result, _confirmExit, _map, _settings };
+            foreach (var screen in screens)
+                if (screen != null) screen.ApplyLanguage(texts);
+            if (_touchControls != null && _touchControls.LayoutEditor != null)
+                _touchControls.LayoutEditor.ApplyLanguage(texts);
+        }
     }
 }

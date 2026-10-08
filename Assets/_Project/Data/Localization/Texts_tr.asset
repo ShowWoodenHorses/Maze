@@ -1,0 +1,189 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2440f53a5c7a5764999ebb8b0ba4a2e4, type: 3}
+  m_Name: Texts_tr
+  m_EditorClassIdentifier: Maze.Core::Maze.Core.Localization.LocalizationTable
+  _language: tr
+  _keys:
+  - language.name
+  - common.settings
+  - common.yes
+  - common.no
+  - format.percent
+  - menu.play
+  - menu.reset_progress
+  - level_select.title
+  - level_select.empty
+  - loading
+  - hud.level
+  - hud.reload
+  - hud.weapon_here
+  - hud.weapon_taken
+  - hud.fragment_found
+  - hud.locked
+  - hud.locked.red
+  - hud.locked.blue
+  - hud.locked.green
+  - hud.locked.yellow
+  - hud.door_unlocked
+  - hud.door_blocked
+  - weapon.assault_rifle_01
+  - weapon.assault_rifle_03
+  - weapon.bat
+  - weapon.crowbar
+  - weapon.fire_axe
+  - weapon.hunting_rifle
+  - weapon.katana
+  - weapon.revolver_rifle
+  - weapon.sniper_rifle
+  - weapon.smg
+  - confirm_exit.title
+  - pause.title
+  - pause.resume
+  - pause.restart
+  - pause.exit
+  - pause.debug_complete
+  - pause.debug_fail
+  - result.complete
+  - result.failed
+  - result.exit_found
+  - result.no_exit
+  - result.zombies
+  - result.map
+  - result.menu
+  - result.retry
+  - result.next
+  - error.title
+  - error.back
+  - map.player
+  - map.pieces
+  - map.none
+  - map.none_found
+  - map.count
+  - settings.tab.controls
+  - settings.tab.shooting
+  - settings.tab.other
+  - settings.dead_zone
+  - settings.stick_response
+  - settings.controls_size
+  - settings.controls_opacity
+  - settings.floating_stick
+  - settings.left_handed
+  - settings.button_layout
+  - settings.edit
+  - settings.aim_mode
+  - settings.aim.free
+  - settings.aim.eight
+  - settings.aim.four
+  - settings.aim_assist
+  - settings.music
+  - settings.sound
+  - settings.show_fps
+  - settings.language
+  - settings.reset_tab
+  - layout.hint
+  - layout.size
+  - layout.element.stick
+  - layout.element.attack
+  - layout.element.use
+  - layout.element.melee
+  - layout.element.ranged
+  - layout.reset
+  - layout.done
+  _texts:
+  - "T\xFCrk\xE7e"
+  - AYARLAR
+  - EVET
+  - HAYIR
+  - '%{0}'
+  - OYNA
+  - "DEBUG: \u0130LERLEMEY\u0130 SIFIRLA"
+  - "B\xD6L\xDCM SE\xC7"
+  - "Hen\xFCz b\xF6l\xFCm yok: Level Designer'da Build / Sync \xE7al\u0131\u015Ft\u0131r\u0131n."
+  - "Y\xDCKLEN\u0130YOR"
+  - "B\xD6L\xDCM {0}"
+  - DOLDURMA
+  - "{0}: almak i\xE7in Kullan'a bas\u0131n"
+  - "Al\u0131nd\u0131: {0}"
+  - "Harita par\xE7as\u0131 bulundu {0}/{1}"
+  - 'Kilitli: anahtar gerekli'
+  - "Kilitli: k\u0131rm\u0131z\u0131 anahtar gerekli"
+  - 'Kilitli: mavi anahtar gerekli'
+  - "Kilitli: ye\u015Fil anahtar gerekli"
+  - "Kilitli: sar\u0131 anahtar gerekli"
+  - "Kap\u0131n\u0131n kilidi a\xE7\u0131ld\u0131"
+  - "Kap\u0131 aral\u0131\u011F\u0131nda bir \u015Fey var"
+  - "Sald\u0131r\u0131 t\xFCfe\u011Fi"
+  - "Muharebe t\xFCfe\u011Fi"
+  - Sopa
+  - Levye
+  - "Yang\u0131n baltas\u0131"
+  - "Av t\xFCfe\u011Fi"
+  - Katana
+  - "Revolver t\xFCfek"
+  - "Keskin ni\u015Fanc\u0131 t\xFCfe\u011Fi"
+  - Susturuculu hafif makineli
+  - "B\xD6L\xDCM\xDC B\u0130T\u0130R?"
+  - DURAKLATILDI
+  - DEVAM ET
+  - "YEN\u0130DEN BA\u015ELAT"
+  - "MEN\xDCYE D\xD6N"
+  - 'DEBUG: TAMAMLA'
+  - 'DEBUG: KAYBET'
+  - "B\xD6L\xDCM TAMAMLANDI"
+  - "B\xD6L\xDCM BA\u015EARISIZ"
+  - "\xC7IKI\u015E BULUNDU"
+  - "\xC7IKI\u015E BULUNAMADI"
+  - "ZOMB\u0130LER {0}/{1}"
+  - "HAR\u0130TA {0}/{1}"
+  - "MEN\xDC"
+  - TEKRAR
+  - "SONRAK\u0130"
+  - "B\u0130R \u015EEYLER TERS G\u0130TT\u0130"
+  - "MEN\xDCYE D\xD6N"
+  - OYUNCU
+  - "HAR\u0130TA PAR\xC7ALARI"
+  - "Bu b\xF6l\xFCmde harita yok"
+  - "Hen\xFCz harita par\xE7as\u0131 bulunamad\u0131 (0/{0})"
+  - "Harita par\xE7alar\u0131: {0}/{1}"
+  - KONTROLLER
+  - "ATI\u015E"
+  - "D\u0130\u011EER"
+  - "\xC7ubuk \xF6l\xFC b\xF6lgesi"
+  - "\xC7ubuk tepkisi"
+  - Kontrol boyutu
+  - "Kontrol opakl\u0131\u011F\u0131"
+  - "Kayan \xE7ubuk (ba\u015Fparma\u011F\u0131n alt\u0131nda belirir)"
+  - "Solak d\xFCzeni"
+  - "D\xFC\u011Fme d\xFCzeni"
+  - "D\xDCZENLE"
+  - "Ni\u015Fan y\xF6nleri"
+  - SERBEST
+  - "SEK\u0130Z"
+  - "D\xD6RT"
+  - "Zombilere otomatik ni\u015Fan"
+  - "M\xFCzik"
+  - Ses
+  - "FPS sayac\u0131n\u0131 g\xF6ster"
+  - Dil
+  - "SEKMEY\u0130 SIFIRLA"
+  - "\xC7ubu\u011Fu ve d\xFC\u011Fmeleri s\xFCr\xFCkleyin. Boyutunu de\u011Fi\u015Ftirmek
+    i\xE7in birine dokunun."
+  - '{0} boyutu: {1}'
+  - "\xC7ubuk"
+  - "Sald\u0131r\u0131 ve silahlar"
+  - Kullan
+  - "Yak\u0131n d\xF6v\xFC\u015F"
+  - Uzak menzil
+  - SIFIRLA
+  - TAMAM
+  _missing: []

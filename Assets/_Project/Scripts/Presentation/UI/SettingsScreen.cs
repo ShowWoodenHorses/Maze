@@ -1,6 +1,8 @@
 using System;
 using Maze.Application.Save;
+using Maze.Application.Services;
 using Maze.Gameplay.Combat;
+using Maze.Presentation.Localization;
 using Maze.Presentation.UI.Style;
 using TMPro;
 using UnityEngine;
@@ -17,7 +19,7 @@ namespace Maze.Presentation.UI
         /// <summary>Aim directions, auto-aim.</summary>
         Shooting,
 
-        /// <summary>Everything else: music and sound volumes, FPS counter.</summary>
+        /// <summary>Everything else: language, music and sound volumes, FPS counter.</summary>
         Other,
     }
 
@@ -58,6 +60,10 @@ namespace Maze.Presentation.UI
         [SerializeField] private Slider _sfxVolume;
         [SerializeField] private TMP_Text _sfxVolumeLabel;
         [SerializeField] private Toggle _showFps;
+        [Tooltip("Language: its own name between the previous / next arrows.")]
+        [SerializeField] private TMP_Text _languageName;
+        [SerializeField] private Button _languagePrevious;
+        [SerializeField] private Button _languageNext;
         [SerializeField] private Button _resetButton;
         [SerializeField] private Button _backButton;
 
@@ -73,9 +79,13 @@ namespace Maze.Presentation.UI
 
         /// <summary>The "Show FPS counter" toggle was switched (not part of the controls).</summary>
         public event Action<bool> ShowFpsChanged;
+
+        /// <summary>A language arrow: −1 previous, +1 next.</summary>
+        public event Action<int> LanguageStepped;
         public event Action BackClicked;
 
         private AimMode _aimMode;
+        private LocalizationService _texts;
 
         public SettingsTab Tab { get; private set; }
 
@@ -105,6 +115,8 @@ namespace Maze.Presentation.UI
             Bind(_resetButton, () => ResetClicked?.Invoke(Tab));
             Bind(_editLayoutButton, () => EditLayoutClicked?.Invoke());
             Bind(_backButton, () => BackClicked?.Invoke());
+            Bind(_languagePrevious, () => LanguageStepped?.Invoke(-1));
+            Bind(_languageNext, () => LanguageStepped?.Invoke(1));
             for (var i = 0; i < _tabButtons.Length; i++)
             {
                 var tab = (SettingsTab)i;
@@ -138,6 +150,19 @@ namespace Maze.Presentation.UI
                 _tabLabels[i].color = i == (int)tab ? _style.Accent : _style.MutedText;
             for (var i = 0; i < _tabUnderlines.Length; i++)
                 _tabUnderlines[i].SetActive(i == (int)tab);
+        }
+
+        public override void ApplyLanguage(LocalizationService texts)
+        {
+            _texts = texts;
+            UpdateLabels(_values);
+            if (_musicVolume != null && _sfxVolume != null) UpdateVolumeLabels();
+        }
+
+        /// <summary>The shown language's own name.</summary>
+        public void SetLanguage(string nativeName)
+        {
+            if (_languageName != null) _languageName.text = nativeName;
         }
 
         public void SetShowFps(bool show)
@@ -220,7 +245,11 @@ namespace Maze.Presentation.UI
             _sfxVolumeLabel.text = Percent(_sfxVolume.value);
         }
 
-        private static string Percent(float value) => Mathf.RoundToInt(value * 100f) + "%";
+        private string Percent(float value)
+        {
+            var percent = Mathf.RoundToInt(value * 100f);
+            return _texts != null ? _texts.Format(TextKeys.Percent, percent) : percent + "%";
+        }
 
         private static void Range(Slider slider, float min, float max)
         {

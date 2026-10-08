@@ -25,6 +25,14 @@ namespace Maze.Presentation.UI
 
         private WeaponSlotState _state;
         private bool _painted;
+        private string _reloadText = "RELOAD";
+
+        /// <summary>The ammo caption while reloading (localized).</summary>
+        public void SetReloadText(string text)
+        {
+            _reloadText = text;
+            _painted = false; // Repaint with the new caption.
+        }
 
         public void Set(in WeaponSlotState state)
         {
@@ -67,7 +75,7 @@ namespace Maze.Presentation.UI
                 var shown = state.Equipped && state.Magazine > 0;
                 _ammo.enabled = shown;
                 if (shown && ammoChanged)
-                    _ammo.text = state.Reloading ? "RELOAD" : state.Ammo + "/" + state.Magazine;
+                    _ammo.text = state.Reloading ? _reloadText : state.Ammo + "/" + state.Magazine;
                 if (shown) _ammo.color = state.Reloading ? _style.Accent : _style.Text;
             }
 

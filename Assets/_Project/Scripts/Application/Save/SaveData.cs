@@ -37,6 +37,7 @@ namespace Maze.Application.Save
             UnlockedLevels ??= new List<string>();
             LevelStars ??= new List<LevelStarsRecord>();
             Settings ??= new SettingsData();
+            Settings.Language ??= string.Empty;
             // Saves made before the controls settings existed have zeros there (a valid size is never zero).
             if (!(Settings.Controls.Size > 0f)) Settings.Controls = ControlsSettings.Default;
             if (Version < 2)
@@ -81,6 +82,9 @@ namespace Maze.Application.Save
 
         /// <summary>Map screen: hide icons of map fragments not collected yet. Negated like <see cref="MapHidePlayer"/>.</summary>
         public bool MapHideFragments;
+
+        /// <summary>Language code ("en", "ru", …); empty until the first start chooses one from the system language.</summary>
+        public string Language = string.Empty;
     }
 
     /// <summary>

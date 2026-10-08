@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using Maze.Application.Flow;
 using Maze.Core.Common;
 using Maze.Presentation.Audio;
+using Maze.Presentation.Localization;
 using Maze.Presentation.UI;
 using VContainer.Unity;
 
@@ -16,10 +17,12 @@ namespace Maze.Composition
         private readonly PauseController _pause;
         private readonly SettingsPresenter _settings;
         private readonly AppAudioPresenter _audio;
+        private readonly LocalizationPresenter _localization;
 
         public ApplicationEntryPoint(GameFlow flow, ScreenRouter screens, PauseController pause, SettingsPresenter settings,
-            AppAudioPresenter audio)
+            AppAudioPresenter audio, LocalizationPresenter localization)
         {
+            _localization = localization;
             _audio = audio;
             _flow = flow;
             _screens = screens;
@@ -30,6 +33,7 @@ namespace Maze.Composition
         public async UniTask StartAsync(CancellationToken cancellation)
         {
             GameLog.Info(LogChannel.Bootstrap, "Bootstrap started.");
+            _localization.Initialize();
             _screens.Initialize();
             _settings.Initialize();
             _audio.Initialize();

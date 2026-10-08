@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cda400de030acc645b9907703fca3e92, type: 3}
+  m_Name: Languages
+  m_EditorClassIdentifier: Maze.Core::Maze.Core.Localization.LanguageCatalog
+  _languages:
+  - _code: en
+    _nativeName: English
+    _systemLanguages: 0a000000
+    _table:
+      m_AssetGUID: 9744d57c36b976149a90a0edaafb09b3
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - _code: ru
+    _nativeName: "\u0420\u0443\u0441\u0441\u043A\u0438\u0439"
+    _systemLanguages: 1e000000
+    _table:
+      m_AssetGUID: 373f07124d1c81d4b8e32b798c9db6ea
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - _code: tr
+    _nativeName: "T\xFCrk\xE7e"
+    _systemLanguages: 25000000
+    _table:
+      m_AssetGUID: 3028039187233b14186282895b133e1b
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - _code: es
+    _nativeName: "Espa\xF1ol"
+    _systemLanguages: 22000000
+    _table:
+      m_AssetGUID: 028230155977b4c499c5b3a05839884c
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - _code: de
+    _nativeName: Deutsch
+    _systemLanguages: 0f000000
+    _table:
+      m_AssetGUID: 55fa078d516f4d34ca6b4a50fb509587
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0

@@ -1,5 +1,7 @@
 using System;
+using Maze.Application.Services;
 using Maze.Gameplay.Level;
+using Maze.Presentation.Localization;
 using Maze.Presentation.UI.Style;
 using TMPro;
 using UnityEngine;
@@ -36,6 +38,7 @@ namespace Maze.Presentation.UI
         private readonly float[] _pop = { -1f, -1f, -1f };
         private int _revealed;
         private float _shownTime;
+        private LocalizationService _texts;
 
         public event Action RetryClicked;
         public event Action MenuClicked;
@@ -48,20 +51,24 @@ namespace Maze.Presentation.UI
             Bind(_nextButton, () => NextClicked?.Invoke());
         }
 
-        /// <summary>Fills the screen; earned stars start hidden (empty slots) and are revealed one by one.</summary>
+        public override void ApplyLanguage(LocalizationService texts) => _texts = texts;
+
+        /// <summary>
+        /// Fills the screen; earned stars start hidden (empty slots) and are revealed one by one.
+        /// <paramref name="levelName"/> is shown as given (already in the language's letter case).
+        /// </summary>
         public void SetResult(bool completed, LevelResult? result, string levelName, bool hasNext)
         {
-            _title.text = completed ? "LEVEL COMPLETE" : "LEVEL FAILED";
-            if (_levelName != null)
-                _levelName.text = string.IsNullOrEmpty(levelName) ? string.Empty : levelName.ToUpperInvariant();
+            _title.text = Text(completed ? TextKeys.ResultComplete : TextKeys.ResultFailed);
+            if (_levelName != null) _levelName.text = levelName ?? string.Empty;
 
             var r = result ?? default;
             _earned[0] = completed;
             _earned[1] = completed && r.AllZombiesKilled;
             _earned[2] = completed && r.AllFragmentsCollected;
-            SetLabel(0, completed ? "EXIT FOUND" : "NO EXIT", _earned[0]);
-            SetLabel(1, "ZOMBIES " + r.Kills + "/" + r.TotalZombies, _earned[1]);
-            SetLabel(2, "MAP " + r.Fragments + "/" + r.TotalFragments, _earned[2]);
+            SetLabel(0, Text(completed ? TextKeys.ResultExitFound : TextKeys.ResultNoExit), _earned[0]);
+            SetLabel(1, Format(TextKeys.ResultZombies, r.Kills, r.TotalZombies), _earned[1]);
+            SetLabel(2, Format(TextKeys.ResultMap, r.Fragments, r.TotalFragments), _earned[2]);
 
             for (var i = 0; i < _stars.Length; i++)
             {
@@ -116,6 +123,10 @@ namespace Maze.Presentation.UI
             image.color = color;
             image.rectTransform.localScale = Vector3.one;
         }
+
+        private string Text(string key) => _texts != null ? _texts.Get(key) : key;
+
+        private string Format(string key, int a, int b) => _texts != null ? _texts.Format(key, a, b) : key;
 
         private void SetLabel(int index, string text, bool earned)
         {

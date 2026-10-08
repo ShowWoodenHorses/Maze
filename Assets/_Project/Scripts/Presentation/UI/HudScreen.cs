@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Maze.Application.Services;
+using Maze.Presentation.Localization;
 using Maze.Presentation.UI.Shapes;
 using Maze.Presentation.UI.Style;
 using Maze.Presentation.UI.Touch;
@@ -265,9 +267,17 @@ namespace Maze.Presentation.UI
             _messageHideTime = Time.unscaledTime + MessageSeconds;
         }
 
+        /// <summary>The level caption as shown (already in the language's letter case).</summary>
         public void SetLevelName(string levelName)
         {
-            if (_levelName != null) _levelName.text = string.IsNullOrEmpty(levelName) ? string.Empty : levelName.ToUpperInvariant();
+            if (_levelName != null) _levelName.text = levelName ?? string.Empty;
+        }
+
+        public override void ApplyLanguage(LocalizationService texts)
+        {
+            var reload = texts.Get(TextKeys.HudReload);
+            if (_meleeSlot != null) _meleeSlot.SetReloadText(reload);
+            if (_rangedSlot != null) _rangedSlot.SetReloadText(reload);
         }
 
         public void ClearLevelInfo()

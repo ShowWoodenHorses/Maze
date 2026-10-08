@@ -6,6 +6,7 @@ using Maze.Application.Services;
 using Maze.Gameplay.Combat;
 using Maze.Gameplay.Player;
 using Maze.Presentation.Audio;
+using Maze.Presentation.Localization;
 using Maze.Presentation.UI;
 using UnityEngine;
 using VContainer;
@@ -31,6 +32,7 @@ namespace Maze.Composition
             builder.Register<PlayerPrefsSaveStorage>(Lifetime.Singleton).As<ISaveStorage>();
             builder.Register<SaveService>(Lifetime.Singleton).AsSelf().As<IApplicationService>();
             builder.Register<SettingsService>(Lifetime.Singleton).AsSelf().As<IApplicationService, IAimSettings>();
+            builder.Register<LocalizationService>(Lifetime.Singleton).AsSelf().As<IApplicationService>();
             builder.Register<AudioService>(Lifetime.Singleton).AsSelf().As<IApplicationService>();
             builder.Register<UiPointer>(Lifetime.Singleton).As<IUiPointer>();
             builder.Register<InputService>(Lifetime.Singleton).As<IInputService, IPlayerInput, IApplicationService>();
@@ -45,6 +47,7 @@ namespace Maze.Composition
             builder.RegisterInstance(_ui);
             builder.Register<ScreenRouter>(Lifetime.Singleton);
             builder.Register<SettingsPresenter>(Lifetime.Singleton);
+            builder.Register<LocalizationPresenter>(Lifetime.Singleton);
             builder.Register<AppAudioPresenter>(Lifetime.Singleton);
 
             builder.RegisterEntryPoint<ApplicationEntryPoint>();

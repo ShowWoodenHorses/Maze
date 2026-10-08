@@ -88,12 +88,38 @@ namespace Maze.Tests.PlayMode
         {
             var catalog = _container.Resolve<ILevelCatalog>();
             Assert.Greater(catalog.Levels.Count, 0, "Run Build / Sync for at least one level.");
-            Assert.AreEqual(6, AppHandles,
+            Assert.AreEqual(8, AppHandles,
                 "Only application-wide assets are resident in the menu: level catalog, player definition, player visual, " +
-                "combat visual, weapon visuals, audio catalog (music is counted apart).");
+                "combat visual, weapon visuals, audio catalog, language catalog, texts of one language (music is counted apart).");
             Assert.IsNotNull(_audio.Catalog, "Audio catalog loaded.");
             Assert.AreSame(_audio.Catalog.MenuMusic, _audio.CurrentMusic, "Menu music in the menu.");
         }
+
+        /// <summary>Switching the language re-texts the shown captions and keeps one table loaded.</summary>
+        [UnityTest]
+        public IEnumerator Language_Switch_RetextsCaptions_AndKeepsOneTable() => Async(async () =>
+        {
+            var texts = _container.Resolve<LocalizationService>();
+            var ui = _container.Resolve<UIRoot>();
+            var play = ui.MainMenu.transform.GetComponentsInChildren<TMPro.TMP_Text>(true).First(t => t.name == "Label" &&
+                t.transform.parent.name == "PlayButton");
+            var original = texts.LanguageIndex;
+            var russian = Enumerable.Range(0, texts.Languages.Count).First(i => texts.Languages[i].Code == "ru");
+            var english = Enumerable.Range(0, texts.Languages.Count).First(i => texts.Languages[i].Code == "en");
+            var handles = AppHandles;
+            try
+            {
+                await texts.SetLanguageAsync(russian);
+                Assert.AreEqual("ИГРАТЬ", play.text, "PLAY in Russian.");
+                Assert.AreEqual(handles, AppHandles, "The previous table is released.");
+                await texts.SetLanguageAsync(english);
+                Assert.AreEqual("PLAY", play.text);
+            }
+            finally
+            {
+                await texts.SetLanguageAsync(original); // The choice is saved: keep the developer's.
+            }
+        });
 
         [UnityTest]
         public IEnumerator StartLevel_BuildsLevelScope_ThenExit_ReleasesEverything() => Async(async () =>
