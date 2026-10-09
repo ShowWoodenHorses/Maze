@@ -45,6 +45,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1569e28419b9c3d449fa2c2e26f72332
+    m_Address: Assets/_Project/Art/Biomes/Snow/Prefabs/floor_snow_drift.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 1681bc070307efc45a88839b0fb386ea
     m_Address: Assets/_Project/Art/Decor/SM_Prop_BloodPool_02.prefab
     m_ReadOnly: 0
@@ -140,6 +145,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3d3985f05e334d44eb82d9adbe394c7f
+    m_Address: Assets/_Project/Art/Biomes/Snow/Prefabs/floor_snow.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 42ebc84ac539e0749aa91a37e048b6a7
     m_Address: Assets/_Project/Art/Placeholders/floor_01.prefab
     m_ReadOnly: 0
@@ -165,6 +175,16 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 52bf82913080d784ab4e73fc851ad61d
+    m_Address: Assets/_Project/Art/Biomes/Forest/Prefabs/floor_forest_flagstones.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 54dadb18da01ec54dae370f632b1b89e
+    m_Address: Assets/_Project/Art/Biomes/Forest/Prefabs/wall_forest_logs.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 560f18092b37e2544aab4b08ffca02e8
     m_Address: Assets/_Project/Art/Doors/SM_Bld_Door_04.prefab
     m_ReadOnly: 0
@@ -177,6 +197,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 5bf5b8e260d165c448c4d016eebda95c
     m_Address: Assets/_Project/Art/Zombie/Zombie_02.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5ef82be4f8bbaff49a8b3c0e403351c6
+    m_Address: Assets/_Project/Art/Biomes/Forest/Prefabs/wall_forest_mossy_stone.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -212,6 +237,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8b3ad0b31d4acb54eb31040339252903
     m_Address: Assets/_Project/Art/Placeholders/floor_special_blood.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 96143ae90acecb54b86a5a49bf743f5e
+    m_Address: Assets/_Project/Art/Biomes/Forest/Prefabs/floor_forest_soil.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -265,6 +295,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b7242339de7d95c4e8c26ecffa4467bb
+    m_Address: Assets/_Project/Art/Biomes/Snow/Prefabs/floor_ice.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: ba4897ffed852104ea57eea973481eae
     m_Address: Assets/_Project/Art/Doors/SM_Bld_Door_Barricaded_08_yellow.prefab
     m_ReadOnly: 0
@@ -287,6 +322,16 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: bf895cb5fd4363f479ff71d9c859c4cb
     m_Address: Assets/_Project/Art/Placeholders/door_wood.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c023baa0fe42b8a46813a0eb570bfbaf
+    m_Address: Assets/_Project/Art/Biomes/Forest/Prefabs/floor_forest_grass.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c1399f418ca2ed2448252ca11c2be771
+    m_Address: Assets/_Project/Art/Biomes/Snow/Prefabs/wall_snow_blocks.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -322,6 +367,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: d8edb8760195c5842ade3b3708c73605
     m_Address: Assets/_Project/Art/Decor/SM_Prop_TreasurePile_02.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: de976f49bdc391747aaf76bcf1de36d7
+    m_Address: Assets/_Project/Art/Biomes/Snow/Prefabs/wall_snow_stone.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

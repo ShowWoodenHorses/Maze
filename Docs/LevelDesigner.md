@@ -377,6 +377,7 @@ floor_blood Weight 0  →  только вручную
 - Веса используются **только** при Generate New и Regenerate Visuals. В игре они не участвуют.
 
 ### Новая тема
+Готовые темы-биомы **SnowTheme** (снег) и **ForestTheme** (лес) делает меню **Maze → Dev → Build Biome Themes** — свои пол и стены, остальное общее с замком. Своя тема проще всего — копией существующей (Ctrl+D на ассете темы) с заменой наборов Floor / Wall. С нуля:
 1. **Create → Maze → Visual → Visual Theme**.
 2. Для каждого вида создайте набор: **Create → Maze → Visual → Visual Set**. Поле **Kind** набора должно совпадать со слотом темы: Floor, Wall, Door, Key, Exit, Medkit, Weapon, Zombie, MapFragment.
 3. Назначьте наборы в слоты темы.

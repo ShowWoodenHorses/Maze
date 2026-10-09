@@ -43,6 +43,12 @@ MonoBehaviour:
   - _levelId: Level_10
     _address: Levels/Level_10
     _displayName: New Level
+  - _levelId: Level_11
+    _address: Levels/Level_11
+    _displayName: New Level
+  - _levelId: Level_12
+    _address: Levels/Level_12
+    _displayName: New Level
   - _levelId: Level_Dev
     _address: Levels/Level_Dev
     _displayName: New Level
