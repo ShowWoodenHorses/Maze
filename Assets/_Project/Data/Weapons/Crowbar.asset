@@ -14,9 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Maze.Core::Maze.Core.Definitions.WeaponDefinition
   _id: crowbar
   _slot: 0
-  _damage: 10
-  _soundRadius: 3
-  _attackSpeed: 1.4
+  _damage: 25
+  _soundRadius: 1
+  _sound: 
+  _attackSpeed: 0.9
   _meleeRange: 1.2
   _meleeArc: 90
   _fireInterval: 0.3

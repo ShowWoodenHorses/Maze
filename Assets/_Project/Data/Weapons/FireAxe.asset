@@ -14,11 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Maze.Core::Maze.Core.Definitions.WeaponDefinition
   _id: fire_axe
   _slot: 0
-  _damage: 25
+  _damage: 70
   _soundRadius: 5
-  _attackSpeed: 0.7
+  _sound: 
+  _attackSpeed: 1.2
   _meleeRange: 1.4
-  _meleeArc: 110
+  _meleeArc: 70
   _fireInterval: 0.3
   _magazineSize: 10
   _reloadTime: 1.5

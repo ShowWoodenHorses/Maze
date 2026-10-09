@@ -16,7 +16,7 @@ MonoBehaviour:
   m_GUID: f25b94d44c1933643bbcfe494300844d
   m_SerializeEntries:
   - m_GUID: 05592bd23d54afc4fa8f4f31f4a5f45b
-    m_Address: Assets/_Project/Data/Weapons/SubMachineGun.asset
+    m_Address: Assets/_Project/Data/Weapons/MP5.asset
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -61,7 +61,7 @@ MonoBehaviour:
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 3493d85149291cd41ac4d077cc3ec857
-    m_Address: Assets/_Project/Data/Weapons/AssaultRifle03.asset
+    m_Address: Assets/_Project/Data/Weapons/M416.asset
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -146,7 +146,7 @@ MonoBehaviour:
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: bd948e954d146054e87e4bd8308c40a7
-    m_Address: Assets/_Project/Data/Weapons/AssaultRifle01.asset
+    m_Address: Assets/_Project/Data/Weapons/AK-74.asset
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

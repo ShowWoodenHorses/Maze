@@ -14,8 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Maze.Core::Maze.Core.Definitions.WeaponDefinition
   _id: revolver_rifle
   _slot: 1
-  _damage: 18
+  _damage: 40
   _soundRadius: 7
+  _sound: 
   _attackSpeed: 1
   _meleeRange: 1.2
   _meleeArc: 100

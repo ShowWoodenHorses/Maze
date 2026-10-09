@@ -14,11 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Maze.Core::Maze.Core.Definitions.WeaponDefinition
   _id: katana
   _slot: 0
-  _damage: 15
+  _damage: 40
   _soundRadius: 3
+  _sound: 
   _attackSpeed: 1.5
-  _meleeRange: 1.4
-  _meleeArc: 120
+  _meleeRange: 1.6
+  _meleeArc: 180
   _fireInterval: 0.3
   _magazineSize: 10
   _reloadTime: 1.5

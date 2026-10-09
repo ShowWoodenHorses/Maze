@@ -14,8 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Maze.Core::Maze.Core.Definitions.WeaponDefinition
   _id: sniper_rifle
   _slot: 1
-  _damage: 40
+  _damage: 100
   _soundRadius: 10
+  _sound: 
   _attackSpeed: 1
   _meleeRange: 1.2
   _meleeArc: 100

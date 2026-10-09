@@ -26,6 +26,7 @@ MonoBehaviour:
     _category: 0
     _definition: {fileID: 11400000, guid: c9e4824799a23154dae897c7fde15723, type: 2}
     _colorTag: 
+    _height: 0
   - _id: zombie_listener
     _prefab:
       m_AssetGUID: 5bf5b8e260d165c448c4d016eebda95c
@@ -37,6 +38,7 @@ MonoBehaviour:
     _category: 0
     _definition: {fileID: 11400000, guid: ac0c610bbc54b95459ad02ba82f4340b, type: 2}
     _colorTag: 
+    _height: 0
   - _id: zombie_hunter
     _prefab:
       m_AssetGUID: 380a06f7e15f09340ba7d15ab415dcbd
@@ -48,3 +50,4 @@ MonoBehaviour:
     _category: 0
     _definition: {fileID: 11400000, guid: 64ec30b356044824083cab89bfdd3cdc, type: 2}
     _colorTag: 
+    _height: 0

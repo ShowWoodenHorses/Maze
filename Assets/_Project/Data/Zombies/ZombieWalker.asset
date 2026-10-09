@@ -18,7 +18,7 @@ MonoBehaviour:
   _visionRange: 5
   _hearingRadius: 5
   _detectionRadius: 4
-  _maxHp: 30
+  _maxHp: 75
   _damage: 10
   _attackInterval: 1
   _moveSpeed: 0.5
