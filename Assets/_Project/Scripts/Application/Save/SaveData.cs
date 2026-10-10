@@ -31,11 +31,16 @@ namespace Maze.Application.Save
 
         public SettingsData Settings = new SettingsData();
 
+        /// <summary>Map layers bought with a rewarded ad, per level (they stay for replays of that level).</summary>
+        public List<MapUnlockRecord> MapUnlocks = new List<MapUnlockRecord>();
+
         /// <summary>Replaces lists and objects missing in old or hand-edited JSON.</summary>
         public void Normalize()
         {
             UnlockedLevels ??= new List<string>();
             LevelStars ??= new List<LevelStarsRecord>();
+            MapUnlocks ??= new List<MapUnlockRecord>();
+            MapUnlocks.RemoveAll(record => record == null || string.IsNullOrEmpty(record.LevelId));
             Settings ??= new SettingsData();
             Settings.Language ??= string.Empty;
             // Saves made before the controls settings existed have zeros there (a valid size is never zero).
@@ -70,6 +75,24 @@ namespace Maze.Application.Save
 
         /// <summary>Best time of a completed run, seconds; 0 = none (records made before the timer).</summary>
         public float BestTime;
+    }
+
+    /// <summary>Map layers that need a rewarded ad (the player and map pieces are always free).</summary>
+    [Flags]
+    public enum MapUnlock
+    {
+        None = 0,
+        Zombies = 1,
+        Weapons = 2,
+        Medkits = 4,
+        Keys = 8,
+    }
+
+    [Serializable]
+    public sealed class MapUnlockRecord
+    {
+        public string LevelId;
+        public MapUnlock Layers;
     }
 
     [Serializable]

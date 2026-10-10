@@ -86,6 +86,8 @@ namespace Maze.Editor.Dev
             set.Close = Draw("ui_close", new Icon().Segment(6, 6, 18, 18).Segment(18, 6, 6, 18));
             set.Player = Draw("ui_player", new Icon().Polyline(true, 12, 3.5f, 19, 20, 12, 16, 5, 20));
             set.Search = Draw("ui_search", new Icon().Circle(10.5f, 10.5f, 6f).Segment(15f, 15f, 20f, 20f));
+            set.Ad = Draw("ui_ad", new Icon().Polyline(true, 3.5f, 5.5f, 20.5f, 5.5f, 20.5f, 18.5f, 3.5f, 18.5f)
+                .Polyline(true, 10f, 9f, 15.5f, 12f, 10f, 15f).Fill(new[] { 10f, 9f, 15.5f, 12f, 10f, 15f }));
             set.Backdrop = DrawBackdrop();
 
             EditorUtility.SetDirty(set);

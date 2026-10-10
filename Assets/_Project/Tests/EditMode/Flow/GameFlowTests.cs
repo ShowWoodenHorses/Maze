@@ -467,6 +467,8 @@ namespace Maze.Tests.EditMode.Flow
             public bool IsUnlocked(string levelId) => true;
             public int GetStars(string levelId) => 0;
             public float GetBestTime(string levelId) => 0f;
+            public bool IsMapLayerUnlocked(string levelId, MapUnlock layer) => false;
+            public void UnlockMapLayer(string levelId, MapUnlock layer) { }
             public void RecordCompletion(string levelId, LevelResult result) =>
                 Recorded.Add(new KeyValuePair<string, LevelResult>(levelId, result));
             public void ResetProgress() => Recorded.Clear();

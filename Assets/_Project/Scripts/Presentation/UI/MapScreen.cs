@@ -25,6 +25,9 @@ namespace Maze.Presentation.UI
         [Tooltip("A switch per MapLayer, in its order.")]
         [SerializeField] private Toggle[] _layers;
 
+        [Tooltip("Per MapLayer: a button over the switch while the layer is not bought (null = always free).")]
+        [SerializeField] private Button[] _unlockButtons;
+
         [Header("Route hint")]
         [SerializeField] private Button _hintButton;
         [SerializeField] private TMP_Text _hintStatus;
@@ -40,6 +43,9 @@ namespace Maze.Presentation.UI
         /// <summary>The magnifier button: the player asks for a route hint.</summary>
         public event Action HintClicked;
 
+        /// <summary>The player tapped a locked layer: offer the rewarded ad that unlocks it.</summary>
+        public event Action<MapLayer> LayerUnlockRequested;
+
         /// <summary>The player switched a layer on or off.</summary>
         public event Action<MapLayer, bool> LayerChanged;
 
@@ -52,6 +58,13 @@ namespace Maze.Presentation.UI
         {
             Bind(_closeButton, () => CloseClicked?.Invoke());
             Bind(_hintButton, () => HintClicked?.Invoke());
+            if (_unlockButtons != null)
+                for (var i = 0; i < _unlockButtons.Length; i++)
+                {
+                    var layer = (MapLayer)i;
+                    if (_unlockButtons[i] != null) Bind(_unlockButtons[i], () => LayerUnlockRequested?.Invoke(layer));
+                }
+
             if (_layers == null) return;
             for (var i = 0; i < _layers.Length; i++)
             {
@@ -110,6 +123,20 @@ namespace Maze.Presentation.UI
             var toggle = LayerToggle(layer);
             if (toggle != null) toggle.SetIsOnWithoutNotify(shown);
         }
+
+        /// <summary>A locked layer shows its switch off and faint with an ad mark; a tap asks to unlock it.</summary>
+        public void SetLayerLocked(MapLayer layer, bool locked)
+        {
+            var button = _unlockButtons != null && (int)layer < _unlockButtons.Length ? _unlockButtons[(int)layer] : null;
+            if (button != null) button.gameObject.SetActive(locked);
+            var toggle = LayerToggle(layer);
+            if (toggle == null) return;
+            toggle.interactable = !locked;
+            if (locked) toggle.SetIsOnWithoutNotify(false);
+        }
+
+        public Button UnlockButton(MapLayer layer) =>
+            _unlockButtons != null && (int)layer < _unlockButtons.Length ? _unlockButtons[(int)layer] : null;
 
         public Toggle LayerToggle(MapLayer layer) =>
             _layers != null && (int)layer < _layers.Length ? _layers[(int)layer] : null;

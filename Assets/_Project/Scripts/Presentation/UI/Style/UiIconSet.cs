@@ -36,6 +36,8 @@ namespace Maze.Presentation.UI.Style
         public Sprite Close;
         public Sprite Player;
         public Sprite Search;
+        [Tooltip("Watch an ad: a screen with a play triangle.")]
+        public Sprite Ad;
 
         [Tooltip("Background of the menu screens: a faint maze with a torch glow and a vignette.")]
         public Texture2D Backdrop;

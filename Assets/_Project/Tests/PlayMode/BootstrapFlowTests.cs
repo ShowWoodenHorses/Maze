@@ -492,7 +492,24 @@ namespace Maze.Tests.PlayMode
                     Assert.AreEqual(map.IsRevealed(cell), doorIcon.Visible, "Doors only in collected regions.");
                 }
 
-                // Zombies, weapons, medkits, keys: everywhere (also unknown regions), each with its switch.
+                // Zombies, weapons, medkits, keys: bought per level with a rewarded ad (simulated in the editor), then
+                // shown everywhere (also unknown regions), each with its switch; the purchase is saved for the level.
+                var progress = _container.Resolve<IProgressService>();
+                progress.ResetProgress();
+                ui.Map.gameObject.SetActive(false);
+                ui.Map.gameObject.SetActive(true); // Re-open: the switches follow the reset.
+                Assert.IsFalse(presenter.Icons.Any(icon => icon.Kind == MapIconKind.Zombie && icon.Visible), "Locked: no zombies.");
+                foreach (var layer in new[] { MapLayer.Zombies, MapLayer.Weapons, MapLayer.Medkits, MapLayer.Keys })
+                {
+                    var unlock = ui.Map.UnlockButton(layer);
+                    Assert.IsTrue(unlock.gameObject.activeSelf, $"{layer}: locked at first.");
+                    unlock.onClick.Invoke();
+                    Assert.IsFalse(unlock.gameObject.activeSelf, $"{layer}: unlocked by the ad.");
+                }
+
+                Assert.IsTrue(progress.IsMapLayerUnlocked(itemsLevel, MapUnlock.Zombies | MapUnlock.Keys), "Saved for the level.");
+                Assert.IsFalse(progress.IsMapLayerUnlocked("Level_01", MapUnlock.Zombies), "Only for this level.");
+                icons = presenter.Icons;
                 var zombies = container.Resolve<Maze.Gameplay.Zombies.ZombieSystem>();
                 var zombieIcons = icons.Where(icon => icon.Kind == MapIconKind.Zombie).ToList();
                 Assert.AreEqual(zombies.TotalCount, zombieIcons.Count);

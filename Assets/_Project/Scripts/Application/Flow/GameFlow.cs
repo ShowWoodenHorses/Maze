@@ -5,6 +5,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using Maze.Application.Assets;
 using Maze.Application.Levels;
+using Maze.Application.Platform;
 using Maze.Application.Save;
 using Maze.Application.Services;
 using Maze.Core.Common;
@@ -47,6 +48,7 @@ namespace Maze.Application.Flow
         private readonly IAddressablesService _addressables;
         private readonly ILevelSessionFactory _sessionFactory;
         private readonly IProgressService _progress;
+        private readonly AdsService _ads;
         private readonly CancellationTokenSource _lifetime = new CancellationTokenSource();
 
         private CancellationTokenSource _transition;
@@ -56,8 +58,10 @@ namespace Maze.Application.Flow
         private bool _disposed;
 
         public GameFlow(IReadOnlyList<IApplicationService> services, ILevelCatalog catalog,
-            IAddressablesService addressables, ILevelSessionFactory sessionFactory, IProgressService progress)
+            IAddressablesService addressables, ILevelSessionFactory sessionFactory, IProgressService progress,
+            AdsService ads = null)
         {
+            _ads = ads;
             _progress = progress;
             _services = services;
             _catalog = catalog;
@@ -209,6 +213,9 @@ namespace Maze.Application.Flow
 
             // Stop current gameplay, dispose the old LevelScope, release its Addressables.
             await UnloadLevelAsync();
+
+            // An interstitial before the level (retry, next, from the menu) when the ad policy allows; over the loading screen.
+            if (_ads != null) await _ads.ShowBeforeLevelAsync(levelId, cancellation);
 
             var entry = _catalog.Find(levelId)
                         ?? throw new LevelLoadException($"Level '{levelId}' is not in the level catalog.");

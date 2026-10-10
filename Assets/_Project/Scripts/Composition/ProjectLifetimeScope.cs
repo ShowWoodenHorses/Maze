@@ -41,9 +41,11 @@ namespace Maze.Composition
             builder.Register<LevelCatalogService>(Lifetime.Singleton).As<ILevelCatalog, IApplicationService>();
             builder.Register<ProgressService>(Lifetime.Singleton).As<IProgressService>();
 
-            // Platform: analytics sinks of the build's platform (SDK integrations go here).
+            // Platform: analytics sinks and the ad provider of the build's platform (SDK integrations go here).
             builder.Register<LogAnalyticsSink>(Lifetime.Singleton).As<IAnalyticsSink>();
+            builder.Register<SimulatedAdProvider>(Lifetime.Singleton).As<IAdProvider>();
             builder.Register<AnalyticsService>(Lifetime.Singleton).AsSelf().As<IApplicationService>();
+            builder.Register<AdsService>(Lifetime.Singleton).AsSelf().As<IApplicationService>();
             builder.Register<LevelRunStats>(Lifetime.Singleton);
             builder.Register<GameAnalytics>(Lifetime.Singleton);
 

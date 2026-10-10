@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using Maze.Application.Platform;
+using Maze.Application.Save;
 using Maze.Application.Services;
 using Maze.Core.Grid;
 using Maze.Core.Level;
@@ -29,7 +31,9 @@ namespace Maze.Presentation.Map
     /// living zombies (where they are when the map opens: it pauses the game), weapons, medkits and keys lying in the
     /// level (keys in the colour of their door pair), the player (always last, on top). The switches live in
     /// <see cref="SettingsService"/>. The magnifier button asks <see cref="RouteHintSystem"/> for a hint; its route is
-    /// drawn over the map when it opens and right after the request. The texture is destroyed with the level.
+    /// drawn over the map when it opens and right after the request. Zombies, weapons, medkits and keys are bought per
+    /// level with a rewarded ad (<see cref="IProgressService.UnlockMapLayer"/>, kept for replays); every hint costs a
+    /// rewarded ad. The texture is destroyed with the level.
     /// </summary>
     public sealed class MapPresenter : ILevelLoadStep, IDisposable
     {
@@ -44,6 +48,12 @@ namespace Maze.Presentation.Map
         private readonly PickupSystem _pickups;
         private readonly ZombieSystem _zombies;
         private readonly RouteHintSystem _route;
+        private readonly AdsService _ads;
+        private readonly IProgressService _progress;
+        private readonly AnalyticsService _analytics;
+        private readonly LevelRunStats _stats;
+        private readonly CancellationTokenSource _lifetime = new CancellationTokenSource();
+        private bool _adPending;
         private readonly List<Vector2> _routePoints = new List<Vector2>();
         private readonly List<MapIcon> _icons = new List<MapIcon>();
         private readonly List<Pickup> _lying = new List<Pickup>();
@@ -55,9 +65,13 @@ namespace Maze.Presentation.Map
 
         public MapPresenter(UIRoot ui, LevelData level, LevelGrid grid, MapSystem map, PlayerSystem player,
             DoorSystem doors, SettingsService settings, LocalizationService texts, PickupSystem pickups, ZombieSystem zombies,
-            RouteHintSystem route)
+            RouteHintSystem route, AdsService ads, IProgressService progress, AnalyticsService analytics, LevelRunStats stats)
         {
             _route = route;
+            _ads = ads;
+            _progress = progress;
+            _analytics = analytics;
+            _stats = stats;
             _pickups = pickups;
             _zombies = zombies;
             _texts = texts;
@@ -104,13 +118,13 @@ namespace Maze.Presentation.Map
                 _ui.Map.Opened += RefreshIcons;
                 _ui.Map.LayerChanged += OnLayerChanged;
                 _ui.Map.Opened += OnOpened;
-                _ui.Map.HintClicked += RequestHint;
+                _ui.Map.HintClicked += OnHintClicked;
+                _ui.Map.LayerUnlockRequested += OnUnlockRequested;
                 _texts.LanguageChanged += Redraw; // The caption (rare: settings from the pause screen).
                 _bound = true;
             }
 
-            for (var i = 0; i < MapLayers.Count; i++)
-                _ui.Map.SetLayer((MapLayer)i, IsShown((MapLayer)i));
+            ApplyLayerSwitches();
             Redraw();
             RefreshIcons(); // Creates the icon images now, while loading.
             return UniTask.CompletedTask;
@@ -118,6 +132,7 @@ namespace Maze.Presentation.Map
 
         public void Dispose()
         {
+            _lifetime.Cancel();
             if (_bound)
             {
                 _map.FragmentCollected -= OnFragmentCollected;
@@ -127,7 +142,8 @@ namespace Maze.Presentation.Map
                     _ui.Map.Opened -= RefreshIcons;
                     _ui.Map.LayerChanged -= OnLayerChanged;
                     _ui.Map.Opened -= OnOpened;
-                    _ui.Map.HintClicked -= RequestHint;
+                    _ui.Map.HintClicked -= OnHintClicked;
+                    _ui.Map.LayerUnlockRequested -= OnUnlockRequested;
                 }
 
                 _bound = false;
@@ -145,7 +161,83 @@ namespace Maze.Presentation.Map
             RefreshIcons();
         }
 
-        /// <summary>Lays a new route hint and shows it (also used once the hint is paid for).</summary>
+        private void OnHintClicked() => HintAsync().Forget();
+
+        private async UniTaskVoid HintAsync()
+        {
+            if (_adPending) return;
+            _adPending = true;
+            try
+            {
+                if (await _ads.ShowRewardedAsync("route_hint", _lifetime.Token)) RequestHint();
+            }
+            catch (OperationCanceledException)
+            {
+                // The level went away during the ad.
+            }
+            finally
+            {
+                _adPending = false;
+            }
+        }
+
+        private void OnUnlockRequested(MapLayer layer) => UnlockAsync(layer).Forget();
+
+        private async UniTaskVoid UnlockAsync(MapLayer layer)
+        {
+            var flag = UnlockOf(layer);
+            if (_adPending || flag == MapUnlock.None) return;
+            _adPending = true;
+            try
+            {
+                if (!await _ads.ShowRewardedAsync("map_" + layer.ToString().ToLowerInvariant(), _lifetime.Token)) return;
+                _progress.UnlockMapLayer(_level.name, flag);
+                _stats.LayersUnlocked++;
+                var parameters = _analytics.Begin();
+                parameters["level"] = _level.name;
+                parameters["layer"] = layer.ToString().ToLowerInvariant();
+                _analytics.Send(AnalyticsEvents.MapLayerUnlocked);
+                OnLayerChanged(layer, true); // Bought to be seen: switched on.
+                ApplyLayerSwitches();
+            }
+            catch (OperationCanceledException)
+            {
+                // The level went away during the ad.
+            }
+            finally
+            {
+                _adPending = false;
+            }
+        }
+
+        /// <summary>The ad-bought flag of a layer; None for the free ones (player, map pieces).</summary>
+        private static MapUnlock UnlockOf(MapLayer layer) => layer switch
+        {
+            MapLayer.Zombies => MapUnlock.Zombies,
+            MapLayer.Weapons => MapUnlock.Weapons,
+            MapLayer.Medkits => MapUnlock.Medkits,
+            MapLayer.Keys => MapUnlock.Keys,
+            _ => MapUnlock.None,
+        };
+
+        private bool IsUnlocked(MapLayer layer)
+        {
+            var flag = UnlockOf(layer);
+            return flag == MapUnlock.None || _progress.IsMapLayerUnlocked(_level.name, flag);
+        }
+
+        private void ApplyLayerSwitches()
+        {
+            for (var i = 0; i < MapLayers.Count; i++)
+            {
+                var layer = (MapLayer)i;
+                var unlocked = IsUnlocked(layer);
+                _ui.Map.SetLayerLocked(layer, !unlocked);
+                if (unlocked) _ui.Map.SetLayer(layer, IsShown(layer));
+            }
+        }
+
+        /// <summary>Lays a new route hint and shows it (once the hint is paid for).</summary>
         public void RequestHint()
         {
             var target = _route.Request();
@@ -164,6 +256,7 @@ namespace Maze.Presentation.Map
 
         private void OnOpened()
         {
+            ApplyLayerSwitches();
             _ui.Map.SetHintStatus(_route.IsActive ? _texts.Get(HintText(_route.Target)) : null);
             RefreshRoute();
         }
@@ -196,6 +289,9 @@ namespace Maze.Presentation.Map
 
             RefreshIcons();
         }
+
+        /// <summary>Icons of the layer are drawn: bought (or free) and switched on.</summary>
+        private bool IsVisible(MapLayer layer) => IsShown(layer) && IsUnlocked(layer);
 
         private bool IsShown(MapLayer layer) => layer switch
         {
@@ -254,7 +350,7 @@ namespace Maze.Presentation.Map
             foreach (var exit in _level.Exits)
                 AddObjectIcon(set, MapIconKind.Exit, exit.Id, exit.Position, 0f, set.ExitColor);
 
-            var showFragments = IsShown(MapLayer.Fragments);
+            var showFragments = IsVisible(MapLayer.Fragments);
             foreach (var fragment in _level.MapFragments)
             {
                 var icon = ObjectIcon(set, MapIconKind.MapFragment, fragment.Id, fragment.Position, 0f, set.MapFragmentColor);
@@ -265,12 +361,12 @@ namespace Maze.Presentation.Map
             // Items lying now, everywhere. Slots: as many as the level has (a dropped weapon takes the slot of one
             // taken, so there are never more weapons lying than the level started with).
             _pickups.GetAll(_lying);
-            AddItemIcons(set, PickupKind.Key, _level.Keys.Count, IsShown(MapLayer.Keys));
-            AddItemIcons(set, PickupKind.Medkit, _level.Medkits.Count, IsShown(MapLayer.Medkits));
-            AddItemIcons(set, PickupKind.Weapon, _level.Weapons.Count, IsShown(MapLayer.Weapons));
+            AddItemIcons(set, PickupKind.Key, _level.Keys.Count, IsVisible(MapLayer.Keys));
+            AddItemIcons(set, PickupKind.Medkit, _level.Medkits.Count, IsVisible(MapLayer.Medkits));
+            AddItemIcons(set, PickupKind.Weapon, _level.Weapons.Count, IsVisible(MapLayer.Weapons));
             _lying.Clear();
 
-            var showZombies = IsShown(MapLayer.Zombies);
+            var showZombies = IsVisible(MapLayer.Zombies);
             foreach (var zombie in _zombies.Zombies)
                 _icons.Add(new MapIcon
                 {
@@ -289,7 +385,7 @@ namespace Maze.Presentation.Map
                 Rotation = MapIconLayout.PlayerRotation(_player.Facing),
                 Size = set.PlayerSize,
                 Color = set.PlayerColor,
-                Visible = IsShown(MapLayer.Player) && _player.IsSpawned, // Always, also outside collected regions.
+                Visible = IsVisible(MapLayer.Player) && _player.IsSpawned, // Always, also outside collected regions.
             });
 
             _ui.Map.SetIcons(_icons);

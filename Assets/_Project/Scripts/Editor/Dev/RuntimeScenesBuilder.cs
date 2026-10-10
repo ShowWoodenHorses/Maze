@@ -1160,6 +1160,7 @@ namespace Maze.Editor.Dev
             // Left of Close, spaced so that the widened touch areas meet but do not overlap.
             var hint = RoundButton(screen.transform, "HintButton", icons.Search, new Vector2(1f, 1f), new Vector2(-232f, -90f),
                 84f, 36f);
+            AdMark(hint.transform, icons.Ad); // Every hint costs a rewarded ad.
             var hintStatus = Text(screen.transform, "HintStatus", "", 26f, false, new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f),
                 new Vector2(0f, -136f), new Vector2(760f, 34f), TextAlignmentOptions.Center, _style.MutedText);
             hintStatus.textWrappingMode = TextWrappingModes.NoWrap;
@@ -1197,15 +1198,23 @@ namespace Maze.Editor.Dev
                 ("ShowWeapons", TextKeys.MapWeapons), ("ShowMedkits", TextKeys.MapMedkits), ("ShowKeys", TextKeys.MapKeys),
             };
             var toggles = new List<Object>();
+            var unlocks = new List<Object>();
             for (var i = 0; i < layers.Length; i++)
-                toggles.Add(LabeledSwitch(screen.transform, layers[i].name, Loc(layers[i].caption), TopLeft,
-                    new Vector2(40f, -250f - 64f * i)));
+            {
+                var toggle = LabeledSwitch(screen.transform, layers[i].name, Loc(layers[i].caption), TopLeft,
+                    new Vector2(40f, -250f - 64f * i));
+                toggles.Add(toggle);
+                // Zombies, weapons, medkits, keys are bought per level with a rewarded ad: while locked, a button over
+                // the switch (child: it gets the tap) with the ad mark at the end of the row.
+                unlocks.Add(i >= (int)Maze.Presentation.Map.MapLayer.Zombies ? UnlockOverlay(toggle.transform, icons.Ad) : null);
+            }
 
             var mapIcons = AssetDatabase.LoadAssetAtPath<MapIconSet>(MapIconsBuilder.SetPath);
             if (mapIcons == null) mapIcons = MapIconsBuilder.Build();
 
             SetReference(screen, "_icons", mapIcons);
             SetReferences(screen, "_layers", toggles);
+            SetReferences(screen, "_unlockButtons", unlocks);
             SetReference(screen, "_hintButton", hint);
             SetReference(screen, "_hintStatus", hintStatus);
             SetReference(screen, "_route", route);
@@ -1715,6 +1724,37 @@ namespace Maze.Editor.Dev
             var toggle = pill.GetComponent<Toggle>();
             toggle.targetGraphic = pill;
             return toggle;
+        }
+
+        /// <summary>
+        /// Transparent button over a map layer switch row (and the ad mark at its end), shown while the layer is locked.
+        /// </summary>
+        private static Button UnlockOverlay(Transform row, Sprite adIcon)
+        {
+            var overlay = Shape(row, "UnlockButton", new Vector2(0f, 0.5f), Vector2.zero, new Vector2(400f, 60f), true);
+            overlay.rectTransform.pivot = new Vector2(0f, 0.5f);
+            overlay.Fill = Color.clear;
+            overlay.StrokeWidth = 0f;
+            overlay.raycastTarget = true;
+            var mark = Icon(overlay.transform, "Ad", adIcon, new Vector2(0f, 0.5f), new Vector2(372f, 0f), 34f);
+            mark.color = _style.Accent;
+            var button = overlay.gameObject.AddComponent<Button>();
+            button.transition = Selectable.Transition.None;
+            button.targetGraphic = overlay;
+            overlay.gameObject.SetActive(false);
+            return button;
+        }
+
+        /// <summary>A small ad mark at the bottom right of a round button (a rewarded ad comes first).</summary>
+        private static void AdMark(Transform button, Sprite adIcon)
+        {
+            var back = Shape(button, "AdMark", new Vector2(1f, 0f), new Vector2(-6f, 6f), new Vector2(34f, 34f));
+            back.Kind = UiShapeKind.Capsule;
+            back.StrokeWidth = 0f;
+            back.Fill = Background;
+            back.raycastTarget = false;
+            var icon = Icon(back.transform, "Icon", adIcon, Center, Vector2.zero, 24f);
+            icon.color = _style.Accent;
         }
 
         /// <summary>A switch with a caption on its right, placed absolutely (map screen).</summary>
