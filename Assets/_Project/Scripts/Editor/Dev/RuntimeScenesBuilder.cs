@@ -463,8 +463,9 @@ namespace Maze.Editor.Dev
             messageRow.gameObject.SetActive(false); // Shown with a message.
 
             // Top right: Map and Pause.
+            // Spaced so that their widened touch areas (RoundButton) meet but do not overlap.
             var pause = RoundButton(root, "PauseButton", icons.Pause, new Vector2(1f, 1f), new Vector2(-82f, -78f), 84f, 40f);
-            var map = RoundButton(root, "MapButton", icons.Map, new Vector2(1f, 1f), new Vector2(-190f, -78f), 84f, 40f);
+            var map = RoundButton(root, "MapButton", icons.Map, new Vector2(1f, 1f), new Vector2(-214f, -78f), 84f, 40f);
 
             // Bottom right (no on-screen controls): weapon slots, keys 1 and 2.
             var weaponPanel = Rect(root, "WeaponPanel", new Vector2(1f, 0f), new Vector2(-40f - 158f, 40f + 55f),
@@ -649,12 +650,16 @@ namespace Maze.Editor.Dev
             return label;
         }
 
-        /// <summary>Round icon button (HUD, back buttons).</summary>
+        /// <summary>
+        /// Round icon button (HUD, back buttons). Touches count up to <paramref name="hitPadding"/> outside the circle:
+        /// on a phone the 84-unit buttons are ~5 mm across, smaller than a fingertip.
+        /// </summary>
         private static UiButton RoundButton(Transform parent, string name, Sprite icon, Vector2 anchor, Vector2 position,
-            float diameter, float iconSize)
+            float diameter, float iconSize, float hitPadding = 24f)
         {
             var body = Shape(parent, name, anchor, position, new Vector2(diameter, diameter), true);
             body.Kind = UiShapeKind.Capsule;
+            body.HitPadding = hitPadding;
             var image = Icon(body.transform, "Icon", icon, Center, Vector2.zero, iconSize);
             return MakeButton(body, false, image);
         }

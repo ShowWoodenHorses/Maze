@@ -52,6 +52,19 @@ namespace Maze.Presentation.UI
 
         public void RequestSound(UiSoundKind kind) => SoundRequested?.Invoke(kind);
 
+        /// <summary>
+        /// The default drag threshold (10 px) is under a millimetre on a phone: a tap that slides a little starts a
+        /// drag (level pages swipe) and the button does not get its click. ~2 mm of travel, never less than the default.
+        /// </summary>
+        public void ScaleDragThreshold()
+        {
+            const float millimetres = 2f;
+            const int minimum = 10;
+            if (_eventSystem == null) return;
+            var dpi = Screen.dpi;
+            _eventSystem.pixelDragThreshold = dpi > 0f ? Mathf.Max(minimum, Mathf.RoundToInt(dpi / 25.4f * millimetres)) : minimum;
+        }
+
         /// <summary>Static captions take the texts of the current language; screens get them for their own texts.</summary>
         public void ApplyLanguage(LocalizationService texts)
         {

@@ -9,7 +9,7 @@ namespace Maze.Presentation.UI.Shapes
     /// distance field — crisp at any DPI and scale, one quad per shape. Fill and stroke colours travel in vertex
     /// channels, so all shapes share one material and batch together; <see cref="Graphic.color"/> stays a tint over
     /// the whole shape (button transitions, CanvasGroup fades). Clicks count only inside the shape (plus
-    /// <see cref="HitPadding"/>), not anywhere in its rect.
+    /// <see cref="HitPadding"/>, which also widens the rect the raycaster tests first), not anywhere in its rect.
     /// The shape is clipped to its rect (+ a pixel for anti-aliasing): size a sector's rect with
     /// <see cref="UiShapeMath.SectorBounds"/>.
     /// </summary>
@@ -118,7 +118,21 @@ namespace Maze.Presentation.UI.Shapes
         public float HitPadding
         {
             get => _hitPadding;
-            set => _hitPadding = value;
+            set
+            {
+                _hitPadding = value;
+                SyncRaycastPadding();
+            }
+        }
+
+        /// <summary>
+        /// The raycaster tests the rect (minus <see cref="Graphic.raycastPadding"/>) before the shape: a negative
+        /// padding lets touches outside the rect reach <see cref="IsRaycastLocationValid"/>.
+        /// </summary>
+        private void SyncRaycastPadding()
+        {
+            var outside = -Mathf.Max(0f, _hitPadding);
+            raycastPadding = new Vector4(outside, outside, outside, outside);
         }
 
         /// <summary>Sets a sector at once (one mesh rebuild).</summary>
@@ -249,6 +263,7 @@ namespace Maze.Presentation.UI.Shapes
         {
             base.OnValidate();
             EnableChannels();
+            SyncRaycastPadding();
         }
 #endif
     }

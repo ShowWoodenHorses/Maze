@@ -42,6 +42,7 @@ namespace Maze.Presentation.UI
             if (_initialized) return;
             _initialized = true;
 
+            _ui.ScaleDragThreshold();
             _flow.StateChanged += Show;
             _texts.LanguageChanged += OnLanguageChanged;
             _ui.MainMenu.PlayClicked += OnPlayClicked;
