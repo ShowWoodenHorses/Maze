@@ -8641,3 +8641,4 @@ MonoBehaviour:
         _variantId: snow_zombie_walker
         _rotation: 0
     _objectOverrides: []
+  _tutorial: {fileID: 0}

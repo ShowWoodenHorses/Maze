@@ -1270,12 +1270,18 @@ namespace Maze.Editor.Dev
             AutoSize(hintStatus, 0.6f);
             hintStatus.gameObject.SetActive(false);
 
+            // Switches and the map inside the safe area: a front camera or a notch on the left must not cover a switch.
+            var safe = new GameObject("SafeArea", typeof(RectTransform));
+            safe.transform.SetParent(screen.transform, false);
+            Stretch(safe.GetComponent<RectTransform>());
+            safe.AddComponent<SafeAreaFitter>();
+
             // Area below the caption, right of the switches; the image keeps the level's aspect ratio inside it.
             var area = new GameObject("MapArea", typeof(RectTransform));
-            area.transform.SetParent(screen.transform, false);
+            area.transform.SetParent(safe.transform, false);
             var areaRect = area.GetComponent<RectTransform>();
             Stretch(areaRect);
-            areaRect.offsetMin = new Vector2(400f, 40f);
+            areaRect.offsetMin = new Vector2(450f, 40f);
             areaRect.offsetMax = new Vector2(-40f, -160f);
 
             var imageObject = new GameObject("MapImage", typeof(RectTransform));
@@ -1293,8 +1299,8 @@ namespace Maze.Editor.Dev
             route.raycastTarget = false;
             Stretch(route.rectTransform);
 
-            // Icon switches (one per MapLayer, in its order) stacked at the left, below the FPS counter (over every
-            // screen at about -182..-210). Direct children named "<name>Toggle" (tests).
+            // Icon switches (one per MapLayer, in its order) stacked at the left of the safe area, with a margin, below
+            // the FPS counter (over every screen at about -182..-210). Children of SafeArea named "<name>Toggle" (tests).
             (string name, string caption)[] layers =
             {
                 ("ShowPlayer", TextKeys.MapPlayer), ("ShowFragments", TextKeys.MapPieces), ("ShowZombies", TextKeys.MapZombies),
@@ -1304,8 +1310,8 @@ namespace Maze.Editor.Dev
             var unlocks = new List<Object>();
             for (var i = 0; i < layers.Length; i++)
             {
-                var toggle = LabeledSwitch(screen.transform, layers[i].name, Loc(layers[i].caption), TopLeft,
-                    new Vector2(40f, -250f - 64f * i));
+                var toggle = LabeledSwitch(safe.transform, layers[i].name, Loc(layers[i].caption), TopLeft,
+                    new Vector2(80f, -250f - 64f * i));
                 toggles.Add(toggle);
                 // Zombies, weapons, medkits, keys are bought per level with a rewarded ad: while locked, a button over
                 // the switch (child: it gets the tap) with the ad mark at the end of the row.

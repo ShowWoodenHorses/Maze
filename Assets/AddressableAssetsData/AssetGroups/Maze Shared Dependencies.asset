@@ -20,6 +20,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0976e9e2f75b61643818c92e87fa1788
+    m_Address: Assets/_Project/Art/Effects/fx_route_line.mat
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 174abc94a5cf6b44992c03a6bf528bee
     m_Address: Assets/_Project/Art/ThirdParty/PolygonApocalypse/Models/SM_Wep_AssaultRifle_01.fbx
     m_ReadOnly: 0
@@ -45,6 +50,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2a6342712722c654c8aa208b06371596
+    m_Address: Assets/_Project/Data/Themes/CastleBlockExitSet.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 2bb7dc9d0eb49d94aa908e133bb58da9
     m_Address: Assets/_Project/Data/Weapons/Crowbar.asset
     m_ReadOnly: 0
@@ -60,6 +70,16 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 307013d4046175540b40ca4e3e8dcfd7
+    m_Address: Assets/_Project/Art/Effects/fx_vision_zone.mat
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3143762e16a7e23408d38ae891030756
+    m_Address: Assets/_Project/Data/Themes/CastleBlockFloorSet.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 3493d85149291cd41ac4d077cc3ec857
     m_Address: Assets/_Project/Data/Weapons/M416.asset
     m_ReadOnly: 0
@@ -70,6 +90,21 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4329f07b42756c24caededb8268c1897
+    m_Address: Assets/_Project/Data/Themes/CastleBlockMedkitSet.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 46cd222b1c4f77742b6e467b2b291b2c
+    m_Address: Assets/_Project/Art/Lighting/BlobShadow.mat
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4852d557940957f4e90455abefa07fe8
+    m_Address: Assets/_Project/Data/Themes/CastleBlockTheme.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 52544eaa2c194144ab7b28fa647d781c
     m_Address: Assets/_Project/Art/ThirdParty/PolygonApocalypse/Textures/Misc/PolygonApocalypse_Emissive_01.png
     m_ReadOnly: 0
@@ -77,6 +112,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 535606c83797fb04ea7fd64794db6d8c
     m_Address: Assets/_Project/Art/ThirdParty/PolygonApocalypse/Models/SM_Wep_SubMGun_02.fbx
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 57b71dca180984d488eb03f23f3bef0b
+    m_Address: Assets/_Project/Data/Themes/PlaceholderZombieSet.asset
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -100,6 +140,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 64ec30b356044824083cab89bfdd3cdc
+    m_Address: Assets/_Project/Data/Zombies/ZombieHunter.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 7c2a5fb0e861fc242bb7bb40feddc206
     m_Address: Assets/_Project/Art/Characters/CharactersAvatar.asset
     m_ReadOnly: 0
@@ -120,8 +165,28 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 848777e871c45864389124a0559bf682
+    m_Address: Assets/_Project/Data/Themes/CastleBlockMapFragmentSet.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8ec1aafa434afa44987c004e69ba7af6
+    m_Address: Assets/_Project/Art/Effects/fx_footprints.mat
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8f3a52989d6d9534290edf86e19f4dd9
+    m_Address: Assets/_Project/Data/Themes/CastleBlockWallSet.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 9782ffd36b3686f4eb4d820b0861438f
     m_Address: Assets/_Project/Art/ThirdParty/PolygonApocalypse/Models/SM_Wep_AssaultRifle_03.fbx
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 97ef3c7cdf0c73648bad7e94f60e15ec
+    m_Address: Assets/_Project/Art/Shaders/MazeBlobShadow.shader
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -140,6 +205,16 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ac0c610bbc54b95459ad02ba82f4340b
+    m_Address: Assets/_Project/Data/Zombies/ZombieListener.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b222ebbe4d129c443bf95e5da51751c5
+    m_Address: Assets/_Project/Art/Fog/FogNoise.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: b648aac8a8cb44c45a97d41297b31aba
     m_Address: Assets/_Project/Data/Weapons/FireAxe.asset
     m_ReadOnly: 0
@@ -150,8 +225,38 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c2846f78ff3f75148832bd4261978478
+    m_Address: Assets/_Project/Art/Shaders/MazeRouteLine.shader
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c798c01d46f63bb4299d10b91436a6c7
+    m_Address: Assets/_Project/Art/Effects/fx_footprints.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: c7e9ec95b3da8ad40a670cc1a1994bf7
     m_Address: Assets/_Project/Data/Weapons/RevolverRifle.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c9e4824799a23154dae897c7fde15723
+    m_Address: Assets/_Project/Data/Zombies/ZombieWalker.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cb299dba8e11c1149aa22907c53bc418
+    m_Address: Assets/_Project/Data/Themes/CastleBlockDoorSet.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cfa9392684729334e801c808b8fda77a
+    m_Address: Assets/_Project/Data/Themes/CastleBlockLightSet.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d0979293b58f90343b18039357dc34e5
+    m_Address: Assets/_Project/Art/Shaders/MazeFog.shader
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -160,8 +265,38 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e1e3a08f74b470148a08ad6db9711a10
+    m_Address: Assets/_Project/Data/Themes/PlaceholderDecorSet.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e44f05f90fed0e446b142333febf4f9e
+    m_Address: Assets/_Project/Art/Fog/Fog.mat
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: eed7f5fc0ce713d418f2014e9021fd8b
     m_Address: Assets/_Project/Data/Weapons/SniperRifle.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f27b134fb56d17341899f871cca56d03
+    m_Address: Assets/_Project/Art/Effects/fx_noise_ring.mat
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f3f66466e2941c5458939f5dde50eff1
+    m_Address: Assets/_Project/Data/Themes/CastleBlockKeySet.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f49a2f304f01b9f4292f3a57c14bd4ab
+    m_Address: Assets/_Project/Art/Shaders/MazeRing.shader
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fb15d3c7f0ca317498e3750cb736fd43
+    m_Address: Assets/_Project/Data/Themes/PlaceholderWeaponSet.asset
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

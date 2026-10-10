@@ -47,7 +47,7 @@ namespace Maze.Presentation.Visual
             cancellation.ThrowIfCancellationRequested();
 
             Geometry = new GeometryBuilder(prefabs).Build(_level, _root.transform, staticBatching: true);
-            Geometry.Mask.Bind();
+            Geometry.Bind();
 
             EntityViews = new EntityViewFactory(prefabs);
             var missingObjects = 0;

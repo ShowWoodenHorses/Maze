@@ -16,6 +16,14 @@ namespace Maze.Presentation.Visual
         public static readonly int VisibilityTextureId = Shader.PropertyToID("_MazeVisibility");
         public static readonly int VisibilitySizeId = Shader.PropertyToID("_MazeVisibilitySize");
 
+        /// <summary>Soft snowdrifts on the floor (<see cref="SnowdriftMask"/>); off = no drift blending at all.</summary>
+        public const string SnowdriftKeyword = "MAZE_SNOWDRIFT";
+
+        public static readonly int SnowdriftTextureId = Shader.PropertyToID("_MazeDrift");
+        public static readonly int SnowdriftSizeId = Shader.PropertyToID("_MazeDriftSize");
+        public static readonly int SnowdriftColorId = Shader.PropertyToID("_MazeDriftColor");
+        public static readonly int SnowdriftParamsId = Shader.PropertyToID("_MazeDriftParams");
+
         public static bool Supports(Material material) =>
             material != null && material.shader != null && material.shader.name == Name;
     }

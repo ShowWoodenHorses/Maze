@@ -518,14 +518,14 @@ namespace Maze.Tests.PlayMode
                 Assert.AreEqual(level.Keys.Count, icons.Count(icon => icon.Kind == MapIconKind.Key && icon.Visible));
                 Assert.AreEqual(level.Medkits.Count, icons.Count(icon => icon.Kind == MapIconKind.Medkit && icon.Visible));
                 Assert.AreEqual(level.Weapons.Count, icons.Count(icon => icon.Kind == MapIconKind.Weapon && icon.Visible));
-                var zombieToggle = ui.Map.transform.Find("ShowZombiesToggle").GetComponent<Toggle>();
+                var zombieToggle = ui.Map.transform.Find("SafeArea/ShowZombiesToggle").GetComponent<Toggle>();
                 var iconCount = presenter.Icons.Count;
                 zombieToggle.isOn = false;
                 Assert.IsFalse(presenter.Icons.Any(icon => icon.Kind == MapIconKind.Zombie && icon.Visible), "Zombies switched off.");
                 Assert.AreEqual(iconCount, presenter.Icons.Count, "The icon count never changes.");
                 zombieToggle.isOn = true;
 
-                var playerToggle = ui.Map.transform.Find("ShowPlayerToggle").GetComponent<Toggle>();
+                var playerToggle = ui.Map.transform.Find("SafeArea/ShowPlayerToggle").GetComponent<Toggle>();
                 Assert.IsTrue(playerToggle.isOn);
                 playerToggle.isOn = false;
                 Assert.IsFalse(presenter.Icons[presenter.Icons.Count - 1].Visible, "Player toggle hides the icon.");

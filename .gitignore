@@ -44,3 +44,6 @@ UserSettings/
 # (keeping GUIDs) before committing; the packs themselves stay local.
 /Assets/_Project/Import/
 /Assets/_Project/Import.meta
+
+# Store promo screenshots and their generator (local only)
+/Promo/

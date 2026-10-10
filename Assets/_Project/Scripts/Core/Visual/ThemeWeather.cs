@@ -6,7 +6,8 @@ namespace Maze.Core.Visual
 {
     /// <summary>
     /// Weather of the theme (display only): frost on the characters (<c>Maze/Lit</c>: whitening of the surfaces facing
-    /// up and of the edges), falling snow around the player and breath puffs of the player and the zombies. Empty
+    /// up and of the edges), falling snow around the player, breath puffs of the player and the zombies and the look of
+    /// the snowdrift edges (<c>Maze/Geometry</c>, keyword <c>MAZE_SNOWDRIFT</c>). Empty
     /// <see cref="SnowMaterial"/> = no snow, empty <see cref="BreathMaterial"/> = no breath, frost 0 = no frost.
     /// </summary>
     [Serializable]
@@ -75,6 +76,23 @@ namespace Maze.Core.Visual
 
         [Tooltip("Speed a puff leaves the mouth with, cells/s.")]
         [Range(0f, 2f)] public float BreathSpeed = 0.35f;
+
+        [Header("Snowdrifts")]
+        [Tooltip("Colour of the drift snow (sRGB): the floor texture is lifted towards it, so its grain stays. Used where " +
+                 "snowdrift cells show a drift floor of the theme.")]
+        public Color DriftColor = new Color(0.86f, 0.91f, 1f, 1f);
+
+        [Tooltip("Width of the soft edge between the drift and the ordinary snow, in mask units (0.5 ≈ the whole cell).")]
+        [Range(0.02f, 0.5f)] public float DriftEdgeSoftness = 0.14f;
+
+        [Tooltip("How far the noise pushes the edge in and out (uneven edge), mask units.")]
+        [Range(0f, 0.6f)] public float DriftEdgeNoise = 0.3f;
+
+        [Tooltip("Size of the edge bumps: noise frequency per cell.")]
+        [Range(0.5f, 6f)] public float DriftNoiseScale = 2.2f;
+
+        [Tooltip("Light shadow along the foot of the drift, 0..1.")]
+        [Range(0f, 1f)] public float DriftShadow = 0.25f;
 
         [Header("Frozen doors")]
         [Tooltip("Ice put over a frozen door (pivot = the door's centre on the floor, door rotation 0 = passage " +

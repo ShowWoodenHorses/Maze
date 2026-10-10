@@ -13,17 +13,29 @@ namespace Maze.Presentation.Visual
     {
         private readonly List<VisibilityChunk> _chunks;
 
-        public LevelGeometryView(Transform root, List<VisibilityChunk> chunks, CellVisibilityMask mask, int missingVisuals)
+        public LevelGeometryView(Transform root, List<VisibilityChunk> chunks, CellVisibilityMask mask, int missingVisuals,
+            SnowdriftMask snowdrifts = null)
         {
             Root = root;
             _chunks = chunks;
             Mask = mask;
             MissingVisuals = missingVisuals;
+            Snowdrifts = snowdrifts;
         }
 
         public Transform Root { get; }
         public IReadOnlyList<VisibilityChunk> Chunks => _chunks;
         public CellVisibilityMask Mask { get; }
+
+        /// <summary>Soft drift edges of the level; null when it shows no drift floors.</summary>
+        public SnowdriftMask Snowdrifts { get; }
+
+        /// <summary>Makes the shader use this level's masks. Only one level is active at a time.</summary>
+        public void Bind()
+        {
+            Mask.Bind();
+            Snowdrifts?.Bind();
+        }
 
         /// <summary>Cell layers that should have geometry but whose visual or prefab is missing.</summary>
         public int MissingVisuals { get; }
@@ -43,6 +55,7 @@ namespace Maze.Presentation.Visual
         public void Dispose()
         {
             Mask.Dispose();
+            Snowdrifts?.Dispose();
             foreach (var chunk in _chunks)
                 UnityObjects.Destroy(chunk.Mesh);
             _chunks.Clear();

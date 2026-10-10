@@ -46,7 +46,8 @@ namespace Maze.Presentation.Visual
             if (staticBatching && chunks.Count > 0)
                 StaticBatchingUtility.Combine(root.gameObject);
 
-            var view = new LevelGeometryView(root, chunks, new CellVisibilityMask(geometry.Width, geometry.Height), missing);
+            var view = new LevelGeometryView(root, chunks, new CellVisibilityMask(geometry.Width, geometry.Height), missing,
+                SnowdriftMask.Create(level));
             view.ApplyVisibility();
             return view;
         }

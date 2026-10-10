@@ -70,9 +70,12 @@ namespace Maze.Editor.Dev
             public (Surface Sides, int Weight)[] Walls;
             public Surface WallTop;
 
-            /// <summary>Floors of snowdrift cells (category Snowdrift): a low mound on the floor block; each its own shape.</summary>
+            /// <summary>
+            /// Floors of snowdrift cells (category Snowdrift): a low mound on the floor block, each its own shape, with
+            /// the material of the first floor — the drift whiteness and its soft edge are drawn by Maze/Geometry over
+            /// any floor (SnowdriftMask), so a drift texture of its own would show a seam at the cell border.
+            /// </summary>
             public (int Seed, int Weight)[] Drifts;
-            public Surface DriftSurface;
 
             public Action<VisualTheme, Material> Tune;
         }
@@ -93,7 +96,6 @@ namespace Maze.Editor.Dev
             },
             WallTop = new Surface { Name = "wall_snow_top", Paint = (u, v) => SnowGround(u, v, 13, drift: false, bright: true), Bump = 2f },
             Drifts = new[] { (61, 1), (62, 1), (63, 1) },
-            DriftSurface = new Surface { Name = "floor_snowdrift", Paint = (u, v) => SnowGround(u, v, 14, drift: true, bright: true), Bump = 2f },
             Tune = (theme, fog) =>
             {
                 var l = theme.Lighting;
@@ -153,9 +155,11 @@ namespace Maze.Editor.Dev
             var floorAdds = new SetAdditions(floorSet, newFloorSet);
             var wallAdds = new SetAdditions(wallSet, newWallSet);
 
+            Material baseFloor = null;
             foreach (var (surface, weight) in biome.Floors)
             {
                 var material = MaterialFor(folder, surface);
+                baseFloor ??= material;
                 var prefab = Prefab(folder, surface.Name, floorMesh, material);
                 floorAdds.Add(Variant(surface.Name, weight, VisualCategory.General, prefab));
             }
@@ -164,13 +168,12 @@ namespace Maze.Editor.Dev
 
             if (biome.Drifts != null)
             {
-                var driftMaterial = MaterialFor(folder, biome.DriftSurface);
                 for (var i = 0; i < biome.Drifts.Length; i++)
                 {
                     var (seed, weight) = biome.Drifts[i];
-                    var name = $"{biome.DriftSurface.Name}_{i + 1:00}";
+                    var name = $"floor_snowdrift_{i + 1:00}";
                     var mesh = SaveMesh(BuildDriftMesh(seed), $"{ArtRoot}/Meshes/BiomeDrift_{i + 1:00}.asset");
-                    floorAdds.Add(Variant(name, weight, VisualCategory.Snowdrift, Prefab(folder, name, mesh, driftMaterial)));
+                    floorAdds.Add(Variant(name, weight, VisualCategory.Snowdrift, Prefab(folder, name, mesh, baseFloor)));
                 }
             }
 

@@ -129,6 +129,11 @@ MonoBehaviour:
     BreathColor: {r: 0.92, g: 0.96, b: 1, a: 0.45}
     BreathMouthOffset: {x: 0.14, y: -0.06}
     BreathSpeed: 0.35
+    DriftColor: {r: 0.86, g: 0.91, b: 1, a: 1}
+    DriftEdgeSoftness: 0.14
+    DriftEdgeNoise: 0.3
+    DriftNoiseScale: 2.2
+    DriftShadow: 0.25
     IceOverlay:
       m_AssetGUID: fd4d82f6367b9f94192f41787f70f2b6
       m_SubObjectName: 

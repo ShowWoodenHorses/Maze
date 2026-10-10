@@ -1,6 +1,7 @@
 using Maze.Core.Grid;
 using Maze.Core.Level;
 using Maze.Core.Visual;
+using Maze.Presentation.Visual;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -16,6 +17,9 @@ namespace Maze.Editor.LevelDesigner
     internal static class LevelPreviewBuilder
     {
         private const string RootName = "[Maze Level Preview]";
+
+        /// <summary>Soft drift edges of the previewed level (same shader path as in the game); null without drifts.</summary>
+        private static SnowdriftMask _snowdrifts;
 
         /// <summary>Returns the number of cells/objects that could not be shown (no visual or missing prefab).</summary>
         public static int Build(LevelData level)
@@ -99,6 +103,9 @@ namespace Maze.Editor.LevelDesigner
             foreach (var transform in root.GetComponentsInChildren<Transform>(true))
                 transform.gameObject.hideFlags = HideFlags.DontSave;
 
+            _snowdrifts = SnowdriftMask.Create(level);
+            _snowdrifts?.Bind();
+
             Selection.activeGameObject = root;
             return missing;
         }
@@ -167,6 +174,7 @@ namespace Maze.Editor.LevelDesigner
 
         public static void Clear()
         {
+            ReleaseSnowdrifts();
             for (var i = 0; i < SceneManager.sceneCount; i++)
                 Clear(SceneManager.GetSceneAt(i));
         }
@@ -181,6 +189,13 @@ namespace Maze.Editor.LevelDesigner
                     Object.DestroyImmediate(go);
         }
 
+        /// <summary>Drops the preview's drift mask (keyword off); also before a domain reload, which would orphan it.</summary>
+        public static void ReleaseSnowdrifts()
+        {
+            _snowdrifts?.Dispose();
+            _snowdrifts = null;
+        }
+
         /// <summary>
         /// Removes the preview before its scene closes (scene switch, new scene, Test Runner reload).
         /// Otherwise the DontSave preview would outlive the scene as an orphan: gone from the Hierarchy,
@@ -189,7 +204,11 @@ namespace Maze.Editor.LevelDesigner
         [InitializeOnLoad]
         private static class PreviewSceneGuard
         {
-            static PreviewSceneGuard() => EditorSceneManager.sceneClosing += (scene, removingScene) => Clear(scene);
+            static PreviewSceneGuard()
+            {
+                EditorSceneManager.sceneClosing += (scene, removingScene) => Clear(scene);
+                AssemblyReloadEvents.beforeAssemblyReload += ReleaseSnowdrifts;
+            }
         }
 
         private static bool Spawn(VisualSet set, VisualChoice choice, GridPosition cell, Transform parent, string name = null)
