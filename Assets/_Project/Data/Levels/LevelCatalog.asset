@@ -76,3 +76,30 @@ MonoBehaviour:
   - _levelId: Level_21
     _address: Levels/Level_21
     _displayName: New Level
+  - _levelId: Level_22
+    _address: Levels/Level_22
+    _displayName: New Level
+  - _levelId: Level_23
+    _address: Levels/Level_23
+    _displayName: New Level
+  - _levelId: Level_24
+    _address: Levels/Level_24
+    _displayName: New Level
+  - _levelId: Level_25
+    _address: Levels/Level_25
+    _displayName: New Level
+  - _levelId: Level_26
+    _address: Levels/Level_26
+    _displayName: New Level
+  - _levelId: Level_27
+    _address: Levels/Level_27
+    _displayName: New Level
+  - _levelId: Level_28
+    _address: Levels/Level_28
+    _displayName: New Level
+  - _levelId: Level_29
+    _address: Levels/Level_29
+    _displayName: New Level
+  - _levelId: Level_30
+    _address: Levels/Level_30
+    _displayName: New Level
