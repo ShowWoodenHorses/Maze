@@ -343,7 +343,7 @@ namespace Maze.Presentation.Map
                 else
                 {
                     AddObjectIcon(set, MapIconKind.Door, door.Id, door.Position,
-                        MapIconLayout.DoorRotation(_grid, door.Position), set.DoorColor);
+                        MapIconLayout.DoorRotation(_grid, door.Position), _doors.IsFrozen(door.Id) ? set.FrozenDoorColor : set.DoorColor);
                 }
             }
 

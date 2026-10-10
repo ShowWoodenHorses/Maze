@@ -72,6 +72,25 @@ namespace Maze.Tests.EditMode.Player
         }
 
         [Test]
+        public void Snowdrift_SlowsThePlayer_AndTheWalkAnimation()
+        {
+            var free = Spawn(new LevelLaunchOptions(startIndex: 0));
+            _input.Move = Vector2.right;
+            Run(free, 0.2f);
+            var freeDistance = free.Position.x - 1f;
+            Assert.AreEqual(1f, free.SpeedFactor, 0.01f);
+
+            _level.Geometry.SetSurface(new GridPosition(1, 1), CellSurface.Snowdrift);
+            _grid = new LevelGrid(_level.Geometry);
+            _occupancy = new OccupancyMap(_grid);
+            var slowed = Spawn(new LevelLaunchOptions(startIndex: 0));
+            Run(slowed, 0.2f);
+
+            Assert.AreEqual(freeDistance * _definition.SnowdriftSpeed, slowed.Position.x - 1f, 0.02f);
+            Assert.AreEqual(_definition.SnowdriftSpeed, slowed.SpeedFactor, 0.01f);
+        }
+
+        [Test]
         public void ForcedStart_SpawnsThere_AndOccupiesCell()
         {
             var player = Spawn(new LevelLaunchOptions(startIndex: 1));

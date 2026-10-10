@@ -100,7 +100,9 @@ namespace Maze.Editor.LevelDesigner
                     .Distinct();
 
                 // Prefabs already in some group are left where the team put them.
-                foreach (var guid in prefabGuids)
+                // The ice of frozen doors (weather) is loaded the same way as the variants.
+                var ice = theme.Weather.HasIceOverlay ? new[] { theme.Weather.IceOverlay.AssetGUID } : Array.Empty<string>();
+                foreach (var guid in prefabGuids.Concat(ice).Distinct())
                     if (settings.FindAssetEntry(guid) == null && !string.IsNullOrEmpty(AssetDatabase.GUIDToAssetPath(guid)))
                     {
                         settings.CreateOrMoveEntry(guid, visualsGroup);

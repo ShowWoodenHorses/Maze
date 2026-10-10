@@ -107,3 +107,25 @@ MonoBehaviour:
     PulseSpacing: 1.6
     PulseSpeed: 1.2
     Height: 0.05
+  _weather:
+    ZombieFrost: 0
+    PlayerFrost: 0
+    FrostColor: {r: 0.9, g: 0.95, b: 1, a: 1}
+    FrostSharpness: 2
+    FrostRim: 0.35
+    SnowMaterial: {fileID: 0}
+    SnowRate: 70
+    SnowArea: 12
+    SnowHeight: 4.5
+    SnowFallSpeed: 1.1
+    SnowWind: {x: 0.35, y: -0.15}
+    SnowFlutter: 0.25
+    SnowSize: 0.07
+    SnowColor: {r: 1, g: 1, b: 1, a: 0.85}
+    BreathMaterial: {fileID: 0}
+    BreathInterval: 2.4
+    BreathSize: 0.22
+    BreathLifetime: 1.1
+    BreathColor: {r: 0.92, g: 0.96, b: 1, a: 0.45}
+    BreathMouthOffset: {x: 0.14, y: -0.06}
+    BreathSpeed: 0.35

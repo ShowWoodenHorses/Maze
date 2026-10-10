@@ -26,6 +26,7 @@ namespace Maze.Presentation.Visual
     public sealed class PlayerViewPresenter : ILevelLoadStep, ILevelLateTickable, IDisposable
     {
         private const float TurnSpeed = 900f; // degrees per second
+        private const string PlayerHeadId = "player";
 
         private readonly PlayerSystem _player;
         private readonly PlayerVisualDefinition _visual;
@@ -38,6 +39,7 @@ namespace Maze.Presentation.Visual
         private readonly PlayerInteraction _interaction;
         private readonly BlobShadows _shadows;
         private readonly CombatVisualDefinition _combatVisual;
+        private readonly LevelData _level;
         private readonly HashSet<int> _parameters = new HashSet<int>();
         private readonly float[] _attackContacts = new float[P.AttackVariants];
         private readonly float[] _attackSweeps = new float[P.AttackVariants];
@@ -52,8 +54,9 @@ namespace Maze.Presentation.Visual
 
         public PlayerViewPresenter(PlayerSystem player, PlayerVisualDefinition visual, IAssetOwner assets,
             LevelViewRoot root, TopDownCamera camera, PlayerCombat combat, WeaponSystem weapons, PlayerHealth health,
-            PlayerInteraction interaction, BlobShadows shadows, CombatVisualDefinition combatVisual)
+            PlayerInteraction interaction, BlobShadows shadows, CombatVisualDefinition combatVisual, LevelData level)
         {
+            _level = level;
             _combatVisual = combatVisual;
             _shadows = shadows;
             _combat = combat;
@@ -70,6 +73,9 @@ namespace Maze.Presentation.Visual
         public LevelLoadStage Stage => LevelLoadStage.SpawnPlayer;
 
         public GameObject View => _view;
+
+        /// <summary>The player's head (breath); default until the view is created.</summary>
+        public CharacterHead Head { get; private set; }
 
         /// <summary>
         /// Seconds from the last melee attack until its clip hits (from the controller's AttackContact data and the
@@ -96,6 +102,9 @@ namespace Maze.Presentation.Visual
             _shadows.Attach(_view);
             _flash = HitFlash.Create(_view); // before weapons are put in hands: the body flashes, not the gun
             _animator = _view.GetComponentInChildren<Animator>();
+            if (_level != null && _level.VisualTheme != null)
+                _flash?.SetFrost(_level.VisualTheme.Weather.PlayerFrost);
+            Head = CharacterHead.Of(PlayerHeadId, null, _view, _animator);
             CacheParameters();
 
             _lastHealth = _health.Current;
@@ -128,6 +137,7 @@ namespace Maze.Presentation.Visual
             _view = null;
             _animator = null;
             _flash = null;
+            Head = default;
         }
 
         private void Sync(float deltaTime, bool snap)

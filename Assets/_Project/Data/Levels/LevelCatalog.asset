@@ -73,3 +73,6 @@ MonoBehaviour:
   - _levelId: Level_20
     _address: Levels/Level_20
     _displayName: New Level
+  - _levelId: Level_21
+    _address: Levels/Level_21
+    _displayName: New Level

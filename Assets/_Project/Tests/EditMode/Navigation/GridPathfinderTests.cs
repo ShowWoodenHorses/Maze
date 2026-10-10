@@ -26,6 +26,50 @@ namespace Maze.Tests.EditMode.Navigation
             return geometry;
         }
 
+        private readonly struct CellCost : IGridCost
+        {
+            private readonly HashSet<GridPosition> _cells;
+            private readonly int _cost;
+
+            public CellCost(int cost, params GridPosition[] cells)
+            {
+                _cost = cost;
+                _cells = new HashSet<GridPosition>(cells);
+            }
+
+            public int StepCost(GridPosition to) => _cells.Contains(to) ? _cost : 1;
+        }
+
+        [Test]
+        public void WeightedCost_GoesAroundExpensiveCell_WhenDetourIsCheaper()
+        {
+            var geometry = Parse(
+                "#######",
+                "#.....#",
+                "#.....#",
+                "#######");
+            var path = new List<GridPosition>();
+            var pathfinder = new GridPathfinder(7, 4);
+            var drift = new GridPosition(3, 1);
+
+            // Straight: 4 steps, one of them into the drift (cost 4) = 7; around: 6 steps = 6.
+            Assert.IsTrue(pathfinder.TryFindPath(new GridPosition(1, 1), new GridPosition(5, 1), Mask(geometry),
+                new CellCost(4, drift), path));
+            CollectionAssert.DoesNotContain(path, drift);
+            Assert.AreEqual(7, path.Count);
+
+            // Cost 2: straight = 5 < around = 6 — wades through.
+            Assert.IsTrue(pathfinder.TryFindPath(new GridPosition(1, 1), new GridPosition(5, 1), Mask(geometry),
+                new CellCost(2, drift), path));
+            CollectionAssert.Contains(path, drift);
+            Assert.AreEqual(5, path.Count);
+
+            // A drift across the whole corridor: no way around, the path goes through it.
+            Assert.IsTrue(pathfinder.TryFindPath(new GridPosition(1, 1), new GridPosition(5, 1), Mask(geometry),
+                new CellCost(4, drift, new GridPosition(3, 2)), path));
+            Assert.AreEqual(5, path.Count);
+        }
+
         [Test]
         public void OpenGrid_PathLengthIsManhattan()
         {

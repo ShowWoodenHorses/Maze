@@ -36,6 +36,8 @@ namespace Maze.Core.Definitions
         [SerializeField, Min(0.01f)] private float _moveSpeed = 1.5f;
         [Tooltip("Cells per second while chasing the player (run).")]
         [SerializeField, Min(0.01f)] private float _chaseSpeed = 2.5f;
+        [Tooltip("Share of the speed kept while the zombie is in a snowdrift cell.")]
+        [SerializeField, Range(0.1f, 1f)] private float _snowdriftSpeed = 0.6f;
 
         public string Id => _id;
         public ZombieDetectionType DetectionType => _detectionType;
@@ -48,6 +50,7 @@ namespace Maze.Core.Definitions
         public float AttackInterval => _attackInterval;
         public float MoveSpeed => _moveSpeed;
         public float ChaseSpeed => _chaseSpeed;
+        public float SnowdriftSpeed => _snowdriftSpeed;
 
         /// <summary>For tests and tools.</summary>
         internal void Configure(string id, ZombieDetectionType detection, float visionAngle = 45f, float visionRange = 5f,

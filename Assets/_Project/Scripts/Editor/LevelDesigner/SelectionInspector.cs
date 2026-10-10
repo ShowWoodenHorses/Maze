@@ -19,6 +19,7 @@ namespace Maze.Editor.LevelDesigner
     {
         private static readonly string[] RotationNames = { "0°", "90°", "180°", "270°" };
         private static readonly int[] RotationValues = { 0, 1, 2, 3 };
+        private const int DefaultIceHits = 3;
 
         private readonly LevelDesignerState _state;
         private readonly EditToolController _tools;
@@ -213,6 +214,17 @@ namespace Maze.Editor.LevelDesigner
             var open = EditorGUILayout.Toggle("Initially Open", door.IsInitiallyOpen);
             if (open != door.IsInitiallyOpen)
                 Apply("Toggle Door Open", () => LevelEditing.SetDoorInitiallyOpen(door, open));
+
+            var frozen = EditorGUILayout.Toggle(new GUIContent("Frozen",
+                "The ice must be broken with melee hits before the door can be opened (starts closed)."), door.IsFrozen);
+            if (frozen != door.IsFrozen)
+                Apply("Toggle Frozen Door", () => LevelEditing.SetDoorIce(door, frozen ? DefaultIceHits : 0));
+            if (door.IsFrozen)
+            {
+                var hits = EditorGUILayout.IntSlider("Ice Hits", door.IceHits, 1, 10);
+                if (hits != door.IceHits)
+                    Apply("Set Ice Hits", () => LevelEditing.SetDoorIce(door, hits));
+            }
         }
 
         private void DrawKey(KeyData key)

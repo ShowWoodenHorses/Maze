@@ -29,6 +29,7 @@ namespace Maze.Editor.LevelDesigner
         private static readonly Color WallColor = new Color(0.27f, 0.27f, 0.30f);
         private static readonly Color FloorColor = new Color(0.80f, 0.78f, 0.72f);
         private static readonly Color DoorColor = new Color(0.55f, 0.36f, 0.18f);
+        private static readonly Color SnowdriftColor = new Color(0.86f, 0.93f, 1f);
         private static readonly Color FragmentColor = new Color(0.65f, 0.35f, 0.95f);
         private static readonly Color DecorAutoColor = new Color(0.45f, 0.4f, 0.32f);
         private static readonly Color DecorManualColor = new Color(0.2f, 0.6f, 0.25f);
@@ -237,7 +238,9 @@ namespace Maze.Editor.LevelDesigner
                 if (!r.Overlaps(local))
                     continue;
 
-                EditorGUI.DrawRect(new Rect(r.x, r.y, r.width - gap, r.height - gap), CellColor(geometry.GetCell(cell)));
+                var type = geometry.GetCell(cell);
+                var color = type == CellType.Floor && geometry.GetSurface(cell) == CellSurface.Snowdrift ? SnowdriftColor : CellColor(type);
+                EditorGUI.DrawRect(new Rect(r.x, r.y, r.width - gap, r.height - gap), color);
             }
 
             foreach (var fragment in level.MapFragments)

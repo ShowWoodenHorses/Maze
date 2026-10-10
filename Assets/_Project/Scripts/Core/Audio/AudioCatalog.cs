@@ -113,6 +113,10 @@ namespace Maze.Core.Audio
         [SerializeField] private SoundCue _doorUnlock = new SoundCue(0.8f, 10f, 1, Vector2.one);
         [Tooltip("Locked and no key; also a door that cannot close (someone in the doorway).")]
         [SerializeField] private SoundCue _doorLocked = new SoundCue(0.7f, 10f, 1, new Vector2(0.97f, 1.03f), 0.3f);
+        [Tooltip("A melee hit on a frozen door's ice (empty: the bullet impact).")]
+        [SerializeField] private SoundCue _iceHit = new SoundCue(0.7f, 10f, 2, new Vector2(0.92f, 1.08f));
+        [Tooltip("The ice of a frozen door breaks (empty: the door unlock).")]
+        [SerializeField] private SoundCue _iceBreak = new SoundCue(0.85f, 12f, 1, new Vector2(0.95f, 1.05f));
 
         [Header("Zombies")]
         [Tooltip("Groans now and then while idle, patrolling or returning.")]
@@ -194,6 +198,8 @@ namespace Maze.Core.Audio
         public SoundCue DoorClose => _doorClose;
         public SoundCue DoorUnlock => _doorUnlock;
         public SoundCue DoorLocked => _doorLocked;
+        public SoundCue IceHit => NonEmpty(_iceHit) ?? _bulletImpact;
+        public SoundCue IceBreak => NonEmpty(_iceBreak) ?? _doorUnlock;
 
         public SoundCue ZombieGroan => _zombieGroan;
         public SoundCue ZombieRoar => _zombieRoar;
@@ -227,6 +233,10 @@ namespace Maze.Core.Audio
         public float ResultDelay => _resultDelay;
         public float StarInterval => _starInterval;
         public float StarPitchStep => _starPitchStep;
+
+        /// <summary>The cues themselves (the builder fills them); <see cref="IceHit"/> / <see cref="IceBreak"/> fall back.</summary>
+        internal SoundCue IceHitCue => _iceHit;
+        internal SoundCue IceBreakCue => _iceBreak;
 
         internal List<WeaponSound> MutableWeaponSounds => _weaponSounds;
         internal List<ZombieVoice> MutableZombieVoices => _zombieVoices;

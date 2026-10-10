@@ -58,6 +58,8 @@ namespace Maze.Editor.Dev
             ("Other", @"^Door Close \d+$", c => c.DoorClose),
             ("Other", @"^door_unlock$", c => c.DoorUnlock),
             ("Other", @"^door_lock$", c => c.DoorLocked),
+            ("Other", @"^ice_hit\d*$", c => c.IceHitCue),
+            ("Other", @"^ice_break\d*$", c => c.IceBreakCue),
             ("Other", @"^detect$", c => c.ChaseStinger),
             ("Other", @"^light_loop$", c => c.TorchLoop),
 

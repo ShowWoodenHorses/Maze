@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
 using Maze.Core.Definitions;
+using Maze.Core.Grid;
+using Maze.Core.Level;
+using Maze.Gameplay.Doors;
 using Maze.Gameplay.Level;
 using Maze.Gameplay.Player;
 using Maze.Gameplay.Sound;
@@ -18,7 +21,9 @@ namespace Maze.Gameplay.Combat
     /// The weapon's cooldown blocks only the next attack.
     /// <list type="bullet">
     /// <item>Melee: every living target in a sector in front of the player (range, arc) with no wall or closed
-    /// door in between takes the damage. Repeats while the button is held.</item>
+    /// door in between takes the damage. Repeats while the button is held. A frozen door next to the player in the
+    /// attack direction, within reach, takes one hit on its ice (<see cref="DoorSystem.HitIce"/>) — heard by zombies as
+    /// a door sound. Bullets do not break ice.</item>
     /// <item>Ranged: a bullet (<see cref="BulletSystem"/>). Single fires once per press, Automatic while held.
     /// An empty magazine reloads automatically (ReloadTime); reload runs only while the weapon is in hands.
     /// Reload (or SwitchRanged again, <see cref="WeaponSystem.ReloadRequested"/>) starts it earlier.</item>
@@ -48,13 +53,15 @@ namespace Maze.Gameplay.Combat
         private readonly BulletSystem _bullets;
         private readonly SoundEventBus _sounds;
         private readonly IAimSettings _aim;
+        private readonly DoorSystem _doors;
         private readonly List<ISpatialObject> _candidates = new List<ISpatialObject>();
         private readonly List<IDamageable> _hits = new List<IDamageable>();
         private float _standLeft;
 
         public PlayerCombat(IPlayerInput input, PlayerSystem player, WeaponSystem weapons, ISpatialQueryService spatial,
-            BulletSystem bullets, SoundEventBus sounds, IAimSettings aim)
+            BulletSystem bullets, SoundEventBus sounds, IAimSettings aim, DoorSystem doors)
         {
+            _doors = doors;
             _aim = aim;
             _input = input;
             _player = player;
@@ -72,6 +79,9 @@ namespace Maze.Gameplay.Combat
 
         /// <summary>Targets hit by the last melee attack.</summary>
         public IReadOnlyList<IDamageable> LastMeleeHits => _hits;
+
+        /// <summary>Frozen door whose ice the last melee attack hit; null if none.</summary>
+        public DoorData LastIceHit { get; private set; }
 
         /// <summary>The player stands this tick because of attacking (see the class remarks).</summary>
         public bool IsStanding { get; private set; }
@@ -262,6 +272,43 @@ namespace Maze.Gameplay.Combat
 
             foreach (var target in _hits)
                 target.ApplyDamage(definition.Damage, direction);
+
+            LastIceHit = null;
+            var door = FrozenDoorInFront(definition, direction);
+            if (door != null)
+            {
+                LastIceHit = door;
+                _doors.HitIce(door.Id);
+                _sounds.Emit(SoundType.Door, new Vector2(door.Position.X, door.Position.Y), definition.SoundRadius);
+            }
+        }
+
+        /// <summary>
+        /// The frozen door in a neighbouring cell the attack points at (within the melee arc), whose near face is in
+        /// melee range.
+        /// </summary>
+        private DoorData FrozenDoorInFront(WeaponDefinition definition, Vector2 direction)
+        {
+            DoorData best = null;
+            var bestDot = Mathf.Max(Mathf.Cos(definition.MeleeArc * 0.5f * Mathf.Deg2Rad), 0.1f);
+            var origin = _player.Position;
+            foreach (var side in DirectionExtensions.All)
+            {
+                var cell = _player.Cell.Neighbour(side);
+                if (!_doors.TryGetDoor(cell, out var door) || !_doors.IsFrozen(door.Id))
+                    continue;
+
+                var offset = new Vector2(cell.X, cell.Y) - origin;
+                var face = Mathf.Max(Mathf.Abs(offset.x), Mathf.Abs(offset.y)) - 0.5f;
+                var dot = Vector2.Dot(offset.normalized, direction);
+                if (face > definition.MeleeRange || dot < bestDot)
+                    continue;
+
+                best = door;
+                bestDot = dot;
+            }
+
+            return best;
         }
     }
 }

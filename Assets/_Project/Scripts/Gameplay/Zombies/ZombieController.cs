@@ -382,7 +382,8 @@ namespace Maze.Gameplay.Zombies
             var target = new Vector2(next.X, next.Y);
             var offset = target - Zombie.Position;
             var distance = offset.magnitude;
-            var step = CurrentSpeed * deltaTime;
+            var fullStep = CurrentSpeed * deltaTime;
+            var step = _navigation.IsSnowdrift(Zombie.Cell) ? fullStep * Zombie.Definition.SnowdriftSpeed : fullStep;
             var newPosition = distance <= step ? target : Zombie.Position + offset / distance * step;
 
             var newCell = PlayerMovement.CellOf(newPosition);
@@ -395,7 +396,7 @@ namespace Maze.Gameplay.Zombies
             }
 
             if (distance > 1e-5f) Zombie.Facing = offset / distance;
-            Zombie.SpeedFactor = deltaTime > 0f ? Mathf.Clamp01((newPosition - Zombie.Position).magnitude / step) : 0f;
+            Zombie.SpeedFactor = deltaTime > 0f ? Mathf.Clamp01((newPosition - Zombie.Position).magnitude / fullStep) : 0f;
             Zombie.Position = newPosition;
             if (distance <= step && _pathIndex < _path.Count - 1)
                 _pathIndex++;

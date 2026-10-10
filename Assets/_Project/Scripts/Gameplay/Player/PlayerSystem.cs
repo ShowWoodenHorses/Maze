@@ -134,7 +134,9 @@ namespace Maze.Gameplay.Player
             Facing = move.normalized;
             _moved = true;
             var maxDistance = _definition.MoveSpeed * deltaTime;
-            var target = PlayerMovement.Move(Position, move * maxDistance, _definition.BodyHalfSize, _definition.CornerAssist, this);
+            var slow = _passability.IsSnowdrift(Cell) ? _definition.SnowdriftSpeed : 1f;
+            var target = PlayerMovement.Move(Position, move * (maxDistance * slow), _definition.BodyHalfSize, _definition.CornerAssist, this);
+            // Of the full speed: in a snowdrift the walk animation slows down too.
             SpeedFactor = Mathf.Clamp01((target - Position).magnitude / maxDistance);
             Position = target;
 

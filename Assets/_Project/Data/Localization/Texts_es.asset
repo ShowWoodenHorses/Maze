@@ -36,6 +36,7 @@ MonoBehaviour:
   - hud.locked.yellow
   - hud.door_unlocked
   - hud.door_blocked
+  - hud.door_frozen
   - weapon.assault_rifle_01
   - weapon.assault_rifle_03
   - weapon.bat
@@ -134,6 +135,7 @@ MonoBehaviour:
   - 'Cerrada: necesitas la llave amarilla'
   - Puerta desbloqueada
   - Algo bloquea la puerta
+  - 'Congelada: rompe el hielo con un arma cuerpo a cuerpo'
   - Fusil de asalto
   - Fusil de combate
   - Bate

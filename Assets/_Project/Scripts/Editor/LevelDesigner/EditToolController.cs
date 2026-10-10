@@ -25,6 +25,7 @@ namespace Maze.Editor.LevelDesigner
         FragmentRegion,
         Patrol,
         Decor,
+        Snowdrift,
         Erase,
     }
 
@@ -91,6 +92,8 @@ namespace Maze.Editor.LevelDesigner
                     Apply("Remove Patrol Point", () => LevelEditing.RemoveLastPatrolPoint(Level, zombie));
                 else if (ActiveTool == EditTool.Decor)
                     PaintDecor(cell, DecorBrushMode.None);
+                else if (ActiveTool == EditTool.Snowdrift)
+                    PaintSurface(cell, CellSurface.None);
                 return;
             }
 
@@ -116,6 +119,9 @@ namespace Maze.Editor.LevelDesigner
                 case EditTool.Decor:
                     PaintDecor(cell, DecorMode);
                     break;
+                case EditTool.Snowdrift:
+                    PaintSurface(cell, CellSurface.Snowdrift);
+                    break;
                 case EditTool.Erase:
                     Erase(cell);
                     break;
@@ -130,6 +136,12 @@ namespace Maze.Editor.LevelDesigner
             if (ActiveTool == EditTool.Decor && (e.button == 0 || e.button == 1))
             {
                 PaintDecor(cell, e.button == 1 ? DecorBrushMode.None : DecorMode);
+                return;
+            }
+
+            if (ActiveTool == EditTool.Snowdrift && (e.button == 0 || e.button == 1))
+            {
+                PaintSurface(cell, e.button == 1 ? CellSurface.None : CellSurface.Snowdrift);
                 return;
             }
 
@@ -248,6 +260,17 @@ namespace Maze.Editor.LevelDesigner
                         Apply("Paint Decor", () => LevelEditing.SetCellOverride(Level, cell, Maze.Core.Visual.CellLayer.Decor, choice));
                     break;
             }
+        }
+
+        /// <summary>Ground only on floor cells; other cells are skipped silently while dragging.</summary>
+        private void PaintSurface(GridPosition cell, CellSurface surface)
+        {
+            var geometry = Level.Geometry;
+            if (geometry.GetCell(cell) != CellType.Floor || geometry.GetSurface(cell) == surface)
+                return;
+
+            Apply(surface == CellSurface.None ? "Remove Snowdrift" : "Paint Snowdrift",
+                () => LevelEditing.SetSurface(Level, cell, surface));
         }
 
         private void Place(GridPosition cell)

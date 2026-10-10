@@ -201,6 +201,9 @@ namespace Maze.Presentation.UI
                 case InteractionResult.DoorBlocked:
                     _ui.Hud.ShowMessage(_texts.Get(TextKeys.HudDoorBlocked));
                     break;
+                case InteractionResult.DoorFrozen:
+                    _ui.Hud.ShowMessage(_texts.Get(TextKeys.HudDoorFrozen));
+                    break;
                 case InteractionResult.WeaponTaken:
                     if (_weapons.Active != null)
                         _ui.Hud.ShowMessage(_texts.Format(TextKeys.HudWeaponTaken, WeaponName(_weapons.Active.Definition)));

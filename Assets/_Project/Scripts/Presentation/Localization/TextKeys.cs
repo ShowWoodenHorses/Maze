@@ -29,6 +29,7 @@ namespace Maze.Presentation.Localization
         public const string HudLocked = "hud.locked";
         public const string HudDoorUnlocked = "hud.door_unlocked";
         public const string HudDoorBlocked = "hud.door_blocked";
+        public const string HudDoorFrozen = "hud.door_frozen";
 
         /// <summary>"hud.locked.red": locked door whose key has that colour tag (falls back to <see cref="HudLocked"/>).</summary>
         public const string HudLockedPrefix = "hud.locked.";

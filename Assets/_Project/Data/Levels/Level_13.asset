@@ -301,7 +301,16 @@ MonoBehaviour:
     _position:
       _x: 9
       _y: 8
-  _mapFragments: []
+  _mapFragments:
+  - _id: fragment_1
+    _position:
+      _x: 3
+      _y: 15
+    _region:
+      _x: 0
+      _y: 0
+      _width: 25
+      _height: 25
   _lights:
   - _id: light_1
     _cell:
@@ -4363,5 +4372,9 @@ MonoBehaviour:
     - _entityId: medkit_2
       _choice:
         _variantId: medkit_01
+        _rotation: 0
+    - _entityId: fragment_1
+      _choice:
+        _variantId: fragment_01
         _rotation: 0
     _objectOverrides: []

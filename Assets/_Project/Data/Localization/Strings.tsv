@@ -28,6 +28,7 @@ hud.locked.green	Locked: needs the green key	Заперто: нужен зелё
 hud.locked.yellow	Locked: needs the yellow key	Заперто: нужен жёлтый ключ	Kilitli: sarı anahtar gerekli	Cerrada: necesitas la llave amarilla	Verschlossen: gelber Schlüssel nötig
 hud.door_unlocked	Door unlocked	Дверь отперта	Kapının kilidi açıldı	Puerta desbloqueada	Tür aufgeschlossen
 hud.door_blocked	Something is in the doorway	Что-то мешает в проёме	Kapı aralığında bir şey var	Algo bloquea la puerta	Etwas steht in der Tür
+hud.door_frozen	Frozen: break the ice with a melee weapon	Дверь замёрзла: разбейте лёд оружием ближнего боя	Donmuş: buzu yakın dövüş silahıyla kır	Congelada: rompe el hielo con un arma cuerpo a cuerpo	Vereist: Brich das Eis mit einer Nahkampfwaffe
 # Weapons (by definition id)
 weapon.assault_rifle_01	Assault rifle	Штурмовая винтовка	Saldırı tüfeği	Fusil de asalto	Sturmgewehr
 weapon.assault_rifle_03	Battle rifle	Боевая винтовка	Muharebe tüfeği	Fusil de combate	Kampfgewehr

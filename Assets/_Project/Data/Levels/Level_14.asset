@@ -218,7 +218,19 @@ MonoBehaviour:
       _y: 11
     _definition: {fileID: 11400000, guid: 3493d85149291cd41ac4d077cc3ec857, type: 2}
   _keys: []
-  _medkits: []
+  _medkits:
+  - _id: medkit_1
+    _position:
+      _x: 11
+      _y: 19
+  - _id: medkit_2
+    _position:
+      _x: 23
+      _y: 11
+  - _id: medkit_3
+    _position:
+      _x: 11
+      _y: 15
   _mapFragments:
   - _id: fragment_1
     _position:
@@ -4932,5 +4944,17 @@ MonoBehaviour:
     - _entityId: zombie_9
       _choice:
         _variantId: forest_zombie_walker
+        _rotation: 0
+    - _entityId: medkit_1
+      _choice:
+        _variantId: medkit_01
+        _rotation: 0
+    - _entityId: medkit_2
+      _choice:
+        _variantId: medkit_01
+        _rotation: 0
+    - _entityId: medkit_3
+      _choice:
+        _variantId: medkit_01
         _rotation: 0
     _objectOverrides: []

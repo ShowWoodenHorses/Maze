@@ -36,6 +36,7 @@ MonoBehaviour:
   - hud.locked.yellow
   - hud.door_unlocked
   - hud.door_blocked
+  - hud.door_frozen
   - weapon.assault_rifle_01
   - weapon.assault_rifle_03
   - weapon.bat
@@ -134,6 +135,7 @@ MonoBehaviour:
   - 'Locked: needs the yellow key'
   - Door unlocked
   - Something is in the doorway
+  - 'Frozen: break the ice with a melee weapon'
   - Assault rifle
   - Battle rifle
   - Bat

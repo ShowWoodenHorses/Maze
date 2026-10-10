@@ -35,6 +35,8 @@ namespace Maze.Core.Visual
 
         [SerializeField] private ThemeRoute _route = new ThemeRoute();
 
+        [SerializeField] private ThemeWeather _weather = new ThemeWeather();
+
         public string Id => _id;
 
         public Material FogMaterial { get => _fogMaterial; internal set => _fogMaterial = value; }
@@ -46,6 +48,8 @@ namespace Maze.Core.Visual
         public ThemeAwareness Awareness => _awareness ??= new ThemeAwareness();
 
         public ThemeRoute Route => _route ??= new ThemeRoute();
+
+        public ThemeWeather Weather => _weather ??= new ThemeWeather();
 
         public VisualSet GetSet(VisualKind kind)
         {

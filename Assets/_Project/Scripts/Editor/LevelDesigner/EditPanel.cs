@@ -94,7 +94,8 @@ namespace Maze.Editor.LevelDesigner
                 case EditTool.FragmentRegion: return "Drag a rectangle to set the region of the selected map fragment. Regions must not overlap.";
                 case EditTool.Patrol: return "Select a zombie, then click cells to add patrol points (loop A→B→…→A). Right-click removes the last point.";
                 case EditTool.Decor: return "Click or drag on floor cells to paint decor (Paint: a variant, None = no decor, Automatic = back to auto placement). Right-click or right-drag removes decor. Decor is only visual.";
-                case EditTool.Erase: return "Click or drag to clear cells: objects, lights and decor are removed, walls and doors become floor.";
+                case EditTool.Snowdrift: return "Click or drag on floor cells to make snowdrifts: the player and zombies move slower there, zombie routes go around them when the detour is short. Right-click or right-drag removes them. The cell gets a drift floor of the theme (if it has one) and no auto decor.";
+                case EditTool.Erase: return "Click or drag to clear cells: objects, lights, snowdrifts and decor are removed, walls and doors become floor.";
                 default: return "Click a floor cell to place.";
             }
         }

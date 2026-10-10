@@ -34,6 +34,93 @@ namespace Maze.Tests.EditMode.Authoring
                 .ToArray();
 
         [Test]
+        public void Snowdrift_OnlyOnFloor_RemovedWhenCellStopsBeingFloor_AndByErase()
+        {
+            Assert.IsFalse(LevelEditing.SetSurface(Level, Pillar, CellSurface.Snowdrift), "Not on a wall.");
+            Assert.AreEqual(CellSurface.None, Level.Geometry.GetSurface(Pillar));
+
+            Assert.IsTrue(LevelEditing.SetSurface(Level, Room, CellSurface.Snowdrift));
+            Assert.IsFalse(LevelEditing.SetSurface(Level, Room, CellSurface.Snowdrift), "No-op returns false.");
+            Assert.AreEqual(CellSurface.Snowdrift, Level.Geometry.GetSurface(Room));
+            Assert.IsTrue(new LevelGrid(Level.Geometry).IsSnowdrift(Room));
+
+            LevelEditing.SetCellType(Level, Room, CellType.Wall);
+            Assert.AreEqual(CellSurface.None, Level.Geometry.GetSurface(Room), "A wall has no surface.");
+
+            LevelEditing.SetCellType(Level, Room, CellType.Floor);
+            LevelEditing.SetSurface(Level, Room, CellSurface.Snowdrift);
+            Assert.IsTrue(LevelEditing.ClearCell(Level, Room));
+            Assert.AreEqual(CellSurface.None, Level.Geometry.GetSurface(Room), "Erase removes the drift.");
+        }
+
+        [Test]
+        public void Snowdrift_GetsDriftFloorVariant_AndNoAutoDecor_BackToNormalWhenRemoved()
+        {
+            _fixture.Floor.MutableVariants.Add(new VisualVariant("floor_drift", 1, VisualCategory.Snowdrift));
+            LevelAuthoring.RegenerateVisuals(Level, clearOverrides: false);
+            var before = VisualResolver.ResolveCell(Level, Room, CellLayer.Floor);
+            Assert.AreNotEqual("floor_drift", before.VariantId, "Drift floors are only for drift cells.");
+            Assert.IsTrue(Enumerable.Range(0, Level.Geometry.CellCount)
+                .All(i => VisualResolver.ResolveCell(Level, Level.Geometry.ToPosition(i), CellLayer.Floor).VariantId != "floor_drift"));
+
+            Level.Generation.DecorDensity = 1f;
+            LevelEditing.SetSurface(Level, Room, CellSurface.Snowdrift);
+            Assert.AreEqual("floor_drift", VisualResolver.ResolveCell(Level, Room, CellLayer.Floor).VariantId);
+            Assert.IsTrue(VisualAssigner.ChooseDecor(Level, Room).IsEmpty, "No auto decor on a drift.");
+
+            LevelEditing.SetSurface(Level, Room, CellSurface.None);
+            Assert.AreEqual(before, VisualResolver.ResolveCell(Level, Room, CellLayer.Floor), "Back to the same floor.");
+        }
+
+        [Test]
+        public void Snowdrift_ThemeWithoutDriftFloors_KeepsOrdinaryFloor()
+        {
+            var before = VisualResolver.ResolveCell(Level, Room, CellLayer.Floor);
+            LevelEditing.SetSurface(Level, Room, CellSurface.Snowdrift);
+            Assert.AreEqual(before, VisualResolver.ResolveCell(Level, Room, CellLayer.Floor));
+        }
+
+        [Test]
+        public void Geometry_WithoutSurfaces_IsConsistent_AndHasNoDrifts()
+        {
+            var geometry = new LevelGeometry(5, 5, CellType.Floor);
+            Assert.IsTrue(geometry.SurfacesConsistent);
+            Assert.IsFalse(geometry.HasSurfaces);
+            Assert.AreEqual(CellSurface.None, geometry.GetSurface(new GridPosition(2, 2)));
+            Assert.AreEqual(CellSurface.None, new LevelGrid(geometry).GetSurface(new GridPosition(2, 2)));
+        }
+
+        [Test]
+        public void Validator_WarnsAboutSurfaceOnWall()
+        {
+            Level.Geometry.SetSurface(Pillar, CellSurface.Snowdrift); // bypassing LevelEditing
+            var report = LevelValidator.Validate(Level);
+            Assert.IsTrue(report.Issues.Any(i => i.Code == ValidationCodes.SurfaceNotOnFloor && i.Position == Pillar));
+            Assert.IsFalse(new LevelGrid(Level.Geometry).IsSnowdrift(Pillar), "Ignored in the game.");
+        }
+
+        [Test]
+        public void FrozenDoor_StartsClosed_OpenThaws_AndValidatorRejectsBoth()
+        {
+            LevelEditing.SetCellType(Level, Pillar, CellType.Door);
+            var door = Level.Doors.Single();
+            LevelEditing.SetDoorInitiallyOpen(door, true);
+
+            LevelEditing.SetDoorIce(door, 3);
+            Assert.IsTrue(door.IsFrozen);
+            Assert.AreEqual(3, door.IceHits);
+            Assert.IsFalse(door.IsInitiallyOpen, "A frozen door starts closed.");
+
+            LevelEditing.SetDoorInitiallyOpen(door, true);
+            Assert.IsFalse(door.IsFrozen, "Opening it initially thaws it.");
+
+            door.IceHits = 2; // both, bypassing LevelEditing
+            Assert.IsTrue(LevelValidator.Validate(Level).Issues.Any(i => i.Code == ValidationCodes.FrozenDoorInitiallyOpen));
+            Assert.IsTrue(LevelValidator.Validate(Level).Issues.Any(i => i.Code == ValidationCodes.FrozenDoorWithoutIceVisual),
+                "The fixture theme has no ice overlay.");
+        }
+
+        [Test]
         public void PaintDoor_CreatesDoorData_PaintFloor_RemovesIt()
         {
             Assert.IsTrue(LevelEditing.SetCellType(Level, Pillar, CellType.Door));

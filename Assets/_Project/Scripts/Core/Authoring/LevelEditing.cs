@@ -41,7 +41,10 @@ namespace Maze.Core.Authoring
             if (type != CellType.Wall)
                 level.VisualData.ClearCellOverride(position, CellLayer.Wall);
             if (type != CellType.Floor)
+            {
                 level.VisualData.ClearCellOverride(position, CellLayer.Decor);
+                geometry.SetSurface(position, CellSurface.None); // only floor has a surface
+            }
 
             VisualAssigner.ReassignAround(level, position);
 
@@ -52,6 +55,25 @@ namespace Maze.Core.Authoring
                 VisualAssigner.AssignObject(level, door);
             }
 
+            return true;
+        }
+
+        /// <summary>
+        /// Ground of a Floor cell (e.g. a snowdrift). Its floor visual and auto decor are chosen again (a drift has its
+        /// own floor variants and no auto decor). False when not a Floor cell or nothing changed.
+        /// </summary>
+        public static bool SetSurface(LevelData level, GridPosition position, CellSurface surface)
+        {
+            var geometry = level.Geometry;
+            if (!geometry.IsInside(position) || geometry.GetCell(position) != CellType.Floor ||
+                geometry.GetSurface(position) == surface)
+                return false;
+
+            geometry.SetSurface(position, surface);
+            if (level.VisualData.HasCellAssignments(geometry.CellCount))
+                level.VisualData.SetCellAssignment(CellLayer.Floor, geometry.ToIndex(position),
+                    VisualAssigner.ChooseCell(level, position, CellLayer.Floor));
+            VisualAssigner.AssignDecor(level, position);
             return true;
         }
 
@@ -136,8 +158,8 @@ namespace Maze.Core.Authoring
         }
 
         /// <summary>
-        /// Erase brush: the cell becomes empty floor — its objects (a door opens the passage), light sources and
-        /// decor ("no decor here", so auto placement leaves it empty) are removed, a wall becomes floor.
+        /// Erase brush: the cell becomes empty floor — its objects (a door opens the passage), light sources, surface
+        /// (snowdrift) and decor ("no decor here", so auto placement leaves it empty) are removed, a wall becomes floor.
         /// Patrol points and fragment regions passing through the cell stay. False when there was nothing to erase.
         /// </summary>
         public static bool ClearCell(LevelData level, GridPosition position)
@@ -157,6 +179,8 @@ namespace Maze.Core.Authoring
 
             if (level.Geometry.GetCell(position) == CellType.Wall)
                 changed |= SetCellType(level, position, CellType.Floor);
+
+            changed |= SetSurface(level, position, CellSurface.None);
 
             if (!VisualResolver.ResolveDecor(level, position).IsEmpty)
             {
@@ -186,6 +210,7 @@ namespace Maze.Core.Authoring
             {
                 geometry.SetCell(from, CellType.Floor);
                 geometry.SetCell(to, CellType.Door);
+                geometry.SetSurface(to, CellSurface.None);
                 level.VisualData.ClearCellOverride(to, CellLayer.Wall);
                 level.VisualData.ClearCellOverride(to, CellLayer.Decor);
                 VisualAssigner.ReassignAround(level, from);
@@ -261,7 +286,19 @@ namespace Maze.Core.Authoring
                 VisualAssigner.AssignObject(level, previousKey);
         }
 
-        public static void SetDoorInitiallyOpen(DoorData door, bool open) => door.IsInitiallyOpen = open;
+        /// <summary>A frozen door starts closed: opening it initially thaws it.</summary>
+        public static void SetDoorInitiallyOpen(DoorData door, bool open)
+        {
+            door.IsInitiallyOpen = open;
+            if (open) door.IceHits = 0;
+        }
+
+        /// <summary>Frozen door: <paramref name="hits"/> melee hits break its ice (0 = not frozen; then it starts closed).</summary>
+        public static void SetDoorIce(DoorData door, int hits)
+        {
+            door.IceHits = hits;
+            if (door.IsFrozen) door.IsInitiallyOpen = false;
+        }
 
         // ------------------------------------------------------------ Definitions
 

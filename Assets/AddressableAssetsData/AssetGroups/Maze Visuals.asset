@@ -25,6 +25,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 086988b3054a1da499ddf4e0b981f3b6
+    m_Address: Assets/_Project/Art/Biomes/Snow/Prefabs/floor_snowdrift_02.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 0c1032f40f199f2418c5d670d7118424
     m_Address: Assets/_Project/Art/Decor/SM_DeadBody_Male_08.prefab
     m_ReadOnly: 0
@@ -175,8 +180,23 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 47a336e3955104e4e9d8c531c88f6af6
+    m_Address: Assets/_Project/Art/Decor/Snow_Grass_02.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4a7f6226c286e934c916f1179f6f95ac
+    m_Address: Assets/_Project/Art/Biomes/Snow/Prefabs/floor_snowdrift_03.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 4ba4be40fed048a4388042ed91c4fe88
     m_Address: Assets/_Project/Art/Placeholders/zombie_01.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4c22e4a590b520e49a60c7f51137de85
+    m_Address: Assets/_Project/Art/Decor/Snow_Grass_01.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -280,6 +300,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 96049d571ab2544459b510a2b1dadca7
+    m_Address: Assets/_Project/Art/Decor/Snow_GrassPatch_02.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 96143ae90acecb54b86a5a49bf743f5e
     m_Address: Assets/_Project/Art/Biomes/Forest/Prefabs/floor_forest_soil.prefab
     m_ReadOnly: 0
@@ -302,6 +327,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: a47e8dbbaf3bda04d9258a1b3c1e3776
     m_Address: Assets/_Project/Art/Lighting/SM_Prop_Torch_04.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a4e46255948171a4cbbb9a769dd427af
+    m_Address: Assets/_Project/Art/Decor/Snow_GrassPatch_03.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -405,6 +435,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d0c2a8b3ac5fc494ca877c3c268c7c14
+    m_Address: Assets/_Project/Art/Decor/Snow_GrassPatch_01.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: d247dbba00b4456498edf1696de8ac8b
     m_Address: Assets/_Project/Art/Decor/SM_Prop_BurnPile_Books_02.prefab
     m_ReadOnly: 0
@@ -430,8 +465,18 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e48c75c62bfebf847a40f27019843c41
+    m_Address: Assets/_Project/Art/Decor/Snow_GrassPatch_04.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: e59132867b851604591d941b9096e133
     m_Address: Assets/_Project/Art/Items/SM_Item_Book_Open_01.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e68e02650b92b3c4fa1f1c10a7b6ce07
+    m_Address: Assets/_Project/Art/Biomes/Snow/Prefabs/floor_snowdrift_01.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -487,6 +532,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: f93f53310920b544b98e5d432a6e4778
     m_Address: Assets/_Project/Art/Decor/SM_Prop_Table_01.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fd4d82f6367b9f94192f41787f70f2b6
+    m_Address: Assets/_Project/Art/Effects/IceOverlay.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

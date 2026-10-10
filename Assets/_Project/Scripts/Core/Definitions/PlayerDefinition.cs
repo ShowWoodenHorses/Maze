@@ -14,6 +14,9 @@ namespace Maze.Core.Definitions
         [Tooltip("Cells (metres) per second at full stick deflection.")]
         [SerializeField, Min(0.1f)] private float _moveSpeed = 3.5f;
 
+        [Tooltip("Share of the speed kept while the player's centre is in a snowdrift cell.")]
+        [SerializeField, Range(0.1f, 1f)] private float _snowdriftSpeed = 0.6f;
+
         [Tooltip("Half size of the player's square footprint used for collisions with walls and closed doors. " +
                  "Must be below 0.5 so the player fits a one-cell corridor.")]
         [SerializeField, Range(0.05f, 0.45f)] private float _bodyHalfSize = 0.3f;
@@ -31,6 +34,7 @@ namespace Maze.Core.Definitions
         [SerializeField, Min(0f)] private float _interactionSoundRadius = 3f;
 
         public float MoveSpeed => _moveSpeed;
+        public float SnowdriftSpeed => _snowdriftSpeed;
         public float BodyHalfSize => _bodyHalfSize;
         public float CornerAssist => _cornerAssist;
         public int MaxHealth => _maxHealth;

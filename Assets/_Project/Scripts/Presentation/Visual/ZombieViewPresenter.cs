@@ -49,6 +49,7 @@ namespace Maze.Presentation.Visual
         private readonly PlayerCombat _combat;
         private readonly PlayerViewPresenter _playerView;
         private readonly List<Reaction> _reactions = new List<Reaction>();
+        private readonly List<CharacterHead> _heads = new List<CharacterHead>();
         private bool _subscribed;
 
         public ZombieViewPresenter(LevelData level, ZombieSystem zombies, LevelVisualSystem visuals, EntityViewRegistry views,
@@ -79,6 +80,9 @@ namespace Maze.Presentation.Visual
         /// and damage numbers show the hit when it shows, not when gameplay dealt it.
         /// </summary>
         public event Action<ZombieRuntime, float, float> DamageShown;
+
+        /// <summary>Heads of the living zombies' views (breath); a killed zombie leaves the list when its death shows.</summary>
+        public IReadOnlyList<CharacterHead> Heads => _heads;
 
         public UniTask ExecuteAsync(CancellationToken cancellation)
         {
@@ -153,6 +157,7 @@ namespace Maze.Presentation.Visual
             foreach (var zombie in _bound.Keys)
                 zombie.Damaged -= OnDamaged;
             _bound.Clear();
+            _heads.Clear();
             _reactions.Clear();
             _corpses.Clear(); // their views are destroyed with the registry
         }
@@ -186,6 +191,9 @@ namespace Maze.Presentation.Visual
             bound.CacheParameters();
             _bound[zombie] = bound;
             zombie.Damaged += OnDamaged;
+            if (_level.VisualTheme != null)
+                bound.Flash?.SetFrost(_level.VisualTheme.Weather.ZombieFrost);
+            _heads.Add(CharacterHead.Of(zombie.Id, view, bound.Animator));
 
             if (bound.HasParameters)
             {
@@ -303,6 +311,13 @@ namespace Maze.Presentation.Visual
                 return;
 
             _bound.Remove(zombie);
+            for (var i = 0; i < _heads.Count; i++)
+                if (_heads[i].View == bound.View)
+                {
+                    _heads.RemoveAt(i);
+                    break;
+                }
+
             Flash(bound.Flash);
             if (!bound.Has(Z.DeadHash))
             {

@@ -27,5 +27,8 @@ namespace Maze.Gameplay.Grid
                 default: return false;
             }
         }
+
+        /// <summary>Deep snow in the cell (walkers there move slower).</summary>
+        public bool IsSnowdrift(GridPosition cell) => _grid.IsSnowdrift(cell);
     }
 }

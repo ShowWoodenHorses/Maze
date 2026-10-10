@@ -30,6 +30,9 @@ namespace Maze.Core.Level
         [SerializeField] private string _keyId;
         [SerializeField] private bool _isInitiallyOpen;
 
+        [Tooltip("Frozen door: melee hits needed to break the ice before it can be opened; 0 = not frozen.")]
+        [SerializeField] private int _iceHits;
+
         public DoorData(string id, GridPosition position, string keyId = null, bool isInitiallyOpen = false)
             : base(id, position)
         {
@@ -41,6 +44,10 @@ namespace Maze.Core.Level
         public string KeyId { get => _keyId; internal set => _keyId = value; }
         public bool RequiresKey => !string.IsNullOrEmpty(_keyId);
         public bool IsInitiallyOpen { get => _isInitiallyOpen; internal set => _isInitiallyOpen = value; }
+
+        /// <summary>Melee hits that break the door's ice; 0 = not frozen. A frozen door starts closed.</summary>
+        public int IceHits { get => _iceHits; internal set => _iceHits = Math.Max(0, value); }
+        public bool IsFrozen => _iceHits > 0;
     }
 
     [Serializable]

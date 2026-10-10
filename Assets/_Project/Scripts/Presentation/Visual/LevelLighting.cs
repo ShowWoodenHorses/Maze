@@ -20,6 +20,8 @@ namespace Maze.Presentation.Visual
         private static readonly int LanternPositionId = Shader.PropertyToID("_MazeLanternPosition");
         private static readonly int LanternColorId = Shader.PropertyToID("_MazeLanternColor");
         private static readonly int LightCeilingId = Shader.PropertyToID("_MazeLightCeiling");
+        private static readonly int FrostColorId = Shader.PropertyToID("_MazeFrostColor");
+        private static readonly int FrostParamsId = Shader.PropertyToID("_MazeFrostParams");
 
         private readonly LevelData _level;
         private readonly LevelViewRoot _root;
@@ -56,6 +58,12 @@ namespace Maze.Presentation.Visual
             Shader.SetGlobalVector(LightCeilingId, new Vector4(_lighting.LightFadeStart,
                 1f / Mathf.Max(_lighting.LightFadeLength, 0.01f), Mathf.Clamp01(_lighting.LightTopShare), 0f));
 
+            // Frost of the characters (Maze/Lit): the amount is per model (HitFlash), colour and shape are global.
+            var weather = _level.VisualTheme != null ? _level.VisualTheme.Weather : new ThemeWeather();
+            var frost = QualitySettings.activeColorSpace == ColorSpace.Linear ? weather.FrostColor.linear : weather.FrostColor;
+            Shader.SetGlobalVector(FrostColorId, new Vector4(frost.r, frost.g, frost.b, 1f));
+            Shader.SetGlobalVector(FrostParamsId, new Vector4(weather.FrostSharpness, weather.FrostRim, 0f, 0f));
+
             ClearLantern();
             return UniTask.CompletedTask;
         }
@@ -78,6 +86,8 @@ namespace Maze.Presentation.Visual
         {
             ClearLantern();
             Shader.SetGlobalVector(LightCeilingId, Vector4.zero);
+            Shader.SetGlobalVector(FrostColorId, Vector4.zero);
+            Shader.SetGlobalVector(FrostParamsId, Vector4.zero);
         }
 
         private static void ClearLantern()

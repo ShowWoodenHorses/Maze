@@ -52,6 +52,7 @@ namespace Maze.Presentation.Audio
         private readonly PickupSystem _pickups;
         private readonly ZombieSystem _zombies;
         private readonly ZombieViewPresenter _zombieViews;
+        private readonly FrozenDoorsView _frozenDoors;
         private readonly SoundEventBus _sounds;
         private readonly DeterministicRandom _random = new DeterministicRandom(Environment.TickCount);
         private readonly List<ZombieSound> _zombieSounds = new List<ZombieSound>();
@@ -70,8 +71,9 @@ namespace Maze.Presentation.Audio
 
         public LevelAudioPresenter(AudioService audio, LevelData level, PlayerSystem player, PlayerHealth health, PlayerCombat combat,
             PlayerInteraction interaction, WeaponSystem weapons, BulletSystem bullets, PickupSystem pickups, ZombieSystem zombies,
-            ZombieViewPresenter zombieViews, SoundEventBus sounds)
+            ZombieViewPresenter zombieViews, SoundEventBus sounds, FrozenDoorsView frozenDoors)
         {
+            _frozenDoors = frozenDoors;
             _audio = audio;
             _level = level;
             _player = player;
@@ -117,6 +119,8 @@ namespace Maze.Presentation.Audio
                 _zombies.Attacked += OnZombieAttacked;
                 _zombieViews.HitShown += OnZombieHitShown;
                 _zombieViews.DeathShown += OnZombieDeathShown;
+                _frozenDoors.IceHitShown += OnIceHitShown;
+                _frozenDoors.IceBrokenShown += OnIceBrokenShown;
             }
 
             return UniTask.CompletedTask;
@@ -150,6 +154,8 @@ namespace Maze.Presentation.Audio
                 _zombies.Attacked -= OnZombieAttacked;
                 _zombieViews.HitShown -= OnZombieHitShown;
                 _zombieViews.DeathShown -= OnZombieDeathShown;
+                _frozenDoors.IceHitShown -= OnIceHitShown;
+                _frozenDoors.IceBrokenShown -= OnIceBrokenShown;
             }
 
             foreach (var slot in _torchSlots)
@@ -204,10 +210,15 @@ namespace Maze.Presentation.Audio
                 InteractionResult.DoorUnlocked => Catalog.DoorUnlock,
                 InteractionResult.DoorLocked => Catalog.DoorLocked,
                 InteractionResult.DoorBlocked => Catalog.DoorLocked,
+                InteractionResult.DoorFrozen => Catalog.DoorLocked,
                 _ => null,
             };
             PlayAt(cue, new Vector2(door.Position.X, door.Position.Y));
         }
+
+        private void OnIceHitShown(DoorData door) => PlayAt(Catalog.IceHit, new Vector2(door.Position.X, door.Position.Y));
+
+        private void OnIceBrokenShown(DoorData door) => PlayAt(Catalog.IceBreak, new Vector2(door.Position.X, door.Position.Y));
 
         private void OnBulletEnded(Bullet bullet, Vector2 point, BulletEnd end)
         {

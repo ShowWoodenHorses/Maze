@@ -21,6 +21,8 @@ namespace Maze.Gameplay.Player
         DoorLocked = 4,
         /// <summary>Cannot close: the player or a zombie is in the doorway.</summary>
         DoorBlocked = 5,
+        /// <summary>Frozen: the ice must be broken with melee hits first.</summary>
+        DoorFrozen = 6,
     }
 
     /// <summary>What Interact would act on now (for the Use button).</summary>
@@ -128,6 +130,9 @@ namespace Maze.Gameplay.Player
 
         private InteractionResult UseDoor(DoorData door)
         {
+            if (_doors.IsFrozen(door.Id))
+                return InteractionResult.DoorFrozen;
+
             if (_doors.IsLocked(door.Id))
             {
                 if (!_inventory.UseKey(door.KeyId))

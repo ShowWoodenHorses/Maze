@@ -46,6 +46,9 @@ namespace Maze.Presentation.Map
         public Color DoorColor = new Color(0.78f, 0.52f, 0.28f);
         [Tooltip("Locked door whose pair has no colour.")]
         public Color LockedDoorColor = new Color(0.85f, 0.85f, 0.85f);
+
+        [Tooltip("Door whose ice is not broken yet (a frozen door without a key).")]
+        public Color FrozenDoorColor = new Color(0.62f, 0.86f, 1f);
         public Color ExitColor = new Color(0.35f, 0.9f, 0.45f);
         public Color MapFragmentColor = new Color(1f, 0.88f, 0.55f);
         public Color PlayerColor = new Color(1f, 0.45f, 0.2f);

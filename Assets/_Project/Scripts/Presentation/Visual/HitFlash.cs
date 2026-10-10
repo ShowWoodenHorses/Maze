@@ -7,10 +7,13 @@ namespace Maze.Presentation.Visual
     /// Short flash of a character model when hit (display only, instead of a hit clip): <c>_HitFlash</c> of the
     /// <c>Maze/Lit</c> materials is set through a <see cref="MaterialPropertyBlock"/> and fades out. Only renderers
     /// whose materials have the property take part (not blob shadows, effects). Renderers are found once, on creation.
+    /// The same property block carries the model's frost (<c>_Frost</c>, theme weather): a second block would be
+    /// overwritten by the flash.
     /// </summary>
     public sealed class HitFlash
     {
         private static readonly int FlashId = Shader.PropertyToID("_HitFlash");
+        private static readonly int FrostId = Shader.PropertyToID("_Frost");
         private static readonly List<Renderer> Found = new List<Renderer>();
         private static readonly List<Material> Materials = new List<Material>();
 
@@ -19,6 +22,7 @@ namespace Maze.Presentation.Visual
         private Color _color;
         private float _duration;
         private float _left;
+        private float _frost;
 
         private HitFlash(Renderer[] renderers)
         {
@@ -59,6 +63,13 @@ namespace Maze.Presentation.Visual
             Apply(_color.a);
         }
 
+        /// <summary>Frost of the model, 0..1 (stays until changed).</summary>
+        public void SetFrost(float amount)
+        {
+            _frost = Mathf.Clamp01(amount);
+            Apply(_left > 0f ? _color.a * (_left / _duration) * (_left / _duration) : 0f);
+        }
+
         /// <summary>Ends the flash at once (the model gets its own colours back).</summary>
         public void Stop()
         {
@@ -78,6 +89,7 @@ namespace Maze.Presentation.Visual
         private void Apply(float strength)
         {
             _block.SetColor(FlashId, new Color(_color.r, _color.g, _color.b, strength));
+            _block.SetFloat(FrostId, _frost);
             foreach (var renderer in _renderers)
                 if (renderer != null)
                     renderer.SetPropertyBlock(_block);

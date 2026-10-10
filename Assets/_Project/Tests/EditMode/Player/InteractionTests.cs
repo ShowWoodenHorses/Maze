@@ -139,6 +139,24 @@ namespace Maze.Tests.EditMode.Player
         }
 
         [Test]
+        public void FrozenDoor_CannotBeOpened_UntilTheIceIsBroken()
+        {
+            _level.MutableDoors[0].IceHits = 1;
+            var doors = new DoorSystem(_level);
+            var interaction = new PlayerInteraction(_input, _player, _pickups, doors, _inventory, _occupancy, _sounds);
+            var results = new List<InteractionResult>();
+            interaction.Interacted += (result, door) => results.Add(result);
+
+            interaction.Interact();
+            Assert.AreEqual(InteractionResult.DoorFrozen, results[0]);
+            Assert.IsFalse(doors.IsOpen("door_plain"));
+
+            doors.HitIce("door_plain");
+            interaction.Interact();
+            Assert.AreEqual(InteractionResult.DoorOpened, results[1]);
+        }
+
+        [Test]
         public void PlainDoor_OpensAndCloses_NotOnThePlayer_NorOnAZombie()
         {
             Assert.AreEqual(InteractionResult.DoorOpened, Interact(), "The door next to the start.");

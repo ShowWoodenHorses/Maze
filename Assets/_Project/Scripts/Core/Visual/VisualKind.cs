@@ -23,7 +23,8 @@ namespace Maze.Core.Visual
     /// <summary>
     /// Sub-category of a variant. Walls are categorized by their wall neighbours (ТЗ §32–33);
     /// everything else uses <see cref="General"/>. <see cref="Special"/> variants are never picked
-    /// automatically: they exist for manual designer overrides only.
+    /// automatically: they exist for manual designer overrides only. <see cref="Snowdrift"/> floor variants are picked
+    /// only for snowdrift cells (and nowhere else).
     /// </summary>
     public enum VisualCategory
     {
@@ -35,5 +36,8 @@ namespace Maze.Core.Visual
         Cross = 5,
         Isolated = 6,
         Special = 7,
+
+        /// <summary>Floor of a snowdrift cell (<see cref="Grid.CellSurface.Snowdrift"/>).</summary>
+        Snowdrift = 8,
     }
 }

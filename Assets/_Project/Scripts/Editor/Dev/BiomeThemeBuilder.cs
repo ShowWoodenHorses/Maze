@@ -14,7 +14,8 @@ namespace Maze.Editor.Dev
     /// map from a height field). Floors and walls are own block meshes with tiling UVs (Synty blocks are mapped to a
     /// palette); a wall has two materials — sides and top. Everything except Floor and Wall is shared with
     /// CastleBlockTheme: a new theme starts as its copy (lighting, fog, footprints and awareness retuned once);
-    /// later runs rebuild textures, materials, prefabs and the two sets and keep the hand-tuned theme values.
+    /// later runs rebuild textures, materials and prefabs and keep the hand-tuned theme values and set contents
+    /// (only variants of a category the set does not have yet are added — e.g. snowdrift floors).
     /// </summary>
     internal static class BiomeThemeBuilder
     {
@@ -68,6 +69,11 @@ namespace Maze.Editor.Dev
             public (Surface Surface, int Weight)[] Floors;
             public (Surface Sides, int Weight)[] Walls;
             public Surface WallTop;
+
+            /// <summary>Floors of snowdrift cells (category Snowdrift): a low mound on the floor block; each its own shape.</summary>
+            public (int Seed, int Weight)[] Drifts;
+            public Surface DriftSurface;
+
             public Action<VisualTheme, Material> Tune;
         }
 
@@ -86,6 +92,8 @@ namespace Maze.Editor.Dev
                 (new Surface { Name = "wall_snow_blocks", Height = 768, Paint = (u, v) => SnowStoneWall(u, v, 22, rows: 4, dark: true), Bump = 6f }, 30),
             },
             WallTop = new Surface { Name = "wall_snow_top", Paint = (u, v) => SnowGround(u, v, 13, drift: false, bright: true), Bump = 2f },
+            Drifts = new[] { (61, 1), (62, 1), (63, 1) },
+            DriftSurface = new Surface { Name = "floor_snowdrift", Paint = (u, v) => SnowGround(u, v, 14, drift: true, bright: true), Bump = 2f },
             Tune = (theme, fog) =>
             {
                 var l = theme.Lighting;
@@ -140,25 +148,41 @@ namespace Maze.Editor.Dev
         private static void BuildBiome(Biome biome, Mesh floorMesh, Mesh wallMesh)
         {
             var folder = $"{ArtRoot}/{biome.Name}";
-            var floorSet = Set($"{ThemesFolder}/{biome.Name}FloorSet.asset", VisualKind.Floor);
-            var wallSet = Set($"{ThemesFolder}/{biome.Name}WallSet.asset", VisualKind.Wall);
+            var floorSet = Set($"{ThemesFolder}/{biome.Name}FloorSet.asset", VisualKind.Floor, out var newFloorSet);
+            var wallSet = Set($"{ThemesFolder}/{biome.Name}WallSet.asset", VisualKind.Wall, out var newWallSet);
+            var floorAdds = new SetAdditions(floorSet, newFloorSet);
+            var wallAdds = new SetAdditions(wallSet, newWallSet);
 
             foreach (var (surface, weight) in biome.Floors)
             {
                 var material = MaterialFor(folder, surface);
                 var prefab = Prefab(folder, surface.Name, floorMesh, material);
-                floorSet.MutableVariants.Add(Variant(surface.Name, weight, VisualCategory.General, prefab));
+                floorAdds.Add(Variant(surface.Name, weight, VisualCategory.General, prefab));
             }
-            floorSet.DefaultVariantId = biome.Floors[0].Surface.Name;
+            if (newFloorSet)
+                floorSet.DefaultVariantId = biome.Floors[0].Surface.Name;
+
+            if (biome.Drifts != null)
+            {
+                var driftMaterial = MaterialFor(folder, biome.DriftSurface);
+                for (var i = 0; i < biome.Drifts.Length; i++)
+                {
+                    var (seed, weight) = biome.Drifts[i];
+                    var name = $"{biome.DriftSurface.Name}_{i + 1:00}";
+                    var mesh = SaveMesh(BuildDriftMesh(seed), $"{ArtRoot}/Meshes/BiomeDrift_{i + 1:00}.asset");
+                    floorAdds.Add(Variant(name, weight, VisualCategory.Snowdrift, Prefab(folder, name, mesh, driftMaterial)));
+                }
+            }
 
             var top = MaterialFor(folder, biome.WallTop);
             foreach (var (sides, weight) in biome.Walls)
             {
                 var prefab = Prefab(folder, sides.Name, wallMesh, MaterialFor(folder, sides), top);
                 foreach (var category in WallCategories)
-                    wallSet.MutableVariants.Add(Variant($"{sides.Name}_{category.ToString().ToLowerInvariant()}", weight, category, prefab));
+                    wallAdds.Add(Variant($"{sides.Name}_{category.ToString().ToLowerInvariant()}", weight, category, prefab));
             }
-            wallSet.DefaultVariantId = $"{biome.Walls[0].Sides.Name}_straight";
+            if (newWallSet)
+                wallSet.DefaultVariantId = $"{biome.Walls[0].Sides.Name}_straight";
             EditorUtility.SetDirty(floorSet);
             EditorUtility.SetDirty(wallSet);
 
@@ -185,17 +209,43 @@ namespace Maze.Editor.Dev
             EditorUtility.SetDirty(theme);
         }
 
-        private static VisualSet Set(string path, VisualKind kind)
+        private static VisualSet Set(string path, VisualKind kind, out bool created)
         {
             var set = AssetDatabase.LoadAssetAtPath<VisualSet>(path);
-            if (set == null)
+            created = set == null;
+            if (created)
             {
                 set = ScriptableObject.CreateInstance<VisualSet>();
                 AssetDatabase.CreateAsset(set, path);
             }
             set.Kind = kind;
-            set.MutableVariants.Clear();
             return set;
+        }
+
+        /// <summary>
+        /// Puts built variants into a set without undoing hand edits: a new set gets them all; an existing one keeps
+        /// its list, weights and default (variants removed by hand stay removed) and only gets the variants of a
+        /// category it has none of yet (e.g. drifts added in a later version of the builder).
+        /// </summary>
+        private sealed class SetAdditions
+        {
+            private readonly VisualSet _set;
+            private readonly HashSet<VisualCategory> _known = new HashSet<VisualCategory>();
+
+            public SetAdditions(VisualSet set, bool created)
+            {
+                _set = set;
+                if (!created)
+                    foreach (var variant in set.Variants)
+                        _known.Add(variant.Category);
+            }
+
+            public void Add(VisualVariant variant)
+            {
+                if (_known.Contains(variant.Category) || _set.FindVariant(variant.Id) != null)
+                    return;
+                _set.MutableVariants.Add(variant);
+            }
         }
 
         private static VisualVariant Variant(string id, int weight, VisualCategory category, GameObject prefab) =>
@@ -310,6 +360,56 @@ namespace Maze.Editor.Dev
             var builder = new BoxBuilder();
             builder.Box(new Vector3(-0.5f, -0.1f, -0.5f), new Vector3(0.5f, 0f, 0.5f), sideV: 0.1f, separateTop: false);
             return builder.ToMesh("BiomeFloor", 1);
+        }
+
+        private const float DriftHeight = 0.2f;
+        private const int DriftGrid = 10;
+
+        /// <summary>
+        /// Floor block with a snow mound: the top is a <see cref="DriftGrid"/>² height field up to <see cref="DriftHeight"/>,
+        /// lumpy and off-centre by <paramref name="seed"/>, exactly flat at the cell border (no seams with neighbours).
+        /// </summary>
+        private static Mesh BuildDriftMesh(int seed)
+        {
+            var vertices = new List<Vector3>();
+            var uv = new List<Vector2>();
+            var triangles = new List<int>();
+            var cx = (Hash(seed, 1, 7) - 0.5f) * 0.2f;
+            var cz = (Hash(seed, 2, 7) - 0.5f) * 0.2f;
+            var stretch = 0.8f + Hash(seed, 3, 7) * 0.4f;
+
+            for (var j = 0; j <= DriftGrid; j++)
+            for (var i = 0; i <= DriftGrid; i++)
+            {
+                var u = (float)i / DriftGrid;
+                var v = (float)j / DriftGrid;
+                var x = u - 0.5f;
+                var z = v - 0.5f;
+                var dx = (x - cx) * stretch;
+                var dz = (z - cz) / stretch;
+                var lumps = (Fbm(u, v, 3, seed, 3) - 0.5f) * 0.18f;
+                var dome = Smooth(0.48f, 0.08f, Mathf.Sqrt(dx * dx + dz * dz) + lumps);
+                var border = Smooth(0f, 0.18f, Mathf.Min(0.5f - Mathf.Abs(x), 0.5f - Mathf.Abs(z)));
+                vertices.Add(new Vector3(x, DriftHeight * dome * border, z));
+                uv.Add(new Vector2(u, v));
+            }
+
+            for (var j = 0; j < DriftGrid; j++)
+            for (var i = 0; i < DriftGrid; i++)
+            {
+                var a = j * (DriftGrid + 1) + i;
+                var b = a + DriftGrid + 1;
+                triangles.AddRange(new[] { a, b, b + 1, a, b + 1, a + 1 });
+            }
+
+            var mesh = new Mesh { name = $"BiomeDrift_{seed}" };
+            mesh.SetVertices(vertices);
+            mesh.SetUVs(0, uv);
+            mesh.SetTriangles(triangles, 0);
+            mesh.RecalculateNormals();
+            mesh.RecalculateTangents();
+            mesh.RecalculateBounds();
+            return mesh;
         }
 
         /// <summary>1 × 1.5 × 1 block: sub-mesh 0 — the four sides (u wraps around the block, v = height / 1.5), 1 — the top.</summary>

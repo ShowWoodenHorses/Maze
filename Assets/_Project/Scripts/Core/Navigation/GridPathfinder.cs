@@ -36,11 +36,19 @@ namespace Maze.Core.Navigation
         }
 
         /// <summary>
-        /// Finds a shortest path. On success <paramref name="path"/> holds cells from start to goal inclusive.
+        /// Finds a shortest path by steps. On success <paramref name="path"/> holds cells from start to goal inclusive.
         /// The start cell itself does not need to be passable (the walker already stands there).
         /// </summary>
         public bool TryFindPath<TPassability>(GridPosition start, GridPosition goal, TPassability passability,
-            List<GridPosition> path) where TPassability : IGridPassability
+            List<GridPosition> path) where TPassability : IGridPassability =>
+            TryFindPath(start, goal, passability, new UniformCost(), path);
+
+        /// <summary>
+        /// Finds a cheapest path by <paramref name="cost"/> of the cells stepped into (at least 1 each, e.g. slow cells
+        /// cost more). On success <paramref name="path"/> holds cells from start to goal inclusive.
+        /// </summary>
+        public bool TryFindPath<TPassability, TCost>(GridPosition start, GridPosition goal, TPassability passability,
+            TCost cost, List<GridPosition> path) where TPassability : IGridPassability where TCost : IGridCost
         {
             path.Clear();
             if (!IsInside(start) || !IsInside(goal) || !passability.IsPassable(goal))
@@ -75,7 +83,6 @@ namespace Maze.Core.Navigation
 
                 _closedStamp[current] = _stamp;
                 var position = ToPosition(current);
-                var nextG = _gScore[current] + 1;
 
                 foreach (var direction in DirectionExtensions.All)
                 {
@@ -87,6 +94,7 @@ namespace Maze.Core.Navigation
                     if (_closedStamp[index] == _stamp)
                         continue;
 
+                    var nextG = _gScore[current] + Math.Max(cost.StepCost(neighbour), 1);
                     if (_openStamp[index] == _stamp && _gScore[index] <= nextG)
                         continue;
 

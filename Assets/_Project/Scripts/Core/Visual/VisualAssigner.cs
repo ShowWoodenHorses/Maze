@@ -67,12 +67,14 @@ namespace Maze.Core.Visual
         /// (stable per cell and VisualSeed), a weighted General variant not taller than
         /// <see cref="LevelGenerationSettings.MaxAutoDecorHeight"/>, a stable quarter turn. No set default.
         /// Never in a key's cell — a small key gets lost in a pile of props; only decor placed by hand may be there.
+        /// Never on a snowdrift either (the drift is the cell's look).
         /// </summary>
         public static VisualChoice ChooseDecor(LevelData level, GridPosition position)
         {
             var theme = level.VisualTheme;
             var geometry = level.Geometry;
-            if (theme == null || !CellLayers.Exists(geometry.GetCell(position), CellLayer.Decor) || HasKey(level, position))
+            if (theme == null || !CellLayers.Exists(geometry.GetCell(position), CellLayer.Decor) || HasKey(level, position) ||
+                geometry.GetSurface(position) != CellSurface.None)
                 return VisualChoice.None;
 
             var settings = level.Generation;
@@ -316,10 +318,22 @@ namespace Maze.Core.Visual
 
             if (layer == CellLayer.Wall)
                 (category, rotation) = WallShapes.Classify(new CellVisualContext(geometry, position).WallConnections);
+            else if (layer == CellLayer.Floor && geometry.GetSurface(position) == CellSurface.Snowdrift &&
+                     HasAutoVariant(theme.GetSet(kind), VisualCategory.Snowdrift))
+                category = VisualCategory.Snowdrift; // a theme without drift floors shows the ordinary floor
 
             var key = VisualSelector.CellKey(level.Generation.VisualSeed, kind, geometry.ToIndex(position));
             var variant = VisualSelector.PickOrDefault(theme.GetSet(kind), category, null, key);
             return variant == null ? VisualChoice.None : new VisualChoice(variant.Id, rotation);
+        }
+
+        private static bool HasAutoVariant(VisualSet set, VisualCategory category)
+        {
+            if (set == null) return false;
+            foreach (var variant in set.Variants)
+                if (variant.Weight > 0 && variant.Category == category)
+                    return true;
+            return false;
         }
 
         public static VisualChoice ChooseObject(LevelData level, LevelEntityData entity)

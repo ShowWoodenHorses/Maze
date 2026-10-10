@@ -24,6 +24,9 @@ namespace Maze.Core.Validation
         public const string MissingDefinition = "MissingDefinition";
         public const string InvalidFragmentRegion = "InvalidFragmentRegion";
         public const string FragmentOverlap = "FragmentOverlap";
+        public const string FrozenDoorInitiallyOpen = "FrozenDoorInitiallyOpen";
+        public const string SurfacesOutOfSync = "SurfacesOutOfSync";
+        public const string SurfaceNotOnFloor = "SurfaceNotOnFloor";
 
         // Visual
         public const string NoVisualTheme = "NoVisualTheme";
@@ -55,6 +58,7 @@ namespace Maze.Core.Validation
         public const string KeyDoorColorMismatch = "KeyDoorColorMismatch";
         public const string RepeatedKeyColor = "RepeatedKeyColor";
         public const string UnlockedDoorWithColor = "UnlockedDoorWithColor";
+        public const string FrozenDoorWithoutIceVisual = "FrozenDoorWithoutIceVisual";
 
         // Gameplay
         public const string NoReachableExit = "NoReachableExit";

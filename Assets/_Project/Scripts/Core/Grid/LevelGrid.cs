@@ -11,6 +11,7 @@ namespace Maze.Core.Grid
     public sealed class LevelGrid
     {
         private readonly CellType[] _cells;
+        private readonly CellSurface[] _surfaces;
 
         public LevelGrid(LevelGeometry geometry)
         {
@@ -20,6 +21,7 @@ namespace Maze.Core.Grid
             Width = geometry.Width;
             Height = geometry.Height;
             _cells = geometry.CopyCells();
+            _surfaces = geometry.CopySurfaces();
         }
 
         public int Width { get; }
@@ -30,6 +32,12 @@ namespace Maze.Core.Grid
             position.X >= 0 && position.X < Width && position.Y >= 0 && position.Y < Height;
 
         public CellType GetCell(GridPosition position) => _cells[ToIndex(position)];
+
+        /// <summary>Ground of the cell; None outside the grid and for non-Floor cells.</summary>
+        public CellSurface GetSurface(GridPosition position) =>
+            IsInside(position) && _cells[ToIndex(position)] == CellType.Floor ? _surfaces[ToIndex(position)] : CellSurface.None;
+
+        public bool IsSnowdrift(GridPosition position) => GetSurface(position) == CellSurface.Snowdrift;
 
         /// <summary>Returns Wall for positions outside the grid, which simplifies neighbour checks.</summary>
         public CellType GetCellOrWall(GridPosition position) => IsInside(position) ? GetCell(position) : CellType.Wall;

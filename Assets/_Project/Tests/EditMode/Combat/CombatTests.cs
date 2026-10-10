@@ -101,7 +101,7 @@ namespace Maze.Tests.EditMode.Combat
                 new LevelLaunchOptions(startIndex: 0), _aim);
             _bullets = new BulletSystem(_spatial);
             _bullets.Ended += (bullet, point, reason) => _ended.Add((point, reason));
-            _combat = new PlayerCombat(_input, _player, _weapons, _spatial, _bullets, _sounds, _aim);
+            _combat = new PlayerCombat(_input, _player, _weapons, _spatial, _bullets, _sounds, _aim, _doors);
             _heard.Clear();
             _ended.Clear();
             _player.ExecuteAsync(CancellationToken.None).GetAwaiter().GetResult();
@@ -181,6 +181,76 @@ namespace Maze.Tests.EditMode.Combat
             _combat.Tick(1f); // cooldown over
             _combat.TryAttack(Vector2.right);
             Assert.AreEqual(75f, beyond.Health, "Open door does not.");
+        }
+
+        private void FreezeDoor(int hits)
+        {
+            _level.MutableDoors[0].IceHits = hits;
+            _doors = new DoorSystem(_level);
+            _combat = new PlayerCombat(_input, _player, _weapons, _spatial, _bullets, _sounds, _aim, _doors);
+        }
+
+        private void WalkToDoor()
+        {
+            for (var i = 0; i < 300 && _player.Position.x < 6f; i++)
+            {
+                _input.Move = Vector2.right;
+                _player.Tick(Dt);
+            }
+
+            _input.Move = Vector2.zero;
+        }
+
+        [Test]
+        public void Melee_BreaksTheIceOfAFrozenDoor_HitByHit_AndIsHeard()
+        {
+            FreezeDoor(2);
+            Equip(_knife);
+            WalkToDoor();
+            Assert.Throws<System.InvalidOperationException>(() => _doors.SetOpen("door_1", true), "Frozen: cannot open.");
+
+            var broken = 0;
+            _doors.IceBroken += _ => broken++;
+            _heard.Clear();
+            Assert.IsTrue(_combat.TryAttack(Vector2.right));
+            Assert.AreEqual("door_1", _combat.LastIceHit?.Id);
+            Assert.AreEqual(1, _doors.IceLeft("door_1"));
+            Assert.IsTrue(_heard.Exists(e => e.Type == SoundType.Door), "Zombies hear the ice.");
+
+            _combat.Tick(1f);
+            _combat.TryAttack(Vector2.right);
+            Assert.AreEqual(1, broken);
+            Assert.IsFalse(_doors.IsFrozen("door_1"));
+            Assert.IsFalse(_doors.IsOpen("door_1"), "Broken ice leaves the door closed.");
+            _doors.SetOpen("door_1", true);
+            Assert.IsTrue(_doors.IsOpen("door_1"));
+        }
+
+        [Test]
+        public void Ice_NotHitWhenAttackingAway_OrOutOfReach_OrWithBullets()
+        {
+            FreezeDoor(1);
+            Equip(_knife);
+            WalkToDoor();
+            _combat.TryAttack(Vector2.left);
+            Assert.IsNull(_combat.LastIceHit, "Attack away from the door.");
+            Assert.IsTrue(_doors.IsFrozen("door_1"));
+
+            FreezeDoor(1);
+            Equip(_pistol);
+            _combat.TryAttack(Vector2.right);
+            FlyBullets();
+            Assert.IsTrue(_doors.IsFrozen("door_1"), "Bullets do not break ice.");
+        }
+
+        [Test]
+        public void Ice_FarFromTheDoor_IsNotHit()
+        {
+            FreezeDoor(1);
+            Equip(_knife); // start (2,2), door at (7,2)
+            _combat.TryAttack(Vector2.right);
+            Assert.IsNull(_combat.LastIceHit);
+            Assert.IsTrue(_doors.IsFrozen("door_1"));
         }
 
         [Test]

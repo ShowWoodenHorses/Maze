@@ -252,7 +252,19 @@ MonoBehaviour:
     _position:
       _x: 9
       _y: 4
-  _medkits: []
+  _medkits:
+  - _id: medkit_1
+    _position:
+      _x: 15
+      _y: 17
+  - _id: medkit_2
+    _position:
+      _x: 20
+      _y: 3
+  - _id: medkit_3
+    _position:
+      _x: 10
+      _y: 7
   _mapFragments:
   - _id: fragment_1
     _position:
@@ -4329,5 +4341,17 @@ MonoBehaviour:
     - _entityId: zombie_12
       _choice:
         _variantId: forest_zombie_listener
+        _rotation: 0
+    - _entityId: medkit_1
+      _choice:
+        _variantId: medkit_01
+        _rotation: 0
+    - _entityId: medkit_2
+      _choice:
+        _variantId: medkit_01
+        _rotation: 0
+    - _entityId: medkit_3
+      _choice:
+        _variantId: medkit_01
         _rotation: 0
     _objectOverrides: []

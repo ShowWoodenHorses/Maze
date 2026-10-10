@@ -36,6 +36,7 @@ MonoBehaviour:
   - hud.locked.yellow
   - hud.door_unlocked
   - hud.door_blocked
+  - hud.door_frozen
   - weapon.assault_rifle_01
   - weapon.assault_rifle_03
   - weapon.bat
@@ -134,6 +135,7 @@ MonoBehaviour:
   - "Kilitli: sar\u0131 anahtar gerekli"
   - "Kap\u0131n\u0131n kilidi a\xE7\u0131ld\u0131"
   - "Kap\u0131 aral\u0131\u011F\u0131nda bir \u015Fey var"
+  - "Donmu\u015F: buzu yak\u0131n d\xF6v\xFC\u015F silah\u0131yla k\u0131r"
   - "Sald\u0131r\u0131 t\xFCfe\u011Fi"
   - "Muharebe t\xFCfe\u011Fi"
   - Sopa

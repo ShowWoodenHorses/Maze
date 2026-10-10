@@ -65,6 +65,32 @@ namespace Maze.Core.Validation
             ValidatePlacement(level, report);
             ValidateReferences(level, report);
             ValidateMapFragments(level, report);
+            ValidateSurfaces(level, report);
+
+            foreach (var door in level.Doors.Where(d => d.IsFrozen && d.IsInitiallyOpen))
+                report.Add(Error, Structural, ValidationCodes.FrozenDoorInitiallyOpen,
+                    $"Door '{door.Id}' is frozen and initially open: a frozen door starts closed.", door.Position, door.Id);
+        }
+
+        /// <summary>Snowdrifts and the like: only on Floor cells; the array must match the size (or be empty).</summary>
+        private static void ValidateSurfaces(LevelData level, ValidationReport report)
+        {
+            var geometry = level.Geometry;
+            if (!geometry.SurfacesConsistent)
+            {
+                report.Add(Error, Structural, ValidationCodes.SurfacesOutOfSync,
+                    "Cell surfaces (snowdrifts) do not match the level size; they are ignored.");
+                return;
+            }
+
+            for (var i = 0; i < geometry.CellCount; i++)
+            {
+                var p = geometry.ToPosition(i);
+                var surface = geometry.GetSurface(p);
+                if (surface != CellSurface.None && geometry.GetCell(p) != CellType.Floor)
+                    report.Add(Warning, Structural, ValidationCodes.SurfaceNotOnFloor,
+                        $"{surface} at {p} is on a {geometry.GetCell(p)} cell and is ignored.", p);
+            }
         }
 
         private static void ValidateIds(LevelData level, ValidationReport report)
@@ -251,6 +277,12 @@ namespace Maze.Core.Validation
             ValidateObjectVisuals(level, theme, report);
             ValidateLightVisuals(level, theme, report);
             ValidateKeyDoorColors(level, theme, report);
+
+            if (!theme.Weather.HasIceOverlay)
+                foreach (var door in level.Doors.Where(d => d.IsFrozen))
+                    report.Add(Warning, Visual, ValidationCodes.FrozenDoorWithoutIceVisual,
+                        $"Door '{door.Id}' is frozen, but the theme has no ice overlay (Weather): the ice is not shown.",
+                        door.Position, door.Id);
         }
 
         /// <summary>A light's fixture must exist in the theme's Light set (a missing set is reported as MissingVisualSet).</summary>
@@ -516,7 +548,8 @@ namespace Maze.Core.Validation
                 if (set == null || !usedVariants.TryGetValue(kind, out var used))
                     continue;
 
-                var autoVariants = set.Variants.Count(v => v.Weight > 0 && v.Category != VisualCategory.Special);
+                var autoVariants = set.Variants.Count(v => v.Weight > 0 && v.Category != VisualCategory.Special &&
+                                                           v.Category != VisualCategory.Snowdrift);
                 if (autoVariants >= 2 && used.Count == 1 && cellCounts[kind] >= 20)
                     report.Add(Warning, Visual, ValidationCodes.UniformDistribution,
                         $"All {cellCounts[kind]} cells use the same {kind.ToString().ToLowerInvariant()} variant '{used.First()}'.");
