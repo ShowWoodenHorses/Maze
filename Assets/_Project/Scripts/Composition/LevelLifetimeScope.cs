@@ -77,7 +77,7 @@ namespace Maze.Composition
             builder.Register<NavigationSystem>(Lifetime.Singleton);
             builder.Register<ZombieSystem>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep, ILevelTickable>();
             builder.Register<VisibilitySystem>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep>();
-            builder.Register<LevelProgress>(Lifetime.Singleton);
+            builder.Register<LevelProgress>(Lifetime.Singleton).AsSelf().As<ILevelTickable>();
             builder.Register<LevelRuntime>(Lifetime.Singleton);
             builder.Register<PlayerDeathRule>(Lifetime.Singleton);
             builder.RegisterEntryPoint<LevelTickDriver>();

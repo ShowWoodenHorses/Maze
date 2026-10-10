@@ -350,6 +350,10 @@ namespace Maze.Editor.Dev
             var number = Text(bodyRect, "Number", (index + 1).ToString(), 72f, true, Center, Center, new Vector2(0f, 10f),
                 new Vector2(160f, 90f), TextAlignmentOptions.Center);
             var padlock = Icon(bodyRect, "Lock", icons.Lock, new Vector2(0.5f, 0f), new Vector2(0f, 26f), 30f);
+            var bestTime = Text(bodyRect, "BestTime", "", 22f, false, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
+                new Vector2(0f, 10f), new Vector2(150f, 28f), TextAlignmentOptions.Bottom, _style.MutedText);
+            bestTime.textWrappingMode = TextWrappingModes.NoWrap;
+            bestTime.gameObject.SetActive(false);
             var button = MakeButton(body, false, number, padlock);
 
             var stars = new GameObject("Stars", typeof(RectTransform)).GetComponent<RectTransform>();
@@ -370,6 +374,7 @@ namespace Maze.Editor.Dev
             SetReference(tile, "_button", button);
             SetReference(tile, "_number", number);
             SetReference(tile, "_lock", padlock.gameObject);
+            SetReference(tile, "_bestTime", bestTime);
             SetReference(tile, "_group", holder.GetComponent<CanvasGroup>());
             SetReference(tile, "_stars", stars.gameObject);
             SetReferences(tile, "_starImages", starImages);
@@ -415,6 +420,10 @@ namespace Maze.Editor.Dev
 
             var levelName = Text(root, "LevelName", "LEVEL", 30f, true, TopLeft, TopLeft, new Vector2(146f, -36f),
                 new Vector2(330f, 38f), TextAlignmentOptions.BottomLeft, spacing: 10f);
+            // Top centre: the play time (between the HP bar and Map, also at 4:3).
+            var timer = Text(root, "Timer", "0:00", 34f, true, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
+                new Vector2(0f, -56f), new Vector2(180f, 44f), TextAlignmentOptions.Center, spacing: 4f);
+            timer.textWrappingMode = TextWrappingModes.NoWrap;
             var health = Text(root, "Health", "100 / 100", 28f, false, TopLeft, new Vector2(1f, 1f), new Vector2(622f, -36f),
                 new Vector2(160f, 38f), TextAlignmentOptions.BottomRight);
 
@@ -475,6 +484,7 @@ namespace Maze.Editor.Dev
 
             SetReference(screen, "_style", _style);
             SetReference(screen, "_levelName", levelName);
+            SetReference(screen, "_timer", timer);
             SetReference(screen, "_healthText", health);
             SetReference(screen, "_healthFrame", frame);
             SetReference(screen, "_heartRing", heartRing);
@@ -1106,6 +1116,12 @@ namespace Maze.Editor.Dev
                 labels.Add(label);
             }
 
+            var time = Text(panel, "Time", "", 28f, true, Center, Center, Vector2.zero, new Vector2(700f, 36f),
+                TextAlignmentOptions.Center, _style.MutedText, 6f);
+            time.textWrappingMode = TextWrappingModes.NoWrap;
+            AutoSize(time);
+            time.gameObject.AddComponent<LayoutElement>().preferredHeight = 36f;
+
             Hairline(panel, 0.2f);
             var row = ButtonRow(panel, "Buttons", 18f, 86f);
             var menu = TextButton(row, "MenuButton", Loc(TextKeys.ResultMenu), false, icons.Menu, 86f);
@@ -1117,6 +1133,7 @@ namespace Maze.Editor.Dev
             SetReference(screen, "_levelName", levelName);
             SetReferences(screen, "_stars", stars);
             SetReferences(screen, "_starLabels", labels);
+            SetReference(screen, "_time", time);
             SetReference(screen, "_star", icons.Star);
             SetReference(screen, "_starFilled", icons.StarFilled);
             SetReference(screen, "_retryButton", retry);

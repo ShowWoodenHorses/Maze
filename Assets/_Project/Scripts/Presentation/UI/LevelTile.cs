@@ -10,7 +10,8 @@ namespace Maze.Presentation.UI
     /// <summary>
     /// A level tile (on its button): the number; under it three star slots once completed (earned ones filled with the
     /// accent); the next level to play outlined in the accent; a locked level faint with a padlock — a tap on it shakes
-    /// the tile (the button's denied sound comes from <see cref="UiSound"/>).
+    /// the tile (the button's denied sound comes from <see cref="UiSound"/>). A completed level shows its best time at
+    /// the bottom of the button (where a locked one has the padlock).
     /// </summary>
     public sealed class LevelTile : MonoBehaviour, IPointerClickHandler
     {
@@ -22,6 +23,7 @@ namespace Maze.Presentation.UI
         [SerializeField] private UiButton _button;
         [SerializeField] private TMP_Text _number;
         [SerializeField] private GameObject _lock;
+        [SerializeField] private TMP_Text _bestTime;
 
         [Tooltip("Faint for locked levels that development builds still let you start.")]
         [SerializeField] private CanvasGroup _group;
@@ -51,6 +53,12 @@ namespace Maze.Presentation.UI
             LevelId = data.LevelId;
             _number.text = data.Number.ToString();
             _lock.SetActive(!data.Unlocked);
+            if (_bestTime != null)
+            {
+                var shown = data.Unlocked && data.BestTime > 0f;
+                _bestTime.gameObject.SetActive(shown);
+                if (shown) _bestTime.text = TimeFormat.ToText(data.BestTime);
+            }
             _button.interactable = data.Playable;
             _button.Accent = data.IsNext;
             if (_group != null) _group.alpha = !data.Unlocked && data.Playable ? 0.5f : 1f;

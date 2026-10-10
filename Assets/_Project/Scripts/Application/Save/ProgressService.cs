@@ -16,7 +16,10 @@ namespace Maze.Application.Save
         /// <summary>Best stars of the level, 0 when it was never completed.</summary>
         int GetStars(string levelId);
 
-        /// <summary>Stores a completed run (persistent event): best stars, kills, unlocks the next level, saves.</summary>
+        /// <summary>Best time of a completed run of the level, seconds; 0 when there is none.</summary>
+        float GetBestTime(string levelId);
+
+        /// <summary>Stores a completed run (persistent event): best stars and time, kills, unlocks the next level, saves.</summary>
         void RecordCompletion(string levelId, LevelResult result);
 
         /// <summary>Forgets all progress (debug).</summary>
@@ -54,6 +57,8 @@ namespace Maze.Application.Save
             return record?.Stars ?? 0;
         }
 
+        public float GetBestTime(string levelId) => FindStars(levelId)?.BestTime ?? 0f;
+
         public void RecordCompletion(string levelId, LevelResult result)
         {
             if (string.IsNullOrEmpty(levelId)) throw new ArgumentException("Level id is empty.", nameof(levelId));
@@ -63,6 +68,8 @@ namespace Maze.Application.Save
             if (record == null)
                 Data.LevelStars.Add(record = new LevelStarsRecord { LevelId = levelId });
             record.Stars = Math.Max(record.Stars, Math.Min(result.Stars, LevelResult.MaxStars));
+            if (result.Time > 0f && (record.BestTime <= 0f || result.Time < record.BestTime))
+                record.BestTime = result.Time;
 
             Data.TotalKills += result.Kills;
             Unlock(levelId);

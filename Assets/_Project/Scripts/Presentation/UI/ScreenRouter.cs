@@ -113,7 +113,7 @@ namespace Maze.Presentation.UI
             {
                 var completed = state == GameFlowState.Completed;
                 _ui.Result.SetResult(completed, _flow.LastResult, LevelCaption(_flow.CurrentLevelId),
-                    completed && NextLevelId() != null);
+                    completed && NextLevelId() != null, _flow.LastPreviousBestTime);
             }
             if (error) _ui.Error.SetMessage(_flow.ErrorMessage);
 
@@ -143,7 +143,8 @@ namespace Maze.Presentation.UI
                 var stars = _progress.GetStars(entry.LevelId);
                 totalStars += stars;
                 var unlocked = _progress.IsUnlocked(entry.LevelId);
-                _tiles.Add(new LevelTileData(entry.LevelId, i + 1, stars, unlocked, unlocked || Debug.isDebugBuild));
+                _tiles.Add(new LevelTileData(entry.LevelId, i + 1, stars, unlocked, unlocked || Debug.isDebugBuild,
+                    _progress.GetBestTime(entry.LevelId)));
             }
 
             var maxStars = levels.Count * LevelResult.MaxStars;

@@ -45,6 +45,24 @@ namespace Maze.Tests.EditMode.Progress
         private static LevelResult Completed(int kills = 0, int zombies = 0, int fragments = 0, int totalFragments = 0) =>
             new LevelResult(true, kills, zombies, fragments, totalFragments);
 
+        // ------------------------------------------------------------ Time
+
+        [Test]
+        public void BestTime_KeepsTheFastestCompletedRun_AndSurvivesReload()
+        {
+            Assert.AreEqual(0f, _progress.GetBestTime("first"), "No time before a completed run.");
+            _progress.RecordCompletion("first", new LevelResult(true, 0, 0, 0, 0, 80f));
+            _progress.RecordCompletion("first", new LevelResult(true, 0, 0, 0, 0, 95f));
+            Assert.AreEqual(80f, _progress.GetBestTime("first"), "A slower run keeps the best.");
+            _progress.RecordCompletion("first", new LevelResult(true, 0, 0, 0, 0, 61.5f));
+            _progress.RecordCompletion("first", Completed());
+            Assert.AreEqual(61.5f, _progress.GetBestTime("first"), "Faster replaces it; an unknown time (0) does not.");
+
+            var reloaded = new SaveService(_storage);
+            reloaded.Load();
+            Assert.AreEqual(61.5f, new ProgressService(reloaded, new Catalog(_catalogAsset)).GetBestTime("first"));
+        }
+
         // ------------------------------------------------------------ Stars
 
         [Test]

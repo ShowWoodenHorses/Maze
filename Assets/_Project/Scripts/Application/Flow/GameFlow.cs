@@ -78,6 +78,9 @@ namespace Maze.Application.Flow
         /// <summary>Result of the last ended run (stars, kills, fragments); null until a level ends.</summary>
         public LevelResult? LastResult { get; private set; }
 
+        /// <summary>Best time of the level before the last ended run, seconds; 0 when there was none.</summary>
+        public float LastPreviousBestTime { get; private set; }
+
         public event Action<GameFlowState> StateChanged;
 
         public UniTask InitializeApplication() => RunTransition("InitializeApplication", async cancellation =>
@@ -201,6 +204,7 @@ namespace Maze.Application.Flow
             CurrentLevelId = levelId;
             _launchOptions = options;
             LastResult = null;
+            LastPreviousBestTime = 0f;
             GameLog.Info(LogChannel.LevelLoading, $"Loading level '{levelId}'.");
 
             // Stop current gameplay, dispose the old LevelScope, release its Addressables.
@@ -307,6 +311,7 @@ namespace Maze.Application.Flow
             var outcome = result == GameFlowState.Completed ? LevelOutcome.Completed : LevelOutcome.Failed;
             var levelResult = _session.GetResult(outcome);
             LastResult = levelResult;
+            LastPreviousBestTime = _progress.GetBestTime(CurrentLevelId);
             GameLog.Info(LogChannel.GameFlow, $"Level '{CurrentLevelId}' ended: {levelResult}.");
 
             if (outcome == LevelOutcome.Completed)

@@ -27,8 +27,14 @@ namespace Maze.Presentation.UI
         private const float TrailSpeed = 0.9f;
         private const float LowPulseSpeed = 5f;
 
+        private readonly char[] _timeChars = new char[TimeFormat.MaxLength];
+        private int _timeShown = -1;
+
         [SerializeField] private UiStyle _style;
         [SerializeField] private TMP_Text _levelName;
+
+        [Tooltip("Play time of the run (top centre).")]
+        [SerializeField] private TMP_Text _timer;
 
         [Header("Health")]
         [SerializeField] private TMP_Text _healthText;
@@ -280,8 +286,19 @@ namespace Maze.Presentation.UI
             if (_rangedSlot != null) _rangedSlot.SetReloadText(reload);
         }
 
+        /// <summary>Shows the play time; the text changes only when the whole seconds do (no allocations).</summary>
+        public void SetTime(float seconds)
+        {
+            var whole = TimeFormat.WholeSeconds(seconds);
+            if (whole == _timeShown || _timer == null) return;
+            _timeShown = whole;
+            _timer.SetCharArray(_timeChars, 0, TimeFormat.Write(whole, _timeChars));
+        }
+
         public void ClearLevelInfo()
         {
+            _timeShown = -1;
+            SetTime(0f);
             _health = _maxHealth = -1;
             _fragmentsShown = _fragmentsTotal = _killsShown = _killsTotal = -1;
             _low = false;

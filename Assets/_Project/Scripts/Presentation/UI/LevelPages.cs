@@ -5,8 +5,9 @@ namespace Maze.Presentation.UI
     /// <summary>One level tile of the level select screen.</summary>
     public readonly struct LevelTileData
     {
-        public LevelTileData(string levelId, int number, int stars, bool unlocked, bool playable)
+        public LevelTileData(string levelId, int number, int stars, bool unlocked, bool playable, float bestTime = 0f)
         {
+            BestTime = bestTime;
             LevelId = levelId;
             Number = number;
             Stars = stars;
@@ -30,6 +31,9 @@ namespace Maze.Presentation.UI
         public int Stars { get; }
 
         public bool Unlocked { get; }
+
+        /// <summary>Best time of a completed run, seconds; 0 = none.</summary>
+        public float BestTime { get; }
 
         /// <summary>Can be started: unlocked, or any level in development builds.</summary>
         public bool Playable { get; }

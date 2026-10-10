@@ -41,14 +41,17 @@ namespace Maze.Presentation.UI
         private readonly ZombieSystem _zombies;
         private readonly WeaponVisualCatalog _visuals;
         private readonly LocalizationService _texts;
+        private readonly LevelProgress _progress;
         private readonly List<Color> _keyColors = new List<Color>();
         private int _lastHealth;
         private bool _bound;
 
         public HudPresenter(UIRoot ui, LevelData level, PlayerHealth health, PlayerInventory inventory,
             WeaponSystem weapons, PlayerInteraction interaction, MapSystem map, PlayerSystem player,
-            PickupSystem pickups, ZombieSystem zombies, WeaponVisualCatalog visuals, LocalizationService texts)
+            PickupSystem pickups, ZombieSystem zombies, WeaponVisualCatalog visuals, LocalizationService texts,
+            LevelProgress progress)
         {
+            _progress = progress;
             _texts = texts;
             _ui = ui;
             _level = level;
@@ -105,6 +108,7 @@ namespace Maze.Presentation.UI
 
         public void LateTick(float deltaTime)
         {
+            _ui.Hud.SetTime(_progress.Elapsed);
             var melee = SlotState(WeaponSlot.Melee);
             var ranged = SlotState(WeaponSlot.Ranged);
             _ui.Hud.SetWeapons(melee, ranged);

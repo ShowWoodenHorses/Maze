@@ -53,6 +53,9 @@ result.exit_found	EXIT FOUND	ВЫХОД НАЙДЕН	ÇIKIŞ BULUNDU	SALIDA ENCO
 result.no_exit	NO EXIT	ВЫХОД НЕ НАЙДЕН	ÇIKIŞ BULUNAMADI	SIN SALIDA	KEIN AUSGANG
 result.zombies	ZOMBIES {0}/{1}	ЗОМБИ {0}/{1}	ZOMBİLER {0}/{1}	ZOMBIS {0}/{1}	ZOMBIES {0}/{1}
 result.map	MAP {0}/{1}	КАРТА {0}/{1}	HARİTA {0}/{1}	MAPA {0}/{1}	KARTE {0}/{1}
+result.time	TIME {0}	ВРЕМЯ {0}	SÜRE {0}	TIEMPO {0}	ZEIT {0}
+result.best	BEST {0}	РЕКОРД {0}	EN İYİ {0}	MEJOR {0}	BESTZEIT {0}
+result.record	NEW RECORD!	НОВЫЙ РЕКОРД!	YENİ REKOR!	¡NUEVO RÉCORD!	NEUER REKORD!
 result.menu	MENU	МЕНЮ	MENÜ	MENÚ	MENÜ
 result.retry	RETRY	ЕЩЁ РАЗ	TEKRAR	REPETIR	NOCHMAL
 result.next	NEXT	ДАЛЕЕ	SONRAKİ	SIGUIENTE	WEITER

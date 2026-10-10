@@ -50,6 +50,9 @@ namespace Maze.Presentation.Localization
         public const string ResultNoExit = "result.no_exit";
         public const string ResultZombies = "result.zombies";
         public const string ResultMap = "result.map";
+        public const string ResultTime = "result.time";
+        public const string ResultBest = "result.best";
+        public const string ResultRecord = "result.record";
         public const string ResultMenu = "result.menu";
         public const string ResultRetry = "result.retry";
         public const string ResultNext = "result.next";

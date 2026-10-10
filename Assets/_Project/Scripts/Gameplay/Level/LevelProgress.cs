@@ -12,8 +12,9 @@ namespace Maze.Gameplay.Level
     {
         public const int MaxStars = 3;
 
-        public LevelResult(bool completed, int kills, int totalZombies, int fragments, int totalFragments)
+        public LevelResult(bool completed, int kills, int totalZombies, int fragments, int totalFragments, float time = 0f)
         {
+            Time = time;
             Completed = completed;
             Kills = kills;
             TotalZombies = totalZombies;
@@ -27,20 +28,24 @@ namespace Maze.Gameplay.Level
         public int Fragments { get; }
         public int TotalFragments { get; }
 
+        /// <summary>Seconds of play (pause, map and dialogs do not count); 0 = unknown.</summary>
+        public float Time { get; }
+
         public bool AllZombiesKilled => Kills >= TotalZombies;
         public bool AllFragmentsCollected => Fragments >= TotalFragments;
 
         public int Stars => !Completed ? 0 : 1 + (AllZombiesKilled ? 1 : 0) + (AllFragmentsCollected ? 1 : 0);
 
         public override string ToString() =>
-            $"{(Completed ? "completed" : "failed")}, stars {Stars}, kills {Kills}/{TotalZombies}, fragments {Fragments}/{TotalFragments}";
+            $"{(Completed ? "completed" : "failed")}, stars {Stars}, kills {Kills}/{TotalZombies}, fragments {Fragments}/{TotalFragments}, time {Time:0.0} s";
     }
 
     /// <summary>
-    /// Runtime progress of the current run (ТЗ §86): killed zombies and collected fragments. Door, player and weapon
+    /// Runtime progress of the current run (ТЗ §86): killed zombies, collected fragments and the play time (counted
+    /// only while the level ticks, i.e. Running: pause, map and the exit dialog stop it). Door, player and weapon
     /// state live in their own systems. Nothing here is saved: a retry or death starts from a fresh LevelScope.
     /// </summary>
-    public sealed class LevelProgress
+    public sealed class LevelProgress : ILevelTickable
     {
         private readonly ZombieSystem _zombies;
         private readonly MapSystem _map;
@@ -56,7 +61,12 @@ namespace Maze.Gameplay.Level
         public int Fragments => _map.CollectedCount;
         public int TotalFragments => _map.TotalCount;
 
+        /// <summary>Seconds played so far.</summary>
+        public float Elapsed { get; private set; }
+
+        public void Tick(float deltaTime) => Elapsed += deltaTime;
+
         public LevelResult GetResult(LevelOutcome outcome) =>
-            new LevelResult(outcome == LevelOutcome.Completed, Kills, TotalZombies, Fragments, TotalFragments);
+            new LevelResult(outcome == LevelOutcome.Completed, Kills, TotalZombies, Fragments, TotalFragments, Elapsed);
     }
 }

@@ -57,6 +57,8 @@ namespace Maze.Application.Save
             UnlockedLevels.RemoveAll(string.IsNullOrEmpty);
             LevelStars.RemoveAll(record => record == null || string.IsNullOrEmpty(record.LevelId));
             if (TotalKills < 0) TotalKills = 0;
+            foreach (var record in LevelStars)
+                if (!(record.BestTime > 0f)) record.BestTime = 0f; // Negative or NaN from a hand-edited save.
         }
     }
 
@@ -65,6 +67,9 @@ namespace Maze.Application.Save
     {
         public string LevelId;
         public int Stars;
+
+        /// <summary>Best time of a completed run, seconds; 0 = none (records made before the timer).</summary>
+        public float BestTime;
     }
 
     [Serializable]
