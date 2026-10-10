@@ -107,6 +107,9 @@ namespace Maze.Gameplay.Navigation
         /// <summary>The path changed: a new hint, progress along it, a detour, or the hint ended.</summary>
         public event Action Changed;
 
+        /// <summary>A hint was asked for (<see cref="Request"/>) and what it found.</summary>
+        public event Action<RouteTarget> Requested;
+
         /// <summary>The player got to the target of the hint (it has ended).</summary>
         public event Action<RouteTarget> Reached;
 
@@ -133,6 +136,13 @@ namespace Maze.Gameplay.Navigation
 
         /// <summary>Picks the target and lays the path to it; <see cref="RouteTarget.None"/> when nothing is reachable.</summary>
         public RouteTarget Request()
+        {
+            var target = Lay();
+            Requested?.Invoke(target);
+            return target;
+        }
+
+        private RouteTarget Lay()
         {
             if (!_player.IsSpawned || _search == null)
             {

@@ -1,6 +1,7 @@
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using Maze.Application.Flow;
+using Maze.Application.Platform;
 using Maze.Core.Common;
 using Maze.Presentation.Audio;
 using Maze.Presentation.Localization;
@@ -18,10 +19,12 @@ namespace Maze.Composition
         private readonly SettingsPresenter _settings;
         private readonly AppAudioPresenter _audio;
         private readonly LocalizationPresenter _localization;
+        private readonly GameAnalytics _analytics;
 
         public ApplicationEntryPoint(GameFlow flow, ScreenRouter screens, PauseController pause, SettingsPresenter settings,
-            AppAudioPresenter audio, LocalizationPresenter localization)
+            AppAudioPresenter audio, LocalizationPresenter localization, GameAnalytics analytics)
         {
+            _analytics = analytics;
             _localization = localization;
             _audio = audio;
             _flow = flow;
@@ -38,6 +41,7 @@ namespace Maze.Composition
             _settings.Initialize();
             _audio.Initialize();
             _pause.Initialize();
+            _analytics.Initialize();
 
             await _flow.InitializeApplication();
             if (_flow.State != GameFlowState.Error && !cancellation.IsCancellationRequested)

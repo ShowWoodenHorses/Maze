@@ -1,5 +1,6 @@
 using Maze.Application.Assets;
 using Maze.Application.Flow;
+using Maze.Application.Platform;
 using Maze.Application.Levels;
 using Maze.Application.Save;
 using Maze.Application.Services;
@@ -39,6 +40,12 @@ namespace Maze.Composition
             builder.Register<SharedDefinitionsService>(Lifetime.Singleton).AsSelf().As<IApplicationService>();
             builder.Register<LevelCatalogService>(Lifetime.Singleton).As<ILevelCatalog, IApplicationService>();
             builder.Register<ProgressService>(Lifetime.Singleton).As<IProgressService>();
+
+            // Platform: analytics sinks of the build's platform (SDK integrations go here).
+            builder.Register<LogAnalyticsSink>(Lifetime.Singleton).As<IAnalyticsSink>();
+            builder.Register<AnalyticsService>(Lifetime.Singleton).AsSelf().As<IApplicationService>();
+            builder.Register<LevelRunStats>(Lifetime.Singleton);
+            builder.Register<GameAnalytics>(Lifetime.Singleton);
 
             builder.Register<ILevelSessionFactory>(_ => new LevelSessionFactory(this, _levelSceneName), Lifetime.Singleton);
             builder.Register<GameFlow>(Lifetime.Singleton);

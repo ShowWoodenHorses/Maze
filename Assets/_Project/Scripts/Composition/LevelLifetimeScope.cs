@@ -1,3 +1,4 @@
+using Maze.Application.Platform;
 using Maze.Application.Services;
 using Maze.Core.Grid;
 using Maze.Core.Level;
@@ -79,6 +80,7 @@ namespace Maze.Composition
             builder.Register<VisibilitySystem>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep>();
             builder.Register<LevelProgress>(Lifetime.Singleton).AsSelf().As<ILevelTickable>();
             builder.Register<RouteHintSystem>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep>();
+            builder.Register<LevelAnalytics>(Lifetime.Singleton).As<ILevelLoadStep, ILevelTickable, ILevelLateTickable>();
             builder.Register<LevelRuntime>(Lifetime.Singleton);
             builder.Register<PlayerDeathRule>(Lifetime.Singleton);
             builder.RegisterEntryPoint<LevelTickDriver>();
