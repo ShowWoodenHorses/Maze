@@ -455,6 +455,7 @@ namespace Maze.Tests.EditMode.Flow
             private readonly LevelCatalog _catalog;
             public FakeCatalog(LevelCatalog catalog) => _catalog = catalog;
             public IReadOnlyList<LevelCatalogEntry> Levels => _catalog.Levels;
+            public IReadOnlyList<LevelCatalogEntry> DevLevels => System.Array.Empty<LevelCatalogEntry>();
             public LevelCatalogEntry Find(string levelId) => _catalog.Find(levelId);
         }
 

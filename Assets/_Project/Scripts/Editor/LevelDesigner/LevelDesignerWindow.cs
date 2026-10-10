@@ -136,6 +136,15 @@ namespace Maze.Editor.LevelDesigner
                 if (GUILayout.Button("Clear Preview", EditorStyles.toolbarButton, GUILayout.Width(85f)))
                     LevelPreviewBuilder.Clear();
 
+                var dev = LevelSync.IsDevLevel(_state.Level);
+                if (GUILayout.Toggle(dev, new GUIContent("Dev", "Development level: listed in the DEV section of the level select " +
+                        "(editor and development builds only), not in release builds and not in the progression."),
+                        EditorStyles.toolbarButton, GUILayout.Width(34f)) != dev)
+                {
+                    LevelSync.SetDevLevel(_state.Level, !dev);
+                    Notify(!dev ? "Moved to development levels." : "Moved to game levels.");
+                }
+
                 if (GUILayout.Button("Build / Sync", EditorStyles.toolbarButton, GUILayout.Width(80f)) && LevelSync.Sync(_state.Level))
                     Notify("Level synced.");
 

@@ -5,9 +5,11 @@ namespace Maze.Presentation.UI
     /// <summary>One level tile of the level select screen.</summary>
     public readonly struct LevelTileData
     {
-        public LevelTileData(string levelId, int number, int stars, bool unlocked, bool playable, float bestTime = 0f)
+        public LevelTileData(string levelId, int number, int stars, bool unlocked, bool playable, float bestTime = 0f,
+            string caption = null)
         {
             BestTime = bestTime;
+            Caption = caption;
             LevelId = levelId;
             Number = number;
             Stars = stars;
@@ -26,6 +28,12 @@ namespace Maze.Presentation.UI
 
         /// <summary>1-based position in the catalog: the tile's caption.</summary>
         public int Number { get; }
+
+        /// <summary>Shown instead of <see cref="Number"/> (development levels); null for game levels.</summary>
+        public string Caption { get; }
+
+        /// <summary>A development level (or an empty filler tile before them): not part of the progression.</summary>
+        public bool IsDev => Caption != null || LevelId == null;
 
         /// <summary>Best stars; above 0 means completed (the exit is always a star).</summary>
         public int Stars { get; }
@@ -55,11 +63,25 @@ namespace Maze.Presentation.UI
 
         public static int PageOf(int index) => index < 0 ? 0 : index / PerPage;
 
+        /// <summary>
+        /// Game levels, then the development levels from a new page: fillers (default tiles, hidden) complete the last
+        /// page of game levels.
+        /// </summary>
+        public static void Combine(IReadOnlyList<LevelTileData> levels, IReadOnlyList<LevelTileData> devLevels,
+            List<LevelTileData> result)
+        {
+            result.Clear();
+            result.AddRange(levels);
+            if (devLevels == null || devLevels.Count == 0) return;
+            while (result.Count % PerPage != 0) result.Add(default);
+            result.AddRange(devLevels);
+        }
+
         /// <summary>The first unlocked level not completed yet, or −1 (all done, or none open).</summary>
         public static int NextLevel(IReadOnlyList<LevelTileData> levels)
         {
             for (var i = 0; i < levels.Count; i++)
-                if (levels[i].Unlocked && !levels[i].Completed)
+                if (!levels[i].IsDev && levels[i].Unlocked && !levels[i].Completed)
                     return i;
             return -1;
         }
@@ -70,7 +92,7 @@ namespace Maze.Presentation.UI
             var next = NextLevel(levels);
             if (next >= 0) return PageOf(next);
             for (var i = levels.Count - 1; i >= 0; i--)
-                if (levels[i].Unlocked)
+                if (!levels[i].IsDev && levels[i].Unlocked)
                     return PageOf(i);
             return 0;
         }

@@ -24,6 +24,9 @@ namespace Maze.Tests.EditMode.Common
             }
         }
 
+        public UniTask<bool> ExistsAsync(string address, CancellationToken cancellation) =>
+            UniTask.FromResult(Assets.ContainsKey(address));
+
         public IAssetOwner CreateOwner(string name)
         {
             var owner = new FakeOwner(this, name);

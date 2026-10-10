@@ -27,12 +27,16 @@ namespace Maze.Core.Level
     /// <summary>
     /// Ordered list of levels shown in the main menu. Addressable (<see cref="Address"/>), filled by Build / Sync
     /// in the Level Designer; the order can be changed in the inspector. The menu reads names from here,
-    /// so it never has to load every level.
+    /// so it never has to load every level. A second asset of this type (<see cref="DevAddress"/>) lists the
+    /// development levels: shown only in the editor and development builds, left out of release builds.
     /// </summary>
     [CreateAssetMenu(fileName = "LevelCatalog", menuName = "Maze/Level Catalog")]
     public sealed class LevelCatalog : ScriptableObject
     {
         public const string Address = "LevelCatalog";
+
+        /// <summary>Address of the development levels catalog (its group is not built into release builds).</summary>
+        public const string DevAddress = "LevelCatalog/Dev";
 
         [SerializeField] private List<LevelCatalogEntry> _levels = new List<LevelCatalogEntry>();
 

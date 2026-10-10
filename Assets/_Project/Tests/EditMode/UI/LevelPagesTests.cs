@@ -46,6 +46,22 @@ namespace Maze.Tests.EditMode.UI
         }
 
         [Test]
+        public void DevLevels_StartOnANewPage_AndAreNeverNext()
+        {
+            var combined = new List<LevelTileData>();
+            var dev = new List<LevelTileData> { new LevelTileData("Level_Dev", 1, 0, true, true, caption: "Dev") };
+            LevelPages.Combine(Levels(12, 12), dev, combined);
+            Assert.AreEqual(21, combined.Count, "12 levels, 8 fillers, the dev level on page 3.");
+            Assert.IsNull(combined[12].LevelId, "A filler.");
+            Assert.AreEqual("Level_Dev", combined[20].LevelId);
+            Assert.AreEqual(-1, LevelPages.NextLevel(combined), "All game levels done: a dev level is not 'next'.");
+            Assert.AreEqual(1, LevelPages.StartPage(combined), "The last page with game levels.");
+
+            LevelPages.Combine(Levels(10, 0), null, combined);
+            Assert.AreEqual(10, combined.Count, "No dev levels: nothing added.");
+        }
+
+        [Test]
         public void AsNext_KeepsTheData()
         {
             var tile = new LevelTileData("L3", 4, 0, true, true).AsNext();

@@ -62,7 +62,18 @@ namespace Maze.Editor.Build
             if (duplicates.Count > 0)
                 return Fail("Assets are still copied into several Addressables bundles: " + string.Join(", ", duplicates.Take(10)));
             AddressableAssetSettings.CleanPlayerContent(settings.ActivePlayerDataBuilder);
-            AddressableAssetSettings.BuildPlayerContent(out var content);
+            // Development levels (and their catalog) ship only in development builds.
+            var devIncluded = LevelSync.SetDevLevelsIncluded(settings, development);
+            AddressablesPlayerBuildResult content;
+            try
+            {
+                AddressableAssetSettings.BuildPlayerContent(out content);
+            }
+            finally
+            {
+                LevelSync.SetDevLevelsIncluded(settings, devIncluded);
+            }
+
             if (!string.IsNullOrEmpty(content.Error)) return Fail("Addressables build failed: " + content.Error);
 
             var location = target == BuildTarget.Android

@@ -12,8 +12,9 @@ namespace Maze.Presentation.UI
     /// <summary>
     /// Level select (opened by Play in the main menu): pages of ten levels in two rows of five
     /// (<see cref="LevelPages"/>), the arrows and a horizontal swipe switch pages, diamonds show the page; total stars
-    /// at the top right. Opens on the page of the next level to play. A passive view: the router fills it and starts
-    /// the chosen level.
+    /// at the top right. Opens on the page of the next level to play. Development levels (editor and development
+    /// builds) follow on their own pages, captioned "DEV". A passive view: the router fills it and starts the chosen
+    /// level.
     /// </summary>
     public sealed class LevelSelectScreen : UIScreen, IBeginDragHandler, IDragHandler, IEndDragHandler
     {
@@ -37,6 +38,8 @@ namespace Maze.Presentation.UI
         [SerializeField] private TMP_Text _emptyLabel;
 
         private readonly List<LevelTileData> _levels = new List<LevelTileData>();
+        private readonly List<LevelTileData> _combined = new List<LevelTileData>();
+        private int _gameLevels;
         private readonly List<UiShape> _dotShapes = new List<UiShape>();
         private int _page;
         private float _fade = -1f;
@@ -55,13 +58,19 @@ namespace Maze.Presentation.UI
             if (_dotTemplate != null) _dotTemplate.gameObject.SetActive(false);
         }
 
-        /// <summary>All catalog levels in order, and the total stars line; shows the start page.</summary>
-        public void SetLevels(IReadOnlyList<LevelTileData> levels, int stars, int maxStars)
+        /// <summary>
+        /// All catalog levels in order (development levels after them, may be null), and the total stars line; shows
+        /// the start page.
+        /// </summary>
+        public void SetLevels(IReadOnlyList<LevelTileData> levels, int stars, int maxStars,
+            IReadOnlyList<LevelTileData> devLevels = null)
         {
+            LevelPages.Combine(levels, devLevels, _combined);
+            _gameLevels = levels.Count;
             _levels.Clear();
-            var next = LevelPages.NextLevel(levels);
-            for (var i = 0; i < levels.Count; i++)
-                _levels.Add(i == next ? levels[i].AsNext() : levels[i]);
+            var next = LevelPages.NextLevel(_combined);
+            for (var i = 0; i < _combined.Count; i++)
+                _levels.Add(i == next ? _combined[i].AsNext() : _combined[i]);
 
             if (_totalStars != null) _totalStars.text = stars + " / " + maxStars;
             if (_emptyLabel != null) _emptyLabel.gameObject.SetActive(levels.Count == 0);
@@ -80,7 +89,7 @@ namespace Maze.Presentation.UI
             for (var i = 0; i < _tiles.Length; i++)
             {
                 var index = first + i;
-                var shown = index < _levels.Count;
+                var shown = index < _levels.Count && _levels[index].LevelId != null;
                 _tiles[i].transform.parent.gameObject.SetActive(shown);
                 if (shown) _tiles[i].Set(_levels[index]);
             }
@@ -90,7 +99,9 @@ namespace Maze.Presentation.UI
             if (_range != null)
                 _range.text = _levels.Count == 0
                     ? string.Empty
-                    : (first + 1) + " - " + Mathf.Min(first + LevelPages.PerPage, _levels.Count);
+                    : first >= _gameLevels
+                        ? "DEV"
+                        : (first + 1) + " - " + Mathf.Min(first + LevelPages.PerPage, _gameLevels);
             PaintDots();
 
             if (_grid != null)

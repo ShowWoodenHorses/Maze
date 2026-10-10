@@ -29,6 +29,20 @@ namespace Maze.Application.Assets
             }
         }
 
+        public async UniTask<bool> ExistsAsync(string address, CancellationToken cancellation)
+        {
+            var handle = Addressables.LoadResourceLocationsAsync(address);
+            try
+            {
+                await handle.ToUniTask(cancellationToken: cancellation);
+                return handle.Status == AsyncOperationStatus.Succeeded && handle.Result != null && handle.Result.Count > 0;
+            }
+            finally
+            {
+                if (handle.IsValid()) Addressables.Release(handle);
+            }
+        }
+
         public IAssetOwner CreateOwner(string name)
         {
             var owner = new AssetOwner(this, name);

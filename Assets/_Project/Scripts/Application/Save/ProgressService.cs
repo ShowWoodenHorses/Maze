@@ -10,7 +10,10 @@ namespace Maze.Application.Save
     {
         int TotalKills { get; }
 
-        /// <summary>The first catalog level is always unlocked; the others after completing the previous one.</summary>
+        /// <summary>
+        /// The first catalog level is always unlocked; the others once the previous one is completed (also levels added
+        /// to the catalog after that completion — an update with new levels opens them for players who finished all).
+        /// </summary>
         bool IsUnlocked(string levelId);
 
         /// <summary>Best stars of the level, 0 when it was never completed.</summary>
@@ -44,11 +47,13 @@ namespace Maze.Application.Save
         public bool IsUnlocked(string levelId)
         {
             if (string.IsNullOrEmpty(levelId)) return false;
+            if (Data.UnlockedLevels.Contains(levelId)) return true;
             var levels = _catalog.Levels;
-            if (levels.Count > 0 && string.Equals(levels[0].LevelId, levelId, StringComparison.Ordinal))
-                return true;
+            for (var i = 0; i < levels.Count; i++)
+                if (string.Equals(levels[i].LevelId, levelId, StringComparison.Ordinal))
+                    return i == 0 || GetStars(levels[i - 1].LevelId) > 0;
 
-            return Data.UnlockedLevels.Contains(levelId);
+            return false;
         }
 
         public int GetStars(string levelId)

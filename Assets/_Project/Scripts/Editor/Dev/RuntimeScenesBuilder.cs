@@ -349,6 +349,8 @@ namespace Maze.Editor.Dev
             bodyRect.offsetMin = bodyRect.offsetMax = Vector2.zero;
             var number = Text(bodyRect, "Number", (index + 1).ToString(), 72f, true, Center, Center, new Vector2(0f, 10f),
                 new Vector2(160f, 90f), TextAlignmentOptions.Center);
+            number.textWrappingMode = TextWrappingModes.NoWrap;
+            AutoSize(number, 0.35f); // Development levels show a word instead of the number.
             var padlock = Icon(bodyRect, "Lock", icons.Lock, new Vector2(0.5f, 0f), new Vector2(0f, 26f), 30f);
             var bestTime = Text(bodyRect, "BestTime", "", 22f, false, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
                 new Vector2(0f, 10f), new Vector2(150f, 28f), TextAlignmentOptions.Bottom, _style.MutedText);

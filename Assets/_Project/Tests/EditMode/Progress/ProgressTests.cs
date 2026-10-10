@@ -79,6 +79,19 @@ namespace Maze.Tests.EditMode.Progress
         // ------------------------------------------------------------ Progress
 
         [Test]
+        public void LevelAddedAfterTheLastCompleted_IsUnlocked()
+        {
+            _catalogAsset.Remove("third");
+            _progress.RecordCompletion("first", Completed());
+            _progress.RecordCompletion("second", Completed());
+            Assert.IsFalse(_save.Data.UnlockedLevels.Contains("third"), "Not in the catalog when 'second' was completed.");
+
+            _catalogAsset.AddOrUpdate("third", "Levels/third", "Third"); // An update brings a new level.
+            Assert.IsTrue(_progress.IsUnlocked("third"), "The previous level is completed: the new one is open.");
+            Assert.IsFalse(_progress.IsUnlocked("unknown"));
+        }
+
+        [Test]
         public void OnlyFirstLevelIsUnlocked_CompletionUnlocksTheNext()
         {
             Assert.IsTrue(_progress.IsUnlocked("first"));
@@ -500,6 +513,7 @@ namespace Maze.Tests.EditMode.Progress
             public Catalog(LevelCatalog asset) => _asset = asset;
 
             public IReadOnlyList<LevelCatalogEntry> Levels => _asset.Levels;
+            public IReadOnlyList<LevelCatalogEntry> DevLevels => System.Array.Empty<LevelCatalogEntry>();
             public LevelCatalogEntry Find(string levelId) => _asset.Find(levelId);
         }
     }

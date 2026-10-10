@@ -35,11 +35,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 305e7b6e98f2e314f900aa53372e70c0
-    m_Address: Levels/Level_light
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 3432c6e961779c64e94b1b532ee025d9
     m_Address: Levels/Level_12
     m_ReadOnly: 0
@@ -80,11 +75,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 83b5aa64504d7ca429fec1144bdb53fd
-    m_Address: Levels/Level_Items
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 853c5819f974e8f4f98f63236fc39b3f
     m_Address: Levels/Level_05
     m_ReadOnly: 0
@@ -92,16 +82,6 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8cd5d7ce75aff6e4eb7d926eb4a781ef
     m_Address: Levels/Level_10
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 8d9cb4905379ad440b1876fbda3920fa
-    m_Address: Levels/Level_weapon
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 957fbfe3b8576bd40a38125e4b1f48c7
-    m_Address: Levels/Level_Dev
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

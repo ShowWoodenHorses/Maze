@@ -28,6 +28,9 @@ namespace Maze.Application.Assets
         int OwnerCount { get; }
 
         IAssetOwner CreateOwner(string name);
+
+        /// <summary>True when the address exists in the loaded content catalogs (nothing is loaded).</summary>
+        UniTask<bool> ExistsAsync(string address, CancellationToken cancellation);
     }
 
     public sealed class AssetLoadException : Exception

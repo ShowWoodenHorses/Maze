@@ -51,7 +51,7 @@ namespace Maze.Presentation.UI
         public void Set(in LevelTileData data)
         {
             LevelId = data.LevelId;
-            _number.text = data.Number.ToString();
+            _number.text = data.Caption ?? data.Number.ToString();
             _lock.SetActive(!data.Unlocked);
             if (_bestTime != null)
             {

@@ -19,16 +19,61 @@ namespace Maze.Editor.LevelDesigner
     /// <summary>
     /// Build / Sync (ТЗ §30, §84): fixes the current state of the level for runtime. Validates, makes the level
     /// and its visual prefabs Addressable, adds the level to the <see cref="LevelCatalog"/> (main menu), saves.
-    /// Never re-randomizes anything.
+    /// Never re-randomizes anything. A development level (<see cref="IsDevLevel"/>, the Level Designer's "Dev"
+    /// toggle) goes to the development catalog and the <see cref="DevLevelsGroup"/> group instead, which release
+    /// builds leave out.
     /// </summary>
     internal static class LevelSync
     {
         public const string LevelsGroup = "Maze Levels";
+        public const string DevLevelsGroup = "Maze Dev Levels";
         public const string VisualsGroup = "Maze Visuals";
         public const string SharedGroup = "Maze Shared";
         public const string SharedDependenciesGroup = "Maze Shared Dependencies";
         public const string LevelAddressPrefix = "Levels/";
         public const string CatalogPath = "Assets/_Project/Data/Levels/LevelCatalog.asset";
+        public const string DevCatalogPath = "Assets/_Project/Data/Levels/DevLevelCatalog.asset";
+
+        /// <summary>The level is listed in the development catalog.</summary>
+        public static bool IsDevLevel(LevelData level)
+        {
+            if (level == null) return false;
+            var dev = AssetDatabase.LoadAssetAtPath<LevelCatalog>(DevCatalogPath);
+            return dev != null && dev.Find(level.name) != null;
+        }
+
+        /// <summary>Moves the level between the game and development catalogs (and groups), without validation.</summary>
+        public static void SetDevLevel(LevelData level, bool dev)
+        {
+            var settings = AddressableAssetSettingsDefaultObject.GetSettings(true);
+            var address = Place(settings, level, dev);
+            EditorUtility.SetDirty(settings);
+            AssetDatabase.SaveAssets();
+            Debug.Log($"[Maze] '{level.name}' is now a {(dev ? "development" : "game")} level ('{address}').");
+        }
+
+        /// <summary>
+        /// Makes the level Addressable in its group and lists it in its catalog (removed from the other one).
+        /// Returns the address.
+        /// </summary>
+        private static string Place(AddressableAssetSettings settings, LevelData level, bool dev)
+        {
+            var levelsGroup = GetOrCreateGroup(settings, LevelsGroup);
+            var devGroup = GetOrCreateGroup(settings, DevLevelsGroup);
+            var levelGuid = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(level));
+            var levelEntry = settings.CreateOrMoveEntry(levelGuid, dev ? devGroup : levelsGroup);
+            levelEntry.address = LevelAddressPrefix + level.name;
+
+            var catalog = GetOrCreateCatalog(settings, levelsGroup);
+            var devCatalog = GetOrCreateCatalog(settings, devGroup, DevCatalogPath, LevelCatalog.DevAddress);
+            var target = dev ? devCatalog : catalog;
+            var other = dev ? catalog : devCatalog;
+            if (target.AddOrUpdate(level.name, levelEntry.address, level.Settings.DisplayName))
+                EditorUtility.SetDirty(target);
+            if (other.Remove(level.name))
+                EditorUtility.SetDirty(other);
+            return levelEntry.address;
+        }
 
         public static bool Sync(LevelData level)
         {
@@ -39,16 +84,8 @@ namespace Maze.Editor.LevelDesigner
                 return false;
 
             var settings = AddressableAssetSettingsDefaultObject.GetSettings(true);
-            var levelsGroup = GetOrCreateGroup(settings, LevelsGroup);
             var visualsGroup = GetOrCreateGroup(settings, VisualsGroup);
-
-            var levelGuid = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(level));
-            var levelEntry = settings.CreateOrMoveEntry(levelGuid, levelsGroup);
-            levelEntry.address = LevelAddressPrefix + level.name;
-
-            var catalog = GetOrCreateCatalog(settings, levelsGroup);
-            if (catalog.AddOrUpdate(level.name, levelEntry.address, level.Settings.DisplayName))
-                EditorUtility.SetDirty(catalog);
+            var address = Place(settings, level, IsDevLevel(level));
 
             var added = 0;
             var theme = level.VisualTheme;
@@ -78,7 +115,7 @@ namespace Maze.Editor.LevelDesigner
             EditorUtility.SetDirty(settings);
             EditorUtility.SetDirty(level);
             AssetDatabase.SaveAssets();
-            Debug.Log($"[Maze] Build/Sync '{level.name}': address '{levelEntry.address}', {added} visual prefab(s) made Addressable, " +
+            Debug.Log($"[Maze] Build/Sync '{level.name}': address '{address}', {added} visual prefab(s) made Addressable, " +
                       $"{report.ErrorCount} error(s), {report.WarningCount} warning(s).");
             return true;
         }
@@ -158,31 +195,45 @@ namespace Maze.Editor.LevelDesigner
             return AssetDatabase.LoadAssetAtPath<T>(AssetDatabase.GUIDToAssetPath(guids[0]));
         }
 
-        /// <summary>The project's single <see cref="LevelCatalog"/>, created on first sync and kept Addressable.</summary>
-        public static LevelCatalog GetOrCreateCatalog(AddressableAssetSettings settings, AddressableAssetGroup levelsGroup)
+        /// <summary>The project's game <see cref="LevelCatalog"/>, created on first sync and kept Addressable.</summary>
+        public static LevelCatalog GetOrCreateCatalog(AddressableAssetSettings settings, AddressableAssetGroup levelsGroup) =>
+            GetOrCreateCatalog(settings, levelsGroup, CatalogPath, LevelCatalog.Address);
+
+        /// <summary>A catalog asset at a fixed path, created when missing, Addressable in the group at the address.</summary>
+        private static LevelCatalog GetOrCreateCatalog(AddressableAssetSettings settings, AddressableAssetGroup group,
+            string path, string address)
         {
-            var guid = AssetDatabase.FindAssets("t:" + nameof(LevelCatalog)).FirstOrDefault();
-            LevelCatalog catalog;
-            if (guid != null)
-            {
-                catalog = AssetDatabase.LoadAssetAtPath<LevelCatalog>(AssetDatabase.GUIDToAssetPath(guid));
-            }
-            else
+            var catalog = AssetDatabase.LoadAssetAtPath<LevelCatalog>(path);
+            if (catalog == null)
             {
                 catalog = ScriptableObject.CreateInstance<LevelCatalog>();
-                AssetDatabase.CreateAsset(catalog, CatalogPath);
-                guid = AssetDatabase.AssetPathToGUID(CatalogPath);
-                Debug.Log($"[Maze] Created level catalog at {CatalogPath}.");
+                AssetDatabase.CreateAsset(catalog, path);
+                Debug.Log($"[Maze] Created level catalog at {path}.");
             }
 
-            var entry = settings.FindAssetEntry(guid) ?? settings.CreateOrMoveEntry(guid, levelsGroup);
-            if (entry.address != LevelCatalog.Address)
+            var guid = AssetDatabase.AssetPathToGUID(path);
+            var entry = settings.FindAssetEntry(guid);
+            if (entry == null || entry.parentGroup != group)
+                entry = settings.CreateOrMoveEntry(guid, group);
+            if (entry.address != address)
             {
-                entry.address = LevelCatalog.Address;
+                entry.address = address;
                 EditorUtility.SetDirty(settings);
             }
 
             return catalog;
+        }
+
+        /// <summary>
+        /// Includes or leaves out the development levels group in the content build; returns the previous value.
+        /// </summary>
+        public static bool SetDevLevelsIncluded(AddressableAssetSettings settings, bool included)
+        {
+            var schema = settings.FindGroup(DevLevelsGroup)?.GetSchema<BundledAssetGroupSchema>();
+            if (schema == null) return true;
+            var previous = schema.IncludeInBuild;
+            schema.IncludeInBuild = included;
+            return previous;
         }
 
         /// <summary>

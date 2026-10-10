@@ -24,6 +24,7 @@ namespace Maze.Presentation.UI
         private readonly IProgressService _progress;
         private readonly LocalizationService _texts;
         private readonly List<LevelTileData> _tiles = new List<LevelTileData>();
+        private readonly List<LevelTileData> _devTiles = new List<LevelTileData>();
         private bool _levelSelectOpen;
         private bool _initialized;
 
@@ -147,10 +148,29 @@ namespace Maze.Presentation.UI
                     _progress.GetBestTime(entry.LevelId)));
             }
 
+            // Development levels (editor, development builds): always playable, outside the progression.
+            _devTiles.Clear();
+            var devLevels = _catalog.DevLevels;
+            for (var i = 0; i < devLevels.Count; i++)
+            {
+                var entry = devLevels[i];
+                _devTiles.Add(new LevelTileData(entry.LevelId, i + 1, _progress.GetStars(entry.LevelId), true, true,
+                    _progress.GetBestTime(entry.LevelId), DevCaption(entry.LevelId)));
+            }
+
             var maxStars = levels.Count * LevelResult.MaxStars;
             _ui.MainMenu.SetSummary(totalStars, maxStars, _progress.TotalKills);
             _ui.MainMenu.SetPlayable(levels.Count > 0);
-            _ui.LevelSelect.SetLevels(_tiles, totalStars, maxStars);
+            _ui.LevelSelect.SetLevels(_tiles, totalStars, maxStars, _devTiles);
+        }
+
+        /// <summary>Tile caption of a development level: its id without the usual "Level_" prefix.</summary>
+        private static string DevCaption(string levelId)
+        {
+            const string prefix = "Level_";
+            return levelId.StartsWith(prefix, System.StringComparison.Ordinal) && levelId.Length > prefix.Length
+                ? levelId.Substring(prefix.Length)
+                : levelId;
         }
 
         /// <summary>The level after the current one in the catalog, if it is open (completing opens it).</summary>

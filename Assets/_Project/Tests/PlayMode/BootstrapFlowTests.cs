@@ -88,9 +88,11 @@ namespace Maze.Tests.PlayMode
         {
             var catalog = _container.Resolve<ILevelCatalog>();
             Assert.Greater(catalog.Levels.Count, 0, "Run Build / Sync for at least one level.");
-            Assert.AreEqual(8, AppHandles,
-                "Only application-wide assets are resident in the menu: level catalog, player definition, player visual, " +
-                "combat visual, weapon visuals, audio catalog, language catalog, texts of one language (music is counted apart).");
+            var devCatalog = catalog.DevLevels.Count > 0 ? 1 : 0; // Editor and development builds.
+            Assert.AreEqual(8 + devCatalog, AppHandles,
+                "Only application-wide assets are resident in the menu: level catalog (+ development levels catalog), " +
+                "player definition, player visual, combat visual, weapon visuals, audio catalog, language catalog, " +
+                "texts of one language (music is counted apart).");
             Assert.IsNotNull(_audio.Catalog, "Audio catalog loaded.");
             Assert.AreSame(_audio.Catalog.MenuMusic, _audio.CurrentMusic, "Menu music in the menu.");
         }
@@ -252,7 +254,7 @@ namespace Maze.Tests.PlayMode
         {
             const string itemsLevel = "Level_Items";
             var catalog = _container.Resolve<ILevelCatalog>();
-            if (!catalog.Levels.Any(l => l.LevelId == itemsLevel))
+            if (catalog.Find(itemsLevel) == null)
                 Assert.Ignore($"Dev level '{itemsLevel}' (doors, key, weapons) is not in the catalog.");
 
             await _flow.StartLevel(itemsLevel, new LevelLaunchOptions(startIndex: 0));
@@ -310,7 +312,7 @@ namespace Maze.Tests.PlayMode
         {
             const string itemsLevel = "Level_Items";
             var catalog = _container.Resolve<ILevelCatalog>();
-            if (!catalog.Levels.Any(l => l.LevelId == itemsLevel))
+            if (catalog.Find(itemsLevel) == null)
                 Assert.Ignore($"Dev level '{itemsLevel}' (with a ranged weapon) is not in the catalog.");
 
             var handlesInMenu = AppHandles;
@@ -374,7 +376,7 @@ namespace Maze.Tests.PlayMode
         {
             const string itemsLevel = "Level_Items";
             var catalog = _container.Resolve<ILevelCatalog>();
-            if (!catalog.Levels.Any(l => l.LevelId == itemsLevel))
+            if (catalog.Find(itemsLevel) == null)
                 Assert.Ignore($"Dev level '{itemsLevel}' (with zombies) is not in the catalog.");
 
             await _flow.StartLevel(itemsLevel, new LevelLaunchOptions(startIndex: 0));
@@ -439,7 +441,7 @@ namespace Maze.Tests.PlayMode
         {
             const string itemsLevel = "Level_Items";
             var catalog = _container.Resolve<ILevelCatalog>();
-            if (!catalog.Levels.Any(l => l.LevelId == itemsLevel))
+            if (catalog.Find(itemsLevel) == null)
                 Assert.Ignore($"Dev level '{itemsLevel}' is not in the catalog.");
 
             // Completion writes the real save (PlayerPrefs): keep the developer's progress intact.
