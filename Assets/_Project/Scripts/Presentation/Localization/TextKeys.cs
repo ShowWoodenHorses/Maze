@@ -62,6 +62,10 @@ namespace Maze.Presentation.Localization
         // Map.
         public const string MapPlayer = "map.player";
         public const string MapPieces = "map.pieces";
+        public const string MapZombies = "map.zombies";
+        public const string MapWeapons = "map.weapons";
+        public const string MapMedkits = "map.medkits";
+        public const string MapKeys = "map.keys";
         public const string MapNone = "map.none";
         public const string MapNoneFound = "map.none_found";
         public const string MapCount = "map.count";

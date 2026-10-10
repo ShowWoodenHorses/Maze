@@ -8,7 +8,7 @@ namespace Maze.Editor.Dev
 {
     /// <summary>
     /// Maze → Dev → Build Map Icons: draws the map icons (start flag, door plank, padlock, exit arrow, map scroll,
-    /// player arrow) "by hand" — signed-distance shapes with a slightly wobbly dark outline, white inside (tinted by
+    /// player arrow, skull, sword, medkit, key) "by hand" — signed-distance shapes with a slightly wobbly dark outline, white inside (tinted by
     /// <see cref="MapIconSet"/> colours) — as PNG sprites and fills <see cref="MapIconSet"/>. PNGs are overwritten
     /// (GUIDs kept); the tuned colours and sizes of an existing set stay. Any sprite may be replaced by hand afterwards.
     /// </summary>
@@ -50,6 +50,10 @@ namespace Maze.Editor.Dev
             set.Exit = Draw("map_exit", 4, ExitArrow, null);
             set.MapFragment = Draw("map_fragment", 5, Scroll, ScrollDetails);
             set.Player = Draw("map_player", 6, PlayerArrow, null);
+            set.Zombie = Draw("map_zombie", 7, Skull, SkullDetails);
+            set.Weapon = Draw("map_weapon", 8, Sword, null);
+            set.Medkit = Draw("map_medkit", 9, Medkit, MedkitCross);
+            set.Key = Draw("map_key", 10, Key, null);
             EditorUtility.SetDirty(set);
             AssetDatabase.SaveAssets();
             Debug.Log($"[Maze] Map icons built: {SetPath}.");
@@ -107,6 +111,48 @@ namespace Maze.Editor.Dev
 
         private static float PlayerArrow(Vector2 p) => Polygon(p,
             new Vector2(0f, 0.9f), new Vector2(0.66f, -0.72f), new Vector2(0f, -0.36f), new Vector2(-0.66f, -0.72f));
+
+        private static float Skull(Vector2 p) => Mathf.Min(
+            Circle(p, new Vector2(0f, 0.16f), 0.62f),
+            RoundBox(p, new Vector2(0f, -0.46f), new Vector2(0.36f, 0.26f), 0.1f));
+
+        private static float SkullDetails(Vector2 p)
+        {
+            var eyes = Mathf.Min(Circle(p, new Vector2(-0.25f, 0.08f), 0.16f), Circle(p, new Vector2(0.25f, 0.08f), 0.16f));
+            var nose = Polygon(p, new Vector2(0f, -0.06f), new Vector2(0.08f, -0.24f), new Vector2(-0.08f, -0.24f));
+            var teeth = Mathf.Min(Capsule(p, new Vector2(-0.14f, -0.44f), new Vector2(-0.14f, -0.64f), 0.025f),
+                Mathf.Min(Capsule(p, new Vector2(0f, -0.44f), new Vector2(0f, -0.66f), 0.025f),
+                    Capsule(p, new Vector2(0.14f, -0.44f), new Vector2(0.14f, -0.64f), 0.025f)));
+            return Mathf.Min(eyes, Mathf.Min(nose, teeth));
+        }
+
+        private static float Sword(Vector2 p) => Mathf.Min(
+            Mathf.Min(Polygon(p, new Vector2(-0.26f, -0.02f), new Vector2(-0.02f, -0.26f), new Vector2(0.6f, 0.4f),
+                    new Vector2(0.76f, 0.76f), new Vector2(0.4f, 0.6f)),
+                Capsule(p, new Vector2(-0.44f, 0.08f), new Vector2(0.08f, -0.44f), 0.08f)),
+            Mathf.Min(Capsule(p, new Vector2(-0.18f, -0.18f), new Vector2(-0.52f, -0.52f), 0.075f),
+                Circle(p, new Vector2(-0.6f, -0.6f), 0.12f)));
+
+        private static float Medkit(Vector2 p)
+        {
+            var box = RoundBox(p, new Vector2(0f, -0.12f), new Vector2(0.74f, 0.54f), 0.12f);
+            var center = new Vector2(0f, 0.42f);
+            var handle = Mathf.Max(Mathf.Abs(RoundBox(p, center, new Vector2(0.3f, 0.2f), 0.1f)) - 0.07f, center.y - p.y);
+            return Mathf.Min(box, handle);
+        }
+
+        private static float MedkitCross(Vector2 p) => Mathf.Min(
+            RoundBox(p, new Vector2(0f, -0.12f), new Vector2(0.12f, 0.34f), 0.03f),
+            RoundBox(p, new Vector2(0f, -0.12f), new Vector2(0.34f, 0.12f), 0.03f));
+
+        private static float Key(Vector2 p)
+        {
+            var bow = Mathf.Abs(Circle(p, new Vector2(-0.46f, 0.1f), 0.26f)) - 0.12f;
+            var shaft = Capsule(p, new Vector2(-0.2f, 0.1f), new Vector2(0.78f, 0.1f), 0.09f);
+            var teeth = Mathf.Min(RoundBox(p, new Vector2(0.48f, -0.1f), new Vector2(0.07f, 0.16f), 0.03f),
+                RoundBox(p, new Vector2(0.7f, -0.14f), new Vector2(0.07f, 0.2f), 0.03f));
+            return Mathf.Min(bow, Mathf.Min(shaft, teeth));
+        }
 
         // ---- drawing ----
 

@@ -11,7 +11,8 @@ namespace Maze.Presentation.UI
     /// Fullscreen map (ТЗ §60). The level's <c>MapPresenter</c> supplies the texture (one pixel per cell) and the icons;
     /// gameplay is paused while open. Icons are Images over the map image, placed in cell units and sized from the
     /// shown map (never smaller than <see cref="MapIconSet.MinScreenSize"/>); they are created when a level sets them
-    /// (loading), reused by later levels. Toggles "Player" and "Map pieces" switch those icons.
+    /// (loading), reused by later levels. A switch per <see cref="MapLayer"/> (player, map pieces, zombies, weapons,
+    /// medkits, keys) shows or hides those icons.
     /// </summary>
     public sealed class MapScreen : UIScreen
     {
@@ -20,8 +21,8 @@ namespace Maze.Presentation.UI
         [SerializeField] private TMP_Text _caption;
         [SerializeField] private Button _closeButton;
         [SerializeField] private MapIconSet _icons;
-        [SerializeField] private Toggle _showPlayer;
-        [SerializeField] private Toggle _showFragments;
+        [Tooltip("A switch per MapLayer, in its order.")]
+        [SerializeField] private Toggle[] _layers;
 
         private readonly List<Image> _iconImages = new List<Image>();
         private readonly List<MapIcon> _iconData = new List<MapIcon>();
@@ -30,8 +31,8 @@ namespace Maze.Presentation.UI
         private Vector2Int _mapSize;
 
         public event Action CloseClicked;
-        public event Action<bool> ShowPlayerChanged;
-        public event Action<bool> ShowFragmentsChanged;
+        /// <summary>The player switched a layer on or off.</summary>
+        public event Action<MapLayer, bool> LayerChanged;
 
         /// <summary>Raised when the screen is shown (icons are refreshed then).</summary>
         public event Action Opened;
@@ -41,8 +42,12 @@ namespace Maze.Presentation.UI
         private void Awake()
         {
             Bind(_closeButton, () => CloseClicked?.Invoke());
-            if (_showPlayer != null) _showPlayer.onValueChanged.AddListener(value => ShowPlayerChanged?.Invoke(value));
-            if (_showFragments != null) _showFragments.onValueChanged.AddListener(value => ShowFragmentsChanged?.Invoke(value));
+            if (_layers == null) return;
+            for (var i = 0; i < _layers.Length; i++)
+            {
+                var layer = (MapLayer)i;
+                if (_layers[i] != null) _layers[i].onValueChanged.AddListener(value => LayerChanged?.Invoke(layer, value));
+            }
         }
 
         private void OnEnable() => Opened?.Invoke();
@@ -64,11 +69,15 @@ namespace Maze.Presentation.UI
             _caption.text = caption;
         }
 
-        public void SetToggles(bool showPlayer, bool showFragments)
+        /// <summary>Shows the layer's switch state without raising <see cref="LayerChanged"/>.</summary>
+        public void SetLayer(MapLayer layer, bool shown)
         {
-            if (_showPlayer != null) _showPlayer.SetIsOnWithoutNotify(showPlayer);
-            if (_showFragments != null) _showFragments.SetIsOnWithoutNotify(showFragments);
+            var toggle = LayerToggle(layer);
+            if (toggle != null) toggle.SetIsOnWithoutNotify(shown);
         }
+
+        public Toggle LayerToggle(MapLayer layer) =>
+            _layers != null && (int)layer < _layers.Length ? _layers[(int)layer] : null;
 
         /// <summary>
         /// Sets the icons (count and contents). Creates missing Images: call at level loading, later calls with the same

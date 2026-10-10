@@ -88,6 +88,12 @@ namespace Maze.Application.Save
         /// <summary>Map screen: hide icons of map fragments not collected yet. Negated like <see cref="MapHidePlayer"/>.</summary>
         public bool MapHideFragments;
 
+        /// <summary>Map screen: hide zombies / weapons / medkits / keys. Negated like <see cref="MapHidePlayer"/>.</summary>
+        public bool MapHideZombies;
+        public bool MapHideWeapons;
+        public bool MapHideMedkits;
+        public bool MapHideKeys;
+
         /// <summary>Language code ("en", "ru", …); empty until the first start chooses one from the system language.</summary>
         public string Language = string.Empty;
     }

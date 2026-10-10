@@ -101,6 +101,13 @@ namespace Maze.Gameplay.Pickups
 
         public IReadOnlyList<Pickup> At(GridPosition cell) => _byCell.TryGetValue(cell, out var list) ? list : Empty;
 
+        /// <summary>Every pickup lying in the level now, into <paramref name="result"/> (cleared first).</summary>
+        public void GetAll(List<Pickup> result)
+        {
+            result.Clear();
+            foreach (var list in _byCell.Values) result.AddRange(list);
+        }
+
         public UniTask ExecuteAsync(CancellationToken cancellation)
         {
             _byCell.Clear();

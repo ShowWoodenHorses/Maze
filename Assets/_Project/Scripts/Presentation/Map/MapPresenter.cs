@@ -9,7 +9,9 @@ using Maze.Core.Visual;
 using Maze.Gameplay.Doors;
 using Maze.Gameplay.Level;
 using Maze.Gameplay.Map;
+using Maze.Gameplay.Pickups;
 using Maze.Gameplay.Player;
+using Maze.Gameplay.Zombies;
 using Maze.Presentation.Localization;
 using Maze.Presentation.UI;
 using Maze.Presentation.Visual;
@@ -22,8 +24,10 @@ namespace Maze.Presentation.Map
     /// <see cref="MapScreen"/> (load stage InitializeUI). The texture is redrawn only when a fragment is collected;
     /// icons are refreshed when the map opens and when a toggle changes, never per frame.
     /// Icons: the start the player began at, doors (locked: a lock in the colour of its key pair), exits — only in
-    /// collected regions; map fragments not collected yet — everywhere ("Map pieces" toggle); the player — always
-    /// ("Player" toggle). The toggles live in <see cref="SettingsService"/>. The texture is destroyed with the level.
+    /// collected regions; everywhere, each with its <see cref="MapLayer"/> switch: map fragments not collected yet,
+    /// living zombies (where they are when the map opens: it pauses the game), weapons, medkits and keys lying in the
+    /// level (keys in the colour of their door pair), the player (always last, on top). The switches live in
+    /// <see cref="SettingsService"/>. The texture is destroyed with the level.
     /// </summary>
     public sealed class MapPresenter : ILevelLoadStep, IDisposable
     {
@@ -35,15 +39,21 @@ namespace Maze.Presentation.Map
         private readonly DoorSystem _doors;
         private readonly SettingsService _settings;
         private readonly LocalizationService _texts;
+        private readonly PickupSystem _pickups;
+        private readonly ZombieSystem _zombies;
         private readonly List<MapIcon> _icons = new List<MapIcon>();
+        private readonly List<Pickup> _lying = new List<Pickup>();
         private readonly Dictionary<string, Color> _pairColors = new Dictionary<string, Color>(StringComparer.Ordinal);
+        private readonly Dictionary<string, Color> _keyColors = new Dictionary<string, Color>(StringComparer.Ordinal);
         private Texture2D _texture;
         private Color32[] _pixels;
         private bool _bound;
 
         public MapPresenter(UIRoot ui, LevelData level, LevelGrid grid, MapSystem map, PlayerSystem player,
-            DoorSystem doors, SettingsService settings, LocalizationService texts)
+            DoorSystem doors, SettingsService settings, LocalizationService texts, PickupSystem pickups, ZombieSystem zombies)
         {
+            _pickups = pickups;
+            _zombies = zombies;
             _texts = texts;
             _ui = ui;
             _level = level;
@@ -60,7 +70,9 @@ namespace Maze.Presentation.Map
         public Texture2D Texture => _texture;
 
         /// <summary>
-        /// Icons as last refreshed (for tests), in order: start, doors, exits, map fragments (as in the level), player.
+        /// Icons as last refreshed (for tests), in order: start, doors, exits, map fragments (as in the level), keys,
+        /// medkits, weapons (lying now), zombies, player. Pickups and zombies keep their slots (hidden when gone), so
+        /// the count never grows after loading.
         /// </summary>
         public IReadOnlyList<MapIcon> Icons => _icons;
 
@@ -84,13 +96,13 @@ namespace Maze.Presentation.Map
             {
                 _map.FragmentCollected += OnFragmentCollected;
                 _ui.Map.Opened += RefreshIcons;
-                _ui.Map.ShowPlayerChanged += OnShowPlayerChanged;
-                _ui.Map.ShowFragmentsChanged += OnShowFragmentsChanged;
+                _ui.Map.LayerChanged += OnLayerChanged;
                 _texts.LanguageChanged += Redraw; // The caption (rare: settings from the pause screen).
                 _bound = true;
             }
 
-            _ui.Map.SetToggles(_settings.MapShowPlayer, _settings.MapShowFragments);
+            for (var i = 0; i < MapLayers.Count; i++)
+                _ui.Map.SetLayer((MapLayer)i, IsShown((MapLayer)i));
             Redraw();
             RefreshIcons(); // Creates the icon images now, while loading.
             return UniTask.CompletedTask;
@@ -105,8 +117,7 @@ namespace Maze.Presentation.Map
                 if (_ui != null && _ui.Map != null)
                 {
                     _ui.Map.Opened -= RefreshIcons;
-                    _ui.Map.ShowPlayerChanged -= OnShowPlayerChanged;
-                    _ui.Map.ShowFragmentsChanged -= OnShowFragmentsChanged;
+                    _ui.Map.LayerChanged -= OnLayerChanged;
                 }
 
                 _bound = false;
@@ -124,17 +135,31 @@ namespace Maze.Presentation.Map
             RefreshIcons();
         }
 
-        private void OnShowPlayerChanged(bool show)
+        private void OnLayerChanged(MapLayer layer, bool show)
         {
-            _settings.MapShowPlayer = show;
+            switch (layer)
+            {
+                case MapLayer.Player: _settings.MapShowPlayer = show; break;
+                case MapLayer.Fragments: _settings.MapShowFragments = show; break;
+                case MapLayer.Zombies: _settings.MapShowZombies = show; break;
+                case MapLayer.Weapons: _settings.MapShowWeapons = show; break;
+                case MapLayer.Medkits: _settings.MapShowMedkits = show; break;
+                case MapLayer.Keys: _settings.MapShowKeys = show; break;
+            }
+
             RefreshIcons();
         }
 
-        private void OnShowFragmentsChanged(bool show)
+        private bool IsShown(MapLayer layer) => layer switch
         {
-            _settings.MapShowFragments = show;
-            RefreshIcons();
-        }
+            MapLayer.Player => _settings.MapShowPlayer,
+            MapLayer.Fragments => _settings.MapShowFragments,
+            MapLayer.Zombies => _settings.MapShowZombies,
+            MapLayer.Weapons => _settings.MapShowWeapons,
+            MapLayer.Medkits => _settings.MapShowMedkits,
+            MapLayer.Keys => _settings.MapShowKeys,
+            _ => true,
+        };
 
         private void Redraw()
         {
@@ -182,13 +207,33 @@ namespace Maze.Presentation.Map
             foreach (var exit in _level.Exits)
                 AddObjectIcon(set, MapIconKind.Exit, exit.Id, exit.Position, 0f, set.ExitColor);
 
-            var showFragments = _settings.MapShowFragments;
+            var showFragments = IsShown(MapLayer.Fragments);
             foreach (var fragment in _level.MapFragments)
             {
                 var icon = ObjectIcon(set, MapIconKind.MapFragment, fragment.Id, fragment.Position, 0f, set.MapFragmentColor);
                 icon.Visible = showFragments && !_map.IsCollected(fragment); // Everywhere: a hint where to go.
                 _icons.Add(icon);
             }
+
+            // Items lying now, everywhere. Slots: as many as the level has (a dropped weapon takes the slot of one
+            // taken, so there are never more weapons lying than the level started with).
+            _pickups.GetAll(_lying);
+            AddItemIcons(set, PickupKind.Key, _level.Keys.Count, IsShown(MapLayer.Keys));
+            AddItemIcons(set, PickupKind.Medkit, _level.Medkits.Count, IsShown(MapLayer.Medkits));
+            AddItemIcons(set, PickupKind.Weapon, _level.Weapons.Count, IsShown(MapLayer.Weapons));
+            _lying.Clear();
+
+            var showZombies = IsShown(MapLayer.Zombies);
+            foreach (var zombie in _zombies.Zombies)
+                _icons.Add(new MapIcon
+                {
+                    Kind = MapIconKind.Zombie,
+                    Center = MapIconLayout.CenterOf(zombie.Position),
+                    Rotation = MapIconLayout.Tilt(zombie.Id, set.MaxTilt),
+                    Size = set.ItemSize,
+                    Color = set.ZombieColor,
+                    Visible = showZombies && zombie.IsAlive, // Also out of sight: where they are now.
+                });
 
             _icons.Add(new MapIcon
             {
@@ -197,11 +242,44 @@ namespace Maze.Presentation.Map
                 Rotation = MapIconLayout.PlayerRotation(_player.Facing),
                 Size = set.PlayerSize,
                 Color = set.PlayerColor,
-                Visible = _settings.MapShowPlayer && _player.IsSpawned, // Always, also outside collected regions.
+                Visible = IsShown(MapLayer.Player) && _player.IsSpawned, // Always, also outside collected regions.
             });
 
             _ui.Map.SetIcons(_icons);
         }
+
+        /// <summary>
+        /// Icons of the lying pickups of a kind, then hidden ones up to <paramref name="slots"/> (a stable icon count).
+        /// </summary>
+        private void AddItemIcons(MapIconSet set, PickupKind kind, int slots, bool shown)
+        {
+            var added = 0;
+            foreach (var pickup in _lying)
+            {
+                if (pickup.Kind != kind) continue;
+                var color = kind switch
+                {
+                    PickupKind.Key => _keyColors.TryGetValue(pickup.Id, out var pair) ? pair : set.KeyColor,
+                    PickupKind.Medkit => set.MedkitColor,
+                    _ => set.WeaponColor,
+                };
+                var icon = ObjectIcon(set, KindOf(kind), pickup.Id, pickup.Cell, 0f, color);
+                icon.Size = set.ItemSize;
+                icon.Visible = shown;
+                _icons.Add(icon);
+                added++;
+            }
+
+            for (; added < slots; added++)
+                _icons.Add(new MapIcon { Kind = KindOf(kind) });
+        }
+
+        private static MapIconKind KindOf(PickupKind kind) => kind switch
+        {
+            PickupKind.Key => MapIconKind.Key,
+            PickupKind.Medkit => MapIconKind.Medkit,
+            _ => MapIconKind.Weapon,
+        };
 
         /// <summary>An icon of a level object, shown only in collected regions.</summary>
         private void AddObjectIcon(MapIconSet set, MapIconKind kind, string id, GridPosition cell, float rotation, Color color)
@@ -224,10 +302,14 @@ namespace Maze.Presentation.Map
         private void CollectPairColors()
         {
             _pairColors.Clear();
+            _keyColors.Clear();
             foreach (var door in _level.Doors)
                 if (door.RequiresKey &&
                     VisualColorTags.TryGetColor(VisualColorTags.TagOf(_level, VisualKind.Door, door), out var color))
+                {
                     _pairColors[door.Id] = color;
+                    _keyColors[door.KeyId] = color;
+                }
         }
     }
 }

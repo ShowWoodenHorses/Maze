@@ -87,6 +87,34 @@ namespace Maze.Application.Services
             set => SetFlag(ref _save.Data.Settings.MapHideFragments, !value);
         }
 
+        /// <summary>Map screen shows living zombies (also out of sight). Saved at once.</summary>
+        public bool MapShowZombies
+        {
+            get => !_save.Data.Settings.MapHideZombies;
+            set => SetFlag(ref _save.Data.Settings.MapHideZombies, !value);
+        }
+
+        /// <summary>Map screen shows weapons lying in the level. Saved at once.</summary>
+        public bool MapShowWeapons
+        {
+            get => !_save.Data.Settings.MapHideWeapons;
+            set => SetFlag(ref _save.Data.Settings.MapHideWeapons, !value);
+        }
+
+        /// <summary>Map screen shows medkits not used yet. Saved at once.</summary>
+        public bool MapShowMedkits
+        {
+            get => !_save.Data.Settings.MapHideMedkits;
+            set => SetFlag(ref _save.Data.Settings.MapHideMedkits, !value);
+        }
+
+        /// <summary>Map screen shows keys not picked up yet. Saved at once.</summary>
+        public bool MapShowKeys
+        {
+            get => !_save.Data.Settings.MapHideKeys;
+            set => SetFlag(ref _save.Data.Settings.MapHideKeys, !value);
+        }
+
         /// <summary>Language code chosen by the player or on the first start; empty before that. Saved at once.</summary>
         public string Language
         {

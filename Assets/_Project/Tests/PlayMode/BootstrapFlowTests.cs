@@ -492,6 +492,22 @@ namespace Maze.Tests.PlayMode
                     Assert.AreEqual(map.IsRevealed(cell), doorIcon.Visible, "Doors only in collected regions.");
                 }
 
+                // Zombies, weapons, medkits, keys: everywhere (also unknown regions), each with its switch.
+                var zombies = container.Resolve<Maze.Gameplay.Zombies.ZombieSystem>();
+                var zombieIcons = icons.Where(icon => icon.Kind == MapIconKind.Zombie).ToList();
+                Assert.AreEqual(zombies.TotalCount, zombieIcons.Count);
+                Assert.IsTrue(zombieIcons.All(icon => icon.Visible), "Living zombies are shown wherever they are.");
+                Assert.AreEqual(MapIconLayout.CenterOf(zombies.Zombies[0].Position), zombieIcons[0].Center);
+                Assert.AreEqual(level.Keys.Count, icons.Count(icon => icon.Kind == MapIconKind.Key && icon.Visible));
+                Assert.AreEqual(level.Medkits.Count, icons.Count(icon => icon.Kind == MapIconKind.Medkit && icon.Visible));
+                Assert.AreEqual(level.Weapons.Count, icons.Count(icon => icon.Kind == MapIconKind.Weapon && icon.Visible));
+                var zombieToggle = ui.Map.transform.Find("ShowZombiesToggle").GetComponent<Toggle>();
+                var iconCount = presenter.Icons.Count;
+                zombieToggle.isOn = false;
+                Assert.IsFalse(presenter.Icons.Any(icon => icon.Kind == MapIconKind.Zombie && icon.Visible), "Zombies switched off.");
+                Assert.AreEqual(iconCount, presenter.Icons.Count, "The icon count never changes.");
+                zombieToggle.isOn = true;
+
                 var playerToggle = ui.Map.transform.Find("ShowPlayerToggle").GetComponent<Toggle>();
                 Assert.IsTrue(playerToggle.isOn);
                 playerToggle.isOn = false;

@@ -1158,12 +1158,12 @@ namespace Maze.Editor.Dev
             var close = RoundButton(screen.transform, "CloseButton", icons.Close, new Vector2(1f, 1f), new Vector2(-100f, -90f),
                 84f, 34f);
 
-            // Area below the caption; the image keeps the level's aspect ratio inside it.
+            // Area below the caption, right of the switches; the image keeps the level's aspect ratio inside it.
             var area = new GameObject("MapArea", typeof(RectTransform));
             area.transform.SetParent(screen.transform, false);
             var areaRect = area.GetComponent<RectTransform>();
             Stretch(areaRect);
-            areaRect.offsetMin = new Vector2(40f, 40f);
+            areaRect.offsetMin = new Vector2(400f, 40f);
             areaRect.offsetMax = new Vector2(-40f, -160f);
 
             var imageObject = new GameObject("MapImage", typeof(RectTransform));
@@ -1174,16 +1174,22 @@ namespace Maze.Editor.Dev
             fitter.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
             fitter.aspectRatio = 1f;
 
-            // Icon switches stacked at the top left (the caption is centred). Direct children named "<name>Toggle" (tests).
-            var showPlayer = LabeledSwitch(screen.transform, "ShowPlayer", Loc(TextKeys.MapPlayer), TopLeft, new Vector2(60f, -60f));
-            var showFragments = LabeledSwitch(screen.transform, "ShowFragments", Loc(TextKeys.MapPieces), TopLeft, new Vector2(60f, -124f));
+            // Icon switches (one per MapLayer, in its order) stacked at the left. Direct children named "<name>Toggle" (tests).
+            (string name, string caption)[] layers =
+            {
+                ("ShowPlayer", TextKeys.MapPlayer), ("ShowFragments", TextKeys.MapPieces), ("ShowZombies", TextKeys.MapZombies),
+                ("ShowWeapons", TextKeys.MapWeapons), ("ShowMedkits", TextKeys.MapMedkits), ("ShowKeys", TextKeys.MapKeys),
+            };
+            var toggles = new List<Object>();
+            for (var i = 0; i < layers.Length; i++)
+                toggles.Add(LabeledSwitch(screen.transform, layers[i].name, Loc(layers[i].caption), TopLeft,
+                    new Vector2(40f, -60f - 64f * i)));
 
             var mapIcons = AssetDatabase.LoadAssetAtPath<MapIconSet>(MapIconsBuilder.SetPath);
             if (mapIcons == null) mapIcons = MapIconsBuilder.Build();
 
             SetReference(screen, "_icons", mapIcons);
-            SetReference(screen, "_showPlayer", showPlayer);
-            SetReference(screen, "_showFragments", showFragments);
+            SetReferences(screen, "_layers", toggles);
             SetReference(screen, "_image", image);
             SetReference(screen, "_fitter", fitter);
             SetReference(screen, "_caption", caption);

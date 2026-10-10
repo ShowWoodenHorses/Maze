@@ -11,6 +11,10 @@ namespace Maze.Presentation.Map
         Exit,
         MapFragment,
         Player,
+        Zombie,
+        Weapon,
+        Medkit,
+        Key,
     }
 
     /// <summary>
@@ -31,6 +35,11 @@ namespace Maze.Presentation.Map
         public Sprite MapFragment;
         [Tooltip("Points up (north); turned to the player's facing.")]
         public Sprite Player;
+        public Sprite Zombie;
+        public Sprite Weapon;
+        public Sprite Medkit;
+        [Tooltip("Tinted with the colour of its door pair.")]
+        public Sprite Key;
 
         [Header("Colours (tint)")]
         public Color StartColor = new Color(0.35f, 0.6f, 1f);
@@ -40,11 +49,18 @@ namespace Maze.Presentation.Map
         public Color ExitColor = new Color(0.35f, 0.9f, 0.45f);
         public Color MapFragmentColor = new Color(1f, 0.88f, 0.55f);
         public Color PlayerColor = new Color(1f, 0.45f, 0.2f);
+        public Color ZombieColor = new Color(0.62f, 0.85f, 0.45f);
+        public Color WeaponColor = new Color(0.8f, 0.82f, 0.86f);
+        public Color MedkitColor = new Color(0.95f, 0.42f, 0.38f);
+        [Tooltip("Key whose door has no colour.")]
+        public Color KeyColor = new Color(0.95f, 0.85f, 0.45f);
 
         [Header("Placement")]
         [Tooltip("Icon size in cells (icons are bigger than a cell).")]
         [Min(0.5f)] public float Size = 1.8f;
         [Min(0.5f)] public float PlayerSize = 1.6f;
+        [Tooltip("Zombies, weapons, medkits and keys: smaller than landmarks (often several close together).")]
+        [Min(0.5f)] public float ItemSize = 1.4f;
         [Tooltip("Smallest icon on screen, canvas units (big levels have tiny cells).")]
         [Min(0f)] public float MinScreenSize = 26f;
         [Tooltip("Largest random turn of an icon, degrees (stable per object id): a careless hand-drawn map.")]
@@ -59,6 +75,10 @@ namespace Maze.Presentation.Map
             MapIconKind.LockedDoor => LockedDoor,
             MapIconKind.Exit => Exit,
             MapIconKind.MapFragment => MapFragment,
+            MapIconKind.Zombie => Zombie,
+            MapIconKind.Weapon => Weapon,
+            MapIconKind.Medkit => Medkit,
+            MapIconKind.Key => Key,
             _ => Player,
         };
 
@@ -69,6 +89,10 @@ namespace Maze.Presentation.Map
             MapIconKind.LockedDoor => LockedDoorColor,
             MapIconKind.Exit => ExitColor,
             MapIconKind.MapFragment => MapFragmentColor,
+            MapIconKind.Zombie => ZombieColor,
+            MapIconKind.Weapon => WeaponColor,
+            MapIconKind.Medkit => MedkitColor,
+            MapIconKind.Key => KeyColor,
             _ => PlayerColor,
         };
     }
