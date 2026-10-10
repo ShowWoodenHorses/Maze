@@ -9,7 +9,7 @@ namespace Maze.Presentation.UI
     /// <summary>
     /// A weapon slot of the HUD where the on-screen controls are not shown (desktop): a frame (accent when active,
     /// faint when empty), the weapon silhouette, rounds in the magazine and a reload line along the bottom, the key
-    /// hint in the corner.
+    /// hint in the corner; the ranged slot also shows the reload key while the magazine in hands is not full.
     /// </summary>
     public sealed class HudWeaponSlot : MonoBehaviour
     {
@@ -19,6 +19,9 @@ namespace Maze.Presentation.UI
         [SerializeField] private Sprite _fallbackIcon;
         [SerializeField] private TMP_Text _ammo;
         [SerializeField] private TMP_Text _hint;
+
+        [Tooltip("Optional: the reload key, shown while the active weapon's magazine is not full.")]
+        [SerializeField] private TMP_Text _reloadHint;
 
         [Tooltip("Accent line along the bottom; its width (right anchor) is the reload done.")]
         [SerializeField] private RectTransform _reload;
@@ -77,6 +80,14 @@ namespace Maze.Presentation.UI
                 if (shown && ammoChanged)
                     _ammo.text = state.Reloading ? _reloadText : state.Ammo + "/" + state.Magazine;
                 if (shown) _ammo.color = state.Reloading ? _style.Accent : _style.Text;
+            }
+
+            if (_reloadHint != null)
+            {
+                var canReload = state.Active && state.Equipped && !state.Reloading && state.Magazine > 0 &&
+                                state.Ammo < state.Magazine;
+                if (_reloadHint.enabled != canReload) _reloadHint.enabled = canReload;
+                if (canReload) _reloadHint.color = _style.MutedText;
             }
 
             if (_reload != null)

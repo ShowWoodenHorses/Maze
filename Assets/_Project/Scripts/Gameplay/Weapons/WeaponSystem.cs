@@ -52,7 +52,9 @@ namespace Maze.Gameplay.Weapons
 
     /// <summary>
     /// The player's two weapon slots, Melee and Ranged (ТЗ §67). A picked weapon becomes active at once; a weapon of
-    /// the same slot is returned to be dropped, reset. SwitchMelee / SwitchRanged choose the active slot.
+    /// the same slot is returned to be dropped, reset. SwitchMelee / SwitchRanged choose the active slot; SwitchRanged
+    /// with the ranged weapon already in hands asks for a reload (<see cref="ReloadRequested"/>: a tap on the active
+    /// ranged slot on screen).
     /// Attacks come with the combat stage.
     /// </summary>
     public sealed class WeaponSystem : ILevelTickable
@@ -64,6 +66,9 @@ namespace Maze.Gameplay.Weapons
         {
             _input = input;
         }
+
+        /// <summary>This tick the player pressed SwitchRanged with the ranged weapon already active.</summary>
+        public bool ReloadRequested { get; private set; }
 
         /// <summary>Null while the player has no weapon.</summary>
         public WeaponSlot? ActiveSlot { get; private set; }
@@ -104,8 +109,13 @@ namespace Maze.Gameplay.Weapons
 
         public void Tick(float deltaTime)
         {
+            ReloadRequested = false;
             if (_input.WasPressed(PlayerAction.SwitchMelee)) Activate(WeaponSlot.Melee);
-            if (_input.WasPressed(PlayerAction.SwitchRanged)) Activate(WeaponSlot.Ranged);
+            if (_input.WasPressed(PlayerAction.SwitchRanged))
+            {
+                if (ActiveSlot == WeaponSlot.Ranged) ReloadRequested = true;
+                else Activate(WeaponSlot.Ranged);
+            }
         }
     }
 }

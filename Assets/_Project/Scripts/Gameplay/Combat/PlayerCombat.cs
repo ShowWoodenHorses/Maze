@@ -20,7 +20,8 @@ namespace Maze.Gameplay.Combat
     /// <item>Melee: every living target in a sector in front of the player (range, arc) with no wall or closed
     /// door in between takes the damage. Repeats while the button is held.</item>
     /// <item>Ranged: a bullet (<see cref="BulletSystem"/>). Single fires once per press, Automatic while held.
-    /// An empty magazine reloads automatically (ReloadTime); reload runs only while the weapon is in hands.</item>
+    /// An empty magazine reloads automatically (ReloadTime); reload runs only while the weapon is in hands.
+    /// Reload (or SwitchRanged again, <see cref="WeaponSystem.ReloadRequested"/>) starts it earlier.</item>
     /// </list>
     /// Aiming (<see cref="IAimSettings"/>): with aim assist the attack turns to the best living target within
     /// <see cref="AssistAngle"/> of the wanted direction, in reach and not behind a wall or closed door; otherwise
@@ -84,6 +85,8 @@ namespace Maze.Gameplay.Combat
                 return;
 
             UpdateTimers(weapon, deltaTime);
+            if (_input.WasPressed(PlayerAction.Reload) || _weapons.ReloadRequested)
+                TryReload();
             var move = _input.Move;
             var stick = move.sqrMagnitude >= DeadZone * DeadZone;
             if (WantsToAttack(weapon) && weapon.Cooldown <= 0f && !weapon.IsReloading)
@@ -112,6 +115,21 @@ namespace Maze.Gameplay.Combat
                 return false;
 
             Attack(weapon, direction.normalized);
+            return true;
+        }
+
+        /// <summary>
+        /// Starts reloading the active ranged weapon unless its magazine is full or it is reloading already.
+        /// </summary>
+        public bool TryReload()
+        {
+            var weapon = _weapons.Active;
+            if (weapon == null || !_player.IsSpawned || weapon.Slot != WeaponSlot.Ranged || weapon.IsReloading ||
+                weapon.Ammo >= weapon.Definition.MagazineSize)
+                return false;
+
+            weapon.ReloadRemaining = Mathf.Max(weapon.Definition.ReloadTime, 1e-4f);
+            ReloadChanged?.Invoke(weapon);
             return true;
         }
 

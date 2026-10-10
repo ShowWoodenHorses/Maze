@@ -10,6 +10,9 @@ namespace Maze.Gameplay.Player
         SwitchMelee = 2,
         SwitchRanged = 3,
         OpenMap = 4,
+
+        /// <summary>Reload the ranged weapon in hands before its magazine is empty.</summary>
+        Reload = 5,
     }
 
     /// <summary>

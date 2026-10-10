@@ -312,6 +312,38 @@ namespace Maze.Tests.EditMode.Combat
         }
 
         [Test]
+        public void ReloadButton_OrActiveRangedSlotAgain_ReloadsEarly_NotWhenFull()
+        {
+            Equip(_knife, "weapon_k");
+            Equip(_pistol); // magazine 2, reload 1 s
+            var weapon = _weapons.Active;
+            _input.Press(PlayerAction.Reload);
+            Frame();
+            Assert.IsFalse(weapon.IsReloading, "A full magazine does not reload.");
+
+            Assert.IsTrue(_combat.TryAttack(Vector2.right));
+            _input.Press(PlayerAction.Reload);
+            Frame();
+            Assert.IsTrue(weapon.IsReloading, "R reloads a magazine that is not full.");
+            for (var t = 0f; t < 1.1f; t += Dt) Frame();
+            Assert.AreEqual(2, weapon.Ammo);
+
+            Assert.IsTrue(_combat.TryAttack(Vector2.right));
+            _input.Press(PlayerAction.SwitchRanged);
+            Frame();
+            Assert.IsTrue(weapon.IsReloading, "Choosing the active ranged slot again reloads it.");
+
+            for (var t = 0f; t < 1.1f; t += Dt) Frame();
+            Assert.IsTrue(_combat.TryAttack(Vector2.right));
+            for (var t = 0f; t < 0.3f; t += Dt) Frame();
+            _weapons.Activate(WeaponSlot.Melee);
+            _input.Press(PlayerAction.SwitchRanged);
+            Frame();
+            Assert.AreEqual(WeaponSlot.Ranged, _weapons.ActiveSlot);
+            Assert.IsFalse(weapon.IsReloading, "Switching to the ranged slot only switches.");
+        }
+
+        [Test]
         public void SingleFire_NeedsAPressPerShot_AutomaticFiresWhileHeld()
         {
             Equip(_pistol);

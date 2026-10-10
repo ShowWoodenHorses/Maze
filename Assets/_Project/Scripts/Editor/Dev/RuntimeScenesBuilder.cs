@@ -471,7 +471,7 @@ namespace Maze.Editor.Dev
             var weaponPanel = Rect(root, "WeaponPanel", new Vector2(1f, 0f), new Vector2(-40f - 158f, 40f + 55f),
                 new Vector2(316f, 110f));
             var meleeSlot = WeaponSlot(weaponPanel, "MeleeSlot", new Vector2(-79f, 0f), "1", icons.Melee);
-            var rangedSlot = WeaponSlot(weaponPanel, "RangedSlot", new Vector2(79f, 0f), "2", icons.Ranged);
+            var rangedSlot = WeaponSlot(weaponPanel, "RangedSlot", new Vector2(79f, 0f), "2", icons.Ranged, "R");
 
             SetReference(screen, "_style", _style);
             SetReference(screen, "_levelName", levelName);
@@ -569,7 +569,8 @@ namespace Maze.Editor.Dev
             return rect;
         }
 
-        private static HudWeaponSlot WeaponSlot(Transform parent, string name, Vector2 position, string hint, Sprite fallback)
+        private static HudWeaponSlot WeaponSlot(Transform parent, string name, Vector2 position, string hint, Sprite fallback,
+            string reloadHint = null)
         {
             var frame = Shape(parent, name, Center, position, new Vector2(150f, 110f));
             frame.CornerRadius = 3f;
@@ -593,6 +594,13 @@ namespace Maze.Editor.Dev
             SetReference(slot, "_fallbackIcon", fallback);
             SetReference(slot, "_ammo", ammo);
             SetReference(slot, "_hint", hintText);
+            if (reloadHint != null)
+            {
+                var reloadText = Text(frame.transform, "ReloadHint", reloadHint, 22f, true, Vector2.one, Vector2.one,
+                    new Vector2(-10f, -6f), new Vector2(30f, 26f), TextAlignmentOptions.TopRight);
+                reloadText.enabled = false;
+                SetReference(slot, "_reloadHint", reloadText);
+            }
             SetReference(slot, "_reload", reload);
             return slot;
         }

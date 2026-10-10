@@ -18,7 +18,7 @@ namespace Maze.Application.Services
 
     /// <summary>
     /// Input System (new only) wrapper with the input abstraction of ТЗ §64: Move, Look, Attack, Interact,
-    /// SwitchMelee, SwitchRanged, OpenMap (+ Pause). Desktop: WASD/arrows, mouse, keys. Gamepad: sticks and buttons.
+    /// SwitchMelee, SwitchRanged, Reload, OpenMap (+ Pause). Desktop: WASD/arrows, mouse, keys. Gamepad: sticks and buttons.
     /// Android: the HUD's on-screen stick and buttons drive the same gamepad controls.
     /// A mouse click that starts over the UI (the HUD's Pause / Map buttons, screens) is not an attack, for as long as
     /// that button stays down (<see cref="IUiPointer"/>; checked when gameplay polls the attack, not in input callbacks).
@@ -30,7 +30,7 @@ namespace Maze.Application.Services
         private InputAction _look;
         private InputAction _attack;
         private InputAction _pointerAttack;
-        private readonly InputAction[] _buttons = new InputAction[5];
+        private readonly InputAction[] _buttons = new InputAction[6];
         private readonly IUiPointer _uiPointer;
         private bool _pointerBlocked;
         private int _pointerCheckedFrame = -1;
@@ -115,6 +115,7 @@ namespace Maze.Application.Services
             Button(PlayerAction.Interact, "<Keyboard>/e", "<Gamepad>/buttonWest");
             Button(PlayerAction.SwitchMelee, "<Keyboard>/1", "<Gamepad>/leftShoulder");
             Button(PlayerAction.SwitchRanged, "<Keyboard>/2", "<Gamepad>/rightShoulder");
+            Button(PlayerAction.Reload, "<Keyboard>/r", "<Gamepad>/buttonNorth");
             // Map and pause also work while gameplay is paused (to close the map), so they are events
             // rather than polled by level ticks. Android Back arrives as Escape.
             var map = Button(PlayerAction.OpenMap, "<Keyboard>/m", "<Keyboard>/tab", "<Gamepad>/select");
