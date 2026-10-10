@@ -32,6 +32,9 @@ namespace Maze.Application.Flow
 
         /// <summary>The fullscreen map is open: gameplay is paused (ТЗ §60).</summary>
         Map = 10,
+
+        /// <summary>A tutorial window is shown over the level: gameplay is paused until it is closed.</summary>
+        Tip = 11,
     }
 
     /// <summary>
@@ -78,6 +81,9 @@ namespace Maze.Application.Flow
         public string ErrorMessage { get; private set; }
 
         public bool HasLevel => _session != null;
+
+        /// <summary>The current level is the tutorial (<see cref="ILevelCatalog.Tutorial"/>).</summary>
+        public bool IsTutorialLevel => CurrentLevelId != null && _catalog.Tutorial?.LevelId == CurrentLevelId;
 
         /// <summary>Result of the last ended run (stars, kills, fragments); null until a level ends.</summary>
         public LevelResult? LastResult { get; private set; }
@@ -160,6 +166,21 @@ namespace Maze.Application.Flow
         public void CloseMap()
         {
             if (State != GameFlowState.Map) return;
+            _session.SetPaused(false);
+            SetState(GameFlowState.Playing);
+        }
+
+        /// <summary>Shows a tutorial window: gameplay pauses until <see cref="CloseTip"/>.</summary>
+        public void OpenTip()
+        {
+            if (State != GameFlowState.Playing) return;
+            _session.SetPaused(true);
+            SetState(GameFlowState.Tip);
+        }
+
+        public void CloseTip()
+        {
+            if (State != GameFlowState.Tip) return;
             _session.SetPaused(false);
             SetState(GameFlowState.Playing);
         }
@@ -311,7 +332,7 @@ namespace Maze.Application.Flow
         private void EndLevel(GameFlowState result)
         {
             if (State != GameFlowState.Playing && State != GameFlowState.Paused && State != GameFlowState.ExitConfirmation &&
-                State != GameFlowState.Map)
+                State != GameFlowState.Map && State != GameFlowState.Tip)
                 return;
 
             _session.StopGameplay();

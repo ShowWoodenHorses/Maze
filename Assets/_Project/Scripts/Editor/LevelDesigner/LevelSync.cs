@@ -21,7 +21,8 @@ namespace Maze.Editor.LevelDesigner
     /// and its visual prefabs Addressable, adds the level to the <see cref="LevelCatalog"/> (main menu), saves.
     /// Never re-randomizes anything. A development level (<see cref="IsDevLevel"/>, the Level Designer's "Dev"
     /// toggle) goes to the development catalog and the <see cref="DevLevelsGroup"/> group instead, which release
-    /// builds leave out.
+    /// builds leave out. A level with a tutorial script (<see cref="LevelData.Tutorial"/>) becomes the catalog's tutorial
+    /// (the main menu button), not a numbered level.
     /// </summary>
     internal static class LevelSync
     {
@@ -68,10 +69,22 @@ namespace Maze.Editor.LevelDesigner
             var devCatalog = GetOrCreateCatalog(settings, devGroup, DevCatalogPath, LevelCatalog.DevAddress);
             var target = dev ? devCatalog : catalog;
             var other = dev ? catalog : devCatalog;
-            if (target.AddOrUpdate(level.name, levelEntry.address, level.Settings.DisplayName))
-                EditorUtility.SetDirty(target);
             if (other.Remove(level.name))
                 EditorUtility.SetDirty(other);
+            if (!dev && level.Tutorial != null)
+            {
+                // The tutorial: out of the numbered list, into its own place.
+                var wasListed = catalog.Levels.Any(e => e.LevelId == level.name);
+                if (wasListed) catalog.Remove(level.name);
+                if (catalog.SetTutorial(level.name, levelEntry.address, level.Settings.DisplayName) || wasListed)
+                    EditorUtility.SetDirty(catalog);
+                return levelEntry.address;
+            }
+
+            if (!dev && catalog.Tutorial?.LevelId == level.name && catalog.Remove(level.name))
+                EditorUtility.SetDirty(catalog); // No longer the tutorial: back to the numbered levels.
+            if (target.AddOrUpdate(level.name, levelEntry.address, level.Settings.DisplayName))
+                EditorUtility.SetDirty(target);
             return levelEntry.address;
         }
 

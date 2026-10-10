@@ -116,6 +116,48 @@ MonoBehaviour:
   - layout.element.ranged
   - layout.reset
   - layout.done
+  - menu.tutorial
+  - hud.tutorial
+  - result.tutorial_complete
+  - map.hint.tutorial
+  - tutorial_ui.continue
+  - tutorial.move
+  - tutorial.move.touch
+  - tutorial.move.hint
+  - tutorial.key
+  - tutorial.key.hint
+  - tutorial.unlock
+  - tutorial.unlock.touch
+  - tutorial.unlock.hint
+  - tutorial.unlock.hint.touch
+  - tutorial.open
+  - tutorial.open.touch
+  - tutorial.open.hint
+  - tutorial.open.hint.touch
+  - tutorial.melee
+  - tutorial.melee.touch
+  - tutorial.melee.hint
+  - tutorial.melee.hint.touch
+  - tutorial.zombie
+  - tutorial.zombie.touch
+  - tutorial.zombie.hint
+  - tutorial.zombie.hint.touch
+  - tutorial.ranged
+  - tutorial.ranged.touch
+  - tutorial.ranged.hint
+  - tutorial.ranged.hint.touch
+  - tutorial.shoot
+  - tutorial.shoot.hint
+  - tutorial.medkit
+  - tutorial.medkit.hint
+  - tutorial.fragment
+  - tutorial.fragment.hint
+  - tutorial.map
+  - tutorial.map.touch
+  - tutorial.map.hint
+  - tutorial.map.hint.touch
+  - tutorial.exit
+  - tutorial.exit.hint
   _texts:
   - Deutsch
   - EINSTELLUNGEN
@@ -219,4 +261,72 @@ MonoBehaviour:
   - Fernkampf
   - "ZUR\xDCCKSETZEN"
   - FERTIG
+  - TUTORIAL
+  - TUTORIAL
+  - TUTORIAL ABGESCHLOSSEN
+  - Route des Tutorials
+  - VERSTANDEN
+  - 'Willkommen im Labyrinth! Dein Ziel ist der Ausgang.
+
+    Bewege dich mit WASD
+    oder den Pfeiltasten und folge der leuchtenden Linie.'
+  - 'Willkommen im Labyrinth! Dein Ziel ist der Ausgang.
+
+    Bewege dich mit dem
+    Stick links und folge der leuchtenden Linie.'
+  - Folge der Linie
+  - "Manche T\xFCren sind verschlossen. Ein Schl\xFCssel \xF6ffnet eine T\xFCr seiner
+    Farbe.\nUm ihn aufzuheben, tritt einfach darauf."
+  - "Nimm den Schl\xFCssel"
+  - "Geh zur T\xFCr in der Farbe des Schl\xFCssels und dr\xFCcke E, um sie aufzuschlie\xDFen.
+    Der Schl\xFCssel wird verbraucht."
+  - "Geh zur T\xFCr in der Farbe des Schl\xFCssels und dr\xFCcke \u201EBenutzen\u201C
+    (der runde Knopf), um sie aufzuschlie\xDFen. Der Schl\xFCssel wird verbraucht."
+  - "Schlie\xDF die T\xFCr auf: E"
+  - "Schlie\xDF die T\xFCr auf: \u201EBenutzen\u201C"
+  - "Die T\xFCr ist aufgeschlossen, aber noch zu. Dr\xFCcke erneut E, um sie zu \xF6ffnen.
+    T\xFCren lassen sich beliebig oft \xF6ffnen und schlie\xDFen."
+  - "Die T\xFCr ist aufgeschlossen, aber noch zu. Dr\xFCcke erneut \u201EBenutzen\u201C,
+    um sie zu \xF6ffnen. T\xFCren lassen sich beliebig oft \xF6ffnen und schlie\xDFen."
+  - "\xD6ffne die T\xFCr: E"
+  - "\xD6ffne die T\xFCr: \u201EBenutzen\u201C"
+  - "Waffen liegen auf dem Boden. Stell dich darauf und dr\xFCcke E, um sie aufzuheben.\nDu
+    kannst eine Nahkampfwaffe und eine Schusswaffe tragen."
+  - "Waffen liegen auf dem Boden. Stell dich darauf und dr\xFCcke \u201EBenutzen\u201C,
+    um sie aufzuheben.\nDu kannst eine Nahkampfwaffe und eine Schusswaffe tragen."
+  - 'Nimm die Waffe: E'
+  - "Nimm die Waffe: \u201EBenutzen\u201C"
+  - "Hinter dieser T\xFCr ist ein Zombie! Der gelbe Kegel zeigt, was er sieht: Tritt
+    hinein, und er br\xFCllt und greift an.\n\xD6ffne die T\xFCr und schlag ihn mit
+    der Leertaste oder der linken Maustaste."
+  - "Hinter dieser T\xFCr ist ein Zombie! Der gelbe Kegel zeigt, was er sieht: Tritt
+    hinein, und er br\xFCllt und greift an.\n\xD6ffne die T\xFCr und schlag ihn mit
+    dem gro\xDFen Angriffsknopf rechts."
+  - 'Besiege den Zombie: Leertaste / linke Maustaste'
+  - 'Besiege den Zombie: Angriff'
+  - "Eine Schusswaffe! Sie trifft aus der Ferne, aber das Magazin ist klein: Leer
+    l\xE4dt es von selbst nach, oder dr\xFCcke R.\nWechsle die Waffen mit 1 und 2."
+  - "Eine Schusswaffe! Sie trifft aus der Ferne, aber das Magazin ist klein: Leer
+    l\xE4dt es von selbst nach, oder tippe erneut auf ihr Fach.\nWechsle die Waffen
+    durch Tippen auf die F\xE4cher um den Angriffsknopf."
+  - 'Nimm die Waffe: E'
+  - "Nimm die Waffe: \u201EBenutzen\u201C"
+  - "Weiter den Gang entlang ist noch ein Zombie. Dieser sieht nichts, h\xF6rt aber
+    gut, und Sch\xFCsse sind laut: Er wird zu dir kommen.\nErschie\xDF ihn, bevor
+    er nah ist."
+  - "Erschie\xDF den Zombie"
+  - "Verletzt? Ein Medikit heilt dich vollst\xE4ndig.\nTritt darauf \u2013 es wird
+    nur verbraucht, wenn deine Gesundheit nicht voll ist."
+  - Tritt auf das Medikit
+  - Das ist ein Kartenteil. Jedes zeigt einen Teil der Levelkarte.
+  - Nimm das Kartenteil
+  - "\xD6ffne die Karte mit M oder dem Kartenknopf oben rechts. Die Lupe auf der
+    Karte zeigt den Weg zum n\xE4chsten Ziel."
+  - "\xD6ffne die Karte mit dem Kartenknopf oben rechts. Die Lupe auf der Karte zeigt
+    den Weg zum n\xE4chsten Ziel."
+  - "\xD6ffne die Karte: M"
+  - "\xD6ffne die Karte"
+  - "Geh jetzt zum Ausgang \u2013 der Treppe.\nIn den Levels verdienst du Sterne:
+    f\xFCr den Ausgang, f\xFCr alle besiegten Zombies und f\xFCr alle Kartenteile."
+  - Geh zum Ausgang
   _missing: []

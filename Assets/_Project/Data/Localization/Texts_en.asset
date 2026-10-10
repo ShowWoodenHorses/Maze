@@ -116,6 +116,48 @@ MonoBehaviour:
   - layout.element.ranged
   - layout.reset
   - layout.done
+  - menu.tutorial
+  - hud.tutorial
+  - result.tutorial_complete
+  - map.hint.tutorial
+  - tutorial_ui.continue
+  - tutorial.move
+  - tutorial.move.touch
+  - tutorial.move.hint
+  - tutorial.key
+  - tutorial.key.hint
+  - tutorial.unlock
+  - tutorial.unlock.touch
+  - tutorial.unlock.hint
+  - tutorial.unlock.hint.touch
+  - tutorial.open
+  - tutorial.open.touch
+  - tutorial.open.hint
+  - tutorial.open.hint.touch
+  - tutorial.melee
+  - tutorial.melee.touch
+  - tutorial.melee.hint
+  - tutorial.melee.hint.touch
+  - tutorial.zombie
+  - tutorial.zombie.touch
+  - tutorial.zombie.hint
+  - tutorial.zombie.hint.touch
+  - tutorial.ranged
+  - tutorial.ranged.touch
+  - tutorial.ranged.hint
+  - tutorial.ranged.hint.touch
+  - tutorial.shoot
+  - tutorial.shoot.hint
+  - tutorial.medkit
+  - tutorial.medkit.hint
+  - tutorial.fragment
+  - tutorial.fragment.hint
+  - tutorial.map
+  - tutorial.map.touch
+  - tutorial.map.hint
+  - tutorial.map.hint.touch
+  - tutorial.exit
+  - tutorial.exit.hint
   _texts:
   - English
   - SETTINGS
@@ -219,4 +261,87 @@ MonoBehaviour:
   - Ranged
   - RESET
   - DONE
+  - TUTORIAL
+  - TUTORIAL
+  - TUTORIAL COMPLETE
+  - Tutorial route
+  - GOT IT
+  - 'Welcome to the maze! Your goal is to find the exit.
+
+    Move with WASD or the
+    arrow keys and follow the glowing line.'
+  - 'Welcome to the maze! Your goal is to find the exit.
+
+    Move with the stick
+    on the left and follow the glowing line.'
+  - Follow the line
+  - 'Some doors are locked. A key opens one door of its colour.
+
+    To pick up a
+    key, just step on it.'
+  - Pick up the key
+  - Go up to the door of the key's colour and press E to unlock it. The key is used
+    up.
+  - Go up to the door of the key's colour and press Use (the round button) to unlock
+    it. The key is used up.
+  - 'Unlock the door: E'
+  - 'Unlock the door: Use'
+  - The door is unlocked but still closed. Press E again to open it. Doors can be
+    opened and closed any number of times.
+  - The door is unlocked but still closed. Press Use again to open it. Doors can
+    be opened and closed any number of times.
+  - 'Open the door: E'
+  - 'Open the door: Use'
+  - 'Weapons lie on the floor. Stand on one and press E to take it.
+
+    You can
+    carry one melee weapon and one firearm.'
+  - 'Weapons lie on the floor. Stand on one and press Use to take it.
+
+    You can
+    carry one melee weapon and one firearm.'
+  - 'Take the weapon: E'
+  - 'Take the weapon: Use'
+  - 'A zombie is behind this door! The yellow cone shows what it sees: step into
+    it and the zombie roars and attacks.
+
+    Open the door and hit it with Space
+    or the left mouse button.'
+  - 'A zombie is behind this door! The yellow cone shows what it sees: step into
+    it and the zombie roars and attacks.
+
+    Open the door and hit it with the big
+    Attack button on the right.'
+  - 'Defeat the zombie: Space / left mouse button'
+  - 'Defeat the zombie: Attack'
+  - 'A firearm! It hits from afar, but the magazine is small: it reloads by itself
+    when empty, or press R.
+
+    Switch weapons with 1 and 2.'
+  - 'A firearm! It hits from afar, but the magazine is small: it reloads by itself
+    when empty, or tap its slot again.
+
+    Switch weapons by tapping their slots
+    around the Attack button.'
+  - 'Take the gun: E'
+  - 'Take the gun: Use'
+  - 'Another zombie is down the corridor. This one sees nothing but hears well, and
+    shots are loud: it will come to you.
+
+    Shoot it before it gets close.'
+  - Shoot the zombie
+  - "Hurt? A medkit heals you to full.\nStep on it \u2014 it is used only when your
+    health is not full."
+  - Step on the medkit
+  - This is a map fragment. Each one reveals a part of the level map.
+  - Pick up the map fragment
+  - Open the map with M or the map button at the top right. On the map, the magnifier
+    shows the way to the nearest goal.
+  - Open the map with the map button at the top right. On the map, the magnifier
+    shows the way to the nearest goal.
+  - 'Open the map: M'
+  - Open the map
+  - "Now go to the exit \u2014 the stairs.\nIn the levels you earn stars: one for
+    the exit, one for killing all zombies and one for all map fragments."
+  - Go to the exit
   _missing: []

@@ -12,6 +12,7 @@ using Maze.Gameplay.Pickups;
 using Maze.Gameplay.Player;
 using Maze.Gameplay.Sound;
 using Maze.Gameplay.Spatial;
+using Maze.Gameplay.Tutorial;
 using Maze.Gameplay.Visibility;
 using Maze.Gameplay.Weapons;
 using Maze.Gameplay.Zombies;
@@ -80,6 +81,8 @@ namespace Maze.Composition
             builder.Register<VisibilitySystem>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep>();
             builder.Register<LevelProgress>(Lifetime.Singleton).AsSelf().As<ILevelTickable>();
             builder.Register<RouteHintSystem>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep>();
+            // Stage SpawnZombies, registered after ZombieSystem: every target exists when the first step starts.
+            builder.Register<TutorialSystem>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep>();
             builder.Register<LevelAnalytics>(Lifetime.Singleton).As<ILevelLoadStep, ILevelTickable, ILevelLateTickable>();
             builder.Register<LevelRuntime>(Lifetime.Singleton);
             builder.Register<PlayerDeathRule>(Lifetime.Singleton);
@@ -99,6 +102,8 @@ namespace Maze.Composition
             builder.Register<PickupViewPresenter>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep>();
             builder.Register<HudPresenter>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep, ILevelLateTickable>();
             builder.Register<MapPresenter>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep>();
+            builder.Register<TutorialPresenter>(Lifetime.Singleton).AsSelf()
+                .As<ILevelLoadStep, ILevelTickable, ILevelLateTickable>();
             builder.Register<PlayerViewPresenter>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep, ILevelLateTickable>();
             builder.Register<PlayerWeaponPresenter>(Lifetime.Singleton).AsSelf().As<ILevelLoadStep, ILevelLateTickable, IViewWarmup>();
             // After the weapon presenter: the late tick reads the muzzle of the posed gun.

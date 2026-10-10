@@ -68,6 +68,46 @@ namespace Maze.Editor.LevelDesigner
             EditorGUILayout.HelpBox(
                 "Generate New is destructive: geometry, all objects and the visual design (including overrides) are replaced. " +
                 "It never runs automatically.", MessageType.None);
+
+            TutorialGUI(state);
+        }
+
+        /// <summary>
+        /// The tutorial script of the level: a level with one is the game's tutorial (Build / Sync puts it on the main
+        /// menu's Tutorial button, apart from the numbered levels). Steps are edited in the script's inspector.
+        /// </summary>
+        private static void TutorialGUI(LevelDesignerState state)
+        {
+            var level = state.Level;
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField("Tutorial", EditorStyles.boldLabel);
+            EditorGUI.BeginChangeCheck();
+            var script = (TutorialScript)EditorGUILayout.ObjectField(new GUIContent("Tutorial Script",
+                    "Only for the tutorial level: steps with texts, goals and targets. Build / Sync then lists the level " +
+                    "as the tutorial (main menu button), not as a numbered level."),
+                level.Tutorial, typeof(TutorialScript), false);
+            if (EditorGUI.EndChangeCheck())
+            {
+                LevelEditorCommands.Modify(level, "Change Tutorial Script", () => level.Tutorial = script);
+                state.Revalidate();
+            }
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                if (level.Tutorial == null && GUILayout.Button("Create Tutorial Script"))
+                {
+                    var path = AssetDatabase.GenerateUniqueAssetPath(
+                        System.IO.Path.GetDirectoryName(AssetDatabase.GetAssetPath(level)) + "/" + level.name + "_Tutorial.asset");
+                    var created = ScriptableObject.CreateInstance<TutorialScript>();
+                    AssetDatabase.CreateAsset(created, path);
+                    LevelEditorCommands.Modify(level, "Create Tutorial Script", () => level.Tutorial = created);
+                    AssetDatabase.SaveAssets();
+                    state.Revalidate();
+                }
+
+                if (level.Tutorial != null && GUILayout.Button("Edit Steps"))
+                    Selection.activeObject = level.Tutorial;
+            }
         }
 
         private static int SeedField(string label, int value)

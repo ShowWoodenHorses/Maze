@@ -610,6 +610,51 @@ namespace Maze.Tests.PlayMode
             Assert.AreEqual(handlesInMenu, AppHandles);
         });
 
+        /// <summary>
+        /// The tutorial from its menu button: the first step's window pauses the level, Continue resumes; the reminder,
+        /// the arrow and the route line show the step; the map opened counts for the map step.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator Tutorial_WindowPausesTheLevel_ContinueResumes() => Async(async () =>
+        {
+            var catalog = _container.Resolve<ILevelCatalog>();
+            if (catalog.Tutorial == null) Assert.Ignore("No tutorial level: Build / Sync the level with a tutorial script.");
+            var ui = _container.Resolve<UIRoot>();
+            Assert.IsTrue(ui.MainMenu.transform.GetComponentsInChildren<Button>(true)
+                .Any(b => b.name == "TutorialButton" && b.gameObject.activeSelf), "The menu shows the Tutorial button.");
+
+            await _flow.StartLevel(catalog.Tutorial.LevelId);
+            Assert.AreEqual(GameFlowState.Playing, _flow.State, _flow.ErrorMessage);
+            Assert.IsTrue(_flow.IsTutorialLevel);
+            Assert.IsTrue(ui.Tutorial.IsVisible);
+
+            var container = FindRoot<LevelLifetimeScope>(SceneManager.GetSceneByName(GameScene)).Container;
+            var tutorial = container.Resolve<Maze.Gameplay.Tutorial.TutorialSystem>();
+            var runtime = container.Resolve<LevelRuntime>();
+            Assert.AreEqual(0, tutorial.StepIndex, "The first step is on.");
+
+            await WaitFor(() => _flow.State == GameFlowState.Tip);
+            Assert.AreEqual(LevelRunState.Paused, runtime.State, "The window pauses the level.");
+            Assert.IsTrue(ui.Hud.IsVisible, "The HUD stays under the window.");
+            var dialog = ui.Tutorial.transform.Find("Dialog").gameObject;
+            Assert.IsTrue(dialog.activeSelf);
+
+            await WaitFor(() => ui.Tutorial.CanContinue);
+            _flow.CloseTip();
+            Assert.AreEqual(GameFlowState.Playing, _flow.State);
+            Assert.AreEqual(LevelRunState.Running, runtime.State);
+            Assert.IsFalse(dialog.activeSelf);
+            Assert.IsTrue(ui.Tutorial.transform.Find("HintRow").gameObject.activeSelf, "The reminder stays.");
+            await UniTask.Yield();
+            await UniTask.Yield();
+            Assert.IsTrue(ui.Tutorial.transform.Find("Pointer").gameObject.activeSelf, "The arrow points at the target.");
+            Assert.AreEqual(Maze.Gameplay.Navigation.RouteTarget.Guide,
+                container.Resolve<Maze.Gameplay.Navigation.RouteHintSystem>().Target, "The line leads to it.");
+
+            await _flow.ExitToMenu();
+            Assert.IsFalse(ui.Tutorial.IsVisible);
+        });
+
         private string FirstLevelId()
         {
             var catalog = _container.Resolve<ILevelCatalog>();

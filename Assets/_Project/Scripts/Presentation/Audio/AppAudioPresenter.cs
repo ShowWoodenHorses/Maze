@@ -88,16 +88,17 @@ namespace Maze.Presentation.Audio
                     _audio.SetLevelPaused(false);
                     _audio.SetMusicShare(1f);
                     _audio.PlayMusic(Catalog.LevelMusic);
-                    if (previous == GameFlowState.Paused) Play(Catalog.PauseResume);
+                    if (previous == GameFlowState.Paused || previous == GameFlowState.Tip) Play(Catalog.PauseResume);
                     else if (previous == GameFlowState.Map) Play(Catalog.MapClose);
                     break;
 
                 case GameFlowState.Paused:
                 case GameFlowState.Map:
                 case GameFlowState.ExitConfirmation:
+                case GameFlowState.Tip:
                     _audio.SetLevelPaused(true);
                     _audio.SetMusicShare(Catalog.PausedMusicVolume);
-                    if (state == GameFlowState.Paused) Play(Catalog.PauseOpen);
+                    if (state == GameFlowState.Paused || state == GameFlowState.Tip) Play(Catalog.PauseOpen);
                     else if (state == GameFlowState.Map) Play(Catalog.MapOpen);
                     else
                     {
@@ -112,7 +113,9 @@ namespace Maze.Presentation.Audio
                     _audio.StopLevelSounds(loopsOnly: true); // …the ambience stops.
                     _audio.SetMusicShare(Catalog.ResultMusicVolume);
                     _result = new CancellationTokenSource();
-                    PlayResultAsync(state == GameFlowState.Completed, _flow.LastResult?.Stars ?? 0, _result.Token).Forget();
+                    // The tutorial shows no stars: only the jingle.
+                    var stars = _flow.IsTutorialLevel ? 0 : _flow.LastResult?.Stars ?? 0;
+                    PlayResultAsync(state == GameFlowState.Completed, stars, _result.Token).Forget();
                     break;
 
                 case GameFlowState.Error:

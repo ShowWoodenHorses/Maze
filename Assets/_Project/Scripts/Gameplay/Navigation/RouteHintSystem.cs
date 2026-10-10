@@ -21,6 +21,9 @@ namespace Maze.Gameplay.Navigation
         Exit = 2,
         Key = 3,
         Door = 4,
+
+        /// <summary>A cell chosen by the game (the tutorial), not by <see cref="RouteHintSystem.Request"/>.</summary>
+        Guide = 5,
     }
 
     /// <summary>
@@ -76,6 +79,7 @@ namespace Maze.Gameplay.Navigation
         private readonly List<Pickup> _lying = new List<Pickup>();
         private GridBfs _search;
         private string _targetDoorId;
+        private bool _adjacent;
         private bool _subscribed;
 
         public RouteHintSystem(LevelData level, LevelGrid grid, DoorSystem doors, PlayerSystem player,
@@ -192,9 +196,39 @@ namespace Maze.Gameplay.Navigation
             Target = kind;
             TargetCell = best.Cell;
             _targetDoorId = best.DoorId;
+            _adjacent = kind == RouteTarget.Door;
             Version++;
             Changed?.Invoke();
             return kind;
+        }
+
+        /// <summary>
+        /// Leads to a given cell (<see cref="RouteTarget.Guide"/>; the tutorial): one search now, then like any hint.
+        /// <paramref name="adjacent"/> — reached from a next cell (a door). False and no route when the player is already
+        /// there or cannot get there.
+        /// </summary>
+        public bool Guide(GridPosition cell, bool adjacent)
+        {
+            if (!_player.IsSpawned || _search == null || IsNear(_player.Cell, cell, adjacent))
+            {
+                Clear();
+                return false;
+            }
+
+            _search.Run(_player.Cell, Passability);
+            if (!_search.TryGetPath(cell, _path))
+            {
+                Clear();
+                return false;
+            }
+
+            Target = RouteTarget.Guide;
+            TargetCell = cell;
+            _targetDoorId = null;
+            _adjacent = adjacent;
+            Version++;
+            Changed?.Invoke();
+            return true;
         }
 
         /// <summary>Ends the hint (no event <see cref="Reached"/>).</summary>
@@ -251,12 +285,13 @@ namespace Maze.Gameplay.Navigation
             Changed?.Invoke();
         }
 
-        private bool IsAtTarget(GridPosition cell)
+        private bool IsAtTarget(GridPosition cell) => IsNear(cell, TargetCell, _adjacent);
+
+        /// <summary>The cell itself, or also a next one (a door is used from the next cell).</summary>
+        private static bool IsNear(GridPosition cell, GridPosition target, bool adjacent)
         {
-            if (Target != RouteTarget.Door) return cell == TargetCell;
-            var dx = Math.Abs(cell.X - TargetCell.X);
-            var dy = Math.Abs(cell.Y - TargetCell.Y);
-            return dx + dy <= 1; // A door is used from the next cell.
+            if (!adjacent) return cell == target;
+            return Math.Abs(cell.X - target.X) + Math.Abs(cell.Y - target.Y) <= 1;
         }
 
         private void OnDoorUnlocked(DoorData door)

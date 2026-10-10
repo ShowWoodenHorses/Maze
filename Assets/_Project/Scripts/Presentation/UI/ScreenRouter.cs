@@ -14,7 +14,9 @@ namespace Maze.Presentation.UI
     /// <summary>
     /// Presenter of the application screens: shows the screen matching <see cref="GameFlow.State"/>
     /// and turns screen events into GameFlow commands. The level select is part of the main menu state: Play opens it
-    /// over the menu, Back returns.
+    /// over the menu, Back returns. The tutorial has its own menu button and caption, its window pauses the level
+    /// (<see cref="GameFlowState.Tip"/>; Continue, Enter / Space / gamepad South close it) and its completion shows only
+    /// "Tutorial complete" with Next leading to the first level.
     /// </summary>
     public sealed class ScreenRouter : IDisposable
     {
@@ -23,14 +25,16 @@ namespace Maze.Presentation.UI
         private readonly UIRoot _ui;
         private readonly IProgressService _progress;
         private readonly LocalizationService _texts;
+        private readonly IInputService _input;
         private readonly List<LevelTileData> _tiles = new List<LevelTileData>();
         private readonly List<LevelTileData> _devTiles = new List<LevelTileData>();
         private bool _levelSelectOpen;
         private bool _initialized;
 
         public ScreenRouter(GameFlow flow, ILevelCatalog catalog, UIRoot ui, IProgressService progress,
-            LocalizationService texts)
+            LocalizationService texts, IInputService input = null)
         {
+            _input = input;
             _texts = texts;
             _progress = progress;
             _flow = flow;
@@ -47,7 +51,10 @@ namespace Maze.Presentation.UI
             _flow.StateChanged += Show;
             _texts.LanguageChanged += OnLanguageChanged;
             _ui.MainMenu.PlayClicked += OnPlayClicked;
+            _ui.MainMenu.TutorialClicked += OnTutorialClicked;
             _ui.MainMenu.DebugResetProgressClicked += OnResetProgressRequested;
+            if (_ui.Tutorial != null) _ui.Tutorial.ContinueClicked += _flow.CloseTip;
+            if (_input != null) _input.ConfirmRequested += OnConfirmRequested;
             _ui.LevelSelect.LevelSelected += OnLevelSelected;
             _ui.LevelSelect.BackClicked += OnLevelSelectBack;
             _ui.Error.BackClicked += OnMenuRequested;
@@ -75,9 +82,12 @@ namespace Maze.Presentation.UI
 
             _flow.StateChanged -= Show;
             _texts.LanguageChanged -= OnLanguageChanged;
+            if (_input != null) _input.ConfirmRequested -= OnConfirmRequested;
             if (_ui == null) return; // Scene already destroyed on application quit.
 
             _ui.MainMenu.PlayClicked -= OnPlayClicked;
+            _ui.MainMenu.TutorialClicked -= OnTutorialClicked;
+            if (_ui.Tutorial != null) _ui.Tutorial.ContinueClicked -= _flow.CloseTip;
             _ui.MainMenu.DebugResetProgressClicked -= OnResetProgressRequested;
             _ui.LevelSelect.LevelSelected -= OnLevelSelected;
             _ui.LevelSelect.BackClicked -= OnLevelSelectBack;
@@ -103,7 +113,7 @@ namespace Maze.Presentation.UI
             var loading = state == GameFlowState.None || state == GameFlowState.Initializing || state == GameFlowState.Loading;
             // The map is fullscreen: the HUD is hidden under it.
             var inLevel = state == GameFlowState.Playing || state == GameFlowState.Paused ||
-                          state == GameFlowState.ExitConfirmation;
+                          state == GameFlowState.ExitConfirmation || state == GameFlowState.Tip;
             var result = state == GameFlowState.Completed || state == GameFlowState.Failed;
             var error = state == GameFlowState.Error;
 
@@ -113,8 +123,11 @@ namespace Maze.Presentation.UI
             if (result)
             {
                 var completed = state == GameFlowState.Completed;
-                _ui.Result.SetResult(completed, _flow.LastResult, LevelCaption(_flow.CurrentLevelId),
-                    completed && NextLevelId() != null, _flow.LastPreviousBestTime);
+                if (completed && _flow.IsTutorialLevel)
+                    _ui.Result.SetTutorialComplete(NextLevelId() != null);
+                else
+                    _ui.Result.SetResult(completed, _flow.LastResult, LevelCaption(_flow.CurrentLevelId),
+                        completed && NextLevelId() != null, _flow.LastPreviousBestTime);
             }
             if (error) _ui.Error.SetMessage(_flow.ErrorMessage);
 
@@ -127,6 +140,11 @@ namespace Maze.Presentation.UI
             _ui.Error.SetVisible(error);
             _ui.ConfirmExit.SetVisible(state == GameFlowState.ExitConfirmation);
             _ui.Map.SetVisible(state == GameFlowState.Map);
+            if (_ui.Tutorial != null)
+            {
+                _ui.Tutorial.SetVisible(inLevel && _flow.IsTutorialLevel);
+                _ui.Tutorial.SetDialogVisible(state == GameFlowState.Tip);
+            }
         }
 
         /// <summary>
@@ -161,6 +179,7 @@ namespace Maze.Presentation.UI
             var maxStars = levels.Count * LevelResult.MaxStars;
             _ui.MainMenu.SetSummary(totalStars, maxStars, _progress.TotalKills);
             _ui.MainMenu.SetPlayable(levels.Count > 0);
+            _ui.MainMenu.SetTutorialAvailable(_catalog.Tutorial != null);
             _ui.LevelSelect.SetLevels(_tiles, totalStars, maxStars, _devTiles);
         }
 
@@ -173,10 +192,14 @@ namespace Maze.Presentation.UI
                 : levelId;
         }
 
-        /// <summary>The level after the current one in the catalog, if it is open (completing opens it).</summary>
+        /// <summary>
+        /// The level after the current one in the catalog, if it is open (completing opens it); after the tutorial — the
+        /// first level.
+        /// </summary>
         private string NextLevelId()
         {
             var levels = _catalog.Levels;
+            if (_flow.IsTutorialLevel) return levels.Count > 0 ? levels[0].LevelId : null;
             for (var i = 0; i + 1 < levels.Count; i++)
             {
                 if (levels[i].LevelId != _flow.CurrentLevelId) continue;
@@ -196,6 +219,7 @@ namespace Maze.Presentation.UI
             var levels = _catalog.Levels;
             for (var i = 0; i < levels.Count; i++)
                 if (levels[i].LevelId == levelId) return _texts.Format(TextKeys.HudLevel, i + 1);
+            if (levelId != null && _catalog.Tutorial?.LevelId == levelId) return _texts.Get(TextKeys.HudTutorial);
             return levelId ?? string.Empty;
         }
 
@@ -203,7 +227,8 @@ namespace Maze.Presentation.UI
         private void OnLanguageChanged()
         {
             var state = _flow.State;
-            if (state == GameFlowState.Paused || state == GameFlowState.Playing || state == GameFlowState.ExitConfirmation)
+            if (state == GameFlowState.Paused || state == GameFlowState.Playing || state == GameFlowState.ExitConfirmation ||
+                state == GameFlowState.Tip)
                 _ui.Hud.SetLevelName(LevelCaption(_flow.CurrentLevelId));
         }
 
@@ -221,6 +246,18 @@ namespace Maze.Presentation.UI
         }
 
         private void OnLevelSelected(string levelId) => _flow.StartLevel(levelId).Forget();
+
+        private void OnTutorialClicked()
+        {
+            var tutorial = _catalog.Tutorial;
+            if (_flow.State == GameFlowState.MainMenu && tutorial != null) _flow.StartLevel(tutorial.LevelId).Forget();
+        }
+
+        /// <summary>Enter / Space / gamepad South close the tutorial window (not right after it opened).</summary>
+        private void OnConfirmRequested()
+        {
+            if (_flow.State == GameFlowState.Tip && _ui.Tutorial != null && _ui.Tutorial.CanContinue) _flow.CloseTip();
+        }
 
         private void OnRetryRequested() => _flow.RetryLevel().Forget();
 

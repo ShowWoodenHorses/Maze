@@ -116,6 +116,48 @@ MonoBehaviour:
   - layout.element.ranged
   - layout.reset
   - layout.done
+  - menu.tutorial
+  - hud.tutorial
+  - result.tutorial_complete
+  - map.hint.tutorial
+  - tutorial_ui.continue
+  - tutorial.move
+  - tutorial.move.touch
+  - tutorial.move.hint
+  - tutorial.key
+  - tutorial.key.hint
+  - tutorial.unlock
+  - tutorial.unlock.touch
+  - tutorial.unlock.hint
+  - tutorial.unlock.hint.touch
+  - tutorial.open
+  - tutorial.open.touch
+  - tutorial.open.hint
+  - tutorial.open.hint.touch
+  - tutorial.melee
+  - tutorial.melee.touch
+  - tutorial.melee.hint
+  - tutorial.melee.hint.touch
+  - tutorial.zombie
+  - tutorial.zombie.touch
+  - tutorial.zombie.hint
+  - tutorial.zombie.hint.touch
+  - tutorial.ranged
+  - tutorial.ranged.touch
+  - tutorial.ranged.hint
+  - tutorial.ranged.hint.touch
+  - tutorial.shoot
+  - tutorial.shoot.hint
+  - tutorial.medkit
+  - tutorial.medkit.hint
+  - tutorial.fragment
+  - tutorial.fragment.hint
+  - tutorial.map
+  - tutorial.map.touch
+  - tutorial.map.hint
+  - tutorial.map.hint.touch
+  - tutorial.exit
+  - tutorial.exit.hint
   _texts:
   - "T\xFCrk\xE7e"
   - AYARLAR
@@ -220,4 +262,74 @@ MonoBehaviour:
   - Uzak menzil
   - SIFIRLA
   - TAMAM
+  - "E\u011E\u0130T\u0130M"
+  - "E\u011E\u0130T\u0130M"
+  - "E\u011E\u0130T\u0130M TAMAMLANDI"
+  - "E\u011Fitim rotas\u0131"
+  - ANLADIM
+  - "Labirente ho\u015F geldin! Amac\u0131n \xE7\u0131k\u0131\u015F\u0131 bulmak.\nWASD
+    veya ok tu\u015Flar\u0131yla hareket et ve parlayan \xE7izgiyi takip et."
+  - "Labirente ho\u015F geldin! Amac\u0131n \xE7\u0131k\u0131\u015F\u0131 bulmak.\nSoldaki
+    \xE7ubukla hareket et ve parlayan \xE7izgiyi takip et."
+  - "\xC7izgiyi takip et"
+  - "Baz\u0131 kap\u0131lar kilitli. Bir anahtar, kendi rengindeki bir kap\u0131y\u0131
+    a\xE7ar.\nAnahtar\u0131 almak i\xE7in \xFCzerine basman yeterli."
+  - "Anahtar\u0131 al"
+  - "Anahtar\u0131n rengindeki kap\u0131ya git ve kilidi a\xE7mak i\xE7in E'ye bas.
+    Anahtar harcan\u0131r."
+  - "Anahtar\u0131n rengindeki kap\u0131ya git ve kilidi a\xE7mak i\xE7in Kullan'a
+    (yuvarlak d\xFC\u011Fme) bas. Anahtar harcan\u0131r."
+  - "Kap\u0131n\u0131n kilidini a\xE7: E"
+  - "Kap\u0131n\u0131n kilidini a\xE7: Kullan"
+  - "Kap\u0131n\u0131n kilidi a\xE7\u0131ld\u0131 ama h\xE2l\xE2 kapal\u0131. A\xE7mak
+    i\xE7in tekrar E'ye bas. Kap\u0131lar istedi\u011Fin kadar a\xE7\u0131l\u0131p
+    kapat\u0131labilir."
+  - "Kap\u0131n\u0131n kilidi a\xE7\u0131ld\u0131 ama h\xE2l\xE2 kapal\u0131. A\xE7mak
+    i\xE7in tekrar Kullan'a bas. Kap\u0131lar istedi\u011Fin kadar a\xE7\u0131l\u0131p
+    kapat\u0131labilir."
+  - "Kap\u0131y\u0131 a\xE7: E"
+  - "Kap\u0131y\u0131 a\xE7: Kullan"
+  - "Silahlar yerde durur. Birinin \xFCzerine \xE7\u0131k ve almak i\xE7in E'ye bas.\nBir
+    yak\u0131n d\xF6v\xFC\u015F silah\u0131 ve bir ate\u015Fli silah ta\u015F\u0131yabilirsin."
+  - "Silahlar yerde durur. Birinin \xFCzerine \xE7\u0131k ve almak i\xE7in Kullan'a
+    bas.\nBir yak\u0131n d\xF6v\xFC\u015F silah\u0131 ve bir ate\u015Fli silah ta\u015F\u0131yabilirsin."
+  - "Silah\u0131 al: E"
+  - "Silah\u0131 al: Kullan"
+  - "Bu kap\u0131n\u0131n arkas\u0131nda bir zombi var! Sar\u0131 koni onun g\xF6rd\xFC\u011F\xFC
+    aland\u0131r: i\xE7ine girersen k\xFCkrer ve sald\u0131r\u0131r.\nKap\u0131y\u0131
+    a\xE7 ve ona Bo\u015Fluk tu\u015Fu veya sol fare tu\u015Fuyla vur."
+  - "Bu kap\u0131n\u0131n arkas\u0131nda bir zombi var! Sar\u0131 koni onun g\xF6rd\xFC\u011F\xFC
+    aland\u0131r: i\xE7ine girersen k\xFCkrer ve sald\u0131r\u0131r.\nKap\u0131y\u0131
+    a\xE7 ve sa\u011Fdaki b\xFCy\xFCk sald\u0131r\u0131 d\xFC\u011Fmesiyle ona vur."
+  - "Zombiyi yen: Bo\u015Fluk / sol fare tu\u015Fu"
+  - "Zombiyi yen: Sald\u0131r\u0131"
+  - "Ate\u015Fli silah! Uzaktan vurur ama \u015Farj\xF6r\xFC k\xFC\xE7\xFCkt\xFCr:
+    bo\u015Fal\u0131nca kendili\u011Finden dolar ya da R'ye bas.\nSilahlar\u0131
+    1 ve 2 ile de\u011Fi\u015Ftir."
+  - "Ate\u015Fli silah! Uzaktan vurur ama \u015Farj\xF6r\xFC k\xFC\xE7\xFCkt\xFCr:
+    bo\u015Fal\u0131nca kendili\u011Finden dolar ya da yuvas\u0131na tekrar dokun.\nSilahlar\u0131
+    sald\u0131r\u0131 d\xFC\u011Fmesinin \xE7evresindeki yuvalara dokunarak de\u011Fi\u015Ftir."
+  - "Silah\u0131 al: E"
+  - "Silah\u0131 al: Kullan"
+  - "Koridorun ilerisinde bir zombi daha var. Bu hi\xE7bir \u015Fey g\xF6rmez ama
+    iyi duyar ve silah sesleri y\xFCksektir: sana gelecek.\nYakla\u015Fmadan onu
+    vur."
+  - Zombiyi vur
+  - "Yaral\u0131 m\u0131s\u0131n? \u0130lk yard\u0131m \xE7antas\u0131 seni tamamen
+    iyile\u015Ftirir.\n\xDCzerine bas \u2014 yaln\u0131zca can\u0131n tam de\u011Filse
+    kullan\u0131l\u0131r."
+  - "\u0130lk yard\u0131m \xE7antas\u0131na bas"
+  - "Bu bir harita par\xE7as\u0131. Her biri seviye haritas\u0131n\u0131n bir b\xF6l\xFCm\xFCn\xFC
+    a\xE7ar."
+  - "Harita par\xE7as\u0131n\u0131 al"
+  - "Haritay\u0131 M tu\u015Fuyla veya sa\u011F \xFCstteki harita d\xFC\u011Fmesiyle
+    a\xE7. Haritadaki b\xFCy\xFCte\xE7 en yak\u0131n hedefe giden yolu g\xF6sterir."
+  - "Haritay\u0131 sa\u011F \xFCstteki harita d\xFC\u011Fmesiyle a\xE7. Haritadaki
+    b\xFCy\xFCte\xE7 en yak\u0131n hedefe giden yolu g\xF6sterir."
+  - "Haritay\u0131 a\xE7: M"
+  - "Haritay\u0131 a\xE7"
+  - "\u015Eimdi \xE7\u0131k\u0131\u015Fa, merdivenlere git.\nSeviyelerde y\u0131ld\u0131z
+    kazan\u0131rs\u0131n: \xE7\u0131k\u0131\u015F i\xE7in, t\xFCm zombileri \xF6ld\xFCrmek
+    i\xE7in ve t\xFCm harita par\xE7alar\u0131 i\xE7in."
+  - "\xC7\u0131k\u0131\u015Fa git"
   _missing: []

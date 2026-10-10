@@ -66,10 +66,60 @@ namespace Maze.Core.Validation
             ValidateReferences(level, report);
             ValidateMapFragments(level, report);
             ValidateSurfaces(level, report);
+            ValidateTutorial(level, report);
 
             foreach (var door in level.Doors.Where(d => d.IsFrozen && d.IsInitiallyOpen))
                 report.Add(Error, Structural, ValidationCodes.FrozenDoorInitiallyOpen,
                     $"Door '{door.Id}' is frozen and initially open: a frozen door starts closed.", door.Position, door.Id);
+        }
+
+        /// <summary>
+        /// Tutorial steps: a text key; a target that exists and suits the goal; a Reach cell inside the level on the floor.
+        /// </summary>
+        private static void ValidateTutorial(LevelData level, ValidationReport report)
+        {
+            var tutorial = level.Tutorial;
+            if (tutorial == null) return;
+            if (tutorial.Steps.Count == 0)
+            {
+                report.Add(Warning, Structural, ValidationCodes.TutorialEmpty, "Tutorial script has no steps.");
+                return;
+            }
+
+            for (var i = 0; i < tutorial.Steps.Count; i++)
+            {
+                var step = tutorial.Steps[i];
+                var name = $"Tutorial step {i + 1}";
+                if (string.IsNullOrEmpty(step.Text))
+                    report.Add(Error, Structural, ValidationCodes.TutorialStepInvalid, $"{name} has no text key.");
+
+                var target = level.FindEntity(step.Target);
+                if (step.HasTarget && target == null)
+                {
+                    report.Add(Error, Structural, ValidationCodes.TutorialStepInvalid,
+                        $"{name}: target '{step.Target}' is not in the level.", null, step.Target);
+                    continue;
+                }
+
+                var problem = step.Goal switch
+                {
+                    TutorialGoal.Reach when !step.HasTarget && !level.Geometry.IsInside(step.Cell) =>
+                        $"cell {step.Cell} is outside the level",
+                    TutorialGoal.Reach when !step.HasTarget && level.Geometry.GetCell(step.Cell) != CellType.Floor =>
+                        $"cell {step.Cell} is not floor",
+                    TutorialGoal.Collect when !(target is KeyData || target is MedkitData || target is WeaponPickupData ||
+                                                target is MapFragmentData) =>
+                        "Collect needs a key, medkit, weapon or map fragment as the target",
+                    TutorialGoal.UnlockDoor when !(target is DoorData door && door.RequiresKey) =>
+                        "Unlock Door needs a locked door as the target",
+                    TutorialGoal.OpenDoor when !(target is DoorData) => "Open Door needs a door as the target",
+                    TutorialGoal.Kill when !(target is ZombieSpawnData) => "Kill needs a zombie as the target",
+                    _ => null,
+                };
+                if (problem != null)
+                    report.Add(Error, Structural, ValidationCodes.TutorialStepInvalid, $"{name}: {problem}.",
+                        target?.Position, step.Target);
+            }
         }
 
         /// <summary>Snowdrifts and the like: only on Floor cells; the array must match the size (or be empty).</summary>

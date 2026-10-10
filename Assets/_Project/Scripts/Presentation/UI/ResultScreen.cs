@@ -15,6 +15,7 @@ namespace Maze.Presentation.UI
     /// (<see cref="RevealNextStar"/> from the audio presenter); without sound they all appear after a while.
     /// Under the stars — the play time; after a win also the best time, or "new record" in the accent.
     /// Buttons: Menu, Retry and — after a completed level with another one after it — Next (the main action).
+    /// The completed tutorial shows only its title (<see cref="SetTutorialComplete"/>): no stars, no time.
     /// </summary>
     public sealed class ResultScreen : UIScreen
     {
@@ -27,6 +28,7 @@ namespace Maze.Presentation.UI
         [SerializeField] private UiStyle _style;
         [SerializeField] private TMP_Text _title;
         [SerializeField] private TMP_Text _levelName;
+        [SerializeField] private GameObject _starsRow;
         [SerializeField] private Image[] _stars;
         [SerializeField] private TMP_Text[] _starLabels;
         [SerializeField] private TMP_Text _time;
@@ -65,6 +67,7 @@ namespace Maze.Presentation.UI
             _title.text = Text(completed ? TextKeys.ResultComplete : TextKeys.ResultFailed);
             if (_levelName != null) _levelName.text = levelName ?? string.Empty;
 
+            ShowDetails(true);
             var r = result ?? default;
             _earned[0] = completed;
             _earned[1] = completed && r.AllZombiesKilled;
@@ -87,6 +90,30 @@ namespace Maze.Presentation.UI
             if (_nextButton != null) _nextButton.gameObject.SetActive(next);
             // The main action: Next after a win, Retry otherwise.
             if (_retryButton != null) _retryButton.Accent = !next;
+        }
+
+        /// <summary>"Tutorial complete": the title, Menu and — when there is one — Next (the first level, the main action).</summary>
+        public void SetTutorialComplete(bool hasNext)
+        {
+            _title.text = Text(TextKeys.ResultTutorialComplete);
+            ShowDetails(false);
+            for (var i = 0; i < _earned.Length; i++) _earned[i] = false;
+            _revealed = _earned.Length;
+            if (_nextButton != null) _nextButton.gameObject.SetActive(hasNext);
+            if (_retryButton != null)
+            {
+                _retryButton.gameObject.SetActive(false);
+                _retryButton.Accent = false;
+            }
+        }
+
+        /// <summary>Level name, stars and time (hidden for the tutorial); Retry is back for any other result.</summary>
+        private void ShowDetails(bool shown)
+        {
+            if (_levelName != null) _levelName.gameObject.SetActive(shown);
+            if (_starsRow != null) _starsRow.SetActive(shown);
+            if (_time != null && !shown) _time.gameObject.SetActive(false);
+            if (_retryButton != null && shown) _retryButton.gameObject.SetActive(true);
         }
 
         /// <summary>Shows the next earned star with a little pop (one per star sound).</summary>

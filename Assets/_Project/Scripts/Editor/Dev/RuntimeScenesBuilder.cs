@@ -155,6 +155,7 @@ namespace Maze.Editor.Dev
             SetReference(ui, "_touchControls", touch);
             SetReferences(ui, "_localizedTexts", Localized.Cast<Object>().ToList());
             SetReference(ui.Hud, "_touchControls", touch);
+            LinkTutorialHighlights(ui, touch);
 
             var scopeObject = new GameObject("ProjectLifetimeScope");
             var scope = scopeObject.AddComponent<ProjectLifetimeScope>();
@@ -193,6 +194,7 @@ namespace Maze.Editor.Dev
             SetReference(root, "_levelSelect", BuildLevelSelect(parent));
             SetReference(root, "_loading", BuildLoading(parent));
             SetReference(root, "_hud", BuildHud(parent));
+            SetReference(root, "_tutorial", BuildTutorial(parent)); // over the HUD, under the pause and result screens
             SetReference(root, "_pause", BuildPause(parent));
             SetReference(root, "_confirmExit", BuildConfirmExit(parent));
             SetReference(root, "_map", BuildMap(parent));
@@ -219,6 +221,7 @@ namespace Maze.Editor.Dev
                 if (screen is HudScreen && (name == "PauseButton" || name == "MapButton")) kind = UiSoundKind.None;
                 else if (screen is PauseScreen && name == "ResumeButton") kind = UiSoundKind.None;
                 else if (screen is MapScreen && name == "CloseButton") kind = UiSoundKind.None;
+                else if (screen is TutorialScreen && name == "ContinueButton") kind = UiSoundKind.None; // resume sound
                 else if (name == "BackButton" || name == "NoButton") kind = UiSoundKind.Back;
 
                 var sound = selectable.gameObject.AddComponent<UiSound>();
@@ -252,6 +255,7 @@ namespace Maze.Editor.Dev
             layout.childForceExpandHeight = false;
             buttons.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
             var play = TextButton(buttons, "PlayButton", Loc(TextKeys.MenuPlay), true, icons.ChevronRight, 92f);
+            var tutorial = TextButton(buttons, "TutorialButton", Loc(TextKeys.MenuTutorial), false, icons.Help, 92f);
             var settings = TextButton(buttons, "SettingsButton", Loc(TextKeys.Settings), false, icons.Settings, 92f);
 
             var summary = Row(area, "Summary", Vector2.zero, new Vector2(170f, 70f), 44f, Vector2.zero);
@@ -265,6 +269,7 @@ namespace Maze.Editor.Dev
                 new Vector2(-64f, 52f), new Vector2(140f, 36f), TextAlignmentOptions.BottomRight, _style.MutedText, 6f);
 
             SetReference(screen, "_playButton", play);
+            SetReference(screen, "_tutorialButton", tutorial);
             SetReference(screen, "_settingsButton", settings);
             SetReference(screen, "_summary", summary.gameObject);
             SetReference(screen, "_stars", starsText);
@@ -1133,6 +1138,7 @@ namespace Maze.Editor.Dev
             SetReference(screen, "_style", _style);
             SetReference(screen, "_title", title);
             SetReference(screen, "_levelName", levelName);
+            SetReference(screen, "_starsRow", starsRow);
             SetReferences(screen, "_stars", stars);
             SetReferences(screen, "_starLabels", labels);
             SetReference(screen, "_time", time);
@@ -1142,6 +1148,103 @@ namespace Maze.Editor.Dev
             SetReference(screen, "_menuButton", menu);
             SetReference(screen, "_nextButton", next);
             return screen;
+        }
+
+        /// <summary>
+        /// Tutorial layer (over the HUD): the reminder line at the top centre under the HUD message, the arrow (tip at its
+        /// pivot, pointing right; the screen turns it), the highlight ring, and the step window — dim, panel, title,
+        /// text, Continue — shown only while the flow waits for Continue. Only the window catches touches.
+        /// </summary>
+        private static TutorialScreen BuildTutorial(Transform parent)
+        {
+            var screen = Screen<TutorialScreen>(parent, "TutorialScreen", Color.clear);
+            screen.GetComponent<Image>().raycastTarget = false;
+            var icons = UiIcons();
+            var root = screen.transform;
+
+            var hintBox = Shape(root, "HintRow", new Vector2(0.5f, 1f), new Vector2(0f, -236f), new Vector2(1040f, 84f));
+            hintBox.rectTransform.pivot = new Vector2(0.5f, 1f);
+            hintBox.Fill = new Color(0.055f, 0.051f, 0.047f, 0.82f);
+            hintBox.Stroke = Fade(_style.Accent, 0.8f);
+            hintBox.CornerRadius = 2f;
+            var hint = Text(hintBox.transform, "Hint", "", 30f, true, Center, Center, Vector2.zero, Vector2.zero,
+                TextAlignmentOptions.Center, spacing: 2f);
+            Stretch(hint.rectTransform);
+            hint.rectTransform.offsetMin = new Vector2(28f, 6f);
+            hint.rectTransform.offsetMax = new Vector2(-28f, -6f);
+            hint.textWrappingMode = TextWrappingModes.Normal;
+            AutoSize(hint, 0.65f);
+            hintBox.gameObject.SetActive(false);
+
+            // Arrow: a shaft and a triangular head (an Arrow shape whose tip is its whole length), accent with a dark rim.
+            var pointer = Rect(root, "Pointer", Center, Vector2.zero, new Vector2(116f, 60f));
+            pointer.pivot = new Vector2(1f, 0.5f);
+            var rim = new Color(0f, 0f, 0f, 0.65f);
+            var shaft = Shape(pointer, "Shaft", new Vector2(0f, 0.5f), new Vector2(32f, 0f), new Vector2(64f, 24f));
+            shaft.Fill = _style.Accent;
+            shaft.Stroke = rim;
+            shaft.StrokeWidth = 3f;
+            shaft.CornerRadius = 4f;
+            var head = Shape(pointer, "Head", new Vector2(0f, 0.5f), new Vector2(86f, 0f), new Vector2(60f, 60f));
+            head.Kind = UiShapeKind.Arrow;
+            head.CornerRadius = 60f;
+            head.Fill = _style.Accent;
+            head.Stroke = rim;
+            head.StrokeWidth = 3f;
+            pointer.gameObject.SetActive(false);
+
+            var ring = Shape(root, "HighlightRing", Center, Vector2.zero, new Vector2(100f, 100f));
+            ring.Kind = UiShapeKind.Capsule;
+            ring.Fill = Color.clear;
+            ring.Stroke = Color.white; // Tinted by the screen (accent, pulsing).
+            ring.StrokeWidth = 4f;
+            ring.gameObject.SetActive(false);
+
+            // The window: last, over everything of the layer.
+            var dialog = new GameObject("Dialog", typeof(RectTransform));
+            dialog.transform.SetParent(root, false);
+            Stretch(dialog.GetComponent<RectTransform>());
+            dialog.AddComponent<Image>().color = Dim; // Catches every touch: the game is paused under it.
+            var appear = dialog.AddComponent<UiAppear>();
+            var panel = PanelBox(dialog.transform, "Panel", Center, new Vector2(0f, 40f), 940f, new RectOffset(64, 64, 46, 52), 26f);
+            SetReference(appear, "_panel", panel);
+            var title = Heading(panel, "Title", Loc(TextKeys.HudTutorial), 44f);
+            title.color = _style.Accent;
+            var body = Text(panel, "Text", "", 34f, false, Center, Center, Vector2.zero, new Vector2(812f, 100f),
+                TextAlignmentOptions.Center);
+            body.textWrappingMode = TextWrappingModes.Normal;
+            body.lineSpacing = 6f;
+            Hairline(panel, 0.2f);
+            var row = ButtonRow(panel, "Buttons", 0f, 86f);
+            var continueButton = TextButton(row, "ContinueButton", Loc(TextKeys.TutorialContinue), true, icons.ChevronRight, 86f);
+            dialog.SetActive(false);
+
+            SetReference(screen, "_style", _style);
+            SetReference(screen, "_hintRow", hintBox.gameObject);
+            SetReference(screen, "_hint", hint);
+            SetReference(screen, "_pointer", pointer);
+            SetReference(screen, "_ring", ring);
+            SetReference(screen, "_dialog", dialog);
+            SetReference(screen, "_dialogTitle", title);
+            SetReference(screen, "_dialogText", body);
+            SetReference(screen, "_continueButton", continueButton);
+            return screen;
+        }
+
+        /// <summary>The controls the tutorial rings: on the touch canvas, the HUD's Map and the desktop weapon slots.</summary>
+        private static void LinkTutorialHighlights(UIRoot ui, TouchControls touch)
+        {
+            var screen = ui.Tutorial;
+            var area = touch.transform.Find("SafeArea");
+            SetReference(screen, "_stick", area.Find("StickZone/Ring"));
+            SetReference(screen, "_touchAttack", area.Find("AttackCluster/Content/AttackButton"));
+            SetReference(screen, "_touchMelee", area.Find("AttackCluster/Content/MeleeButton"));
+            SetReference(screen, "_touchRanged", area.Find("AttackCluster/Content/RangedButton"));
+            SetReference(screen, "_touchUse", area.Find("UseButton"));
+            var hud = ui.Hud.transform;
+            SetReference(screen, "_map", hud.Find("MapButton"));
+            SetReference(screen, "_meleeSlot", hud.Find("WeaponPanel/MeleeSlot"));
+            SetReference(screen, "_rangedSlot", hud.Find("WeaponPanel/RangedSlot"));
         }
 
         /// <summary>ТЗ §60: fullscreen map; the texture (one pixel per cell) is set by the level's MapPresenter.</summary>

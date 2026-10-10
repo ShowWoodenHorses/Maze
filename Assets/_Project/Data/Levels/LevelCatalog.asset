@@ -103,3 +103,7 @@ MonoBehaviour:
   - _levelId: Level_30
     _address: Levels/Level_30
     _displayName: New Level
+  _tutorial:
+    _levelId: Level_Tutorial
+    _address: Levels/Level_Tutorial
+    _displayName: Tutorial

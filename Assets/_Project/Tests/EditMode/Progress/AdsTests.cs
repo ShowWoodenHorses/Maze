@@ -139,6 +139,7 @@ namespace Maze.Tests.EditMode.Progress
             public Catalog(LevelCatalog asset) => _asset = asset;
             public IReadOnlyList<LevelCatalogEntry> Levels => _asset.Levels;
             public IReadOnlyList<LevelCatalogEntry> DevLevels => System.Array.Empty<LevelCatalogEntry>();
+            public LevelCatalogEntry Tutorial => _asset.Tutorial;
             public LevelCatalogEntry Find(string levelId) => _asset.Find(levelId);
         }
     }

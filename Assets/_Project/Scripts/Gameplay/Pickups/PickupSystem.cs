@@ -108,6 +108,15 @@ namespace Maze.Gameplay.Pickups
             foreach (var list in _byCell.Values) result.AddRange(list);
         }
 
+        /// <summary>A pickup with this id lies somewhere in the level now.</summary>
+        public bool IsLying(string id)
+        {
+            foreach (var list in _byCell.Values)
+                for (var i = 0; i < list.Count; i++)
+                    if (list[i].Id == id) return true;
+            return false;
+        }
+
         public UniTask ExecuteAsync(CancellationToken cancellation)
         {
             _byCell.Clear();

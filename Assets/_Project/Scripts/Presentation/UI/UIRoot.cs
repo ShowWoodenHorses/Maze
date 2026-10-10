@@ -21,6 +21,9 @@ namespace Maze.Presentation.UI
         [SerializeField] private MapScreen _map;
         [SerializeField] private SettingsScreen _settings;
 
+        [Tooltip("Tutorial layer over the HUD: reminder, arrow, highlight ring and the step window.")]
+        [SerializeField] private TutorialScreen _tutorial;
+
         [Tooltip("On-screen controls: a separate canvas with physical sizes, shown by the HUD.")]
         [SerializeField] private TouchControls _touchControls;
 
@@ -43,6 +46,7 @@ namespace Maze.Presentation.UI
         public ConfirmExitScreen ConfirmExit => _confirmExit;
         public MapScreen Map => _map;
         public SettingsScreen Settings => _settings;
+        public TutorialScreen Tutorial => _tutorial;
         public TouchControls TouchControls => _touchControls;
         public FpsCounter FpsCounter => _fpsCounter;
         public EventSystem EventSystem => _eventSystem;
@@ -71,7 +75,7 @@ namespace Maze.Presentation.UI
             foreach (var text in _localizedTexts)
                 if (text != null) text.Apply(texts);
 
-            UIScreen[] screens = { _mainMenu, _levelSelect, _loading, _error, _hud, _pause, _result, _confirmExit, _map, _settings };
+            UIScreen[] screens = { _mainMenu, _levelSelect, _loading, _error, _hud, _pause, _result, _confirmExit, _map, _settings, _tutorial };
             foreach (var screen in screens)
                 if (screen != null) screen.ApplyLanguage(texts);
             if (_touchControls != null && _touchControls.LayoutEditor != null)

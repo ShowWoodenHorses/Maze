@@ -16,7 +16,10 @@ namespace Maze.Application.Levels
         /// <summary>Development levels (editor and development builds only; empty in release builds).</summary>
         IReadOnlyList<LevelCatalogEntry> DevLevels { get; }
 
-        /// <summary>A game or development level; null when it is in neither catalog.</summary>
+        /// <summary>The tutorial level (its own menu button, outside the numbered levels); null when there is none.</summary>
+        LevelCatalogEntry Tutorial { get; }
+
+        /// <summary>A game, tutorial or development level; null when it is in neither catalog.</summary>
         LevelCatalogEntry Find(string levelId);
     }
 
@@ -45,6 +48,8 @@ namespace Maze.Application.Levels
 
         public IReadOnlyList<LevelCatalogEntry> DevLevels =>
             _devCatalog != null ? _devCatalog.Levels : (IReadOnlyList<LevelCatalogEntry>)Array.Empty<LevelCatalogEntry>();
+
+        public LevelCatalogEntry Tutorial => _catalog != null ? _catalog.Tutorial : null;
 
         public LevelCatalogEntry Find(string levelId) =>
             (_catalog != null ? _catalog.Find(levelId) : null) ?? (_devCatalog != null ? _devCatalog.Find(levelId) : null);

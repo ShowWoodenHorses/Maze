@@ -16,12 +16,14 @@ namespace Maze.Presentation.Localization
         // Main menu, level select, loading.
         public const string MenuPlay = "menu.play";
         public const string MenuResetProgress = "menu.reset_progress";
+        public const string MenuTutorial = "menu.tutorial";
         public const string LevelSelectTitle = "level_select.title";
         public const string LevelSelectEmpty = "level_select.empty";
         public const string Loading = "loading";
 
         // HUD.
         public const string HudLevel = "hud.level";
+        public const string HudTutorial = "hud.tutorial";
         public const string HudReload = "hud.reload";
         public const string HudWeaponHere = "hud.weapon_here";
         public const string HudWeaponTaken = "hud.weapon_taken";
@@ -57,6 +59,7 @@ namespace Maze.Presentation.Localization
         public const string ResultMenu = "result.menu";
         public const string ResultRetry = "result.retry";
         public const string ResultNext = "result.next";
+        public const string ResultTutorialComplete = "result.tutorial_complete";
         public const string ErrorTitle = "error.title";
         public const string ErrorBack = "error.back";
 
@@ -72,6 +75,18 @@ namespace Maze.Presentation.Localization
         public const string HintKey = "map.hint.key";
         public const string HintDoor = "map.hint.door";
         public const string HintNone = "map.hint.none";
+        public const string HintTutorial = "map.hint.tutorial";
+
+        // Tutorial window.
+        public const string TutorialContinue = "tutorial_ui.continue";
+
+        /// <summary>
+        /// "tutorial.move": text of a tutorial step (<c>TutorialScript</c>); "<key>.touch" — its touch-screen variant,
+        /// "<key>.hint" (and "<key>.hint.touch") — the reminder line while the step is on.
+        /// </summary>
+        public const string TutorialPrefix = "tutorial.";
+        public static readonly string TouchSuffix = ".touch"; // Not a key: not a constant (Build Localization lists constants).
+        public static readonly string HintSuffix = ".hint";
         public const string MapNone = "map.none";
         public const string MapNoneFound = "map.none_found";
         public const string MapCount = "map.count";

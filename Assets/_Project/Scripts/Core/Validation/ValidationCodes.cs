@@ -60,6 +60,9 @@ namespace Maze.Core.Validation
         public const string UnlockedDoorWithColor = "UnlockedDoorWithColor";
         public const string FrozenDoorWithoutIceVisual = "FrozenDoorWithoutIceVisual";
 
+        public const string TutorialEmpty = "TutorialEmpty";
+        public const string TutorialStepInvalid = "TutorialStepInvalid";
+
         // Gameplay
         public const string NoReachableExit = "NoReachableExit";
         public const string ExitUnreachable = "ExitUnreachable";

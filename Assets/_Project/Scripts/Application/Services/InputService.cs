@@ -14,6 +14,9 @@ namespace Maze.Application.Services
 
         /// <summary>M / Tab / gamepad Select (also the HUD's map button on touch screens).</summary>
         event Action MapRequested;
+
+        /// <summary>Enter / Space / gamepad South: closes a window waiting for "continue" (tutorial).</summary>
+        event Action ConfirmRequested;
     }
 
     /// <summary>
@@ -44,6 +47,7 @@ namespace Maze.Application.Services
 
         public event Action PauseRequested;
         public event Action MapRequested;
+        public event Action ConfirmRequested;
 
         public Vector2 Move => _move != null ? _move.ReadValue<Vector2>() : Vector2.zero;
         public Vector2 Look => _look != null ? _look.ReadValue<Vector2>() : Vector2.zero;
@@ -125,6 +129,13 @@ namespace Maze.Application.Services
             pause.AddBinding("<Keyboard>/escape");
             pause.AddBinding("<Gamepad>/start");
             pause.performed += _ => PauseRequested?.Invoke();
+
+            var confirm = _actions.AddAction("Confirm", InputActionType.Button);
+            confirm.AddBinding("<Keyboard>/enter");
+            confirm.AddBinding("<Keyboard>/numpadEnter");
+            confirm.AddBinding("<Keyboard>/space");
+            confirm.AddBinding("<Gamepad>/buttonSouth");
+            confirm.performed += _ => ConfirmRequested?.Invoke();
 
             _actions.Enable();
             return UniTask.CompletedTask;

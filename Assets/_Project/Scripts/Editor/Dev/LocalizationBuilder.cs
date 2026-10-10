@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using Maze.Core.Definitions;
+using Maze.Core.Level;
 using Maze.Core.Localization;
 using Maze.Core.Visual;
 using Maze.Presentation.Localization;
@@ -128,6 +129,16 @@ namespace Maze.Editor.Dev
                 if (!tableKeys.Contains(TextKeys.HudLockedPrefix + color))
                     issues.Add(new LocalizationCheck.Issue(false,
                         $"Key colour '{color}' has no message ('{TextKeys.HudLockedPrefix}{color}'); the plain one is shown."));
+
+            foreach (var guid in AssetDatabase.FindAssets("t:" + nameof(TutorialScript)))
+            {
+                var script = AssetDatabase.LoadAssetAtPath<TutorialScript>(AssetDatabase.GUIDToAssetPath(guid));
+                if (script == null) continue;
+                foreach (var step in script.Steps)
+                    if (!string.IsNullOrEmpty(step.Text) && !tableKeys.Contains(step.Text))
+                        issues.Add(new LocalizationCheck.Issue(true, $"Tutorial '{script.name}' uses '{step.Text}', missing in the table."));
+            }
+
             return issues;
         }
 

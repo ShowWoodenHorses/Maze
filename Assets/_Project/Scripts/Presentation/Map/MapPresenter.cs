@@ -251,6 +251,7 @@ namespace Maze.Presentation.Map
             RouteTarget.Exit => TextKeys.HintExit,
             RouteTarget.Key => TextKeys.HintKey,
             RouteTarget.Door => TextKeys.HintDoor,
+            RouteTarget.Guide => TextKeys.HintTutorial,
             _ => TextKeys.HintNone,
         };
 

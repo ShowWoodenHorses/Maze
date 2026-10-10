@@ -116,6 +116,48 @@ MonoBehaviour:
   - layout.element.ranged
   - layout.reset
   - layout.done
+  - menu.tutorial
+  - hud.tutorial
+  - result.tutorial_complete
+  - map.hint.tutorial
+  - tutorial_ui.continue
+  - tutorial.move
+  - tutorial.move.touch
+  - tutorial.move.hint
+  - tutorial.key
+  - tutorial.key.hint
+  - tutorial.unlock
+  - tutorial.unlock.touch
+  - tutorial.unlock.hint
+  - tutorial.unlock.hint.touch
+  - tutorial.open
+  - tutorial.open.touch
+  - tutorial.open.hint
+  - tutorial.open.hint.touch
+  - tutorial.melee
+  - tutorial.melee.touch
+  - tutorial.melee.hint
+  - tutorial.melee.hint.touch
+  - tutorial.zombie
+  - tutorial.zombie.touch
+  - tutorial.zombie.hint
+  - tutorial.zombie.hint.touch
+  - tutorial.ranged
+  - tutorial.ranged.touch
+  - tutorial.ranged.hint
+  - tutorial.ranged.hint.touch
+  - tutorial.shoot
+  - tutorial.shoot.hint
+  - tutorial.medkit
+  - tutorial.medkit.hint
+  - tutorial.fragment
+  - tutorial.fragment.hint
+  - tutorial.map
+  - tutorial.map.touch
+  - tutorial.map.hint
+  - tutorial.map.hint.touch
+  - tutorial.exit
+  - tutorial.exit.hint
   _texts:
   - "Espa\xF1ol"
   - AJUSTES
@@ -219,4 +261,69 @@ MonoBehaviour:
   - A distancia
   - RESTABLECER
   - LISTO
+  - TUTORIAL
+  - TUTORIAL
+  - TUTORIAL COMPLETADO
+  - Ruta del tutorial
+  - ENTENDIDO
+  - "\xA1Bienvenido al laberinto! Tu objetivo es encontrar la salida.\nMu\xE9vete
+    con WASD o las flechas y sigue la l\xEDnea luminosa."
+  - "\xA1Bienvenido al laberinto! Tu objetivo es encontrar la salida.\nMu\xE9vete
+    con el stick de la izquierda y sigue la l\xEDnea luminosa."
+  - "Sigue la l\xEDnea"
+  - "Algunas puertas est\xE1n cerradas con llave. Una llave abre una puerta de su
+    color.\nPara recogerla, basta con pisarla."
+  - Recoge la llave
+  - "Ac\xE9rcate a la puerta del color de la llave y pulsa E para abrirla. La llave
+    se gasta."
+  - "Ac\xE9rcate a la puerta del color de la llave y pulsa Usar (el bot\xF3n redondo)
+    para abrirla. La llave se gasta."
+  - 'Abre la puerta: E'
+  - 'Abre la puerta: Usar'
+  - La puerta ya no tiene llave, pero sigue cerrada. Pulsa E otra vez para abrirla.
+    Las puertas se pueden abrir y cerrar cuantas veces quieras.
+  - La puerta ya no tiene llave, pero sigue cerrada. Pulsa Usar otra vez para abrirla.
+    Las puertas se pueden abrir y cerrar cuantas veces quieras.
+  - 'Abre la puerta: E'
+  - 'Abre la puerta: Usar'
+  - "Las armas est\xE1n en el suelo. Ponte encima de una y pulsa E para cogerla.\nPuedes
+    llevar un arma cuerpo a cuerpo y un arma de fuego."
+  - "Las armas est\xE1n en el suelo. Ponte encima de una y pulsa Usar para cogerla.\nPuedes
+    llevar un arma cuerpo a cuerpo y un arma de fuego."
+  - 'Coge el arma: E'
+  - 'Coge el arma: Usar'
+  - "\xA1Hay un zombi tras esta puerta! El cono amarillo es lo que ve: si entras
+    en \xE9l, ruge y ataca.\nAbre la puerta y golp\xE9alo con Espacio o el bot\xF3n
+    izquierdo del rat\xF3n."
+  - "\xA1Hay un zombi tras esta puerta! El cono amarillo es lo que ve: si entras
+    en \xE9l, ruge y ataca.\nAbre la puerta y golp\xE9alo con el gran bot\xF3n de
+    ataque de la derecha."
+  - "Derrota al zombi: Espacio / bot\xF3n izquierdo"
+  - 'Derrota al zombi: Ataque'
+  - "\xA1Un arma de fuego! Golpea de lejos, pero el cargador es peque\xF1o: se recarga
+    solo al vaciarse, o pulsa R.\nCambia de arma con 1 y 2."
+  - "\xA1Un arma de fuego! Golpea de lejos, pero el cargador es peque\xF1o: se recarga
+    solo al vaciarse, o vuelve a tocar su ranura.\nCambia de arma tocando las ranuras
+    alrededor del bot\xF3n de ataque."
+  - 'Coge el arma: E'
+  - 'Coge el arma: Usar'
+  - "Hay otro zombi al fondo del pasillo. Este no ve nada, pero oye bien, y los disparos
+    son ruidosos: vendr\xE1 hacia ti.\nDisp\xE1rale antes de que se acerque."
+  - Dispara al zombi
+  - "\xBFHerido? Un botiqu\xEDn te cura por completo.\nP\xEDsalo: solo se usa si
+    tu salud no est\xE1 completa."
+  - "Pisa el botiqu\xEDn"
+  - Esto es un fragmento de mapa. Cada uno revela una parte del mapa del nivel.
+  - Recoge el fragmento de mapa
+  - "Abre el mapa con M o con el bot\xF3n de mapa de arriba a la derecha. En el mapa,
+    la lupa muestra el camino al objetivo m\xE1s cercano."
+  - "Abre el mapa con el bot\xF3n de mapa de arriba a la derecha. En el mapa, la
+    lupa muestra el camino al objetivo m\xE1s cercano."
+  - 'Abre el mapa: M'
+  - Abre el mapa
+  - 'Ahora ve a la salida: las escaleras.
+
+    En los niveles ganas estrellas: por
+    la salida, por matar a todos los zombis y por todos los fragmentos de mapa.'
+  - Ve a la salida
   _missing: []

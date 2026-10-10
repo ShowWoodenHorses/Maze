@@ -36,6 +36,7 @@ namespace Maze.Presentation.UI.Style
         public Sprite Close;
         public Sprite Player;
         public Sprite Search;
+        public Sprite Help;
         [Tooltip("Watch an ad: a screen with a play triangle.")]
         public Sprite Ad;
 

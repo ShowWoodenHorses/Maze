@@ -30,9 +30,24 @@ namespace Maze.Core.Level
         [SerializeField] private VisualTheme _visualTheme;
         [SerializeField] private VisualData _visualData = new VisualData();
 
+        [Tooltip("Steps of the tutorial: set only on the tutorial level (Build / Sync lists it apart from the numbered levels).")]
+        [SerializeField] private TutorialScript _tutorial;
+
         public LevelSettings Settings => _settings;
         public VisualTheme VisualTheme { get => _visualTheme; internal set => _visualTheme = value; }
         public VisualData VisualData => _visualData;
+
+        /// <summary>Tutorial steps; null for every level but the tutorial.</summary>
+        public TutorialScript Tutorial { get => _tutorial; internal set => _tutorial = value; }
+
+        /// <summary>A placed object by id (doors, starts, exits, zombies, pickups); null when there is none.</summary>
+        public LevelEntityData FindEntity(string id)
+        {
+            if (string.IsNullOrEmpty(id)) return null;
+            foreach (var entity in AllEntities())
+                if (entity.Id == id) return entity;
+            return null;
+        }
         public LevelGenerationSettings Generation => _generation;
         public LevelGeometry Geometry => _geometry;
         public IReadOnlyList<DoorData> Doors => _doors;

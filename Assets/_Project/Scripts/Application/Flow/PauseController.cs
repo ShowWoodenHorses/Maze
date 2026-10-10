@@ -5,7 +5,7 @@ namespace Maze.Application.Flow
 {
     /// <summary>
     /// Toggles pause from the Pause input action (Escape / Start / Android Back) and the map from the OpenMap action.
-    /// Pause while the map is open closes the map.
+    /// Pause while the map is open closes the map; while a tutorial window is open — closes the window.
     /// </summary>
     public sealed class PauseController : IDisposable
     {
@@ -40,6 +40,7 @@ namespace Maze.Application.Flow
             if (_flow.State == GameFlowState.Playing) _flow.PauseGameplay();
             else if (_flow.State == GameFlowState.Paused) _flow.ResumeGameplay();
             else if (_flow.State == GameFlowState.Map) _flow.CloseMap();
+            else if (_flow.State == GameFlowState.Tip) _flow.CloseTip();
         }
 
         private void OnMapRequested()

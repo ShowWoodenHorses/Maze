@@ -6,13 +6,15 @@ using UnityEngine.UI;
 namespace Maze.Presentation.UI
 {
     /// <summary>
-    /// Main menu (minimal by the user's choice): the title, Play (opens the level select) and Settings; total stars and
+    /// Main menu (minimal by the user's choice): the title, Play (opens the level select), Tutorial (when the game has
+    /// one) and Settings; total stars and
     /// zombies killed at the bottom left; "Debug: reset progress" (development builds) and the version at the bottom
     /// right.
     /// </summary>
     public sealed class MainMenuScreen : UIScreen
     {
         [SerializeField] private Button _playButton;
+        [SerializeField] private Button _tutorialButton;
         [SerializeField] private Button _settingsButton;
         [SerializeField] private GameObject _summary;
         [SerializeField] private TMP_Text _stars;
@@ -23,12 +25,14 @@ namespace Maze.Presentation.UI
         [SerializeField] private Button _debugResetProgressButton;
 
         public event Action PlayClicked;
+        public event Action TutorialClicked;
         public event Action SettingsClicked;
         public event Action DebugResetProgressClicked;
 
         private void Awake()
         {
             Bind(_playButton, () => PlayClicked?.Invoke());
+            Bind(_tutorialButton, () => TutorialClicked?.Invoke());
             Bind(_settingsButton, () => SettingsClicked?.Invoke());
             Bind(_debugResetProgressButton, () => DebugResetProgressClicked?.Invoke());
             if (_debugResetProgressButton != null)
@@ -42,6 +46,12 @@ namespace Maze.Presentation.UI
             if (_summary != null) _summary.SetActive(maxStars > 0);
             if (_stars != null) _stars.text = stars + " / " + maxStars;
             if (_kills != null) _kills.text = kills.ToString();
+        }
+
+        /// <summary>The Tutorial button is there only when the catalog has a tutorial level.</summary>
+        public void SetTutorialAvailable(bool available)
+        {
+            if (_tutorialButton != null) _tutorialButton.gameObject.SetActive(available);
         }
 
         /// <summary>Play is unavailable without levels (run Build / Sync in the Level Designer).</summary>

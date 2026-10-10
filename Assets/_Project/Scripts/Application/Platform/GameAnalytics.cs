@@ -8,6 +8,7 @@ using Maze.Application.Services;
 using Maze.Gameplay.Level;
 using Maze.Gameplay.Navigation;
 using Maze.Gameplay.Pickups;
+using Maze.Gameplay.Tutorial;
 using Maze.Gameplay.Player;
 using Maze.Gameplay.Zombies;
 using UnityEngine;
@@ -44,7 +45,7 @@ namespace Maze.Application.Platform
     /// <summary>
     /// Level scope part of the analytics: counts hints, weapon pickups, the last zombie that hit the player, where the
     /// player is, play time and the frame rate into <see cref="LevelRunStats"/>; sends the in-level events (hint used,
-    /// weapon picked up). Ticks are trivial assignments; events are rare.
+    /// weapon picked up, tutorial step started — the funnel of the tutorial). Ticks are trivial assignments; events are rare.
     /// </summary>
     public sealed class LevelAnalytics : ILevelLoadStep, ILevelTickable, ILevelLateTickable, IDisposable
     {
@@ -55,12 +56,15 @@ namespace Maze.Application.Platform
         private readonly RouteHintSystem _route;
         private readonly PickupSystem _pickups;
         private readonly ZombieSystem _zombies;
+        private readonly TutorialSystem _tutorial;
         private readonly string _levelId;
         private bool _subscribed;
 
         public LevelAnalytics(LevelRunStats stats, AnalyticsService analytics, LevelProgress progress, PlayerSystem player,
-            RouteHintSystem route, PickupSystem pickups, ZombieSystem zombies, Maze.Core.Level.LevelData level)
+            RouteHintSystem route, PickupSystem pickups, ZombieSystem zombies, Maze.Core.Level.LevelData level,
+            TutorialSystem tutorial = null)
         {
+            _tutorial = tutorial;
             _stats = stats;
             _analytics = analytics;
             _progress = progress;
@@ -79,7 +83,10 @@ namespace Maze.Application.Platform
             _route.Requested += OnHint;
             _pickups.Removed += OnPickupRemoved;
             _zombies.Attacked += OnAttacked;
+            if (_tutorial != null) _tutorial.StepStarted += OnTutorialStep;
             _subscribed = true;
+            // The first step started at an earlier load stage.
+            if (_tutorial != null && _tutorial.Current != null) OnTutorialStep(_tutorial.StepIndex);
             return UniTask.CompletedTask;
         }
 
@@ -102,6 +109,7 @@ namespace Maze.Application.Platform
             _route.Requested -= OnHint;
             _pickups.Removed -= OnPickupRemoved;
             _zombies.Attacked -= OnAttacked;
+            if (_tutorial != null) _tutorial.StepStarted -= OnTutorialStep;
             _subscribed = false;
         }
 
@@ -123,6 +131,16 @@ namespace Maze.Application.Platform
             parameters["level"] = _levelId;
             parameters["weapon"] = pickup.Weapon.Definition != null ? pickup.Weapon.Definition.Id : "unknown";
             _analytics.Send(AnalyticsEvents.WeaponPickup);
+        }
+
+        private void OnTutorialStep(int index)
+        {
+            var parameters = _analytics.Begin();
+            parameters["level"] = _levelId;
+            parameters["step"] = index + 1;
+            parameters["steps"] = _tutorial.StepCount;
+            parameters["time"] = Mathf.RoundToInt(_progress.Elapsed);
+            _analytics.Send(AnalyticsEvents.TutorialStep);
         }
 
         private void OnAttacked(ZombieRuntime zombie) =>
