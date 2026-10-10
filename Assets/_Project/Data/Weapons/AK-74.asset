@@ -14,13 +14,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Maze.Core::Maze.Core.Definitions.WeaponDefinition
   _id: assault_rifle_01
   _slot: 1
-  _damage: 9
+  _damage: 13
   _soundRadius: 8
   _attackSpeed: 1
   _meleeRange: 1.2
   _meleeArc: 100
-  _fireInterval: 0.12
+  _fireInterval: 0.16
   _magazineSize: 30
-  _reloadTime: 2
+  _reloadTime: 2.4
   _fireMode: 1
   _projectileSpeed: 25

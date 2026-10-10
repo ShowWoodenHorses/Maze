@@ -14,13 +14,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Maze.Core::Maze.Core.Definitions.WeaponDefinition
   _id: hunting_rifle
   _slot: 1
-  _damage: 65
-  _soundRadius: 9
+  _damage: 60
+  _soundRadius: 8
   _sound: 
   _attackSpeed: 1
   _meleeRange: 1.2
   _meleeArc: 100
-  _fireInterval: 0.9
+  _fireInterval: 0.85
   _magazineSize: 5
   _reloadTime: 2.2
   _fireMode: 0
