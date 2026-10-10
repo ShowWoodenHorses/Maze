@@ -136,7 +136,7 @@ namespace Maze.Core.Lighting
                     if (door.KeyId == key.Id)
                         tag = Visual.VisualAssigner.ResolvedColor(level, door);
 
-            return !string.IsNullOrEmpty(tag) && ColorUtility.TryParseHtmlString(tag, out color);
+            return Visual.VisualColors.TryGetColor(tag, out color);
         }
 
         /// <summary>Floor cells reachable from the start in at most the given steps (4 directions, floor only).</summary>

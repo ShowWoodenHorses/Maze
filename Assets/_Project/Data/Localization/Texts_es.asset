@@ -34,6 +34,10 @@ MonoBehaviour:
   - hud.locked.blue
   - hud.locked.green
   - hud.locked.yellow
+  - hud.locked.orange
+  - hud.locked.cyan
+  - hud.locked.purple
+  - hud.locked.pink
   - hud.door_unlocked
   - hud.door_blocked
   - hud.door_frozen
@@ -133,6 +137,10 @@ MonoBehaviour:
   - 'Cerrada: necesitas la llave azul'
   - 'Cerrada: necesitas la llave verde'
   - 'Cerrada: necesitas la llave amarilla'
+  - 'Cerrada: necesitas la llave naranja'
+  - 'Cerrada: necesitas la llave cian'
+  - 'Cerrada: necesitas la llave morada'
+  - 'Cerrada: necesitas la llave rosa'
   - Puerta desbloqueada
   - Algo bloquea la puerta
   - 'Congelada: rompe el hielo con un arma cuerpo a cuerpo'

@@ -75,3 +75,51 @@ MonoBehaviour:
     _definition: {fileID: 0}
     _colorTag: yellow
     _height: 0
+  - _id: door_orange
+    _prefab:
+      m_AssetGUID: b88c77b46cf1d3f4b858d10a78a6d6f0
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+    _weight: 1
+    _category: 0
+    _definition: {fileID: 0}
+    _colorTag: orange
+    _height: 0
+  - _id: door_cyan
+    _prefab:
+      m_AssetGUID: 049b0a329261d1b4d9a593610ea82861
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+    _weight: 1
+    _category: 0
+    _definition: {fileID: 0}
+    _colorTag: cyan
+    _height: 0
+  - _id: door_purple
+    _prefab:
+      m_AssetGUID: 95d4d9e502e4d5e4dbc109d0e6d60e53
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+    _weight: 1
+    _category: 0
+    _definition: {fileID: 0}
+    _colorTag: purple
+    _height: 0
+  - _id: door_pink
+    _prefab:
+      m_AssetGUID: d4cee775991cd60468668c93d72fb322
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+    _weight: 1
+    _category: 0
+    _definition: {fileID: 0}
+    _colorTag: pink
+    _height: 0

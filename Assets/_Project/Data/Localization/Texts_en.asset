@@ -34,6 +34,10 @@ MonoBehaviour:
   - hud.locked.blue
   - hud.locked.green
   - hud.locked.yellow
+  - hud.locked.orange
+  - hud.locked.cyan
+  - hud.locked.purple
+  - hud.locked.pink
   - hud.door_unlocked
   - hud.door_blocked
   - hud.door_frozen
@@ -133,6 +137,10 @@ MonoBehaviour:
   - 'Locked: needs the blue key'
   - 'Locked: needs the green key'
   - 'Locked: needs the yellow key'
+  - 'Locked: needs the orange key'
+  - 'Locked: needs the cyan key'
+  - 'Locked: needs the purple key'
+  - 'Locked: needs the pink key'
   - Door unlocked
   - Something is in the doorway
   - 'Frozen: break the ice with a melee weapon'

@@ -63,3 +63,51 @@ MonoBehaviour:
     _definition: {fileID: 0}
     _colorTag: yellow
     _height: 0
+  - _id: key_orange
+    _prefab:
+      m_AssetGUID: 9b66bdea7c919b342b6def1c14fa7c3f
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+    _weight: 1
+    _category: 0
+    _definition: {fileID: 0}
+    _colorTag: orange
+    _height: 0
+  - _id: key_cyan
+    _prefab:
+      m_AssetGUID: 7b87ec8741a1c8843ad4f339c5ad25c7
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+    _weight: 1
+    _category: 0
+    _definition: {fileID: 0}
+    _colorTag: cyan
+    _height: 0
+  - _id: key_purple
+    _prefab:
+      m_AssetGUID: 6f5cd756fd8888a4ebfca0d206e46da2
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+    _weight: 1
+    _category: 0
+    _definition: {fileID: 0}
+    _colorTag: purple
+    _height: 0
+  - _id: key_pink
+    _prefab:
+      m_AssetGUID: 8745f43fd23507c48adc718d65073d06
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+    _weight: 1
+    _category: 0
+    _definition: {fileID: 0}
+    _colorTag: pink
+    _height: 0

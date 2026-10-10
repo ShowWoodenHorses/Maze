@@ -34,6 +34,10 @@ MonoBehaviour:
   - hud.locked.blue
   - hud.locked.green
   - hud.locked.yellow
+  - hud.locked.orange
+  - hud.locked.cyan
+  - hud.locked.purple
+  - hud.locked.pink
   - hud.door_unlocked
   - hud.door_blocked
   - hud.door_frozen
@@ -133,6 +137,10 @@ MonoBehaviour:
   - 'Kilitli: mavi anahtar gerekli'
   - "Kilitli: ye\u015Fil anahtar gerekli"
   - "Kilitli: sar\u0131 anahtar gerekli"
+  - 'Kilitli: turuncu anahtar gerekli'
+  - 'Kilitli: turkuaz anahtar gerekli'
+  - 'Kilitli: mor anahtar gerekli'
+  - 'Kilitli: pembe anahtar gerekli'
   - "Kap\u0131n\u0131n kilidi a\xE7\u0131ld\u0131"
   - "Kap\u0131 aral\u0131\u011F\u0131nda bir \u015Fey var"
   - "Donmu\u015F: buzu yak\u0131n d\xF6v\xFC\u015F silah\u0131yla k\u0131r"

@@ -26,6 +26,10 @@ hud.locked.red	Locked: needs the red key	Заперто: нужен красны
 hud.locked.blue	Locked: needs the blue key	Заперто: нужен синий ключ	Kilitli: mavi anahtar gerekli	Cerrada: necesitas la llave azul	Verschlossen: blauer Schlüssel nötig
 hud.locked.green	Locked: needs the green key	Заперто: нужен зелёный ключ	Kilitli: yeşil anahtar gerekli	Cerrada: necesitas la llave verde	Verschlossen: grüner Schlüssel nötig
 hud.locked.yellow	Locked: needs the yellow key	Заперто: нужен жёлтый ключ	Kilitli: sarı anahtar gerekli	Cerrada: necesitas la llave amarilla	Verschlossen: gelber Schlüssel nötig
+hud.locked.orange	Locked: needs the orange key	Заперто: нужен оранжевый ключ	Kilitli: turuncu anahtar gerekli	Cerrada: necesitas la llave naranja	Verschlossen: orangefarbener Schlüssel nötig
+hud.locked.cyan	Locked: needs the cyan key	Заперто: нужен голубой ключ	Kilitli: turkuaz anahtar gerekli	Cerrada: necesitas la llave cian	Verschlossen: türkiser Schlüssel nötig
+hud.locked.purple	Locked: needs the purple key	Заперто: нужен фиолетовый ключ	Kilitli: mor anahtar gerekli	Cerrada: necesitas la llave morada	Verschlossen: violetter Schlüssel nötig
+hud.locked.pink	Locked: needs the pink key	Заперто: нужен розовый ключ	Kilitli: pembe anahtar gerekli	Cerrada: necesitas la llave rosa	Verschlossen: rosa Schlüssel nötig
 hud.door_unlocked	Door unlocked	Дверь отперта	Kapının kilidi açıldı	Puerta desbloqueada	Tür aufgeschlossen
 hud.door_blocked	Something is in the doorway	Что-то мешает в проёме	Kapı aralığında bir şey var	Algo bloquea la puerta	Etwas steht in der Tür
 hud.door_frozen	Frozen: break the ice with a melee weapon	Дверь замёрзла: разбейте лёд оружием ближнего боя	Donmuş: buzu yakın dövüş silahıyla kır	Congelada: rompe el hielo con un arma cuerpo a cuerpo	Vereist: Brich das Eis mit einer Nahkampfwaffe

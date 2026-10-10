@@ -8,8 +8,8 @@
 |---|---|---|---|---|
 | Пол | Theme → Floor Set | 1 | 3 + 1 Special | 3–4 вариации + Special по желанию |
 | Стены | Theme → Wall Set | **6** (по одной на категорию) | 7 | 6 категорий, у Straight 2–3 вариации |
-| Двери | Theme → Door Set | 1 + 1 на каждый цвет ключа | 5 (обычная + 4 цвета) | 1–2 обычных + 4 цветных |
-| Ключи | Theme → Key Set | 1 на каждый цвет | 4 (red, blue, green, yellow) | 4 |
+| Двери | Theme → Door Set | 1 + 1 на каждый цвет ключа | 9 (обычная + 8 цветов) | 1–2 обычных + 8 цветных |
+| Ключи | Theme → Key Set | 1 на каждый цвет | 8 (red, blue, green, yellow, orange, cyan, purple, pink) | 8 |
 | Выход | Theme → Exit Set | 1 | CastleBlock: 2 лестницы (`Art/Exit`); заглушка — 1 | 1–2 |
 | Аптечка | Theme → Medkit Set | 1 | 1 | 1 |
 | Оружие на полу | Theme → Weapon Set | 1 на каждое оружие | 1 общий | 3 (нож, бита, пистолет) |

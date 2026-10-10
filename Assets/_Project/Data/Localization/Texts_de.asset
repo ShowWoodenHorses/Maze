@@ -34,6 +34,10 @@ MonoBehaviour:
   - hud.locked.blue
   - hud.locked.green
   - hud.locked.yellow
+  - hud.locked.orange
+  - hud.locked.cyan
+  - hud.locked.purple
+  - hud.locked.pink
   - hud.door_unlocked
   - hud.door_blocked
   - hud.door_frozen
@@ -133,6 +137,10 @@ MonoBehaviour:
   - "Verschlossen: blauer Schl\xFCssel n\xF6tig"
   - "Verschlossen: gr\xFCner Schl\xFCssel n\xF6tig"
   - "Verschlossen: gelber Schl\xFCssel n\xF6tig"
+  - "Verschlossen: orangefarbener Schl\xFCssel n\xF6tig"
+  - "Verschlossen: t\xFCrkiser Schl\xFCssel n\xF6tig"
+  - "Verschlossen: violetter Schl\xFCssel n\xF6tig"
+  - "Verschlossen: rosa Schl\xFCssel n\xF6tig"
   - "T\xFCr aufgeschlossen"
   - "Etwas steht in der T\xFCr"
   - 'Vereist: Brich das Eis mit einer Nahkampfwaffe'

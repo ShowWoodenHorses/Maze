@@ -26,6 +26,10 @@ namespace Maze.Editor.Dev
             ("blue", new Color(0.15f, 0.35f, 0.9f)),
             ("green", new Color(0.15f, 0.75f, 0.25f)),
             ("yellow", new Color(0.95f, 0.85f, 0.1f)),
+            ("orange", new Color(1f, 0.5f, 0.05f)),
+            ("cyan", new Color(0.1f, 0.85f, 0.85f)),
+            ("purple", new Color(0.65f, 0.2f, 0.9f)),
+            ("pink", new Color(1f, 0.4f, 0.7f)),
         };
 
         private static readonly Color WoodColor = new Color(0.45f, 0.28f, 0.12f);

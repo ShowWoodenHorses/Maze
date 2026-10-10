@@ -474,7 +474,7 @@ namespace Maze.Editor.LevelDesigner
                 return null;
 
             var variant = set.FindVariant(VisualResolver.ResolveObject(level, entity).VariantId);
-            return variant != null && variant.HasColor && ColorUtility.TryParseHtmlString(variant.ColorTag, out var color)
+            return variant != null && variant.HasColor && VisualColors.TryGetColor(variant.ColorTag, out var color)
                 ? color
                 : (Color?)null;
         }

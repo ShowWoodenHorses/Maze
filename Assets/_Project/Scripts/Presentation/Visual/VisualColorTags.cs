@@ -15,11 +15,10 @@ namespace Maze.Presentation.Visual
             return variant != null && variant.HasColor ? variant.ColorTag : null;
         }
 
-        /// <summary>Unity colour for a tag like "red" or "#FF8800".</summary>
+        /// <summary>Unity colour for a tag like "red", "pink" or "#FF8800" (<see cref="VisualColors"/>).</summary>
         public static bool TryGetColor(string tag, out Color color)
         {
-            color = default;
-            return !string.IsNullOrEmpty(tag) && ColorUtility.TryParseHtmlString(tag, out color);
+            return VisualColors.TryGetColor(tag, out color);
         }
     }
 }
