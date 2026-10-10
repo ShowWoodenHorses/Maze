@@ -59,6 +59,9 @@ MonoBehaviour:
   - result.no_exit
   - result.zombies
   - result.map
+  - result.time
+  - result.best
+  - result.record
   - result.menu
   - result.retry
   - result.next
@@ -66,6 +69,15 @@ MonoBehaviour:
   - error.back
   - map.player
   - map.pieces
+  - map.zombies
+  - map.weapons
+  - map.medkits
+  - map.keys
+  - map.hint.fragment
+  - map.hint.exit
+  - map.hint.key
+  - map.hint.door
+  - map.hint.none
   - map.none
   - map.none_found
   - map.count
@@ -145,6 +157,9 @@ MonoBehaviour:
   - NO EXIT
   - ZOMBIES {0}/{1}
   - MAP {0}/{1}
+  - TIME {0}
+  - BEST {0}
+  - NEW RECORD!
   - MENU
   - RETRY
   - NEXT
@@ -152,6 +167,15 @@ MonoBehaviour:
   - BACK TO MENU
   - PLAYER
   - MAP PIECES
+  - ZOMBIES
+  - WEAPONS
+  - MEDKITS
+  - KEYS
+  - Route to the nearest map fragment
+  - Route to the exit
+  - Route to the nearest key
+  - Route to the door your key opens
+  - No route found
   - This level has no map
   - No map fragments found yet (0/{0})
   - 'Map fragments: {0}/{1}'

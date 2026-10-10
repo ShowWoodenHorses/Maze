@@ -1157,6 +1157,14 @@ namespace Maze.Editor.Dev
             AutoSize(caption, 0.6f);
             var close = RoundButton(screen.transform, "CloseButton", icons.Close, new Vector2(1f, 1f), new Vector2(-100f, -90f),
                 84f, 34f);
+            // Left of Close, spaced so that the widened touch areas meet but do not overlap.
+            var hint = RoundButton(screen.transform, "HintButton", icons.Search, new Vector2(1f, 1f), new Vector2(-232f, -90f),
+                84f, 36f);
+            var hintStatus = Text(screen.transform, "HintStatus", "", 26f, false, new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f),
+                new Vector2(0f, -136f), new Vector2(760f, 34f), TextAlignmentOptions.Center, _style.MutedText);
+            hintStatus.textWrappingMode = TextWrappingModes.NoWrap;
+            AutoSize(hintStatus, 0.6f);
+            hintStatus.gameObject.SetActive(false);
 
             // Area below the caption, right of the switches; the image keeps the level's aspect ratio inside it.
             var area = new GameObject("MapArea", typeof(RectTransform));
@@ -1174,7 +1182,15 @@ namespace Maze.Editor.Dev
             fitter.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
             fitter.aspectRatio = 1f;
 
-            // Icon switches (one per MapLayer, in its order) stacked at the left. Direct children named "<name>Toggle" (tests).
+            // First child of the image: under the icons (they are created later, at level loading).
+            var routeObject = new GameObject("Route", typeof(RectTransform));
+            routeObject.transform.SetParent(imageObject.transform, false);
+            var route = routeObject.AddComponent<MapRouteGraphic>();
+            route.raycastTarget = false;
+            Stretch(route.rectTransform);
+
+            // Icon switches (one per MapLayer, in its order) stacked at the left, below the FPS counter (over every
+            // screen at about -182..-210). Direct children named "<name>Toggle" (tests).
             (string name, string caption)[] layers =
             {
                 ("ShowPlayer", TextKeys.MapPlayer), ("ShowFragments", TextKeys.MapPieces), ("ShowZombies", TextKeys.MapZombies),
@@ -1183,13 +1199,16 @@ namespace Maze.Editor.Dev
             var toggles = new List<Object>();
             for (var i = 0; i < layers.Length; i++)
                 toggles.Add(LabeledSwitch(screen.transform, layers[i].name, Loc(layers[i].caption), TopLeft,
-                    new Vector2(40f, -60f - 64f * i)));
+                    new Vector2(40f, -250f - 64f * i)));
 
             var mapIcons = AssetDatabase.LoadAssetAtPath<MapIconSet>(MapIconsBuilder.SetPath);
             if (mapIcons == null) mapIcons = MapIconsBuilder.Build();
 
             SetReference(screen, "_icons", mapIcons);
             SetReferences(screen, "_layers", toggles);
+            SetReference(screen, "_hintButton", hint);
+            SetReference(screen, "_hintStatus", hintStatus);
+            SetReference(screen, "_route", route);
             SetReference(screen, "_image", image);
             SetReference(screen, "_fitter", fitter);
             SetReference(screen, "_caption", caption);

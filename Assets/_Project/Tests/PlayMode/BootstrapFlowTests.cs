@@ -514,8 +514,18 @@ namespace Maze.Tests.PlayMode
                 Assert.IsFalse(presenter.Icons[presenter.Icons.Count - 1].Visible, "Player toggle hides the icon.");
                 Assert.IsFalse(_container.Resolve<SettingsService>().MapShowPlayer, "Saved in the settings.");
                 playerToggle.isOn = true;
+
+                // Route hint: the magnifier lays a route, drawn on the map and, after closing it, on the floor.
+                var route = container.Resolve<Maze.Gameplay.Navigation.RouteHintSystem>();
+                ui.Map.transform.Find("HintButton").GetComponent<Button>().onClick.Invoke();
+                Assert.IsTrue(route.IsActive, "Level_Items: something useful is always reachable from the start.");
+                Assert.GreaterOrEqual(ui.Map.GetComponentInChildren<MapRouteGraphic>().PointCount, 2, "The route on the map.");
                 _flow.CloseMap();
                 Assert.AreEqual(LevelRunState.Running, runtime.State);
+                await UniTask.DelayFrame(2);
+                var line = container.Resolve<RouteLineView>();
+                Assert.IsTrue(line.IsShown, "The route on the floor.");
+                Assert.AreEqual((Vector2)player.Position, line.Points[0], "It starts at the player.");
 
                 _flow.CompleteLevel();
                 Assert.AreEqual(GameFlowState.Completed, _flow.State);

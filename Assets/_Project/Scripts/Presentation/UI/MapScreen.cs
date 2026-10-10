@@ -12,7 +12,8 @@ namespace Maze.Presentation.UI
     /// gameplay is paused while open. Icons are Images over the map image, placed in cell units and sized from the
     /// shown map (never smaller than <see cref="MapIconSet.MinScreenSize"/>); they are created when a level sets them
     /// (loading), reused by later levels. A switch per <see cref="MapLayer"/> (player, map pieces, zombies, weapons,
-    /// medkits, keys) shows or hides those icons.
+    /// medkits, keys) shows or hides those icons. The magnifier button (left of Close) asks for a route hint; the route
+    /// is drawn over the map (<see cref="MapRouteGraphic"/>, under the icons) with a line of status under the caption.
     /// </summary>
     public sealed class MapScreen : UIScreen
     {
@@ -24,6 +25,11 @@ namespace Maze.Presentation.UI
         [Tooltip("A switch per MapLayer, in its order.")]
         [SerializeField] private Toggle[] _layers;
 
+        [Header("Route hint")]
+        [SerializeField] private Button _hintButton;
+        [SerializeField] private TMP_Text _hintStatus;
+        [SerializeField] private MapRouteGraphic _route;
+
         private readonly List<Image> _iconImages = new List<Image>();
         private readonly List<MapIcon> _iconData = new List<MapIcon>();
         private int _iconCount;
@@ -31,6 +37,9 @@ namespace Maze.Presentation.UI
         private Vector2Int _mapSize;
 
         public event Action CloseClicked;
+        /// <summary>The magnifier button: the player asks for a route hint.</summary>
+        public event Action HintClicked;
+
         /// <summary>The player switched a layer on or off.</summary>
         public event Action<MapLayer, bool> LayerChanged;
 
@@ -42,6 +51,7 @@ namespace Maze.Presentation.UI
         private void Awake()
         {
             Bind(_closeButton, () => CloseClicked?.Invoke());
+            Bind(_hintButton, () => HintClicked?.Invoke());
             if (_layers == null) return;
             for (var i = 0; i < _layers.Length; i++)
             {
@@ -69,6 +79,31 @@ namespace Maze.Presentation.UI
             _caption.text = caption;
         }
 
+        /// <summary>
+        /// Draws the route (map units: cells, a cell centre at +0.5) with the look of <see cref="MapIconSet"/>; null or
+        /// fewer than two points hide it.
+        /// </summary>
+        public void SetRoute(IReadOnlyList<Vector2> points)
+        {
+            if (_route == null) return;
+            if (points == null || points.Count < 2 || _icons == null)
+            {
+                _route.ClearRoute();
+                return;
+            }
+
+            _route.SetRoute(points, _mapSize, _icons.RouteWidth, _icons.RouteOutline, _icons.RouteMinWidth,
+                _icons.RouteColor, _icons.RouteOutlineColor);
+        }
+
+        /// <summary>The line under the caption: where the hint leads, or why there is none; empty hides it.</summary>
+        public void SetHintStatus(string text)
+        {
+            if (_hintStatus == null) return;
+            _hintStatus.text = text ?? string.Empty;
+            _hintStatus.gameObject.SetActive(!string.IsNullOrEmpty(text));
+        }
+
         /// <summary>Shows the layer's switch state without raising <see cref="LayerChanged"/>.</summary>
         public void SetLayer(MapLayer layer, bool shown)
         {
@@ -94,6 +129,8 @@ namespace Maze.Presentation.UI
 
         public void Clear()
         {
+            SetRoute(null);
+            SetHintStatus(null);
             SetMap(null, string.Empty);
             _iconData.Clear();
             _iconCount = 0;

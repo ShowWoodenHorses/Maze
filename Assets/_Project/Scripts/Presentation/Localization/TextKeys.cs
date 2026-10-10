@@ -66,6 +66,11 @@ namespace Maze.Presentation.Localization
         public const string MapWeapons = "map.weapons";
         public const string MapMedkits = "map.medkits";
         public const string MapKeys = "map.keys";
+        public const string HintFragment = "map.hint.fragment";
+        public const string HintExit = "map.hint.exit";
+        public const string HintKey = "map.hint.key";
+        public const string HintDoor = "map.hint.door";
+        public const string HintNone = "map.hint.none";
         public const string MapNone = "map.none";
         public const string MapNoneFound = "map.none_found";
         public const string MapCount = "map.count";

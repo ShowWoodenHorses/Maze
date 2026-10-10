@@ -93,3 +93,17 @@ MonoBehaviour:
     RingGrow: 0.3
     RingFade: 0.4
     RingRearm: 0.3
+  _route:
+    LineMaterial: {fileID: 2100000, guid: 0976e9e2f75b61643818c92e87fa1788, type: 2}
+    Color: {r: 0.62, g: 0.86, b: 1, a: 1}
+    Brightness: 0.85
+    Opacity: 0.6
+    Width: 0.18
+    OutlineColor: {r: 0.04, g: 0.06, b: 0.08, a: 0.9}
+    OutlineWidth: 0.03
+    CornerRadius: 0.35
+    StartFade: 0.6
+    Pulse: 0.35
+    PulseSpacing: 1.6
+    PulseSpeed: 1.2
+    Height: 0.05

@@ -9,6 +9,7 @@ using Maze.Core.Visual;
 using Maze.Gameplay.Doors;
 using Maze.Gameplay.Level;
 using Maze.Gameplay.Map;
+using Maze.Gameplay.Navigation;
 using Maze.Gameplay.Pickups;
 using Maze.Gameplay.Player;
 using Maze.Gameplay.Zombies;
@@ -27,7 +28,8 @@ namespace Maze.Presentation.Map
     /// collected regions; everywhere, each with its <see cref="MapLayer"/> switch: map fragments not collected yet,
     /// living zombies (where they are when the map opens: it pauses the game), weapons, medkits and keys lying in the
     /// level (keys in the colour of their door pair), the player (always last, on top). The switches live in
-    /// <see cref="SettingsService"/>. The texture is destroyed with the level.
+    /// <see cref="SettingsService"/>. The magnifier button asks <see cref="RouteHintSystem"/> for a hint; its route is
+    /// drawn over the map when it opens and right after the request. The texture is destroyed with the level.
     /// </summary>
     public sealed class MapPresenter : ILevelLoadStep, IDisposable
     {
@@ -41,6 +43,8 @@ namespace Maze.Presentation.Map
         private readonly LocalizationService _texts;
         private readonly PickupSystem _pickups;
         private readonly ZombieSystem _zombies;
+        private readonly RouteHintSystem _route;
+        private readonly List<Vector2> _routePoints = new List<Vector2>();
         private readonly List<MapIcon> _icons = new List<MapIcon>();
         private readonly List<Pickup> _lying = new List<Pickup>();
         private readonly Dictionary<string, Color> _pairColors = new Dictionary<string, Color>(StringComparer.Ordinal);
@@ -50,8 +54,10 @@ namespace Maze.Presentation.Map
         private bool _bound;
 
         public MapPresenter(UIRoot ui, LevelData level, LevelGrid grid, MapSystem map, PlayerSystem player,
-            DoorSystem doors, SettingsService settings, LocalizationService texts, PickupSystem pickups, ZombieSystem zombies)
+            DoorSystem doors, SettingsService settings, LocalizationService texts, PickupSystem pickups, ZombieSystem zombies,
+            RouteHintSystem route)
         {
+            _route = route;
             _pickups = pickups;
             _zombies = zombies;
             _texts = texts;
@@ -97,6 +103,8 @@ namespace Maze.Presentation.Map
                 _map.FragmentCollected += OnFragmentCollected;
                 _ui.Map.Opened += RefreshIcons;
                 _ui.Map.LayerChanged += OnLayerChanged;
+                _ui.Map.Opened += OnOpened;
+                _ui.Map.HintClicked += RequestHint;
                 _texts.LanguageChanged += Redraw; // The caption (rare: settings from the pause screen).
                 _bound = true;
             }
@@ -118,6 +126,8 @@ namespace Maze.Presentation.Map
                 {
                     _ui.Map.Opened -= RefreshIcons;
                     _ui.Map.LayerChanged -= OnLayerChanged;
+                    _ui.Map.Opened -= OnOpened;
+                    _ui.Map.HintClicked -= RequestHint;
                 }
 
                 _bound = false;
@@ -133,6 +143,43 @@ namespace Maze.Presentation.Map
         {
             Redraw();
             RefreshIcons();
+        }
+
+        /// <summary>Lays a new route hint and shows it (also used once the hint is paid for).</summary>
+        public void RequestHint()
+        {
+            var target = _route.Request();
+            _ui.Map.SetHintStatus(_texts.Get(HintText(target)));
+            RefreshRoute();
+        }
+
+        private static string HintText(RouteTarget target) => target switch
+        {
+            RouteTarget.MapFragment => TextKeys.HintFragment,
+            RouteTarget.Exit => TextKeys.HintExit,
+            RouteTarget.Key => TextKeys.HintKey,
+            RouteTarget.Door => TextKeys.HintDoor,
+            _ => TextKeys.HintNone,
+        };
+
+        private void OnOpened()
+        {
+            _ui.Map.SetHintStatus(_route.IsActive ? _texts.Get(HintText(_route.Target)) : null);
+            RefreshRoute();
+        }
+
+        /// <summary>The route from the player (now: the map pauses the game) to the target, in map units.</summary>
+        private void RefreshRoute()
+        {
+            _routePoints.Clear();
+            if (_route.IsActive && _player.IsSpawned)
+            {
+                _routePoints.Add(MapIconLayout.CenterOf(_player.Position));
+                var path = _route.Path;
+                for (var i = 1; i < path.Count; i++) _routePoints.Add(MapIconLayout.CenterOf(path[i]));
+            }
+
+            _ui.Map.SetRoute(_routePoints);
         }
 
         private void OnLayerChanged(MapLayer layer, bool show)

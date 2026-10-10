@@ -55,6 +55,16 @@ namespace Maze.Presentation.Map
         [Tooltip("Key whose door has no colour.")]
         public Color KeyColor = new Color(0.95f, 0.85f, 0.45f);
 
+        [Header("Route hint")]
+        public Color RouteColor = new Color(0.55f, 0.85f, 1f, 1f);
+        public Color RouteOutlineColor = new Color(0.08f, 0.09f, 0.1f, 1f);
+        [Tooltip("Line width, cells (outline excluded).")]
+        [Min(0.05f)] public float RouteWidth = 0.3f;
+        [Tooltip("Outline on each side, cells.")]
+        [Min(0f)] public float RouteOutline = 0.08f;
+        [Tooltip("Thinnest line on screen, canvas units (big levels have tiny cells).")]
+        [Min(0f)] public float RouteMinWidth = 4f;
+
         [Header("Placement")]
         [Tooltip("Icon size in cells (icons are bigger than a cell).")]
         [Min(0.5f)] public float Size = 1.8f;

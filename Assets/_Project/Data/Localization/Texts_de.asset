@@ -59,6 +59,9 @@ MonoBehaviour:
   - result.no_exit
   - result.zombies
   - result.map
+  - result.time
+  - result.best
+  - result.record
   - result.menu
   - result.retry
   - result.next
@@ -66,6 +69,15 @@ MonoBehaviour:
   - error.back
   - map.player
   - map.pieces
+  - map.zombies
+  - map.weapons
+  - map.medkits
+  - map.keys
+  - map.hint.fragment
+  - map.hint.exit
+  - map.hint.key
+  - map.hint.door
+  - map.hint.none
   - map.none
   - map.none_found
   - map.count
@@ -145,6 +157,9 @@ MonoBehaviour:
   - KEIN AUSGANG
   - ZOMBIES {0}/{1}
   - KARTE {0}/{1}
+  - ZEIT {0}
+  - BESTZEIT {0}
+  - NEUER REKORD!
   - "MEN\xDC"
   - NOCHMAL
   - WEITER
@@ -152,6 +167,15 @@ MonoBehaviour:
   - "ZUR\xDCCK ZUM MEN\xDC"
   - SPIELER
   - KARTENTEILE
+  - ZOMBIES
+  - WAFFEN
+  - MEDKITS
+  - "SCHL\xDCSSEL"
+  - "Route zum n\xE4chsten Kartenteil"
+  - Route zum Ausgang
+  - "Route zum n\xE4chsten Schl\xFCssel"
+  - "Route zur T\xFCr, die dein Schl\xFCssel \xF6ffnet"
+  - Keine Route gefunden
   - Dieses Level hat keine Karte
   - Noch keine Kartenteile gefunden (0/{0})
   - 'Kartenteile: {0}/{1}'

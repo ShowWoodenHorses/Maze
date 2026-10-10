@@ -59,6 +59,9 @@ MonoBehaviour:
   - result.no_exit
   - result.zombies
   - result.map
+  - result.time
+  - result.best
+  - result.record
   - result.menu
   - result.retry
   - result.next
@@ -66,6 +69,15 @@ MonoBehaviour:
   - error.back
   - map.player
   - map.pieces
+  - map.zombies
+  - map.weapons
+  - map.medkits
+  - map.keys
+  - map.hint.fragment
+  - map.hint.exit
+  - map.hint.key
+  - map.hint.door
+  - map.hint.none
   - map.none
   - map.none_found
   - map.count
@@ -145,6 +157,9 @@ MonoBehaviour:
   - "\xC7IKI\u015E BULUNAMADI"
   - "ZOMB\u0130LER {0}/{1}"
   - "HAR\u0130TA {0}/{1}"
+  - "S\xDCRE {0}"
+  - "EN \u0130Y\u0130 {0}"
+  - "YEN\u0130 REKOR!"
   - "MEN\xDC"
   - TEKRAR
   - "SONRAK\u0130"
@@ -152,6 +167,15 @@ MonoBehaviour:
   - "MEN\xDCYE D\xD6N"
   - OYUNCU
   - "HAR\u0130TA PAR\xC7ALARI"
+  - "ZOMB\u0130LER"
+  - "S\u0130LAHLAR"
+  - "\u0130LK YARDIM"
+  - ANAHTARLAR
+  - "En yak\u0131n harita par\xE7as\u0131na rota"
+  - "\xC7\u0131k\u0131\u015Fa rota"
+  - "En yak\u0131n anahtara rota"
+  - "Anahtar\u0131n\u0131z\u0131n a\xE7t\u0131\u011F\u0131 kap\u0131ya rota"
+  - "Rota bulunamad\u0131"
   - "Bu b\xF6l\xFCmde harita yok"
   - "Hen\xFCz harita par\xE7as\u0131 bulunamad\u0131 (0/{0})"
   - "Harita par\xE7alar\u0131: {0}/{1}"

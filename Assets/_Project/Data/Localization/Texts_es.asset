@@ -59,6 +59,9 @@ MonoBehaviour:
   - result.no_exit
   - result.zombies
   - result.map
+  - result.time
+  - result.best
+  - result.record
   - result.menu
   - result.retry
   - result.next
@@ -66,6 +69,15 @@ MonoBehaviour:
   - error.back
   - map.player
   - map.pieces
+  - map.zombies
+  - map.weapons
+  - map.medkits
+  - map.keys
+  - map.hint.fragment
+  - map.hint.exit
+  - map.hint.key
+  - map.hint.door
+  - map.hint.none
   - map.none
   - map.none_found
   - map.count
@@ -145,6 +157,9 @@ MonoBehaviour:
   - SIN SALIDA
   - ZOMBIS {0}/{1}
   - MAPA {0}/{1}
+  - TIEMPO {0}
+  - MEJOR {0}
+  - "\xA1NUEVO R\xC9CORD!"
   - "MEN\xDA"
   - REPETIR
   - SIGUIENTE
@@ -152,6 +167,15 @@ MonoBehaviour:
   - "VOLVER AL MEN\xDA"
   - JUGADOR
   - PIEZAS DEL MAPA
+  - ZOMBIS
+  - ARMAS
+  - BOTIQUINES
+  - LLAVES
+  - "Ruta al fragmento de mapa m\xE1s cercano"
+  - Ruta a la salida
+  - "Ruta a la llave m\xE1s cercana"
+  - Ruta a la puerta que abre tu llave
+  - "No se encontr\xF3 ruta"
   - Este nivel no tiene mapa
   - "A\xFAn no hay fragmentos del mapa (0/{0})"
   - 'Fragmentos del mapa: {0}/{1}'

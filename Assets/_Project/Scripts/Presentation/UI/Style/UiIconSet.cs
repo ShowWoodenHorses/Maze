@@ -35,6 +35,7 @@ namespace Maze.Presentation.UI.Style
         public Sprite Exit;
         public Sprite Close;
         public Sprite Player;
+        public Sprite Search;
 
         [Tooltip("Background of the menu screens: a faint maze with a torch glow and a vignette.")]
         public Texture2D Backdrop;

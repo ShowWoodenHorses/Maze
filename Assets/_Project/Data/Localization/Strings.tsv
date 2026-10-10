@@ -68,6 +68,11 @@ map.zombies	ZOMBIES	ЗОМБИ	ZOMBİLER	ZOMBIS	ZOMBIES
 map.weapons	WEAPONS	ОРУЖИЕ	SİLAHLAR	ARMAS	WAFFEN
 map.medkits	MEDKITS	АПТЕЧКИ	İLK YARDIM	BOTIQUINES	MEDKITS
 map.keys	KEYS	КЛЮЧИ	ANAHTARLAR	LLAVES	SCHLÜSSEL
+map.hint.fragment	Route to the nearest map fragment	Маршрут к ближайшему фрагменту карты	En yakın harita parçasına rota	Ruta al fragmento de mapa más cercano	Route zum nächsten Kartenteil
+map.hint.exit	Route to the exit	Маршрут к выходу	Çıkışa rota	Ruta a la salida	Route zum Ausgang
+map.hint.key	Route to the nearest key	Маршрут к ближайшему ключу	En yakın anahtara rota	Ruta a la llave más cercana	Route zum nächsten Schlüssel
+map.hint.door	Route to the door your key opens	Маршрут к двери, которую откроет ваш ключ	Anahtarınızın açtığı kapıya rota	Ruta a la puerta que abre tu llave	Route zur Tür, die dein Schlüssel öffnet
+map.hint.none	No route found	Маршрут не найден	Rota bulunamadı	No se encontró ruta	Keine Route gefunden
 map.none	This level has no map	На этом уровне нет карты	Bu bölümde harita yok	Este nivel no tiene mapa	Dieses Level hat keine Karte
 map.none_found	No map fragments found yet (0/{0})	Фрагменты карты ещё не найдены (0/{0})	Henüz harita parçası bulunamadı (0/{0})	Aún no hay fragmentos del mapa (0/{0})	Noch keine Kartenteile gefunden (0/{0})
 map.count	Map fragments: {0}/{1}	Фрагменты карты: {0}/{1}	Harita parçaları: {0}/{1}	Fragmentos del mapa: {0}/{1}	Kartenteile: {0}/{1}
