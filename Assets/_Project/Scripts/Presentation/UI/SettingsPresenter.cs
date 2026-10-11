@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using Maze.Application.Flow;
 using Maze.Application.Save;
@@ -19,6 +20,7 @@ namespace Maze.Presentation.UI
         private readonly GameFlow _flow;
         private readonly UIRoot _ui;
         private readonly LocalizationService _texts;
+        private readonly List<string> _names = new List<string>();
         private bool _initialized;
 
         private TouchLayoutEditor LayoutEditor => _ui.TouchControls != null ? _ui.TouchControls.LayoutEditor : null;
@@ -47,7 +49,8 @@ namespace Maze.Presentation.UI
             _ui.Settings.ResetClicked += OnReset;
             _ui.Settings.BackClicked += Close;
             _ui.Settings.EditLayoutClicked += BeginLayoutEdit;
-            _ui.Settings.LanguageStepped += OnLanguageStepped;
+            _ui.Settings.LanguageListRequested += OnLanguageListRequested;
+            if (_ui.Settings.LanguagePicker != null) _ui.Settings.LanguagePicker.Picked += OnLanguagePicked;
             _texts.LanguageChanged += ShowLanguage;
             if (LayoutEditor != null)
             {
@@ -79,7 +82,8 @@ namespace Maze.Presentation.UI
             _ui.Settings.ShowFpsChanged -= OnShowFpsEdited;
             _ui.Settings.VolumesChanged -= OnVolumesEdited;
             _ui.Settings.EditLayoutClicked -= BeginLayoutEdit;
-            _ui.Settings.LanguageStepped -= OnLanguageStepped;
+            _ui.Settings.LanguageListRequested -= OnLanguageListRequested;
+            if (_ui.Settings.LanguagePicker != null) _ui.Settings.LanguagePicker.Picked -= OnLanguagePicked;
             if (LayoutEditor != null)
             {
                 LayoutEditor.Changed -= OnLayoutEdited;
@@ -113,12 +117,21 @@ namespace Maze.Presentation.UI
             _ui.Settings.SetLanguage(index >= 0 ? _texts.Languages[index].NativeName : string.Empty);
         }
 
-        /// <summary>Arrows cycle through the languages; the screen shows the new name once its texts are loaded.</summary>
-        private void OnLanguageStepped(int step)
+        /// <summary>The list of languages by their own names, the shown one marked.</summary>
+        private void OnLanguageListRequested()
         {
-            var count = _texts.Languages.Count;
-            if (count < 2 || _texts.LanguageIndex < 0) return;
-            _texts.SetLanguageAsync(((_texts.LanguageIndex + step) % count + count) % count).Forget();
+            var picker = _ui.Settings.LanguagePicker;
+            if (picker == null || _texts.Languages.Count == 0) return;
+            _names.Clear();
+            foreach (var language in _texts.Languages)
+                _names.Add(language.NativeName);
+            picker.Show(_names, _texts.LanguageIndex);
+        }
+
+        /// <summary>The screen shows the new name once its texts are loaded.</summary>
+        private void OnLanguagePicked(int index)
+        {
+            if (index != _texts.LanguageIndex) _texts.SetLanguageAsync(index).Forget();
         }
 
         private void Close()

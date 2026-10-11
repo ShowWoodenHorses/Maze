@@ -122,6 +122,9 @@ namespace Maze.Application.Services
             Button(PlayerAction.Reload, "<Keyboard>/r", "<Gamepad>/buttonNorth");
             // Map and pause also work while gameplay is paused (to close the map), so they are events
             // rather than polled by level ticks. Android Back arrives as Escape.
+            // Keys are bound by their place (US layout), not by the letter: a letter binding ("#(m)") finds no key on
+            // a Russian layout. On AZERTY the places are ZQSD for WASD (the French tutorial says so) and "," for M
+            // (the French tutorial names Tab for the map).
             var map = Button(PlayerAction.OpenMap, "<Keyboard>/m", "<Keyboard>/tab", "<Gamepad>/select");
             map.performed += _ => MapRequested?.Invoke();
 

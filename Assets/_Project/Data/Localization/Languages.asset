@@ -58,3 +58,75 @@ MonoBehaviour:
       m_SubObjectType: 
       m_SubObjectGUID: 
       m_EditorAssetChanged: 0
+  - _code: pt
+    _nativeName: "Portugu\xEAs"
+    _systemLanguages: 1c000000
+    _table:
+      m_AssetGUID: d5585a80f7c452740981cf17fec9c6f7
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - _code: fr
+    _nativeName: "Fran\xE7ais"
+    _systemLanguages: 0e000000
+    _table:
+      m_AssetGUID: 15c71a35b72204541a7c5d9edd3e323a
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - _code: it
+    _nativeName: Italiano
+    _systemLanguages: 15000000
+    _table:
+      m_AssetGUID: 010d6d85fdd40ed40b76615b05508bef
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - _code: pl
+    _nativeName: Polski
+    _systemLanguages: 1b000000
+    _table:
+      m_AssetGUID: ca767776d6b669a469456b8390f7afab
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - _code: id
+    _nativeName: Bahasa Indonesia
+    _systemLanguages: 14000000
+    _table:
+      m_AssetGUID: 359b5063e14de5d429649d57a1d36b36
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - _code: kk
+    _nativeName: "\u049A\u0430\u0437\u0430\u049B\u0448\u0430"
+    _systemLanguages: 
+    _table:
+      m_AssetGUID: 3382225294cedd544ab1493886a27f40
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - _code: uz
+    _nativeName: "O\u02BBzbekcha"
+    _systemLanguages: 
+    _table:
+      m_AssetGUID: fcb1f63709928a34283a2ae26fa21f77
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - _code: be
+    _nativeName: "\u0411\u0435\u043B\u0430\u0440\u0443\u0441\u043A\u0430\u044F"
+    _systemLanguages: 03000000
+    _table:
+      m_AssetGUID: 6de025a2d6916da40b99eb76a04e78e7
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0

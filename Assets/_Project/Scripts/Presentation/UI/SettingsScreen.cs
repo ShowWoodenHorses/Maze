@@ -60,10 +60,10 @@ namespace Maze.Presentation.UI
         [SerializeField] private Slider _sfxVolume;
         [SerializeField] private TMP_Text _sfxVolumeLabel;
         [SerializeField] private Toggle _showFps;
-        [Tooltip("Language: its own name between the previous / next arrows.")]
+        [Tooltip("Language: a button with the language's own name; it opens the list.")]
         [SerializeField] private TMP_Text _languageName;
-        [SerializeField] private Button _languagePrevious;
-        [SerializeField] private Button _languageNext;
+        [SerializeField] private Button _languageButton;
+        [SerializeField] private LanguagePicker _languagePicker;
         [SerializeField] private Button _resetButton;
         [SerializeField] private Button _backButton;
 
@@ -80,8 +80,10 @@ namespace Maze.Presentation.UI
         /// <summary>The "Show FPS counter" toggle was switched (not part of the controls).</summary>
         public event Action<bool> ShowFpsChanged;
 
-        /// <summary>A language arrow: −1 previous, +1 next.</summary>
-        public event Action<int> LanguageStepped;
+        /// <summary>The language button: open the list (<see cref="LanguagePicker"/>).</summary>
+        public event Action LanguageListRequested;
+
+        public LanguagePicker LanguagePicker => _languagePicker;
         public event Action BackClicked;
 
         private AimMode _aimMode;
@@ -115,8 +117,7 @@ namespace Maze.Presentation.UI
             Bind(_resetButton, () => ResetClicked?.Invoke(Tab));
             Bind(_editLayoutButton, () => EditLayoutClicked?.Invoke());
             Bind(_backButton, () => BackClicked?.Invoke());
-            Bind(_languagePrevious, () => LanguageStepped?.Invoke(-1));
-            Bind(_languageNext, () => LanguageStepped?.Invoke(1));
+            Bind(_languageButton, () => LanguageListRequested?.Invoke());
             for (var i = 0; i < _tabButtons.Length; i++)
             {
                 var tab = (SettingsTab)i;

@@ -1479,7 +1479,12 @@ namespace Maze.Editor.Dev
             var aimAssist = SwitchSetting(shootingPage, "AimAssist", Loc(TextKeys.SettingsAimAssist));
 
             var otherPage = Page(pages.transform, "OtherPage");
-            var (languagePrevious, languageName, languageNext) = StepperSetting(otherPage, "Language", Loc(TextKeys.SettingsLanguage));
+            var languageRow = SettingRow(otherPage, "Language", Loc(TextKeys.SettingsLanguage));
+            var languageButton = TextButton(languageRow, "LanguageButton", "", false, icons.ChevronRight, 60f, 26f);
+            languageButton.GetComponent<LayoutElement>().preferredWidth = 420f;
+            var languageName = languageButton.transform.Find("Label").GetComponent<TMP_Text>();
+            languageName.characterSpacing = 2f;
+            languageButton.transform.Find("Icon").localRotation = Quaternion.Euler(0f, 0f, -90f); // a chevron down
             var (music, musicLabel) = SliderSetting(otherPage, "MusicVolume", Loc(TextKeys.SettingsMusic));
             var (sfx, sfxLabel) = SliderSetting(otherPage, "SfxVolume", Loc(TextKeys.SettingsSound));
             var showFps = SwitchSetting(otherPage, "ShowFps", Loc(TextKeys.SettingsShowFps));
@@ -1497,8 +1502,8 @@ namespace Maze.Editor.Dev
             SetReferences(screen, "_pages", new List<Object> { controlsPage.gameObject, shootingPage.gameObject, otherPage.gameObject });
             SetReference(screen, "_editLayoutButton", editLayout);
             SetReference(screen, "_languageName", languageName);
-            SetReference(screen, "_languagePrevious", languagePrevious);
-            SetReference(screen, "_languageNext", languageNext);
+            SetReference(screen, "_languageButton", languageButton);
+            SetReference(screen, "_languagePicker", BuildLanguagePicker(screen.transform)); // last: over the page
             SetReference(screen, "_deadZone", deadZone);
             SetReference(screen, "_deadZoneLabel", deadZoneLabel);
             SetReference(screen, "_sensitivity", sensitivity);
@@ -1699,6 +1704,67 @@ namespace Maze.Editor.Dev
             return button;
         }
 
+        /// <summary>
+        /// The language list over the settings: a dimmed blocker (a tap closes the list) and a panel with a scrolling
+        /// column of buttons — one built here, the rest cloned by <see cref="LanguagePicker"/> for every language.
+        /// </summary>
+        private static LanguagePicker BuildLanguagePicker(Transform screen)
+        {
+            var go = new GameObject("LanguagePicker", typeof(RectTransform));
+            go.transform.SetParent(screen, false);
+            Stretch(go.GetComponent<RectTransform>());
+
+            var overlay = new GameObject("Overlay", typeof(RectTransform));
+            overlay.transform.SetParent(go.transform, false);
+            Stretch(overlay.GetComponent<RectTransform>());
+
+            var blocker = Shape(overlay.transform, "Blocker", Center, Vector2.zero, Vector2.zero, true);
+            Stretch(blocker.rectTransform);
+            blocker.Fill = new Color(0f, 0f, 0f, 0.45f);
+            blocker.StrokeWidth = 0f;
+            var blockerButton = blocker.gameObject.AddComponent<Button>();
+            blockerButton.transition = Selectable.Transition.None;
+            blockerButton.targetGraphic = blocker;
+
+            var panel = Shape(overlay.transform, "Panel", Center, Vector2.zero, new Vector2(560f, 660f), true);
+            panel.Fill = new Color(0.055f, 0.051f, 0.047f, 0.97f);
+            panel.Stroke = Fade(_style.Line, 0.8f);
+            panel.CornerRadius = 2f;
+
+            var viewport = Rect(panel.transform, "Viewport", Center, Vector2.zero, Vector2.zero);
+            Stretch(viewport);
+            viewport.offsetMin = new Vector2(20f, 20f);
+            viewport.offsetMax = new Vector2(-20f, -20f);
+            viewport.gameObject.AddComponent<RectMask2D>();
+            var content = Rect(viewport, "Content", new Vector2(0.5f, 1f), Vector2.zero, Vector2.zero);
+            content.anchorMin = new Vector2(0f, 1f);
+            content.anchorMax = new Vector2(1f, 1f);
+            content.pivot = new Vector2(0.5f, 1f);
+            var layout = content.gameObject.AddComponent<VerticalLayoutGroup>();
+            layout.spacing = 10f;
+            layout.childControlWidth = layout.childControlHeight = true;
+            layout.childForceExpandHeight = false;
+            content.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            var scroll = panel.gameObject.AddComponent<ScrollRect>();
+            scroll.horizontal = false;
+            scroll.movementType = ScrollRect.MovementType.Clamped;
+            scroll.scrollSensitivity = 40f;
+            scroll.viewport = viewport;
+            scroll.content = content;
+
+            var item = TextButton(content, "Language0", "", false, null, 66f, 28f);
+            item.transform.Find("Label").GetComponent<TMP_Text>().characterSpacing = 2f;
+
+            var picker = go.AddComponent<LanguagePicker>();
+            SetReference(picker, "_root", overlay);
+            SetReference(picker, "_blocker", blockerButton);
+            SetReference(picker, "_scroll", scroll);
+            SetReference(picker, "_item", item);
+            overlay.SetActive(false);
+            return picker;
+        }
+
         /// <summary>A settings tab: caption and an accent underline (shown for the open tab).</summary>
         private static (Button Button, TMP_Text Label, GameObject Underline) TabButton(Transform parent, string name, string text)
         {
@@ -1797,23 +1863,6 @@ namespace Maze.Editor.Dev
             var button = TextButton(row, name, text, false, null, 60f, 24f);
             button.GetComponent<LayoutElement>().preferredWidth = 180f;
             return button;
-        }
-
-        /// <summary>Value between round previous / next arrows (the screen writes the value text).</summary>
-        private static (UiButton Previous, TMP_Text Value, UiButton Next) StepperSetting(Transform page, string name, string caption)
-        {
-            var icons = UiIcons();
-            var row = SettingRow(page, name, caption);
-            var previous = RoundButton(row, name + "PreviousButton", icons.ChevronLeft, Center, Vector2.zero, 56f, 24f);
-            previous.gameObject.AddComponent<LayoutElement>().preferredWidth = 56f;
-            previous.GetComponent<LayoutElement>().preferredHeight = 56f;
-            var value = Text(row, name + "Value", "", 28f, true, Center, Center, Vector2.zero, new Vector2(260f, 40f),
-                TextAlignmentOptions.Center);
-            value.gameObject.AddComponent<LayoutElement>().preferredWidth = 260f;
-            var next = RoundButton(row, name + "NextButton", icons.ChevronRight, Center, Vector2.zero, 56f, 24f);
-            next.gameObject.AddComponent<LayoutElement>().preferredWidth = 56f;
-            next.GetComponent<LayoutElement>().preferredHeight = 56f;
-            return (previous, value, next);
         }
 
         /// <summary>A thin track, the accent fill and a diamond handle (uGUI Slider, look only here).</summary>

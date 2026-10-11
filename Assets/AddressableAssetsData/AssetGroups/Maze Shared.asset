@@ -15,8 +15,18 @@ MonoBehaviour:
   m_GroupName: Maze Shared
   m_GUID: 3103d1cbfedb1f14f8c9d647de458c62
   m_SerializeEntries:
+  - m_GUID: 010d6d85fdd40ed40b76615b05508bef
+    m_Address: Assets/_Project/Data/Localization/Texts_it.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 028230155977b4c499c5b3a05839884c
     m_Address: Assets/_Project/Data/Localization/Texts_es.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 15c71a35b72204541a7c5d9edd3e323a
+    m_Address: Assets/_Project/Data/Localization/Texts_fr.asset
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -45,6 +55,16 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3382225294cedd544ab1493886a27f40
+    m_Address: Assets/_Project/Data/Localization/Texts_kk.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 359b5063e14de5d429649d57a1d36b36
+    m_Address: Assets/_Project/Data/Localization/Texts_id.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 373f07124d1c81d4b8e32b798c9db6ea
     m_Address: Assets/_Project/Data/Localization/Texts_ru.asset
     m_ReadOnly: 0
@@ -57,6 +77,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 67d413abe225d2d47a78fb336374d015
     m_Address: Assets/_Project/Art/Weapons/Rifle/Auto/SM_Wep_AssaultRifle_01.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6de025a2d6916da40b99eb76a04e78e7
+    m_Address: Assets/_Project/Data/Localization/Texts_be.asset
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -125,8 +150,18 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ca767776d6b669a469456b8390f7afab
+    m_Address: Assets/_Project/Data/Localization/Texts_pl.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: ce3b93c2ff9f6f644890d8abcb3a5749
     m_Address: Assets/_Project/Art/Weapons/Melee/SM_Wep_Bat_Wood_01.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d5585a80f7c452740981cf17fec9c6f7
+    m_Address: Assets/_Project/Data/Localization/Texts_pt.asset
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -152,6 +187,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: f7b222a233646a34eafdab65adb2eb76
     m_Address: Audio/Catalog
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fcb1f63709928a34283a2ae26fa21f77
+    m_Address: Assets/_Project/Data/Localization/Texts_uz.asset
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

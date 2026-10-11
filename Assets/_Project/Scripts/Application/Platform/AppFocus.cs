@@ -126,7 +126,9 @@ namespace Maze.Application.Platform
         private static extern void MazePage_ListenVisibility(IntCallback callback);
 
         [AOT.MonoPInvokeCallback(typeof(IntCallback))]
-        private static void OnVisibility(int visible) => VisibilityChanged?.Invoke(visible != 0);
+        private static void OnVisibility(int visible) => Raise(visible != 0);
 #endif
+
+        private static void Raise(bool visible) => VisibilityChanged?.Invoke(visible);
     }
 }

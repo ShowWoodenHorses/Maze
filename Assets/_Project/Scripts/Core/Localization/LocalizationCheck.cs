@@ -60,6 +60,8 @@ namespace Maze.Core.Localization
                     var text = row.Texts[l];
                     if (text == null)
                     {
+                        // Unity has no system language for some (Kazakh, Uzbek): the site or the settings choose them.
+                        if (row.Key == LocalizationSource.SystemKey) continue;
                         issues.Add(new Issue(false, $"Line {row.Line}: '{row.Key}' is not translated into '{source.Languages[l]}'."));
                         continue;
                     }
