@@ -21,10 +21,13 @@ namespace Maze.Composition
         private readonly LocalizationPresenter _localization;
         private readonly GameAnalytics _analytics;
         private readonly AppFocusController _focus;
+        private readonly PlatformEvents _platformEvents;
 
         public ApplicationEntryPoint(GameFlow flow, ScreenRouter screens, PauseController pause, SettingsPresenter settings,
-            AppAudioPresenter audio, LocalizationPresenter localization, GameAnalytics analytics, AppFocusController focus)
+            AppAudioPresenter audio, LocalizationPresenter localization, GameAnalytics analytics, AppFocusController focus,
+            PlatformEvents platformEvents)
         {
+            _platformEvents = platformEvents;
             _focus = focus;
             _analytics = analytics;
             _localization = localization;
@@ -45,6 +48,7 @@ namespace Maze.Composition
             _pause.Initialize();
             _analytics.Initialize();
             _focus.Initialize();
+            _platformEvents.Initialize();
 
             await _flow.InitializeApplication();
             if (_flow.State != GameFlowState.Error && !cancellation.IsCancellationRequested)

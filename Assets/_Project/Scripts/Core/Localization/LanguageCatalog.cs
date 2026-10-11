@@ -32,9 +32,19 @@ namespace Maze.Core.Localization
         /// The language to use: the saved one if it still exists, else the first language that lists
         /// <paramref name="system"/>, else the base language. -1 only for an empty catalog.
         /// </summary>
-        public int Choose(string saved, SystemLanguage system)
+        public int Choose(string saved, SystemLanguage system) => Choose(saved, null, system);
+
+        /// <summary>
+        /// As <see cref="Choose(string, SystemLanguage)"/>, with the platform's language (a game site tells the
+        /// player's language: "ru", "en-US"…) between the saved one and the system one.
+        /// </summary>
+        public int Choose(string saved, string platform, SystemLanguage system)
         {
             var index = IndexOf(saved);
+            if (index >= 0) return index;
+            platform = platform?.Trim().ToLowerInvariant();
+            index = IndexOf(platform);
+            if (index < 0 && platform != null && platform.Length > 2) index = IndexOf(platform.Substring(0, 2)); // "en-us"
             if (index >= 0) return index;
             for (var i = 0; i < _languages.Count; i++)
                 if (_languages[i] != null && _languages[i].Matches(system)) return i;

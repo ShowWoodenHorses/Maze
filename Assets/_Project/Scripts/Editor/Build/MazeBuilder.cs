@@ -35,9 +35,14 @@ namespace Maze.Editor.Build
         [MenuItem("Maze/Build/Android APK (Release)")]
         public static void AndroidRelease() => Build(BuildTarget.Android, development: false);
 
-        /// <summary>Builds the player. Returns the report summary, or a problem description when nothing was built.</summary>
-        public static string Build(BuildTarget target, bool development)
+        /// <summary>
+        /// Builds the player. Returns the report summary, or a problem description when nothing was built.
+        /// <paramref name="web"/> — the site of a WebGL build: its scripting symbol goes only to this player build
+        /// (the editor keeps compiling without it), its SDK script into the page, the build into its own folder.
+        /// </summary>
+        public static string Build(BuildTarget target, bool development, WebPlatform web = WebPlatform.Generic)
         {
+            if (target != BuildTarget.WebGL) web = WebPlatform.Generic;
             var group = BuildPipeline.GetBuildTargetGroup(target);
             if (EditorUserBuildSettings.activeBuildTarget != target)
             {
@@ -49,6 +54,8 @@ namespace Maze.Editor.Build
             if (problem != null) return Fail(problem);
 
             ConfigurePlatform(target, development);
+            if (target == BuildTarget.WebGL)
+                PlayerSettings.SetTemplateCustomValue(PlatformHeadVariable, WebPlatforms.Head(web));
 
             // Addressables content must be built for the active platform before the player.
             var settings = AddressableAssetSettingsDefaultObject.GetSettings(false);
@@ -79,7 +86,8 @@ namespace Maze.Editor.Build
 
             var location = target == BuildTarget.Android
                 ? Path.Combine(Output, "Android", development ? "Maze-dev.apk" : "Maze.apk")
-                : Path.Combine(Output, development ? "WebGL-dev" : "WebGL");
+                : Path.Combine(Output, WebPlatforms.Folder(web, development));
+            var define = WebPlatforms.Define(web);
             var options = new BuildPlayerOptions
             {
                 scenes = new[] { RuntimeScenesBuilder.BootstrapPath, RuntimeScenesBuilder.GamePath },
@@ -87,11 +95,12 @@ namespace Maze.Editor.Build
                 target = target,
                 targetGroup = group,
                 options = development ? BuildOptions.Development : BuildOptions.None,
+                extraScriptingDefines = define != null ? new[] { define } : null,
             };
 
             var report = BuildPipeline.BuildPlayer(options);
             var summary = report.summary;
-            var text = $"{target} {(development ? "development" : "release")} build: {summary.result}, " +
+            var text = $"{target}{(web != WebPlatform.Generic ? " " + web : "")} {(development ? "development" : "release")} build: {summary.result}, " +
                        $"{summary.totalErrors} error(s), {summary.totalWarnings} warning(s), " +
                        $"{SizeOf(location) / (1024f * 1024f):0.0} MB, {summary.totalTime.TotalSeconds:0}s → {Path.GetFullPath(location)}";
             if (summary.result == BuildResult.Succeeded) Debug.Log("[Maze] " + text);
@@ -101,6 +110,9 @@ namespace Maze.Editor.Build
 
         /// <summary>The page around the WebGL build: <c>Assets/WebGLTemplates/Mazebound</c>.</summary>
         private const string WebTemplate = "PROJECT:Mazebound";
+
+        /// <summary>The template's variable for the site's SDK script (<see cref="WebPlatforms.Head"/>).</summary>
+        private const string PlatformHeadVariable = "MAZE_PLATFORM_HEAD";
 
         /// <summary>Settings the builds rely on; kept in code so a fresh checkout builds the same way.</summary>
         private static void ConfigurePlatform(BuildTarget target, bool development)

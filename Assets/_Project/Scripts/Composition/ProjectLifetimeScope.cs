@@ -30,6 +30,10 @@ namespace Maze.Composition
             builder.Register<AddressablesService>(Lifetime.Singleton).As<IAddressablesService>();
 
             // IApplicationService initialization order = registration order. Settings are read from the save.
+            // The site the build runs on (its SDK): first, saves and language depend on it. A platform build defines
+            // its symbol (MazeBuilder: MAZE_YANDEX, MAZE_CRAZYGAMES, MAZE_VKPLAY); no symbol = no site.
+            builder.Register<GenericPlatform>(Lifetime.Singleton).As<IGamePlatform>();
+            builder.Register<PlatformService>(Lifetime.Singleton).AsSelf().As<IApplicationService>();
             builder.Register<PlayerPrefsSaveStorage>(Lifetime.Singleton).As<ISaveStorage>();
             builder.Register<SaveService>(Lifetime.Singleton).AsSelf().As<IApplicationService>();
             builder.Register<SettingsService>(Lifetime.Singleton).AsSelf().As<IApplicationService, IAimSettings>();
@@ -54,6 +58,7 @@ namespace Maze.Composition
             builder.Register<GameFlow>(Lifetime.Singleton);
             builder.Register<PauseController>(Lifetime.Singleton);
             builder.Register<AppFocusController>(Lifetime.Singleton);
+            builder.Register<PlatformEvents>(Lifetime.Singleton);
 
             builder.RegisterInstance(_ui);
             builder.Register<ScreenRouter>(Lifetime.Singleton);

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using Maze.Application.Assets;
+using Maze.Application.Platform;
 using Maze.Core.Common;
 using Maze.Core.Localization;
 using UnityEngine;
@@ -29,8 +30,11 @@ namespace Maze.Application.Services
         private LocalizationTable _table;
         private CancellationTokenSource _switch;
 
-        public LocalizationService(IAddressablesService addressables, SettingsService settings)
+        private readonly PlatformService _platform;
+
+        public LocalizationService(IAddressablesService addressables, SettingsService settings, PlatformService platform = null)
         {
+            _platform = platform;
             _addressables = addressables;
             _settings = settings;
         }
@@ -60,7 +64,7 @@ namespace Maze.Application.Services
         {
             _catalogAssets = _addressables.CreateOwner("Application: Languages");
             _catalog = await _catalogAssets.LoadAsync<LanguageCatalog>(LanguageCatalog.Address, cancellation);
-            var index = _catalog.Choose(_settings.Language, SystemLanguage);
+            var index = _catalog.Choose(_settings.Language, _platform?.Language, SystemLanguage);
             if (index < 0) throw new InvalidOperationException("The language catalog is empty: run Maze → Dev → Build Localization.");
 
             await LoadAsync(index, cancellation);

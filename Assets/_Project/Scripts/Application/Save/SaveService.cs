@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using Maze.Application.Platform;
 using Maze.Application.Services;
 using Maze.Core.Common;
 using UnityEngine;
@@ -37,14 +38,25 @@ namespace Maze.Application.Save
     /// SaveData persistence (ТЗ §85). Loaded once at start-up; <see cref="Save"/> is called by owners of persistent
     /// events: level completion (progress) and settings changes. A broken save never stops the game: it is
     /// replaced by a fresh one and the problem is logged.
+    /// With a platform's cloud (<see cref="ICloudSave"/>): the cloud save wins at start-up (it follows the player
+    /// between devices and builds); an empty cloud gets the local save (migration). Every save is written locally at
+    /// once and to the cloud after <see cref="CloudDelay"/> (changes in a row go as one write), at once when the game
+    /// goes to the background (<see cref="FlushCloud"/>). A cloud that failed to answer at start-up is not written
+    /// this session: an empty local save must not replace a real one there.
     /// </summary>
-    public sealed class SaveService : IApplicationService
+    public sealed class SaveService : IApplicationService, IDisposable
     {
         private readonly ISaveStorage _storage;
+        private readonly PlatformService _platform;
+        private readonly CancellationTokenSource _lifetime = new CancellationTokenSource();
+        private ICloudSave _cloud;
+        private bool _cloudDirty;
+        private bool _cloudLoop;
 
-        public SaveService(ISaveStorage storage)
+        public SaveService(ISaveStorage storage, PlatformService platform = null)
         {
             _storage = storage;
+            _platform = platform;
         }
 
         public string Name => "Save";
@@ -52,24 +64,153 @@ namespace Maze.Application.Save
         /// <summary>Current data; never null after initialization.</summary>
         public SaveData Data { get; private set; } = new SaveData();
 
-        public UniTask InitializeAsync(CancellationToken cancellation)
+        /// <summary>Saves go to the platform's cloud (it answered at start-up).</summary>
+        public bool UsesCloud => _cloud != null;
+
+        /// <summary>A cloud write waits this long for more changes (seconds, real time).</summary>
+        public float CloudDelay { get; set; } = 2f;
+
+        public async UniTask InitializeAsync(CancellationToken cancellation)
         {
-            Load();
-            return UniTask.CompletedTask;
+            var local = ReadSafe();
+            var cloud = _platform?.CloudSave;
+            if (cloud == null)
+            {
+                Load(local);
+                return;
+            }
+
+            string remote;
+            try
+            {
+                remote = await cloud.ReadAsync(cancellation);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception e)
+            {
+                GameLog.Exception(LogChannel.Save, e, "Reading the cloud save failed; this session saves only locally");
+                Load(local);
+                return;
+            }
+
+            _cloud = cloud;
+            var data = string.IsNullOrEmpty(remote) ? null : Parse(remote);
+            if (data != null)
+            {
+                Data = data;
+                Data.Normalize();
+                WriteLocal(JsonUtility.ToJson(Data)); // the browser's copy follows the cloud
+                GameLog.Info(LogChannel.Save, "Cloud save used.");
+                return;
+            }
+
+            Load(local);
+            if (!string.IsNullOrEmpty(local))
+            {
+                GameLog.Info(LogChannel.Save, "Cloud save is empty: the local save is moved there.");
+                await WriteCloudAsync(JsonUtility.ToJson(Data));
+            }
         }
 
-        public void Load()
+        public void Load() => Load(ReadSafe());
+
+        private void Load(string json)
         {
-            Data = Parse(ReadSafe()) ?? new SaveData();
+            Data = Parse(json) ?? new SaveData();
             Data.Normalize();
         }
 
-        /// <summary>Writes <see cref="Data"/>. False (and a logged error) when the storage failed.</summary>
+        /// <summary>
+        /// Writes <see cref="Data"/> locally and schedules the cloud write. False (and a logged error) when the local
+        /// storage failed.
+        /// </summary>
         public bool Save()
+        {
+            string json;
+            try
+            {
+                json = JsonUtility.ToJson(Data);
+            }
+            catch (Exception e)
+            {
+                GameLog.Exception(LogChannel.Save, e, "Saving failed");
+                return false;
+            }
+
+            if (_cloud != null)
+            {
+                _cloudDirty = true;
+                if (!_cloudLoop) CloudLoopAsync().Forget();
+            }
+
+            return WriteLocal(json);
+        }
+
+        /// <summary>Writes a pending cloud save now (the game goes to the background: the tab may be closed).</summary>
+        public void FlushCloud() => FlushCloudAsync().Forget();
+
+        public UniTask FlushCloudAsync()
+        {
+            if (_cloud == null || !_cloudDirty) return UniTask.CompletedTask;
+            _cloudDirty = false;
+            return WriteCloudAsync(JsonUtility.ToJson(Data));
+        }
+
+        public void Dispose()
+        {
+            _lifetime.Cancel();
+            _lifetime.Dispose();
+        }
+
+        private async UniTaskVoid CloudLoopAsync()
+        {
+            _cloudLoop = true;
+            try
+            {
+                while (_cloudDirty)
+                {
+                    await UniTask.Delay(TimeSpan.FromSeconds(CloudDelay), DelayType.Realtime, PlayerLoopTiming.Update,
+                        _lifetime.Token);
+                    if (!_cloudDirty) break; // flushed meanwhile
+                    _cloudDirty = false;
+                    await WriteCloudAsync(JsonUtility.ToJson(Data));
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // The application is closing.
+            }
+            finally
+            {
+                _cloudLoop = false;
+            }
+        }
+
+        private async UniTask WriteCloudAsync(string json)
         {
             try
             {
-                _storage.Write(JsonUtility.ToJson(Data));
+                await _cloud.WriteAsync(json, _lifetime.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                // The application is closing.
+            }
+            catch (Exception e)
+            {
+                _cloudDirty = true; // retried with the next save
+                GameLog.Exception(LogChannel.Save, e, "Writing the cloud save failed");
+            }
+        }
+
+        private bool WriteLocal(string json)
+        {
+            try
+            {
+                _storage.Write(json);
                 return true;
             }
             catch (Exception e)

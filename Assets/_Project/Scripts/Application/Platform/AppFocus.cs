@@ -1,6 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
 using Maze.Application.Flow;
+using Maze.Application.Save;
 using UnityEngine;
 
 namespace Maze.Application.Platform
@@ -37,19 +38,22 @@ namespace Maze.Application.Platform
 
     /// <summary>
     /// The game in the background (platform rules: Yandex Games and others): while the page is hidden or unfocused —
-    /// or the app is — the sound is off and a running level is paused (the player resumes it from the pause screen).
+    /// or the app is — the sound is off, a running level is paused (the player resumes it from the pause screen) and
+    /// a pending cloud save is written.
     /// Off in the editor: clicking another editor window must not pause play mode or tests.
     /// </summary>
     public sealed class AppFocusController : IDisposable
     {
         private readonly GameFlow _flow;
         private readonly SoundSuspension _sound;
+        private readonly SaveService _save;
         private bool _initialized;
         private bool _focused = true;
         private bool _visible = true;
 
-        public AppFocusController(GameFlow flow, SoundSuspension sound)
+        public AppFocusController(GameFlow flow, SoundSuspension sound, SaveService save = null)
         {
+            _save = save;
             _flow = flow;
             _sound = sound;
         }
@@ -90,7 +94,9 @@ namespace Maze.Application.Platform
         {
             var active = IsActive;
             _sound.Set(SoundSuspendReason.Background, !active);
-            if (!active && _flow.State == GameFlowState.Playing) _flow.PauseGameplay();
+            if (active) return;
+            if (_flow.State == GameFlowState.Playing) _flow.PauseGameplay();
+            _save?.FlushCloud(); // the tab may be closed next
         }
     }
 

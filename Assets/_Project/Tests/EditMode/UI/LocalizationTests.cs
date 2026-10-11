@@ -89,6 +89,17 @@ namespace Maze.Tests.EditMode.UI
         }
 
         [Test]
+        public void Catalog_PlatformLanguage_ComesAfterSaved_BeforeSystem()
+        {
+            var catalog = Catalog(out _);
+
+            Assert.AreEqual(1, catalog.Choose(null, "ru", SystemLanguage.English));
+            Assert.AreEqual(1, catalog.Choose(null, "RU-ru", SystemLanguage.English), "Region and case do not matter.");
+            Assert.AreEqual(0, catalog.Choose("en", "ru", SystemLanguage.Russian), "The player's own choice wins.");
+            Assert.AreEqual(1, catalog.Choose(null, "xx", SystemLanguage.Russian), "An unknown site language: the system one.");
+        }
+
+        [Test]
         public void Service_PicksSystemLanguage_SavesIt_AndSwitches()
         {
             var catalog = Catalog(out var tables);
