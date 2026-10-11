@@ -241,8 +241,9 @@ namespace Maze.Editor.Dev
             var icons = UiIcons();
             var area = SafeArea(screen.transform);
 
-            Text(area, "Title", "MAZE", 168f, true, TopLeft, TopLeft, new Vector2(160f, -150f), new Vector2(900f, 170f),
-                TextAlignmentOptions.TopLeft, spacing: 30f);
+            // The game's name is one English word in every language: not localized.
+            AutoSize(Text(area, "Title", "MAZEBOUND", 132f, true, TopLeft, TopLeft, new Vector2(160f, -170f),
+                new Vector2(1200f, 150f), TextAlignmentOptions.TopLeft, spacing: 22f));
             OrnamentLine(area, TopLeft, new Vector2(172f, -350f), 560f);
 
             var buttons = new GameObject("Buttons", typeof(RectTransform)).GetComponent<RectTransform>();
