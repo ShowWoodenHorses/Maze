@@ -1,6 +1,6 @@
 // Yandex Games SDK v2 (Maze.Application.Platform.Yandex.YandexBridge). The page loads /sdk.js (WebPlatforms.Head).
 // Async calls answer through one callback: (request id, code, text or 0). Id 0 — events from the site
-// (code 1: pause, 2: resume).
+// (code 1: pause, 2: resume, 3: an ad started).
 mergeInto(LibraryManager.library, {
   MazeYandex_Init: function (callback, id) {
     var state = window.mazeYandex = { callback: callback, ysdk: null, player: null };
@@ -79,6 +79,7 @@ mergeInto(LibraryManager.library, {
     var done = false;
     function end(code, text) { if (!done) { done = true; state.reply(id, code, text); } }
     state.ysdk.adv.showFullscreenAdv({ callbacks: {
+      onOpen: function () { state.reply(0, 3, null); },
       onClose: function (wasShown) { end(wasShown ? 1 : 3, null); },
       onError: function (e) { end(2, String(e)); },
       onOffline: function () { end(2, 'offline'); }
@@ -91,6 +92,7 @@ mergeInto(LibraryManager.library, {
     var rewarded = false;
     function end(code, text) { if (!done) { done = true; state.reply(id, code, text); } }
     state.ysdk.adv.showRewardedVideo({ callbacks: {
+      onOpen: function () { state.reply(0, 3, null); },
       onRewarded: function () { rewarded = true; },
       onClose: function () { end(rewarded ? 0 : 1, null); },
       onError: function (e) { end(2, String(e)); }

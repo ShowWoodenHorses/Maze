@@ -54,6 +54,7 @@ namespace Maze.Presentation.UI
             _flow.StateChanged += Show;
             _texts.LanguageChanged += OnLanguageChanged;
             _ui.MainMenu.PlayClicked += OnPlayClicked;
+            _ui.MainMenu.LevelsClicked += OnLevelsClicked;
             _ui.MainMenu.TutorialClicked += OnTutorialClicked;
             _ui.MainMenu.DebugResetProgressClicked += OnResetProgressRequested;
             _ui.MainMenu.SignInClicked += OnSignInClicked;
@@ -95,6 +96,7 @@ namespace Maze.Presentation.UI
             if (_ui.RotateDevice != null) _ui.RotateDevice.Changed -= OnRotateDeviceChanged;
 
             _ui.MainMenu.PlayClicked -= OnPlayClicked;
+            _ui.MainMenu.LevelsClicked -= OnLevelsClicked;
             _ui.MainMenu.TutorialClicked -= OnTutorialClicked;
             if (_ui.Tutorial != null) _ui.Tutorial.ContinueClicked -= _flow.CloseTip;
             _ui.MainMenu.DebugResetProgressClicked -= OnResetProgressRequested;
@@ -268,11 +270,31 @@ namespace Maze.Presentation.UI
                 _ui.Hud.SetLevelName(LevelCaption(_flow.CurrentLevelId));
         }
 
+        /// <summary>
+        /// Play starts the first open level not completed yet at once (one click to gameplay — site rules); when every
+        /// level is completed it opens the level select.
+        /// </summary>
         private void OnPlayClicked()
+        {
+            if (_flow.State != GameFlowState.MainMenu) return;
+            var next = LevelToPlay();
+            if (next != null) _flow.StartLevel(next).Forget();
+            else OnLevelsClicked();
+        }
+
+        private void OnLevelsClicked()
         {
             if (_flow.State != GameFlowState.MainMenu) return;
             _levelSelectOpen = true;
             Show(_flow.State);
+        }
+
+        private string LevelToPlay()
+        {
+            foreach (var level in _catalog.Levels)
+                if (_progress.IsUnlocked(level.LevelId) && _progress.GetStars(level.LevelId) == 0)
+                    return level.LevelId;
+            return null;
         }
 
         private void OnLevelSelectBack()

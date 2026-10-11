@@ -17,6 +17,7 @@ namespace Maze.Presentation.Localization
         public const string MenuPlay = "menu.play";
         public const string MenuResetProgress = "menu.reset_progress";
         public const string MenuTutorial = "menu.tutorial";
+        public const string MenuLevels = "menu.levels";
         public const string MenuSignIn = "menu.sign_in";
         public const string MenuSignInHint = "menu.sign_in.hint";
         public const string LevelSelectTitle = "level_select.title";

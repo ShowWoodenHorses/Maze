@@ -21,6 +21,7 @@ namespace Maze.Application.Platform
             _analytics = analytics;
             _platform = platform;
             _save = save;
+            _platform.SignedIn += OnSignedInElsewhere;
         }
 
         /// <summary>The sign-in offer makes sense now: the site has accounts, the player is not signed in, no sign-in runs.</summary>
@@ -55,6 +56,27 @@ namespace Maze.Application.Platform
             }
 
             return signedIn;
+        }
+
+        /// <summary>Signed in through the site itself: the account's save joins the current one as after the button.</summary>
+        private void OnSignedInElsewhere()
+        {
+            if (!IsBusy) MergeAsync().Forget();
+        }
+
+        private async UniTaskVoid MergeAsync()
+        {
+            IsBusy = true;
+            Changed?.Invoke();
+            try
+            {
+                await _save.MergeCloudAsync(CancellationToken.None);
+            }
+            finally
+            {
+                IsBusy = false;
+                Changed?.Invoke();
+            }
         }
     }
 }

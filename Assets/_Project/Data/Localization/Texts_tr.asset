@@ -20,6 +20,7 @@ MonoBehaviour:
   - common.no
   - format.percent
   - menu.play
+  - menu.levels
   - menu.reset_progress
   - level_select.title
   - level_select.empty
@@ -169,6 +170,7 @@ MonoBehaviour:
   - HAYIR
   - '%{0}'
   - OYNA
+  - "B\xD6L\xDCMLER"
   - "DEBUG: \u0130LERLEMEY\u0130 SIFIRLA"
   - "B\xD6L\xDCM SE\xC7"
   - "Hen\xFCz b\xF6l\xFCm yok: Level Designer'da Build / Sync \xE7al\u0131\u015Ft\u0131r\u0131n."

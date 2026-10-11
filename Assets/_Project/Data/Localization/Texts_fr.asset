@@ -20,6 +20,7 @@ MonoBehaviour:
   - common.no
   - format.percent
   - menu.play
+  - menu.levels
   - menu.reset_progress
   - level_select.title
   - level_select.empty
@@ -169,6 +170,7 @@ MonoBehaviour:
   - NON
   - '{0} %'
   - JOUER
+  - NIVEAUX
   - "DEBUG : R\xC9INITIALISER LA PROGRESSION"
   - CHOISIR UN NIVEAU
   - "Aucun niveau pour l\u2019instant : lancez Build / Sync dans le Level Designer."

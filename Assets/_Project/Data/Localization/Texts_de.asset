@@ -20,6 +20,7 @@ MonoBehaviour:
   - common.no
   - format.percent
   - menu.play
+  - menu.levels
   - menu.reset_progress
   - level_select.title
   - level_select.empty
@@ -169,6 +170,7 @@ MonoBehaviour:
   - NEIN
   - '{0} %'
   - SPIELEN
+  - LEVEL
   - "DEBUG: FORTSCHRITT ZUR\xDCCKSETZEN"
   - "LEVEL W\xC4HLEN"
   - "Noch keine Level: Build / Sync im Level Designer ausf\xFChren."

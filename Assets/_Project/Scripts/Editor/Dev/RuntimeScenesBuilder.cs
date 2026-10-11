@@ -231,8 +231,8 @@ namespace Maze.Editor.Dev
         }
 
         /// <summary>
-        /// Main menu (mock-up, minimal): the title with an ornament line on the left, PLAY (accent) and SETTINGS under
-        /// it; total stars and kills at the bottom left; debug reset and the version at the bottom right.
+        /// Main menu (mock-up, minimal): the title with an ornament line on the left, PLAY (accent; the next level at
+        /// once), LEVELS, TUTORIAL and SETTINGS under it; sign-in at the top right; total stars and kills at the bottom left; debug reset and the version at the bottom right.
         /// </summary>
         private static MainMenuScreen BuildMainMenu(Transform parent)
         {
@@ -257,6 +257,7 @@ namespace Maze.Editor.Dev
             layout.childForceExpandHeight = false;
             buttons.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
             var play = TextButton(buttons, "PlayButton", Loc(TextKeys.MenuPlay), true, icons.ChevronRight, 92f);
+            var levels = TextButton(buttons, "LevelsButton", Loc(TextKeys.MenuLevels), false, icons.Menu, 92f);
             var tutorial = TextButton(buttons, "TutorialButton", Loc(TextKeys.MenuTutorial), false, icons.Help, 92f);
             var settings = TextButton(buttons, "SettingsButton", Loc(TextKeys.Settings), false, icons.Settings, 92f);
 
@@ -286,6 +287,7 @@ namespace Maze.Editor.Dev
             account.gameObject.SetActive(false);
 
             SetReference(screen, "_playButton", play);
+            SetReference(screen, "_levelsButton", levels);
             SetReference(screen, "_tutorialButton", tutorial);
             SetReference(screen, "_settingsButton", settings);
             SetReference(screen, "_summary", summary.gameObject);

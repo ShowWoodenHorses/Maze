@@ -20,6 +20,7 @@ MonoBehaviour:
   - common.no
   - format.percent
   - menu.play
+  - menu.levels
   - menu.reset_progress
   - level_select.title
   - level_select.empty
@@ -169,6 +170,7 @@ MonoBehaviour:
   - "\u0416\u041E\u049A"
   - '{0}%'
   - "\u041E\u0419\u041D\u0410\u0423"
+  - "\u0414\u0415\u04A2\u0413\u0415\u0419\u041B\u0415\u0420"
   - "DEBUG: \u041F\u0420\u041E\u0413\u0420\u0415\u0421\u0422\u0406 \u0422\u0410\u0417\u0410\u041B\u0410\u0423"
   - "\u0414\u0415\u04A2\u0413\u0415\u0419\u0414\u0406 \u0422\u0410\u04A2\u0414\u0410\u0423"
   - "\u0414\u0435\u04A3\u0433\u0435\u0439\u043B\u0435\u0440 \u04D9\u043B\u0456 \u0436\u043E\u049B:

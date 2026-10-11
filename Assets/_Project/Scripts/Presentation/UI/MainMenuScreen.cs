@@ -6,14 +6,15 @@ using UnityEngine.UI;
 namespace Maze.Presentation.UI
 {
     /// <summary>
-    /// Main menu (minimal by the user's choice): the title, Play (opens the level select), Tutorial (when the game has
-    /// one) and Settings; total stars and
+    /// Main menu (minimal by the user's choice): the title, Play (starts the next level at once), Levels (the level
+    /// select), Tutorial (when the game has one) and Settings; total stars and
     /// zombies killed at the bottom left; "Debug: reset progress" (development builds) and the version at the bottom
     /// right; at the top right — signing in to the site's account (Yandex Games) while the player is not signed in.
     /// </summary>
     public sealed class MainMenuScreen : UIScreen
     {
         [SerializeField] private Button _playButton;
+        [SerializeField] private Button _levelsButton;
         [SerializeField] private Button _tutorialButton;
         [SerializeField] private Button _settingsButton;
         [SerializeField] private GameObject _summary;
@@ -29,6 +30,7 @@ namespace Maze.Presentation.UI
         [SerializeField] private Button _debugResetProgressButton;
 
         public event Action PlayClicked;
+        public event Action LevelsClicked;
         public event Action TutorialClicked;
         public event Action SettingsClicked;
         public event Action DebugResetProgressClicked;
@@ -37,6 +39,7 @@ namespace Maze.Presentation.UI
         private void Awake()
         {
             Bind(_playButton, () => PlayClicked?.Invoke());
+            Bind(_levelsButton, () => LevelsClicked?.Invoke());
             Bind(_tutorialButton, () => TutorialClicked?.Invoke());
             Bind(_settingsButton, () => SettingsClicked?.Invoke());
             Bind(_debugResetProgressButton, () => DebugResetProgressClicked?.Invoke());
@@ -71,6 +74,7 @@ namespace Maze.Presentation.UI
         public void SetPlayable(bool playable)
         {
             if (_playButton != null) _playButton.interactable = playable;
+            if (_levelsButton != null) _levelsButton.interactable = playable;
         }
     }
 }

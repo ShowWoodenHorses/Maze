@@ -140,6 +140,34 @@ namespace Maze.Tests.EditMode.Progress
         }
 
         [Test]
+        public void SignInThroughTheSite_AlsoMerges()
+        {
+            var local = new MemoryStorage();
+            var cloud = new FakeCloud { Json = Json(kills: 2) };
+            var site = new CloudPlatform(cloud);
+            using var save = Start(local, cloud, site);
+            var account = new AccountService(_platform, save);
+            cloud.Json = Json(kills: 8);
+
+            site.SignInOnTheSite();
+
+            Assert.AreEqual(8, save.Data.TotalKills);
+            Assert.IsFalse(account.CanSignIn);
+        }
+
+        [Test]
+        public void SiteMute_IsPassedOn()
+        {
+            var site = new CloudPlatform(null) { MuteAudio = true };
+            var platform = new PlatformService(site);
+            var muted = new System.Collections.Generic.List<bool>();
+            platform.MuteAudioChanged += muted.Add;
+            platform.InitializeAsync(CancellationToken.None).GetAwaiter().GetResult();
+            site.SetMute(false);
+            CollectionAssert.AreEqual(new[] { true, false }, muted, "Muted from the start, then unmuted.");
+        }
+
+        [Test]
         public void Merge_KeepsTheBestOfBoth()
         {
             var mine = new SaveData { TotalKills = 10 };
@@ -264,6 +292,17 @@ namespace Maze.Tests.EditMode.Progress
 
             public event Action<bool> PauseRequested;
             public void RequestPause(bool pause) => PauseRequested?.Invoke(pause);
+            public PlatformTraits Traits => PlatformTraits.Default;
+            public bool MuteAudio { get; set; }
+            public event Action<bool> MuteAudioChanged;
+            public void SetMute(bool mute) { MuteAudio = mute; MuteAudioChanged?.Invoke(mute); }
+            public event Action SignedIn;
+
+            public void SignInOnTheSite()
+            {
+                IsSignedIn = true;
+                SignedIn?.Invoke();
+            }
         }
     }
 }

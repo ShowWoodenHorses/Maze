@@ -170,6 +170,8 @@
 | **WebGL (Release)** | WebGL, релиз |
 | **WebGL Yandex Games (Development)** | WebGL для Яндекс Игр, dev-сборка → `Builds/WebGL-Yandex-dev` + `.zip` |
 | **WebGL Yandex Games (Release)** | WebGL для Яндекс Игр, релиз → `Builds/WebGL-Yandex` + `WebGL-Yandex.zip` (его загружать в консоль ЯИ) |
+| **WebGL CrazyGames (Development)** | WebGL для CrazyGames, dev-сборка (на CrazyGames не запустится: принимают только сжатые) → `Builds/WebGL-CrazyGames-dev` |
+| **WebGL CrazyGames (Release)** | WebGL для CrazyGames → `Builds/WebGL-CrazyGames` + `WebGL-CrazyGames.zip` (загружать в портал как HTML5) |
 | **Android APK (Development)** | APK, dev-сборка |
 | **Android APK (Release)** | APK, релиз |
 
@@ -177,6 +179,13 @@
 (язык площадки, сейв в данных игрока, кнопка «Войти» в меню, реклама ЯИ, события загрузки/геймплея), в `<head>` — `/sdk.js`
 и счётчик Метрики, если задан `WebPlatforms.YandexMetrikaCounter` (`Editor/Build/WebPlatform.cs`; пусто — Метрики нет).
 Рядом с папкой сборки кладётся zip с `index.html` в корне — его загружают в черновик игры в консоли ЯИ.
+В консоль — **только release** (~25 МБ): dev-сборка без сжатия и с отладочным кодом (`.wasm` ~150 МБ) не проходит лимит ЯИ
+100 МБ в распакованном виде; она — для локальной проверки через прокси.
+
+**CrazyGames:** symbol `MAZE_CRAZYGAMES`, в `<head>` — их JS SDK v3. Проверка у себя: открыть сборку с `localhost` (любой
+статический сервер, например `python -m http.server 8000` в папке сборки) — SDK работает в локальном режиме (демо-реклама,
+тестовый пользователь); на другом адресе SDK выключен и игра идёт как без площадки. В портале при отправке включить
+**Progress Save** (иначе сейв не работает) и альбомную ориентацию.
 Проверка на своём компьютере (нужен Node.js): `npx @yandex-games/sdk-dev-proxy -p Builds/WebGL-Yandex-dev --app-id 628471`
 — прокси печатает ссылку вида `https://yandex.ru/games/app/628471?game_url=https://localhost:…`, игра открывается внутри ЯИ
 с настоящим SDK; `--dev-mode true` — имитация SDK без площадки. Вне ЯИ (просто открыть папку) SDK нет — игра работает как без площадки.

@@ -16,22 +16,7 @@ namespace Maze.Application.Platform
     /// </summary>
     public static class YandexBridge
     {
-        public readonly struct Reply
-        {
-            public readonly int Code;
-            public readonly string Text;
-
-            public Reply(int code, string text)
-            {
-                Code = code;
-                Text = text;
-            }
-        }
-
-        private static readonly Dictionary<int, UniTaskCompletionSource<Reply>> Pending =
-            new Dictionary<int, UniTaskCompletionSource<Reply>>();
-
-        private static int _nextId = 1;
+        private static readonly WebCalls Calls = new WebCalls();
 
         /// <summary>The SDK answered <see cref="InitAsync"/>.</summary>
         public static bool IsReady { get; private set; }
@@ -39,10 +24,13 @@ namespace Maze.Application.Platform
         /// <summary>The site asks to stop (true) or lets the game go on (false).</summary>
         public static event Action<bool> PauseRequested;
 
+        /// <summary>The ad asked for has really started (the game goes silent).</summary>
+        public static event Action AdStarted;
+
         /// <summary>Starts the SDK and gets the player (saves); the reply text is the site's language.</summary>
-        public static async UniTask<Reply> InitAsync(CancellationToken cancellation)
+        public static async UniTask<WebReply> InitAsync(CancellationToken cancellation)
         {
-            var reply = await Call(id => Native.Init(OnReply, id), cancellation);
+            var reply = await Calls.Call(id => Native.Init(OnReply, id), cancellation);
             IsReady = reply.Code == 1;
             return reply;
         }
@@ -52,16 +40,16 @@ namespace Maze.Application.Platform
 
         public static bool IsAuthorized => IsReady && Native.IsAuthorized() != 0;
 
-        public static UniTask<Reply> SignInAsync(CancellationToken cancellation) => Call(Native.SignIn, cancellation);
+        public static UniTask<WebReply> SignInAsync(CancellationToken cancellation) => Calls.Call(Native.SignIn, cancellation);
 
-        public static UniTask<Reply> GetDataAsync(CancellationToken cancellation) => Call(Native.GetData, cancellation);
+        public static UniTask<WebReply> GetDataAsync(CancellationToken cancellation) => Calls.Call(Native.GetData, cancellation);
 
-        public static UniTask<Reply> SetDataAsync(string json, CancellationToken cancellation) =>
-            Call(id => Native.SetData(id, json), cancellation);
+        public static UniTask<WebReply> SetDataAsync(string json, CancellationToken cancellation) =>
+            Calls.Call(id => Native.SetData(id, json), cancellation);
 
         /// <summary>Reply code = <see cref="AdResult"/>.</summary>
-        public static UniTask<Reply> ShowAdAsync(AdKind kind, CancellationToken cancellation) =>
-            Call(kind == AdKind.Rewarded ? (Action<int>)Native.ShowRewarded : Native.ShowFullscreen, cancellation);
+        public static UniTask<WebReply> ShowAdAsync(AdKind kind, CancellationToken cancellation) =>
+            Calls.Call(kind == AdKind.Rewarded ? (Action<int>)Native.ShowRewarded : Native.ShowFullscreen, cancellation);
 
         public static void LoadingReady()
         {
@@ -79,40 +67,20 @@ namespace Maze.Application.Platform
             if (IsReady) Native.Goal(name, parametersJson);
         }
 
-        private static UniTask<Reply> Call(Action<int> start, CancellationToken cancellation)
-        {
-            var id = _nextId++;
-            var source = new UniTaskCompletionSource<Reply>();
-            Pending[id] = source;
-            try
-            {
-                start(id); // may answer at once
-            }
-            catch
-            {
-                Pending.Remove(id);
-                throw;
-            }
-
-            return source.Task.AttachExternalCancellation(cancellation);
-        }
-
         private delegate void ReplyCallback(int id, int code, IntPtr text);
 
         [AOT.MonoPInvokeCallback(typeof(ReplyCallback))]
         private static void OnReply(int id, int code, IntPtr text)
         {
-            var value = text == IntPtr.Zero ? null : Marshal.PtrToStringUTF8(text);
-            if (id == 0)
+            if (id != 0)
             {
-                // Events from the site: 1 — pause, 2 — resume.
-                PauseRequested?.Invoke(code == 1);
+                Calls.Complete(id, code, WebCalls.Text(text));
                 return;
             }
 
-            if (!Pending.TryGetValue(id, out var source)) return;
-            Pending.Remove(id);
-            source.TrySetResult(new Reply(code, value));
+            // Events from the site: 1 — pause, 2 — resume, 3 — an ad started.
+            if (code == 3) AdStarted?.Invoke();
+            else PauseRequested?.Invoke(code == 1);
         }
 
         private static class Native
@@ -189,6 +157,16 @@ namespace Maze.Application.Platform
 
         public event Action<bool> PauseRequested;
 
+        public PlatformTraits Traits => PlatformTraits.Default;
+
+        /// <summary>Yandex Games has no sound setting of its own (it pauses the game instead).</summary>
+        public bool MuteAudio => false;
+
+        public event Action<bool> MuteAudioChanged { add { } remove { } }
+
+        /// <summary>Signing in happens only through the game's button here.</summary>
+        public event Action SignedIn { add { } remove { } }
+
         public async UniTask InitializeAsync(CancellationToken cancellation)
         {
             var reply = await YandexBridge.InitAsync(cancellation).Timeout(InitTimeout);
@@ -234,10 +212,22 @@ namespace Maze.Application.Platform
 
         public UniTask InitializeAsync(CancellationToken cancellation) => UniTask.CompletedTask;
 
-        public async UniTask<AdResult> ShowAsync(AdKind kind, string placement, CancellationToken cancellation)
+        public bool InterstitialBetweenLevelsOnly => false;
+
+        public async UniTask<AdResult> ShowAsync(AdKind kind, string placement, Action started, CancellationToken cancellation)
         {
             if (!YandexBridge.IsReady) return AdResult.Unavailable;
-            var reply = await YandexBridge.ShowAdAsync(kind, cancellation);
+            WebReply reply;
+            YandexBridge.AdStarted += started;
+            try
+            {
+                reply = await YandexBridge.ShowAdAsync(kind, cancellation);
+            }
+            finally
+            {
+                YandexBridge.AdStarted -= started;
+            }
+
             if (!string.IsNullOrEmpty(reply.Text))
                 GameLog.Warning(LogChannel.Analytics, $"Yandex {kind} ad '{placement}': {reply.Text}");
             return Enum.IsDefined(typeof(AdResult), reply.Code) ? (AdResult)reply.Code : AdResult.Failed;

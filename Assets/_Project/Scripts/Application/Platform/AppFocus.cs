@@ -15,6 +15,9 @@ namespace Maze.Application.Platform
 
         /// <summary>The page is hidden or has lost focus (another tab, a click outside the game's frame), the app is in the background.</summary>
         Background = 2,
+
+        /// <summary>The site wants the game silent (CrazyGames <c>muteAudio</c>).</summary>
+        Platform = 4,
     }
 
     /// <summary>
@@ -39,7 +42,8 @@ namespace Maze.Application.Platform
     /// <summary>
     /// The game in the background (platform rules: Yandex Games and others): while the page is hidden or unfocused —
     /// or the app is — the sound is off, a running level is paused (the player resumes it from the pause screen) and
-    /// a pending cloud save is written. The same while the site asks the game to stop (<see cref="PlatformService.PauseRequested"/>).
+    /// a pending cloud save is written. The same while the site asks the game to stop (<see cref="PlatformService.PauseRequested"/>);
+    /// silent while the site mutes the game (<see cref="PlatformService.MuteAudioChanged"/>).
     /// Off in the editor: clicking another editor window must not pause play mode or tests.
     /// </summary>
     public sealed class AppFocusController : IDisposable
@@ -68,7 +72,12 @@ namespace Maze.Application.Platform
             UnityEngine.Application.focusChanged += OnFocusChanged;
             WebPage.VisibilityChanged += OnVisibilityChanged;
             WebPage.Listen();
-            if (_platform != null) _platform.PauseRequested += OnSitePauseRequested;
+            if (_platform != null)
+            {
+                _platform.PauseRequested += OnSitePauseRequested;
+                _platform.MuteAudioChanged += OnSiteMuteChanged;
+                OnSiteMuteChanged(_platform.MuteAudio);
+            }
         }
 
         public void Dispose()
@@ -77,7 +86,11 @@ namespace Maze.Application.Platform
             _initialized = false;
             UnityEngine.Application.focusChanged -= OnFocusChanged;
             WebPage.VisibilityChanged -= OnVisibilityChanged;
-            if (_platform != null) _platform.PauseRequested -= OnSitePauseRequested;
+            if (_platform != null)
+            {
+                _platform.PauseRequested -= OnSitePauseRequested;
+                _platform.MuteAudioChanged -= OnSiteMuteChanged;
+            }
         }
 
         /// <summary>The game is in front of the player: focused, visible and not stopped by the site.</summary>
@@ -100,6 +113,9 @@ namespace Maze.Application.Platform
             _sitePaused = pause;
             Apply();
         }
+
+        /// <summary>The site's own mute: stronger than the game's volume settings, they do not touch it.</summary>
+        public void OnSiteMuteChanged(bool mute) => _sound.Set(SoundSuspendReason.Platform, mute);
 
         private void Apply()
         {

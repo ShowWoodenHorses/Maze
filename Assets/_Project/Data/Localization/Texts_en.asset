@@ -20,6 +20,7 @@ MonoBehaviour:
   - common.no
   - format.percent
   - menu.play
+  - menu.levels
   - menu.reset_progress
   - level_select.title
   - level_select.empty
@@ -169,6 +170,7 @@ MonoBehaviour:
   - NO
   - '{0}%'
   - PLAY
+  - LEVELS
   - 'DEBUG: RESET PROGRESS'
   - SELECT LEVEL
   - 'No levels yet: run Build / Sync in the Level Designer.'

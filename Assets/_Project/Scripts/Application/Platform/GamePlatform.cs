@@ -20,6 +20,24 @@ namespace Maze.Application.Platform
         UniTask WriteAsync(string json, CancellationToken cancellation);
     }
 
+    /// <summary>How the game behaves on a site, where sites' rules differ (defaults: as on a site without rules).</summary>
+    public sealed class PlatformTraits
+    {
+        public static readonly PlatformTraits Default = new PlatformTraits();
+
+        /// <summary>
+        /// A player who has never played lands in gameplay at once, without the menu (CrazyGames: "players land in
+        /// gameplay immediately"): the tutorial, or the first level.
+        /// </summary>
+        public bool StartsInGameplay;
+
+        /// <summary>
+        /// The site itself knows when the game loses focus or is hidden: a pause for that reason is not reported as
+        /// <see cref="IGamePlatform.GameplayStopped"/> (CrazyGames).
+        /// </summary>
+        public bool TracksFocusItself;
+    }
+
     /// <summary>
     /// The site the web build runs on (its SDK): start-up, language, cloud saves and the moments it wants to know about.
     /// Ads and analytics are separate (<see cref="IAdProvider"/>, <see cref="IAnalyticsSink"/>). Knows nothing about
@@ -61,6 +79,16 @@ namespace Maze.Application.Platform
         /// The site asks the game to stop (true: its own window, an ad it shows itself…) and to go on (false).
         /// </summary>
         event Action<bool> PauseRequested;
+
+        PlatformTraits Traits { get; }
+
+        /// <summary>The site wants the game silent (its own sound setting); stronger than the game's volume settings.</summary>
+        bool MuteAudio { get; }
+
+        event Action<bool> MuteAudioChanged;
+
+        /// <summary>The player signed in through the site itself, not through the game's button.</summary>
+        event Action SignedIn;
     }
 
     /// <summary>No site: the editor, a local web build, Android. Nothing to tell, no cloud.</summary>
@@ -78,6 +106,10 @@ namespace Maze.Application.Platform
         public bool IsSignedIn => false;
         public UniTask<bool> SignInAsync(CancellationToken cancellation) => UniTask.FromResult(false);
         public event Action<bool> PauseRequested { add { } remove { } }
+        public PlatformTraits Traits => PlatformTraits.Default;
+        public bool MuteAudio => false;
+        public event Action<bool> MuteAudioChanged { add { } remove { } }
+        public event Action SignedIn { add { } remove { } }
     }
 
     /// <summary>
@@ -110,6 +142,17 @@ namespace Maze.Application.Platform
         /// <summary>The site asks to pause (true) or lets the game go on (false); see <see cref="IGamePlatform.PauseRequested"/>.</summary>
         public event Action<bool> PauseRequested;
 
+        /// <summary>The site's rules for the game (defaults until the platform has started).</summary>
+        public PlatformTraits Traits => _ready ? _platform.Traits ?? PlatformTraits.Default : PlatformTraits.Default;
+
+        public bool MuteAudio => _ready && _platform.MuteAudio;
+
+        /// <summary>The site's mute changed; also raised once at start-up when the site starts muted.</summary>
+        public event Action<bool> MuteAudioChanged;
+
+        /// <summary>The player signed in through the site (not through <see cref="SignInAsync"/>).</summary>
+        public event Action SignedIn;
+
         public async UniTask InitializeAsync(CancellationToken cancellation)
         {
             try
@@ -117,6 +160,9 @@ namespace Maze.Application.Platform
                 await _platform.InitializeAsync(cancellation);
                 _ready = true;
                 _platform.PauseRequested += OnPauseRequested;
+                _platform.MuteAudioChanged += OnMuteAudioChanged;
+                _platform.SignedIn += OnSignedIn;
+                if (_platform.MuteAudio) MuteAudioChanged?.Invoke(true);
                 GameLog.Info(LogChannel.Bootstrap, $"Platform '{_platform.Name}': language {Language ?? "-"}, " +
                                                    $"cloud saves {(CloudSave != null ? "yes" : "no")}, " +
                                                    $"signed in {(_platform.SupportsSignIn ? _platform.IsSignedIn ? "yes" : "no" : "-")}.");
@@ -151,6 +197,8 @@ namespace Maze.Application.Platform
         }
 
         private void OnPauseRequested(bool pause) => PauseRequested?.Invoke(pause);
+        private void OnMuteAudioChanged(bool mute) => MuteAudioChanged?.Invoke(mute);
+        private void OnSignedIn() => SignedIn?.Invoke();
 
         public void LoadingFinished() => Tell(p => p.LoadingFinished(), nameof(LoadingFinished));
         public void GameplayStarted() => Tell(p => p.GameplayStarted(), nameof(GameplayStarted));
@@ -173,19 +221,22 @@ namespace Maze.Application.Platform
 
     /// <summary>
     /// Tells the platform what the game does, from <see cref="GameFlow"/> states: loading finished (the first main
-    /// menu), gameplay running only in <see cref="GameFlowState.Playing"/> (pause, map, windows, ads between levels —
-    /// stopped), a happy moment for a level finished with all stars.
+    /// menu, or the first level for a new player who skips it), gameplay running only in <see cref="GameFlowState.Playing"/> (pause, map, windows, ads between levels —
+    /// stopped; a pause for the background is not told to a site that tracks focus itself), a happy moment for a level
+    /// that gets all stars for the first time.
     /// </summary>
     public sealed class PlatformEvents : IDisposable
     {
         private readonly GameFlow _flow;
         private readonly PlatformService _platform;
+        private readonly AppFocusController _focus;
         private bool _initialized;
         private bool _loaded;
         private bool _playing;
 
-        public PlatformEvents(GameFlow flow, PlatformService platform)
+        public PlatformEvents(GameFlow flow, PlatformService platform, AppFocusController focus = null)
         {
+            _focus = focus;
             _flow = flow;
             _platform = platform;
         }
@@ -206,13 +257,17 @@ namespace Maze.Application.Platform
 
         private void OnStateChanged(GameFlowState state)
         {
-            if (!_loaded && state == GameFlowState.MainMenu)
+            if (!_loaded && (state == GameFlowState.MainMenu || state == GameFlowState.Playing))
             {
                 _loaded = true;
                 _platform.LoadingFinished();
             }
 
             var playing = state == GameFlowState.Playing;
+            // Paused because the game went to the background: a site that tracks focus itself is not told.
+            if (!playing && _playing && state == GameFlowState.Paused && _focus != null && !_focus.IsActive &&
+                _platform.Traits.TracksFocusItself)
+                playing = true;
             if (playing != _playing)
             {
                 _playing = playing;
@@ -220,8 +275,10 @@ namespace Maze.Application.Platform
                 else _platform.GameplayStopped();
             }
 
+            // Rarely (site rules): only the first time a level gets all stars.
             if (state == GameFlowState.Completed && _flow.LastResult is { } result &&
-                result.Stars >= LevelResult.MaxStars && !_flow.IsTutorialLevel)
+                result.Stars >= LevelResult.MaxStars && _flow.LastPreviousStars < LevelResult.MaxStars &&
+                !_flow.IsTutorialLevel)
                 _platform.HappyMoment();
         }
     }

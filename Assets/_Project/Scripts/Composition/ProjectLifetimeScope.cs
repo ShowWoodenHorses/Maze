@@ -34,6 +34,8 @@ namespace Maze.Composition
             // its symbol (MazeBuilder: MAZE_YANDEX, MAZE_CRAZYGAMES, MAZE_VKPLAY); no symbol = no site.
 #if MAZE_YANDEX
             builder.Register<YandexPlatform>(Lifetime.Singleton).As<IGamePlatform>();
+#elif MAZE_CRAZYGAMES
+            builder.Register<CrazyGamesPlatform>(Lifetime.Singleton).As<IGamePlatform>();
 #else
             builder.Register<GenericPlatform>(Lifetime.Singleton).As<IGamePlatform>();
 #endif
@@ -54,6 +56,8 @@ namespace Maze.Composition
 #if MAZE_YANDEX
             builder.Register<YandexMetrikaSink>(Lifetime.Singleton).As<IAnalyticsSink>();
             builder.Register<YandexAdProvider>(Lifetime.Singleton).As<IAdProvider>();
+#elif MAZE_CRAZYGAMES
+            builder.Register<CrazyGamesAdProvider>(Lifetime.Singleton).As<IAdProvider>(); // its own statistics: no sink
 #else
             builder.Register<SimulatedAdProvider>(Lifetime.Singleton).As<IAdProvider>();
 #endif

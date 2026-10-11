@@ -20,6 +20,7 @@ MonoBehaviour:
   - common.no
   - format.percent
   - menu.play
+  - menu.levels
   - menu.reset_progress
   - level_select.title
   - level_select.empty
@@ -169,6 +170,7 @@ MonoBehaviour:
   - NIE
   - '{0}%'
   - GRAJ
+  - POZIOMY
   - "DEBUG: RESETUJ POST\u0118P"
   - WYBIERZ POZIOM
   - "Brak poziom\xF3w: uruchom Build / Sync w Level Designer."

@@ -91,6 +91,9 @@ namespace Maze.Application.Flow
         /// <summary>Best time of the level before the last ended run, seconds; 0 when there was none.</summary>
         public float LastPreviousBestTime { get; private set; }
 
+        /// <summary>Best stars of the level before the last ended run; 0 when it was never completed.</summary>
+        public int LastPreviousStars { get; private set; }
+
         public event Action<GameFlowState> StateChanged;
 
         public UniTask InitializeApplication() => RunTransition("InitializeApplication", async cancellation =>
@@ -166,6 +169,7 @@ namespace Maze.Application.Flow
         public void CloseMap()
         {
             if (State != GameFlowState.Map) return;
+            if (_ads != null && _ads.IsShowing) return; // a rewarded ad is asked for: the level waits for it (site rules)
             _session.SetPaused(false);
             SetState(GameFlowState.Playing);
         }
@@ -225,18 +229,20 @@ namespace Maze.Application.Flow
 
         private async UniTask StartLevelAsync(string levelId, LevelLaunchOptions options, CancellationToken cancellation)
         {
+            var fromMenu = State == GameFlowState.MainMenu;
             SetState(GameFlowState.Loading);
             CurrentLevelId = levelId;
             _launchOptions = options;
             LastResult = null;
             LastPreviousBestTime = 0f;
+            LastPreviousStars = 0;
             GameLog.Info(LogChannel.LevelLoading, $"Loading level '{levelId}'.");
 
             // Stop current gameplay, dispose the old LevelScope, release its Addressables.
             await UnloadLevelAsync();
 
             // An interstitial before the level (retry, next, from the menu) when the ad policy allows; over the loading screen.
-            if (_ads != null) await _ads.ShowBeforeLevelAsync(levelId, cancellation);
+            if (_ads != null) await _ads.ShowBeforeLevelAsync(levelId, fromMenu, cancellation);
 
             var entry = _catalog.Find(levelId)
                         ?? throw new LevelLoadException($"Level '{levelId}' is not in the level catalog.");
@@ -340,6 +346,7 @@ namespace Maze.Application.Flow
             var levelResult = _session.GetResult(outcome);
             LastResult = levelResult;
             LastPreviousBestTime = _progress.GetBestTime(CurrentLevelId);
+            LastPreviousStars = _progress.GetStars(CurrentLevelId);
             GameLog.Info(LogChannel.GameFlow, $"Level '{CurrentLevelId}' ended: {levelResult}.");
 
             if (outcome == LevelOutcome.Completed)

@@ -35,6 +35,12 @@ namespace Maze.Editor.Build
         [MenuItem("Maze/Build/WebGL Yandex Games (Release)")]
         public static void WebGLYandexRelease() => Build(BuildTarget.WebGL, development: false, WebPlatform.Yandex);
 
+        [MenuItem("Maze/Build/WebGL CrazyGames (Development)")]
+        public static void WebGLCrazyGamesDevelopment() => Build(BuildTarget.WebGL, development: true, WebPlatform.CrazyGames);
+
+        [MenuItem("Maze/Build/WebGL CrazyGames (Release)")]
+        public static void WebGLCrazyGamesRelease() => Build(BuildTarget.WebGL, development: false, WebPlatform.CrazyGames);
+
         [MenuItem("Maze/Build/Android APK (Development)")]
         public static void AndroidDevelopment() => Build(BuildTarget.Android, development: true);
 

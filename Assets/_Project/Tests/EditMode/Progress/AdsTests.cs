@@ -36,7 +36,8 @@ namespace Maze.Tests.EditMode.Progress
         [TearDown]
         public void TearDown() => Object.DestroyImmediate(_catalogAsset);
 
-        private void BeforeLevel(string id) => _ads.ShowBeforeLevelAsync(id, CancellationToken.None).GetAwaiter().GetResult();
+        private void BeforeLevel(string id, bool fromMenu = false) =>
+            _ads.ShowBeforeLevelAsync(id, fromMenu, CancellationToken.None).GetAwaiter().GetResult();
 
         [Test]
         public void Interstitial_NotOnFirstLevels_NotTooOften_RewardedRestartsTheWait()
@@ -81,6 +82,43 @@ namespace Maze.Tests.EditMode.Progress
         }
 
         [Test]
+        public void AdsSwitchedOffBySite_GiveTheRewardForFree()
+        {
+            _provider.Next = AdResult.Disabled;
+            Assert.IsTrue(_ads.ShowRewardedAsync("route_hint", CancellationToken.None).GetAwaiter().GetResult(),
+                "Basic Launch: the rewarded button still works.");
+            Assert.AreEqual(AdResult.Rewarded,
+                _ads.ShowRewardedResultAsync("map_keys", CancellationToken.None).GetAwaiter().GetResult());
+        }
+
+        [Test]
+        public void Interstitial_BetweenLevelsOnly_WhenTheSiteSaysSo()
+        {
+            BeforeLevel("L4", fromMenu: true);
+            Assert.AreEqual(1, _provider.Shown.Count, "No such rule: from the menu too.");
+
+            _provider.BetweenLevelsOnly = true;
+            _now += 1000f;
+            BeforeLevel("L4", fromMenu: true);
+            Assert.AreEqual(1, _provider.Shown.Count, "Not on navigation from the menu.");
+            BeforeLevel("L4");
+            Assert.AreEqual(2, _provider.Shown.Count, "After a level ended: yes.");
+        }
+
+        [Test]
+        public void Sound_GoesOff_OnlyWhenTheAdReallyStarts()
+        {
+            _provider.CallStarted = false;
+            _provider.CheckSound = () => Assert.IsFalse(AudioListener.pause, "Requested, not started: the game still sounds.");
+            _ads.ShowRewardedAsync("route_hint", CancellationToken.None).GetAwaiter().GetResult();
+
+            _provider.CallStarted = true;
+            _provider.CheckSound = () => Assert.IsTrue(AudioListener.pause, "Playing: silent.");
+            _ads.ShowRewardedAsync("route_hint", CancellationToken.None).GetAwaiter().GetResult();
+            Assert.IsFalse(AudioListener.pause, "Sound is back after the ad.");
+        }
+
+        [Test]
         public void MapLayers_BoughtPerLevel_KeptInTheSave()
         {
             var storage = new MemoryStorage();
@@ -105,14 +143,21 @@ namespace Maze.Tests.EditMode.Progress
             public readonly List<AdKind> Shown = new List<AdKind>();
             public AdResult? Next;
             public bool Throw;
+            public bool BetweenLevelsOnly;
+            public bool CallStarted = true;
+            public System.Action CheckSound;
 
             public string Name => "Fake";
 
+            public bool InterstitialBetweenLevelsOnly => BetweenLevelsOnly;
+
             public UniTask InitializeAsync(CancellationToken cancellation) => UniTask.CompletedTask;
 
-            public UniTask<AdResult> ShowAsync(AdKind kind, string placement, CancellationToken cancellation)
+            public UniTask<AdResult> ShowAsync(AdKind kind, string placement, System.Action started, CancellationToken cancellation)
             {
                 if (Throw) throw new System.InvalidOperationException("SDK crashed.");
+                if (CallStarted) started();
+                CheckSound?.Invoke();
                 Shown.Add(kind);
                 return UniTask.FromResult(Next ?? (kind == AdKind.Rewarded ? AdResult.Rewarded : AdResult.Closed));
             }

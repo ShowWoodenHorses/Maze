@@ -20,6 +20,7 @@ MonoBehaviour:
   - common.no
   - format.percent
   - menu.play
+  - menu.levels
   - menu.reset_progress
   - level_select.title
   - level_select.empty
@@ -169,6 +170,7 @@ MonoBehaviour:
   - "YO\u02BBQ"
   - '{0}%'
   - "O\u02BBYNASH"
+  - BOSQICHLAR
   - 'DEBUG: PROGRESSNI TIKLASH'
   - DARAJANI TANLANG
   - "Hozircha darajalar yo\u02BBq: Level Designer ichida Build / Sync ni ishga tushiring."
