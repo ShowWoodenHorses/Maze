@@ -128,6 +128,10 @@ namespace Maze.Editor.Build
                 // The page decides what is secure (platforms serve https, the browser blocks mixed content); Unity's
                 // own ban on http would break a build opened over the local network (http://192.168.x.x on a phone).
                 PlayerSettings.insecureHttpOption = InsecureHttpOption.AlwaysAllowed;
+                // Textures: ASTC. Phones (most of the web audience) have no DXT — Unity unpacked every texture there to
+                // raw RGBA (4–8x the memory); a desktop without ASTC unpacks instead, it has the memory.
+                if (EditorUserBuildSettings.webGLBuildSubtarget != WebGLTextureSubtarget.ASTC)
+                    EditorUserBuildSettings.webGLBuildSubtarget = WebGLTextureSubtarget.ASTC; // reimports the textures
             }
             else
             {
