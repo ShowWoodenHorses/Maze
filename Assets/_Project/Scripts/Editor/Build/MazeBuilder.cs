@@ -7,6 +7,7 @@ using UnityEditor;
 using UnityEditor.AddressableAssets;
 using UnityEditor.AddressableAssets.Build;
 using UnityEditor.AddressableAssets.Settings;
+using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
 
@@ -47,7 +48,7 @@ namespace Maze.Editor.Build
             var problem = CheckLevels();
             if (problem != null) return Fail(problem);
 
-            ConfigurePlatform(target);
+            ConfigurePlatform(target, development);
 
             // Addressables content must be built for the active platform before the player.
             var settings = AddressableAssetSettingsDefaultObject.GetSettings(false);
@@ -98,13 +99,39 @@ namespace Maze.Editor.Build
             return text;
         }
 
+        /// <summary>The page around the WebGL build: <c>Assets/WebGLTemplates/Mazebound</c>.</summary>
+        private const string WebTemplate = "PROJECT:Mazebound";
+
         /// <summary>Settings the builds rely on; kept in code so a fresh checkout builds the same way.</summary>
-        private static void ConfigurePlatform(BuildTarget target)
+        private static void ConfigurePlatform(BuildTarget target, bool development)
         {
             if (target == BuildTarget.WebGL)
             {
-                // Without it a Gzip build only runs on a server that sends Content-Encoding (any static server works).
+                // Full window, own loading bar, no scrollbars or page gestures (platform rules).
+                PlayerSettings.WebGL.template = WebTemplate;
+                PlayerSettings.WebGL.compressionFormat = WebGLCompressionFormat.Brotli;
+                // Without it a compressed build only runs on a server that sends Content-Encoding (any static server
+                // works, plain http on a phone too). A platform serving the files with the right headers can drop it.
                 PlayerSettings.WebGL.decompressionFallback = true;
+                // New file names for new content: browsers and CDNs never mix an old cached file into a new version.
+                PlayerSettings.WebGL.nameFilesAsHashes = true;
+                PlayerSettings.WebGL.dataCaching = true;
+                PlayerSettings.WebGL.showDiagnostics = false;
+                PlayerSettings.WebGL.exceptionSupport = development
+                    ? WebGLExceptionSupport.FullWithStacktrace
+                    : WebGLExceptionSupport.ExplicitlyThrownExceptionsOnly; // GameFlow catches them into the error screen
+                PlayerSettings.SetIl2CppCodeGeneration(NamedBuildTarget.WebGL,
+                    development ? Il2CppCodeGeneration.OptimizeSpeed : Il2CppCodeGeneration.OptimizeSize);
+                // Our assemblies and VContainer (reflection) are kept whole by Assets/_Project/link.xml.
+                PlayerSettings.SetManagedStrippingLevel(NamedBuildTarget.WebGL, ManagedStrippingLevel.Medium);
+                PlayerSettings.stripEngineCode = true;
+                // The page decides what is secure (platforms serve https, the browser blocks mixed content); Unity's
+                // own ban on http would break a build opened over the local network (http://192.168.x.x on a phone).
+                PlayerSettings.insecureHttpOption = InsecureHttpOption.AlwaysAllowed;
+            }
+            else
+            {
+                PlayerSettings.insecureHttpOption = InsecureHttpOption.NotAllowed; // Android: no cleartext traffic
             }
 
             // The game is landscape only (both landscape sides, rotates between them).

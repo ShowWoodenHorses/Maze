@@ -212,6 +212,20 @@ MonoBehaviour:
     _range: 10
     _maxVoices: 1
     _minInterval: 0.3
+  _iceHit:
+    _clips: []
+    _volume: 0.7
+    _pitch: {x: 0.92, y: 1.08}
+    _range: 10
+    _maxVoices: 2
+    _minInterval: 0
+  _iceBreak:
+    _clips: []
+    _volume: 0.85
+    _pitch: {x: 0.95, y: 1.05}
+    _range: 12
+    _maxVoices: 1
+    _minInterval: 0
   _zombieGroan:
     _clips:
     - {fileID: 8300000, guid: 86ff00ad1c0102544bf0954056c1b3a0, type: 3}

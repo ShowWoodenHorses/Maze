@@ -169,7 +169,7 @@ namespace Maze.Presentation.Map
             _adPending = true;
             try
             {
-                if (await _ads.ShowRewardedAsync("route_hint", _lifetime.Token)) RequestHint();
+                if (Rewarded(await _ads.ShowRewardedResultAsync("route_hint", _lifetime.Token))) RequestHint();
             }
             catch (OperationCanceledException)
             {
@@ -190,7 +190,7 @@ namespace Maze.Presentation.Map
             _adPending = true;
             try
             {
-                if (!await _ads.ShowRewardedAsync("map_" + layer.ToString().ToLowerInvariant(), _lifetime.Token)) return;
+                if (!Rewarded(await _ads.ShowRewardedResultAsync("map_" + layer.ToString().ToLowerInvariant(), _lifetime.Token))) return;
                 _progress.UnlockMapLayer(_level.name, flag);
                 _stats.LayersUnlocked++;
                 var parameters = _analytics.Begin();
@@ -208,6 +208,17 @@ namespace Maze.Presentation.Map
             {
                 _adPending = false;
             }
+        }
+
+        /// <summary>
+        /// True when the reward is due. No ad at all (an ad blocker, no fill, a network error) is told under the map's
+        /// title, so the button does not just look broken; an ad closed early by the player — silently nothing.
+        /// </summary>
+        private bool Rewarded(AdResult result)
+        {
+            if (result == AdResult.Failed || result == AdResult.Unavailable)
+                _ui.Map.SetHintStatus(_texts.Get(TextKeys.AdUnavailable));
+            return result == AdResult.Rewarded;
         }
 
         /// <summary>The ad-bought flag of a layer; None for the free ones (player, map pieces).</summary>

@@ -64,7 +64,7 @@ namespace Maze.Application.Platform
 
     /// <summary>
     /// Ads of the game: rewarded ads for hints and map layers, an interstitial before a level start (retry, next,
-    /// from the menu) by <see cref="AdPolicy"/>. While an ad shows, all sound is paused (<see cref="AudioListener.pause"/>).
+    /// from the menu) by <see cref="AdPolicy"/>. While an ad shows, all sound is paused (<see cref="SoundSuspension"/>).
     /// Reports every ad to analytics. Failures never break the flow: no ad = no reward / just go on.
     /// </summary>
     public sealed class AdsService : IApplicationService
@@ -72,10 +72,12 @@ namespace Maze.Application.Platform
         private readonly IAdProvider _provider;
         private readonly AnalyticsService _analytics;
         private readonly ILevelCatalog _catalog;
+        private readonly SoundSuspension _sound;
         private readonly AdPolicy _policy = new AdPolicy();
 
-        public AdsService(IAdProvider provider, AnalyticsService analytics, ILevelCatalog catalog)
+        public AdsService(IAdProvider provider, AnalyticsService analytics, ILevelCatalog catalog, SoundSuspension sound = null)
         {
+            _sound = sound ?? new SoundSuspension();
             _provider = provider;
             _analytics = analytics;
             _catalog = catalog;
@@ -113,6 +115,14 @@ namespace Maze.Application.Platform
             return result == AdResult.Rewarded;
         }
 
+        /// <summary>
+        /// Shows a rewarded ad and tells how it went: <see cref="AdResult.Closed"/> — the player closed it early,
+        /// <see cref="AdResult.Failed"/> / <see cref="AdResult.Unavailable"/> — no ad (worth telling the player: an ad
+        /// blocker, no fill, a network error).
+        /// </summary>
+        public UniTask<AdResult> ShowRewardedResultAsync(string placement, CancellationToken cancellation) =>
+            ShowAsync(AdKind.Rewarded, placement, cancellation);
+
         /// <summary>Before a level starts: an interstitial when the policy allows it.</summary>
         public async UniTask ShowBeforeLevelAsync(string levelId, CancellationToken cancellation)
         {
@@ -124,8 +134,7 @@ namespace Maze.Application.Platform
         {
             if (IsShowing) return AdResult.Unavailable;
             IsShowing = true;
-            var paused = AudioListener.pause;
-            AudioListener.pause = true;
+            _sound.Set(SoundSuspendReason.Ad, true);
             AdResult result;
             try
             {
@@ -142,7 +151,7 @@ namespace Maze.Application.Platform
             }
             finally
             {
-                AudioListener.pause = paused;
+                _sound.Set(SoundSuspendReason.Ad, false);
                 IsShowing = false;
             }
 

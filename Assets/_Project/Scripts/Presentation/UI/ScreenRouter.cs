@@ -55,6 +55,7 @@ namespace Maze.Presentation.UI
             _ui.MainMenu.DebugResetProgressClicked += OnResetProgressRequested;
             if (_ui.Tutorial != null) _ui.Tutorial.ContinueClicked += _flow.CloseTip;
             if (_input != null) _input.ConfirmRequested += OnConfirmRequested;
+            if (_ui.RotateDevice != null) _ui.RotateDevice.Changed += OnRotateDeviceChanged;
             _ui.LevelSelect.LevelSelected += OnLevelSelected;
             _ui.LevelSelect.BackClicked += OnLevelSelectBack;
             _ui.Error.BackClicked += OnMenuRequested;
@@ -85,6 +86,8 @@ namespace Maze.Presentation.UI
             if (_input != null) _input.ConfirmRequested -= OnConfirmRequested;
             if (_ui == null) return; // Scene already destroyed on application quit.
 
+            if (_ui.RotateDevice != null) _ui.RotateDevice.Changed -= OnRotateDeviceChanged;
+
             _ui.MainMenu.PlayClicked -= OnPlayClicked;
             _ui.MainMenu.TutorialClicked -= OnTutorialClicked;
             if (_ui.Tutorial != null) _ui.Tutorial.ContinueClicked -= _flow.CloseTip;
@@ -105,6 +108,12 @@ namespace Maze.Presentation.UI
             _ui.Result.NextClicked -= OnNextRequested;
             _ui.ConfirmExit.YesClicked -= OnFinishLevelConfirmed;
             _ui.ConfirmExit.NoClicked -= OnFinishLevelDeclined;
+        }
+
+        /// <summary>Portrait on a phone: the level stops under "Rotate your device"; the player resumes it from the pause.</summary>
+        private void OnRotateDeviceChanged(bool shown)
+        {
+            if (shown && _flow.State == GameFlowState.Playing) _flow.PauseGameplay();
         }
 
         private void Show(GameFlowState state)

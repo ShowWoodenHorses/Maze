@@ -9,7 +9,7 @@ namespace Maze.Application.Services
 {
     public interface IInputService
     {
-        /// <summary>Escape / gamepad Start / Android Back.</summary>
+        /// <summary>Escape / P / gamepad Start / Android Back (P: a fullscreen browser keeps Escape for itself).</summary>
         event Action PauseRequested;
 
         /// <summary>M / Tab / gamepad Select (also the HUD's map button on touch screens).</summary>
@@ -127,6 +127,7 @@ namespace Maze.Application.Services
 
             var pause = _actions.AddAction("Pause", InputActionType.Button);
             pause.AddBinding("<Keyboard>/escape");
+            pause.AddBinding("<Keyboard>/p"); // a fullscreen browser takes Escape to leave fullscreen
             pause.AddBinding("<Gamepad>/start");
             pause.performed += _ => PauseRequested?.Invoke();
 

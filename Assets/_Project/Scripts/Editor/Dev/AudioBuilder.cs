@@ -242,6 +242,9 @@ namespace Maze.Editor.Dev
         /// <summary>
         /// Sounds: Vorbis, mono except the interface (the game pans them itself), short ones decompressed on load so
         /// playing them costs nothing, long ones (ambience loops) compressed in memory.
+        /// WebGL: MP3. Unity decodes every clip under 128 KB with WebAudio <c>decodeAudioData</c>, and a mobile browser
+        /// (Android Chrome, checked 2026-10-11) fails on its AAC ("EncodingError: Unable to decode audio data"): only
+        /// music and the long loops (played by an audio element) were heard. MP3 decodes everywhere.
         /// </summary>
         private static bool ConfigureSound(string path)
         {
@@ -258,7 +261,12 @@ namespace Maze.Editor.Dev
                 sampleRateSetting = AudioSampleRateSetting.PreserveSampleRate,
                 preloadAudioData = true,
             };
-            return Apply(importer, !isInterface, false, settings);
+            var web = settings;
+            web.compressionFormat = AudioCompressionFormat.MP3;
+            // The WebGL override refuses "preserve sample rate" (SetOverrideSampleSettings returns false, nothing set).
+            web.sampleRateSetting = AudioSampleRateSetting.OverrideSampleRate;
+            web.sampleRateOverride = 44100;
+            return Apply(importer, !isInterface, false, settings, web);
         }
 
         /// <summary>Music: stereo Vorbis, streamed (never fully in memory where the platform can stream), loaded in the background.</summary>
@@ -276,20 +284,33 @@ namespace Maze.Editor.Dev
             return Apply(importer, false, true, settings);
         }
 
-        private static bool Apply(AudioImporter importer, bool mono, bool loadInBackground, AudioImporterSampleSettings settings)
+        private const string WebGL = "WebGL";
+
+        /// <param name="web">WebGL override; null — none (the defaults).</param>
+        private static bool Apply(AudioImporter importer, bool mono, bool loadInBackground, AudioImporterSampleSettings settings,
+            AudioImporterSampleSettings? web = null)
         {
-            var current = importer.defaultSampleSettings;
+            var webSame = web == null
+                ? !importer.ContainsSampleSettingsOverride(WebGL)
+                : importer.ContainsSampleSettingsOverride(WebGL) && Same(importer.GetOverrideSampleSettings(WebGL), web.Value);
             if (importer.forceToMono == mono && importer.loadInBackground == loadInBackground &&
-                current.loadType == settings.loadType && current.compressionFormat == settings.compressionFormat &&
-                Mathf.Approximately(current.quality, settings.quality) && current.sampleRateSetting == settings.sampleRateSetting &&
-                current.preloadAudioData == settings.preloadAudioData)
+                Same(importer.defaultSampleSettings, settings) && webSame)
                 return false;
 
             importer.forceToMono = mono;
             importer.loadInBackground = loadInBackground;
             importer.defaultSampleSettings = settings;
+            if (web == null) importer.ClearSampleSettingOverride(WebGL);
+            else if (!importer.SetOverrideSampleSettings(WebGL, web.Value))
+                Debug.LogWarning($"[Maze] Build Audio: the WebGL override of '{importer.assetPath}' was refused.");
             importer.SaveAndReimport();
             return true;
         }
+
+        private static bool Same(AudioImporterSampleSettings a, AudioImporterSampleSettings b) =>
+            a.loadType == b.loadType && a.compressionFormat == b.compressionFormat &&
+            Mathf.Approximately(a.quality, b.quality) && a.sampleRateSetting == b.sampleRateSetting &&
+            (a.sampleRateSetting != AudioSampleRateSetting.OverrideSampleRate || a.sampleRateOverride == b.sampleRateOverride) &&
+            a.preloadAudioData == b.preloadAudioData;
     }
 }

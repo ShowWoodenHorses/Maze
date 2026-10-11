@@ -120,6 +120,8 @@ MonoBehaviour:
   - hud.tutorial
   - result.tutorial_complete
   - map.hint.tutorial
+  - ad.unavailable
+  - rotate.title
   - tutorial_ui.continue
   - tutorial.move
   - tutorial.move.touch
@@ -265,6 +267,8 @@ MonoBehaviour:
   - TUTORIAL
   - TUTORIAL COMPLETE
   - Tutorial route
+  - Ad is not available right now
+  - Rotate your device
   - GOT IT
   - 'Welcome to the maze! Your goal is to find the exit.
 

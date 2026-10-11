@@ -1,0 +1,126 @@
+using System;
+using System.Runtime.InteropServices;
+using Maze.Application.Flow;
+using UnityEngine;
+
+namespace Maze.Application.Platform
+{
+    /// <summary>Why the whole game is silent (<see cref="AudioListener.pause"/>).</summary>
+    [Flags]
+    public enum SoundSuspendReason
+    {
+        None = 0,
+        Ad = 1,
+
+        /// <summary>The page is hidden or has lost focus (another tab, a click outside the game's frame), the app is in the background.</summary>
+        Background = 2,
+    }
+
+    /// <summary>
+    /// Silences the game while any reason holds it (an ad, the page in the background) and gives the sound back once
+    /// none does: an ad ending in a hidden tab must not turn the sound on.
+    /// </summary>
+    public sealed class SoundSuspension
+    {
+        private SoundSuspendReason _reasons;
+
+        public SoundSuspendReason Reasons => _reasons;
+
+        public void Set(SoundSuspendReason reason, bool on)
+        {
+            var next = on ? _reasons | reason : _reasons & ~reason;
+            if (next == _reasons) return;
+            _reasons = next;
+            AudioListener.pause = next != SoundSuspendReason.None;
+        }
+    }
+
+    /// <summary>
+    /// The game in the background (platform rules: Yandex Games and others): while the page is hidden or unfocused —
+    /// or the app is — the sound is off and a running level is paused (the player resumes it from the pause screen).
+    /// Off in the editor: clicking another editor window must not pause play mode or tests.
+    /// </summary>
+    public sealed class AppFocusController : IDisposable
+    {
+        private readonly GameFlow _flow;
+        private readonly SoundSuspension _sound;
+        private bool _initialized;
+        private bool _focused = true;
+        private bool _visible = true;
+
+        public AppFocusController(GameFlow flow, SoundSuspension sound)
+        {
+            _flow = flow;
+            _sound = sound;
+        }
+
+        public void Initialize()
+        {
+            if (_initialized || UnityEngine.Application.isEditor) return;
+            _initialized = true;
+            UnityEngine.Application.focusChanged += OnFocusChanged;
+            WebPage.VisibilityChanged += OnVisibilityChanged;
+            WebPage.Listen();
+        }
+
+        public void Dispose()
+        {
+            if (!_initialized) return;
+            _initialized = false;
+            UnityEngine.Application.focusChanged -= OnFocusChanged;
+            WebPage.VisibilityChanged -= OnVisibilityChanged;
+        }
+
+        /// <summary>The game is in front of the player: focused and visible.</summary>
+        public bool IsActive => _focused && _visible;
+
+        public void OnFocusChanged(bool focused)
+        {
+            _focused = focused;
+            Apply();
+        }
+
+        public void OnVisibilityChanged(bool visible)
+        {
+            _visible = visible;
+            Apply();
+        }
+
+        private void Apply()
+        {
+            var active = IsActive;
+            _sound.Set(SoundSuspendReason.Background, !active);
+            if (!active && _flow.State == GameFlowState.Playing) _flow.PauseGameplay();
+        }
+    }
+
+    /// <summary>
+    /// The page around a WebGL build (<c>Plugins/WebGL/MazePage.jslib</c>): tab visibility. Elsewhere — nothing.
+    /// </summary>
+    public static class WebPage
+    {
+        /// <summary>True when the page became visible, false when hidden (another tab, minimized browser).</summary>
+        public static event Action<bool> VisibilityChanged;
+
+        private static bool _listening;
+
+        public static void Listen()
+        {
+            if (_listening) return;
+            _listening = true;
+#if UNITY_WEBGL && !UNITY_EDITOR
+            MazePage_ListenVisibility(OnVisibility);
+#endif
+        }
+
+#if UNITY_WEBGL && !UNITY_EDITOR
+        private delegate void IntCallback(int value);
+
+        [DllImport("__Internal")]
+        private static extern void MazePage_ListenVisibility(IntCallback callback);
+
+        [AOT.MonoPInvokeCallback(typeof(IntCallback))]
+        private static void OnVisibility(int visible) => VisibilityChanged?.Invoke(visible != 0);
+#endif
+    }
+}

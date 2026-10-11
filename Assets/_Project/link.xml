@@ -1,0 +1,11 @@
+<!-- Managed code stripping (MazeBuilder: Medium) keeps these assemblies whole: VContainer builds the scopes by
+     reflection (constructors, [Inject]), and our types are created by it or referenced only from serialized data. -->
+<linker>
+  <assembly fullname="Maze.Core" preserve="all"/>
+  <assembly fullname="Maze.Gameplay" preserve="all"/>
+  <assembly fullname="Maze.Application" preserve="all"/>
+  <assembly fullname="Maze.Presentation" preserve="all"/>
+  <assembly fullname="Maze.Composition" preserve="all"/>
+  <assembly fullname="VContainer" preserve="all"/>
+  <assembly fullname="UniTask" preserve="all"/>
+</linker>

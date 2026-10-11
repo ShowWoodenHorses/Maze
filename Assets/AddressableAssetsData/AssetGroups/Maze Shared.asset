@@ -40,11 +40,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 2ebc912a5364cd2408461cf7f971fdcc
-    m_Address: Assets/_Project/Music/menu.wav
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 3028039187233b14186282895b133e1b
     m_Address: Assets/_Project/Data/Localization/Texts_tr.asset
     m_ReadOnly: 0
@@ -107,11 +102,6 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: a4be1ef066a343b479403ae698a6a07c
     m_Address: Assets/_Project/Art/Player/SM_Chr_Hunter_Male_01.prefab
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: ae2933770e372d449846e0f5db7a246a
-    m_Address: Assets/_Project/Music/game.wav
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

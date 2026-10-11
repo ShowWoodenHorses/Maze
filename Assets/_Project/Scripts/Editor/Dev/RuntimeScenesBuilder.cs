@@ -201,7 +201,8 @@ namespace Maze.Editor.Dev
             SetReference(root, "_result", BuildResult(parent));
             SetReference(root, "_settings", BuildSettings(parent));
             SetReference(root, "_error", BuildError(parent));
-            SetReference(root, "_fpsCounter", BuildFpsCounter(parent)); // last: over every screen
+            SetReference(root, "_fpsCounter", BuildFpsCounter(parent)); // over every screen
+            SetReference(root, "_rotateDevice", BuildRotateDevice(parent)); // last: covers even the FPS counter
             AddUiSounds(root);
             return root;
         }
@@ -1338,6 +1339,53 @@ namespace Maze.Editor.Dev
         /// Small FPS text on the left of the safe area, under the HUD counters and above the stick (corners may be cut
         /// off on some devices), over every screen; ignores touches. Hidden until the setting switches it on.
         /// </summary>
+        /// <summary>
+        /// "Rotate your device" (a phone browser held in portrait): an opaque layer over everything that eats touches —
+        /// a faint portrait phone, an arrow, the landscape phone in the accent, the caption under them. Sized for a
+        /// portrait canvas (about 1000 units wide there).
+        /// </summary>
+        private static RotateDeviceScreen BuildRotateDevice(Transform parent)
+        {
+            var root = new GameObject("RotateDevice", typeof(RectTransform));
+            root.transform.SetParent(parent, false);
+            Stretch(root.GetComponent<RectTransform>());
+
+            var content = new GameObject("Content", typeof(RectTransform));
+            content.transform.SetParent(root.transform, false);
+            Stretch(content.GetComponent<RectTransform>());
+            content.AddComponent<Image>().color = Background; // raycast target: nothing under it gets touched
+
+            var portrait = Shape(content.transform, "Portrait", Center, new Vector2(-230f, 90f), new Vector2(110f, 190f));
+            portrait.CornerRadius = 18f;
+            portrait.Fill = Color.clear;
+            portrait.Stroke = Fade(_style.Line, 0.35f);
+            portrait.StrokeWidth = 4f;
+
+            var shaft = Shape(content.transform, "ArrowShaft", Center, new Vector2(-60f, 90f), new Vector2(90f, 8f));
+            shaft.Kind = UiShapeKind.Capsule;
+            shaft.Fill = _style.Line;
+            shaft.StrokeWidth = 0f;
+            var head = Shape(content.transform, "ArrowHead", Center, new Vector2(0f, 90f), new Vector2(40f, 40f));
+            head.Kind = UiShapeKind.Arrow;
+            head.CornerRadius = 40f;
+            head.Fill = _style.Line;
+            head.StrokeWidth = 0f;
+
+            var landscape = Shape(content.transform, "Landscape", Center, new Vector2(200f, 90f), new Vector2(190f, 110f));
+            landscape.CornerRadius = 18f;
+            landscape.Fill = Color.clear;
+            landscape.Stroke = _style.Accent;
+            landscape.StrokeWidth = 5f;
+
+            AutoSize(Text(content.transform, "Title", Loc(TextKeys.RotateDevice), 54f, true, Center, Center,
+                new Vector2(0f, -110f), new Vector2(900f, 80f), TextAlignmentOptions.Center, null, 2f));
+
+            var screen = root.AddComponent<RotateDeviceScreen>();
+            SetReference(screen, "_content", content);
+            content.SetActive(false);
+            return screen;
+        }
+
         private static FpsCounter BuildFpsCounter(Transform parent)
         {
             var area = new GameObject("FpsCounter", typeof(RectTransform));

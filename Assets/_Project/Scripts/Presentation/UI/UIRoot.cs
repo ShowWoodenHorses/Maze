@@ -30,6 +30,9 @@ namespace Maze.Presentation.UI
         [Tooltip("Frames per second in the bottom-right corner, over every screen; shown when the setting is on.")]
         [SerializeField] private FpsCounter _fpsCounter;
 
+        [Tooltip("\"Rotate your device\" over everything on a phone held in portrait.")]
+        [SerializeField] private RotateDeviceScreen _rotateDevice;
+
         [Tooltip("The scene's EventSystem: tells whether the pointer is over the UI (clicks there are not attacks).")]
         [SerializeField] private EventSystem _eventSystem;
 
@@ -49,6 +52,7 @@ namespace Maze.Presentation.UI
         public TutorialScreen Tutorial => _tutorial;
         public TouchControls TouchControls => _touchControls;
         public FpsCounter FpsCounter => _fpsCounter;
+        public RotateDeviceScreen RotateDevice => _rotateDevice;
         public EventSystem EventSystem => _eventSystem;
 
         /// <summary>A control asked for its sound (<see cref="UiSound"/>).</summary>

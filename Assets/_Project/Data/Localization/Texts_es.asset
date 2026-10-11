@@ -120,6 +120,8 @@ MonoBehaviour:
   - hud.tutorial
   - result.tutorial_complete
   - map.hint.tutorial
+  - ad.unavailable
+  - rotate.title
   - tutorial_ui.continue
   - tutorial.move
   - tutorial.move.touch
@@ -265,6 +267,8 @@ MonoBehaviour:
   - TUTORIAL
   - TUTORIAL COMPLETADO
   - Ruta del tutorial
+  - "El anuncio no est\xE1 disponible ahora"
+  - Gira tu dispositivo
   - ENTENDIDO
   - "\xA1Bienvenido al laberinto! Tu objetivo es encontrar la salida.\nMu\xE9vete
     con WASD o las flechas y sigue la l\xEDnea luminosa."

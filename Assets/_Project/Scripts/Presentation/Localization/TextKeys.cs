@@ -76,6 +76,8 @@ namespace Maze.Presentation.Localization
         public const string HintDoor = "map.hint.door";
         public const string HintNone = "map.hint.none";
         public const string HintTutorial = "map.hint.tutorial";
+        public const string AdUnavailable = "ad.unavailable";
+        public const string RotateDevice = "rotate.title";
 
         // Tutorial window.
         public const string TutorialContinue = "tutorial_ui.continue";

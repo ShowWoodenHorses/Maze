@@ -120,6 +120,8 @@ MonoBehaviour:
   - hud.tutorial
   - result.tutorial_complete
   - map.hint.tutorial
+  - ad.unavailable
+  - rotate.title
   - tutorial_ui.continue
   - tutorial.move
   - tutorial.move.touch
@@ -266,6 +268,8 @@ MonoBehaviour:
   - "E\u011E\u0130T\u0130M"
   - "E\u011E\u0130T\u0130M TAMAMLANDI"
   - "E\u011Fitim rotas\u0131"
+  - "Reklam \u015Fu anda kullan\u0131lam\u0131yor"
+  - "Cihaz\u0131n\u0131z\u0131 d\xF6nd\xFCr\xFCn"
   - ANLADIM
   - "Labirente ho\u015F geldin! Amac\u0131n \xE7\u0131k\u0131\u015F\u0131 bulmak.\nWASD
     veya ok tu\u015Flar\u0131yla hareket et ve parlayan \xE7izgiyi takip et."

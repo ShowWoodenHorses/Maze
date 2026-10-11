@@ -31,6 +31,9 @@ namespace Maze.Editor.LevelDesigner
         public const string VisualsGroup = "Maze Visuals";
         public const string SharedGroup = "Maze Shared";
         public const string SharedDependenciesGroup = "Maze Shared Dependencies";
+
+        /// <summary>Music tracks: a bundle per track, downloaded only when it starts playing (not with the start-up bundle).</summary>
+        public const string MusicGroup = "Maze Music";
         public const string LevelAddressPrefix = "Levels/";
         public const string CatalogPath = "Assets/_Project/Data/Levels/LevelCatalog.asset";
         public const string DevCatalogPath = "Assets/_Project/Data/Levels/DevLevelCatalog.asset";
@@ -175,9 +178,17 @@ namespace Maze.Editor.LevelDesigner
             if (audio == null)
                 return "Audio catalog is missing: run Maze → Dev → Build Audio or create one (Create → Maze → Audio Catalog). " +
                        "The game cannot start without it.";
-            // Music is loaded only while it plays: its own entries, not inside the catalog's bundle.
-            EnsurePrefabAddressable(settings, sharedGroup, audio.MenuMusic.Clip);
-            EnsurePrefabAddressable(settings, sharedGroup, audio.LevelMusic.Clip);
+            // Music is loaded only while it plays: its own entries, each track in its own bundle (a web build downloads
+            // a bundle whole: inside the start-up bundle both tracks would be downloaded before the menu).
+            var musicGroup = GetOrCreateGroup(settings, MusicGroup);
+            var musicSchema = musicGroup.GetSchema<BundledAssetGroupSchema>();
+            if (musicSchema != null && musicSchema.BundleMode != BundledAssetGroupSchema.BundlePackingMode.PackSeparately)
+            {
+                musicSchema.BundleMode = BundledAssetGroupSchema.BundlePackingMode.PackSeparately;
+                EditorUtility.SetDirty(musicSchema);
+            }
+            MoveToGroup(settings, musicGroup, audio.MenuMusic.Clip);
+            MoveToGroup(settings, musicGroup, audio.LevelMusic.Clip);
 
             var languages = EnsureSingleAddressable<LanguageCatalog>(settings, sharedGroup, LanguageCatalog.Address);
             if (languages == null)
@@ -194,6 +205,15 @@ namespace Maze.Editor.LevelDesigner
         {
             if (prefab != null && prefab.RuntimeKeyIsValid() && settings.FindAssetEntry(prefab.AssetGUID) == null)
                 settings.CreateOrMoveEntry(prefab.AssetGUID, group);
+        }
+
+        /// <summary>Makes the asset addressable in <paramref name="group"/>, moving it there from another group.</summary>
+        private static void MoveToGroup(AddressableAssetSettings settings, AddressableAssetGroup group, AssetReference asset)
+        {
+            if (asset == null || !asset.RuntimeKeyIsValid()) return;
+            var entry = settings.FindAssetEntry(asset.AssetGUID);
+            if (entry == null || entry.parentGroup != group)
+                settings.CreateOrMoveEntry(asset.AssetGUID, group);
         }
 
         private static T EnsureSingleAddressable<T>(AddressableAssetSettings settings, AddressableAssetGroup group, string address)

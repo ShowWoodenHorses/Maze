@@ -120,6 +120,8 @@ MonoBehaviour:
   - hud.tutorial
   - result.tutorial_complete
   - map.hint.tutorial
+  - ad.unavailable
+  - rotate.title
   - tutorial_ui.continue
   - tutorial.move
   - tutorial.move.touch
@@ -265,6 +267,8 @@ MonoBehaviour:
   - TUTORIAL
   - TUTORIAL ABGESCHLOSSEN
   - Route des Tutorials
+  - "Werbung ist gerade nicht verf\xFCgbar"
+  - "Drehe dein Ger\xE4t"
   - VERSTANDEN
   - 'Willkommen im Labyrinth! Dein Ziel ist der Ausgang.
 

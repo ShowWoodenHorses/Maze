@@ -44,6 +44,7 @@ namespace Maze.Composition
             // Platform: analytics sinks and the ad provider of the build's platform (SDK integrations go here).
             builder.Register<LogAnalyticsSink>(Lifetime.Singleton).As<IAnalyticsSink>();
             builder.Register<SimulatedAdProvider>(Lifetime.Singleton).As<IAdProvider>();
+            builder.Register<SoundSuspension>(Lifetime.Singleton);
             builder.Register<AnalyticsService>(Lifetime.Singleton).AsSelf().As<IApplicationService>();
             builder.Register<AdsService>(Lifetime.Singleton).AsSelf().As<IApplicationService>();
             builder.Register<LevelRunStats>(Lifetime.Singleton);
@@ -52,6 +53,7 @@ namespace Maze.Composition
             builder.Register<ILevelSessionFactory>(_ => new LevelSessionFactory(this, _levelSceneName), Lifetime.Singleton);
             builder.Register<GameFlow>(Lifetime.Singleton);
             builder.Register<PauseController>(Lifetime.Singleton);
+            builder.Register<AppFocusController>(Lifetime.Singleton);
 
             builder.RegisterInstance(_ui);
             builder.Register<ScreenRouter>(Lifetime.Singleton);
