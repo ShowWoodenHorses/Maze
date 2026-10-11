@@ -117,6 +117,8 @@ MonoBehaviour:
   - layout.reset
   - layout.done
   - menu.tutorial
+  - menu.sign_in
+  - menu.sign_in.hint
   - hud.tutorial
   - result.tutorial_complete
   - map.hint.tutorial
@@ -264,6 +266,8 @@ MonoBehaviour:
   - ATUR ULANG
   - SELESAI
   - TUTORIAL
+  - MASUK
+  - Masuk untuk menyimpan progres di semua perangkat
   - TUTORIAL
   - TUTORIAL SELESAI
   - Rute tutorial

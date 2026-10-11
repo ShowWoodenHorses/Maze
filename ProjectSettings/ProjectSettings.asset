@@ -463,7 +463,7 @@ PlayerSettings:
   openGLRequireES31AEP: 0
   openGLRequireES32: 0
   m_TemplateCustomTags:
-    MAZE_PLATFORM_HEAD: 
+    MAZE_PLATFORM_HEAD: <script src="/sdk.js"></script>
   mobileMTRendering:
     Android: 1
     iPhone: 1
@@ -730,7 +730,7 @@ PlayerSettings:
   blurSplashScreenBackground: 1
   spritePackerPolicy: 
   webGLMemorySize: 16
-  webGLExceptionSupport: 1
+  webGLExceptionSupport: 3
   webGLNameFilesAsHashes: 1
   webGLShowDiagnostics: 0
   webGLDataCaching: 1
@@ -764,7 +764,7 @@ PlayerSettings:
     Android: 1
   il2cppCompilerConfiguration: {}
   il2cppCodeGeneration:
-    WebGL: 1
+    WebGL: 0
   il2cppStacktraceInformation: {}
   managedStrippingLevel:
     WebGL: 2

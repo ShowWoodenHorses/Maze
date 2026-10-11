@@ -48,6 +48,19 @@ namespace Maze.Application.Platform
 
         /// <summary>A moment of joy worth celebrating on the site (a level with all stars).</summary>
         void HappyMoment();
+
+        /// <summary>The site has player accounts the player can sign in to (saves then follow the account).</summary>
+        bool SupportsSignIn { get; }
+
+        bool IsSignedIn { get; }
+
+        /// <summary>Opens the site's sign-in window; true when the player is signed in afterwards.</summary>
+        UniTask<bool> SignInAsync(CancellationToken cancellation);
+
+        /// <summary>
+        /// The site asks the game to stop (true: its own window, an ad it shows itself…) and to go on (false).
+        /// </summary>
+        event Action<bool> PauseRequested;
     }
 
     /// <summary>No site: the editor, a local web build, Android. Nothing to tell, no cloud.</summary>
@@ -61,6 +74,10 @@ namespace Maze.Application.Platform
         public void GameplayStarted() { }
         public void GameplayStopped() { }
         public void HappyMoment() { }
+        public bool SupportsSignIn => false;
+        public bool IsSignedIn => false;
+        public UniTask<bool> SignInAsync(CancellationToken cancellation) => UniTask.FromResult(false);
+        public event Action<bool> PauseRequested { add { } remove { } }
     }
 
     /// <summary>
@@ -87,14 +104,22 @@ namespace Maze.Application.Platform
 
         public ICloudSave CloudSave => _ready ? _platform.CloudSave : null;
 
+        /// <summary>The player can sign in now (the site has accounts, the player is not signed in).</summary>
+        public bool CanSignIn => _ready && _platform.SupportsSignIn && !_platform.IsSignedIn;
+
+        /// <summary>The site asks to pause (true) or lets the game go on (false); see <see cref="IGamePlatform.PauseRequested"/>.</summary>
+        public event Action<bool> PauseRequested;
+
         public async UniTask InitializeAsync(CancellationToken cancellation)
         {
             try
             {
                 await _platform.InitializeAsync(cancellation);
                 _ready = true;
+                _platform.PauseRequested += OnPauseRequested;
                 GameLog.Info(LogChannel.Bootstrap, $"Platform '{_platform.Name}': language {Language ?? "-"}, " +
-                                                   $"cloud saves {(CloudSave != null ? "yes" : "no")}.");
+                                                   $"cloud saves {(CloudSave != null ? "yes" : "no")}, " +
+                                                   $"signed in {(_platform.SupportsSignIn ? _platform.IsSignedIn ? "yes" : "no" : "-")}.");
             }
             catch (OperationCanceledException)
             {
@@ -105,6 +130,27 @@ namespace Maze.Application.Platform
                 GameLog.Exception(LogChannel.Bootstrap, e, $"Platform '{_platform.Name}' failed to start; going on without it");
             }
         }
+
+        /// <summary>Opens the site's sign-in window; false when the player did not sign in or the site failed.</summary>
+        public async UniTask<bool> SignInAsync(CancellationToken cancellation)
+        {
+            if (!CanSignIn) return false;
+            try
+            {
+                return await _platform.SignInAsync(cancellation);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception e)
+            {
+                GameLog.Exception(LogChannel.Bootstrap, e, $"Platform '{_platform.Name}': sign-in failed");
+                return false;
+            }
+        }
+
+        private void OnPauseRequested(bool pause) => PauseRequested?.Invoke(pause);
 
         public void LoadingFinished() => Tell(p => p.LoadingFinished(), nameof(LoadingFinished));
         public void GameplayStarted() => Tell(p => p.GameplayStarted(), nameof(GameplayStarted));

@@ -32,7 +32,11 @@ namespace Maze.Composition
             // IApplicationService initialization order = registration order. Settings are read from the save.
             // The site the build runs on (its SDK): first, saves and language depend on it. A platform build defines
             // its symbol (MazeBuilder: MAZE_YANDEX, MAZE_CRAZYGAMES, MAZE_VKPLAY); no symbol = no site.
+#if MAZE_YANDEX
+            builder.Register<YandexPlatform>(Lifetime.Singleton).As<IGamePlatform>();
+#else
             builder.Register<GenericPlatform>(Lifetime.Singleton).As<IGamePlatform>();
+#endif
             builder.Register<PlatformService>(Lifetime.Singleton).AsSelf().As<IApplicationService>();
             builder.Register<PlayerPrefsSaveStorage>(Lifetime.Singleton).As<ISaveStorage>();
             builder.Register<SaveService>(Lifetime.Singleton).AsSelf().As<IApplicationService>();
@@ -47,12 +51,18 @@ namespace Maze.Composition
 
             // Platform: analytics sinks and the ad provider of the build's platform (SDK integrations go here).
             builder.Register<LogAnalyticsSink>(Lifetime.Singleton).As<IAnalyticsSink>();
+#if MAZE_YANDEX
+            builder.Register<YandexMetrikaSink>(Lifetime.Singleton).As<IAnalyticsSink>();
+            builder.Register<YandexAdProvider>(Lifetime.Singleton).As<IAdProvider>();
+#else
             builder.Register<SimulatedAdProvider>(Lifetime.Singleton).As<IAdProvider>();
+#endif
             builder.Register<SoundSuspension>(Lifetime.Singleton);
             builder.Register<AnalyticsService>(Lifetime.Singleton).AsSelf().As<IApplicationService>();
             builder.Register<AdsService>(Lifetime.Singleton).AsSelf().As<IApplicationService>();
             builder.Register<LevelRunStats>(Lifetime.Singleton);
             builder.Register<GameAnalytics>(Lifetime.Singleton);
+            builder.Register<AccountService>(Lifetime.Singleton);
 
             builder.Register<ILevelSessionFactory>(_ => new LevelSessionFactory(this, _levelSceneName), Lifetime.Singleton);
             builder.Register<GameFlow>(Lifetime.Singleton);

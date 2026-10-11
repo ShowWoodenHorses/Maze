@@ -29,6 +29,12 @@ namespace Maze.Editor.Build
         [MenuItem("Maze/Build/WebGL (Release)")]
         public static void WebGLRelease() => Build(BuildTarget.WebGL, development: false);
 
+        [MenuItem("Maze/Build/WebGL Yandex Games (Development)")]
+        public static void WebGLYandexDevelopment() => Build(BuildTarget.WebGL, development: true, WebPlatform.Yandex);
+
+        [MenuItem("Maze/Build/WebGL Yandex Games (Release)")]
+        public static void WebGLYandexRelease() => Build(BuildTarget.WebGL, development: false, WebPlatform.Yandex);
+
         [MenuItem("Maze/Build/Android APK (Development)")]
         public static void AndroidDevelopment() => Build(BuildTarget.Android, development: true);
 
@@ -103,6 +109,8 @@ namespace Maze.Editor.Build
             var text = $"{target}{(web != WebPlatform.Generic ? " " + web : "")} {(development ? "development" : "release")} build: {summary.result}, " +
                        $"{summary.totalErrors} error(s), {summary.totalWarnings} warning(s), " +
                        $"{SizeOf(location) / (1024f * 1024f):0.0} MB, {summary.totalTime.TotalSeconds:0}s → {Path.GetFullPath(location)}";
+            if (summary.result == BuildResult.Succeeded && WebPlatforms.NeedsArchive(web))
+                text += " + " + Archive(location);
             if (summary.result == BuildResult.Succeeded) Debug.Log("[Maze] " + text);
             else Debug.LogError("[Maze] " + text);
             return text;
@@ -178,6 +186,16 @@ namespace Maze.Editor.Build
                 .Where(p => p != null)
                 .ToList();
             return problems.Count == 0 ? null : "Catalog levels are not ready: " + string.Join("; ", problems);
+        }
+
+        /// <summary>The build folder as a zip next to it (the site's console takes an archive with index.html at its root).</summary>
+        private static string Archive(string folder)
+        {
+            var zip = folder.TrimEnd('/', '\\') + ".zip";
+            if (File.Exists(zip)) File.Delete(zip);
+            System.IO.Compression.ZipFile.CreateFromDirectory(folder, zip, System.IO.Compression.CompressionLevel.Optimal,
+                includeBaseDirectory: false);
+            return $"{new FileInfo(zip).Length / (1024f * 1024f):0.0} MB archive → {Path.GetFullPath(zip)}";
         }
 
         /// <summary>Size of what ships: the APK file or the WebGL folder (the report also counts IL2CPP symbol backups).</summary>

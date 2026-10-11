@@ -270,6 +270,21 @@ namespace Maze.Editor.Dev
             var version = Text(area, "Version", "v0.1", 24f, true, new Vector2(1f, 0f), new Vector2(1f, 0f),
                 new Vector2(-64f, 52f), new Vector2(140f, 36f), TextAlignmentOptions.BottomRight, _style.MutedText, 6f);
 
+            // Signing in to the site's account (Yandex Games), top right; shown by the router only when possible.
+            var account = Rect(area, "Account", new Vector2(1f, 1f), new Vector2(-64f, -64f), new Vector2(420f, 140f));
+            account.pivot = new Vector2(1f, 1f);
+            var signIn = TextButton(account, "SignInButton", Loc(TextKeys.MenuSignIn), false, icons.Player, 72f, 26f);
+            var signInRect = signIn.GetComponent<RectTransform>();
+            signInRect.anchorMin = new Vector2(0f, 1f);
+            signInRect.anchorMax = new Vector2(1f, 1f);
+            signInRect.pivot = new Vector2(0.5f, 1f);
+            signInRect.anchoredPosition = Vector2.zero;
+            signInRect.sizeDelta = new Vector2(0f, 72f);
+            var hint = Text(account, "Hint", Loc(TextKeys.MenuSignInHint), 22f, false, new Vector2(1f, 1f), new Vector2(1f, 1f),
+                new Vector2(0f, -84f), new Vector2(420f, 56f), TextAlignmentOptions.TopRight, _style.MutedText);
+            AutoSize(hint);
+            account.gameObject.SetActive(false);
+
             SetReference(screen, "_playButton", play);
             SetReference(screen, "_tutorialButton", tutorial);
             SetReference(screen, "_settingsButton", settings);
@@ -278,6 +293,8 @@ namespace Maze.Editor.Dev
             SetReference(screen, "_kills", killsText);
             SetReference(screen, "_version", version);
             SetReference(screen, "_debugResetProgressButton", reset);
+            SetReference(screen, "_account", account.gameObject);
+            SetReference(screen, "_signInButton", signIn);
             return screen;
         }
 

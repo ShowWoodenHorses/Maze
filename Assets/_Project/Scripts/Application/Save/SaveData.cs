@@ -65,6 +65,42 @@ namespace Maze.Application.Save
             foreach (var record in LevelStars)
                 if (!(record.BestTime > 0f)) record.BestTime = 0f; // Negative or NaN from a hand-edited save.
         }
+
+        /// <summary>
+        /// Adds the progress of another save (the same player on another device, before signing in): opened levels,
+        /// best stars and times, layers bought on the map; kills — the larger count. Settings stay these.
+        /// Both saves must be normalized.
+        /// </summary>
+        public void MergeFrom(SaveData other)
+        {
+            if (other == null) return;
+            foreach (var level in other.UnlockedLevels)
+                if (!UnlockedLevels.Contains(level))
+                    UnlockedLevels.Add(level);
+
+            foreach (var theirs in other.LevelStars)
+            {
+                var mine = LevelStars.Find(record => record.LevelId == theirs.LevelId);
+                if (mine == null)
+                {
+                    LevelStars.Add(new LevelStarsRecord { LevelId = theirs.LevelId, Stars = theirs.Stars, BestTime = theirs.BestTime });
+                    continue;
+                }
+
+                if (theirs.Stars > mine.Stars) mine.Stars = theirs.Stars;
+                if (theirs.BestTime > 0f && (mine.BestTime <= 0f || theirs.BestTime < mine.BestTime))
+                    mine.BestTime = theirs.BestTime;
+            }
+
+            foreach (var theirs in other.MapUnlocks)
+            {
+                var mine = MapUnlocks.Find(record => record.LevelId == theirs.LevelId);
+                if (mine == null) MapUnlocks.Add(new MapUnlockRecord { LevelId = theirs.LevelId, Layers = theirs.Layers });
+                else mine.Layers |= theirs.Layers;
+            }
+
+            if (other.TotalKills > TotalKills) TotalKills = other.TotalKills;
+        }
     }
 
     [Serializable]

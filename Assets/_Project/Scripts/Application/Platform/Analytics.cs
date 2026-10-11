@@ -37,6 +37,7 @@ namespace Maze.Application.Platform
         public const string Performance = "performance";
         public const string SessionStart = "session_start";
         public const string TutorialStep = "tutorial_step";
+        public const string SignIn = "sign_in";
     }
 
     /// <summary>

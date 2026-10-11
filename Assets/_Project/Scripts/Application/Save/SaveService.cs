@@ -149,6 +149,47 @@ namespace Maze.Application.Save
             return WriteLocal(json);
         }
 
+        /// <summary>
+        /// After the player signed in: the cloud now holds the account's save. Its progress and this one are merged
+        /// (<see cref="SaveData.MergeFrom"/>, settings stay these) and written to both places. A cloud that does not
+        /// answer is not written (as at start-up). Returns true when the merged save was written to the cloud.
+        /// </summary>
+        public async UniTask<bool> MergeCloudAsync(CancellationToken cancellation)
+        {
+            var cloud = _platform?.CloudSave;
+            if (cloud == null) return false;
+
+            string remote;
+            try
+            {
+                remote = await cloud.ReadAsync(cancellation);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception e)
+            {
+                GameLog.Exception(LogChannel.Save, e, "Reading the account's cloud save failed");
+                return false;
+            }
+
+            _cloud = cloud;
+            var data = string.IsNullOrEmpty(remote) ? null : Parse(remote);
+            if (data != null)
+            {
+                data.Normalize();
+                Data.MergeFrom(data);
+                GameLog.Info(LogChannel.Save, "Signed in: the account's save is merged with this one.");
+            }
+
+            var json = JsonUtility.ToJson(Data);
+            WriteLocal(json);
+            _cloudDirty = false;
+            await WriteCloudAsync(json);
+            return !_cloudDirty;
+        }
+
         /// <summary>Writes a pending cloud save now (the game goes to the background: the tab may be closed).</summary>
         public void FlushCloud() => FlushCloudAsync().Forget();
 

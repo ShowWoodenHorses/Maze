@@ -168,8 +168,18 @@
 |---|---|
 | **WebGL (Development)** | WebGL, dev-сборка: отладочные кнопки, можно запускать закрытые уровни |
 | **WebGL (Release)** | WebGL, релиз |
+| **WebGL Yandex Games (Development)** | WebGL для Яндекс Игр, dev-сборка → `Builds/WebGL-Yandex-dev` + `.zip` |
+| **WebGL Yandex Games (Release)** | WebGL для Яндекс Игр, релиз → `Builds/WebGL-Yandex` + `WebGL-Yandex.zip` (его загружать в консоль ЯИ) |
 | **Android APK (Development)** | APK, dev-сборка |
 | **Android APK (Release)** | APK, релиз |
+
+**Яндекс Игры:** в сборку попадает symbol `MAZE_YANDEX` (только в плеер, редактор без него) — игра работает через SDK ЯИ
+(язык площадки, сейв в данных игрока, кнопка «Войти» в меню, реклама ЯИ, события загрузки/геймплея), в `<head>` — `/sdk.js`
+и счётчик Метрики, если задан `WebPlatforms.YandexMetrikaCounter` (`Editor/Build/WebPlatform.cs`; пусто — Метрики нет).
+Рядом с папкой сборки кладётся zip с `index.html` в корне — его загружают в черновик игры в консоли ЯИ.
+Проверка на своём компьютере (нужен Node.js): `npx @yandex-games/sdk-dev-proxy -p Builds/WebGL-Yandex-dev --app-id 628471`
+— прокси печатает ссылку вида `https://yandex.ru/games/app/628471?game_url=https://localhost:…`, игра открывается внутри ЯИ
+с настоящим SDK; `--dev-mode true` — имитация SDK без площадки. Вне ЯИ (просто открыть папку) SDK нет — игра работает как без площадки.
 
 Платформа должна быть **активной** (File → Build Profiles). Если нет — команда только переключит платформу (долгий реимпорт),
 и её надо запустить ещё раз.

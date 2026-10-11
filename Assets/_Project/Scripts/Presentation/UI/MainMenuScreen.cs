@@ -9,7 +9,7 @@ namespace Maze.Presentation.UI
     /// Main menu (minimal by the user's choice): the title, Play (opens the level select), Tutorial (when the game has
     /// one) and Settings; total stars and
     /// zombies killed at the bottom left; "Debug: reset progress" (development builds) and the version at the bottom
-    /// right.
+    /// right; at the top right — signing in to the site's account (Yandex Games) while the player is not signed in.
     /// </summary>
     public sealed class MainMenuScreen : UIScreen
     {
@@ -21,6 +21,10 @@ namespace Maze.Presentation.UI
         [SerializeField] private TMP_Text _kills;
         [SerializeField] private TMP_Text _version;
 
+        [Header("Account (sites with accounts)")]
+        [SerializeField] private GameObject _account;
+        [SerializeField] private Button _signInButton;
+
         [Header("Debug (development builds only)")]
         [SerializeField] private Button _debugResetProgressButton;
 
@@ -28,6 +32,7 @@ namespace Maze.Presentation.UI
         public event Action TutorialClicked;
         public event Action SettingsClicked;
         public event Action DebugResetProgressClicked;
+        public event Action SignInClicked;
 
         private void Awake()
         {
@@ -35,6 +40,7 @@ namespace Maze.Presentation.UI
             Bind(_tutorialButton, () => TutorialClicked?.Invoke());
             Bind(_settingsButton, () => SettingsClicked?.Invoke());
             Bind(_debugResetProgressButton, () => DebugResetProgressClicked?.Invoke());
+            Bind(_signInButton, () => SignInClicked?.Invoke());
             if (_debugResetProgressButton != null)
                 _debugResetProgressButton.gameObject.SetActive(Debug.isDebugBuild);
             if (_version != null) _version.text = "v" + UnityEngine.Application.version;
@@ -52,6 +58,13 @@ namespace Maze.Presentation.UI
         public void SetTutorialAvailable(bool available)
         {
             if (_tutorialButton != null) _tutorialButton.gameObject.SetActive(available);
+        }
+
+        /// <summary>The sign-in offer: shown while the player can sign in, inactive while a sign-in runs.</summary>
+        public void SetSignIn(bool shown, bool interactable)
+        {
+            if (_account != null) _account.SetActive(shown);
+            if (_signInButton != null) _signInButton.interactable = interactable;
         }
 
         /// <summary>Play is unavailable without levels (run Build / Sync in the Level Designer).</summary>

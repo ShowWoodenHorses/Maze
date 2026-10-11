@@ -117,6 +117,8 @@ MonoBehaviour:
   - layout.reset
   - layout.done
   - menu.tutorial
+  - menu.sign_in
+  - menu.sign_in.hint
   - hud.tutorial
   - result.tutorial_complete
   - map.hint.tutorial
@@ -264,6 +266,8 @@ MonoBehaviour:
   - "ZUR\xDCCKSETZEN"
   - FERTIG
   - TUTORIAL
+  - ANMELDEN
+  - "Melde dich an, um deinen Fortschritt auf allen Ger\xE4ten zu behalten"
   - TUTORIAL
   - TUTORIAL ABGESCHLOSSEN
   - Route des Tutorials

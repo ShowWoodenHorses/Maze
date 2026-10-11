@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using Maze.Application.Flow;
 using Maze.Application.Levels;
+using Maze.Application.Platform;
 using Maze.Application.Save;
 using Maze.Application.Services;
 using Maze.Gameplay.Level;
@@ -26,14 +27,16 @@ namespace Maze.Presentation.UI
         private readonly IProgressService _progress;
         private readonly LocalizationService _texts;
         private readonly IInputService _input;
+        private readonly AccountService _account;
         private readonly List<LevelTileData> _tiles = new List<LevelTileData>();
         private readonly List<LevelTileData> _devTiles = new List<LevelTileData>();
         private bool _levelSelectOpen;
         private bool _initialized;
 
         public ScreenRouter(GameFlow flow, ILevelCatalog catalog, UIRoot ui, IProgressService progress,
-            LocalizationService texts, IInputService input = null)
+            LocalizationService texts, IInputService input = null, AccountService account = null)
         {
+            _account = account;
             _input = input;
             _texts = texts;
             _progress = progress;
@@ -53,6 +56,8 @@ namespace Maze.Presentation.UI
             _ui.MainMenu.PlayClicked += OnPlayClicked;
             _ui.MainMenu.TutorialClicked += OnTutorialClicked;
             _ui.MainMenu.DebugResetProgressClicked += OnResetProgressRequested;
+            _ui.MainMenu.SignInClicked += OnSignInClicked;
+            if (_account != null) _account.Changed += OnAccountChanged;
             if (_ui.Tutorial != null) _ui.Tutorial.ContinueClicked += _flow.CloseTip;
             if (_input != null) _input.ConfirmRequested += OnConfirmRequested;
             if (_ui.RotateDevice != null) _ui.RotateDevice.Changed += OnRotateDeviceChanged;
@@ -84,6 +89,7 @@ namespace Maze.Presentation.UI
             _flow.StateChanged -= Show;
             _texts.LanguageChanged -= OnLanguageChanged;
             if (_input != null) _input.ConfirmRequested -= OnConfirmRequested;
+            if (_account != null) _account.Changed -= OnAccountChanged;
             if (_ui == null) return; // Scene already destroyed on application quit.
 
             if (_ui.RotateDevice != null) _ui.RotateDevice.Changed -= OnRotateDeviceChanged;
@@ -92,6 +98,7 @@ namespace Maze.Presentation.UI
             _ui.MainMenu.TutorialClicked -= OnTutorialClicked;
             if (_ui.Tutorial != null) _ui.Tutorial.ContinueClicked -= _flow.CloseTip;
             _ui.MainMenu.DebugResetProgressClicked -= OnResetProgressRequested;
+            _ui.MainMenu.SignInClicked -= OnSignInClicked;
             _ui.LevelSelect.LevelSelected -= OnLevelSelected;
             _ui.LevelSelect.BackClicked -= OnLevelSelectBack;
             _ui.Error.BackClicked -= OnMenuRequested;
@@ -189,7 +196,27 @@ namespace Maze.Presentation.UI
             _ui.MainMenu.SetSummary(totalStars, maxStars, _progress.TotalKills);
             _ui.MainMenu.SetPlayable(levels.Count > 0);
             _ui.MainMenu.SetTutorialAvailable(_catalog.Tutorial != null);
+            RefreshSignIn();
             _ui.LevelSelect.SetLevels(_tiles, totalStars, maxStars, _devTiles);
+        }
+
+        private void RefreshSignIn()
+        {
+            var busy = _account != null && _account.IsBusy;
+            _ui.MainMenu.SetSignIn(_account != null && (_account.CanSignIn || busy), !busy);
+        }
+
+        /// <summary>Signing in to the site's account: only on the player's request (site rules).</summary>
+        private void OnSignInClicked()
+        {
+            if (_account == null || !_account.CanSignIn) return;
+            _account.SignInAsync(System.Threading.CancellationToken.None).Forget();
+        }
+
+        /// <summary>A sign-in started or ended: the offer may go, the merged progress changes the totals.</summary>
+        private void OnAccountChanged()
+        {
+            if (_flow.State == GameFlowState.MainMenu) RefreshMenus();
         }
 
         /// <summary>Tile caption of a development level: its id without the usual "Level_" prefix.</summary>

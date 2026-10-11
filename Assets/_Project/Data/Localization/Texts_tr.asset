@@ -117,6 +117,8 @@ MonoBehaviour:
   - layout.reset
   - layout.done
   - menu.tutorial
+  - menu.sign_in
+  - menu.sign_in.hint
   - hud.tutorial
   - result.tutorial_complete
   - map.hint.tutorial
@@ -265,6 +267,8 @@ MonoBehaviour:
   - SIFIRLA
   - TAMAM
   - "E\u011E\u0130T\u0130M"
+  - "G\u0130R\u0130\u015E YAP"
+  - "\u0130lerlemeni t\xFCm cihazlarda korumak i\xE7in giri\u015F yap"
   - "E\u011E\u0130T\u0130M"
   - "E\u011E\u0130T\u0130M TAMAMLANDI"
   - "E\u011Fitim rotas\u0131"

@@ -39,7 +39,7 @@ namespace Maze.Application.Platform
     /// <summary>
     /// The game in the background (platform rules: Yandex Games and others): while the page is hidden or unfocused —
     /// or the app is — the sound is off, a running level is paused (the player resumes it from the pause screen) and
-    /// a pending cloud save is written.
+    /// a pending cloud save is written. The same while the site asks the game to stop (<see cref="PlatformService.PauseRequested"/>).
     /// Off in the editor: clicking another editor window must not pause play mode or tests.
     /// </summary>
     public sealed class AppFocusController : IDisposable
@@ -47,12 +47,15 @@ namespace Maze.Application.Platform
         private readonly GameFlow _flow;
         private readonly SoundSuspension _sound;
         private readonly SaveService _save;
+        private readonly PlatformService _platform;
         private bool _initialized;
         private bool _focused = true;
         private bool _visible = true;
+        private bool _sitePaused;
 
-        public AppFocusController(GameFlow flow, SoundSuspension sound, SaveService save = null)
+        public AppFocusController(GameFlow flow, SoundSuspension sound, SaveService save = null, PlatformService platform = null)
         {
+            _platform = platform;
             _save = save;
             _flow = flow;
             _sound = sound;
@@ -65,6 +68,7 @@ namespace Maze.Application.Platform
             UnityEngine.Application.focusChanged += OnFocusChanged;
             WebPage.VisibilityChanged += OnVisibilityChanged;
             WebPage.Listen();
+            if (_platform != null) _platform.PauseRequested += OnSitePauseRequested;
         }
 
         public void Dispose()
@@ -73,10 +77,11 @@ namespace Maze.Application.Platform
             _initialized = false;
             UnityEngine.Application.focusChanged -= OnFocusChanged;
             WebPage.VisibilityChanged -= OnVisibilityChanged;
+            if (_platform != null) _platform.PauseRequested -= OnSitePauseRequested;
         }
 
-        /// <summary>The game is in front of the player: focused and visible.</summary>
-        public bool IsActive => _focused && _visible;
+        /// <summary>The game is in front of the player: focused, visible and not stopped by the site.</summary>
+        public bool IsActive => _focused && _visible && !_sitePaused;
 
         public void OnFocusChanged(bool focused)
         {
@@ -87,6 +92,12 @@ namespace Maze.Application.Platform
         public void OnVisibilityChanged(bool visible)
         {
             _visible = visible;
+            Apply();
+        }
+
+        public void OnSitePauseRequested(bool pause)
+        {
+            _sitePaused = pause;
             Apply();
         }
 

@@ -86,6 +86,119 @@ namespace Maze.Tests.EditMode.Progress
             Assert.IsFalse(save.UsesCloud);
         }
 
+        [Test]
+        public void SignIn_MergesTheAccountSave_IntoTheCurrentOne()
+        {
+            var local = new MemoryStorage();
+            var guest = new SaveData { TotalKills = 3 };
+            guest.LevelStars.Add(new LevelStarsRecord { LevelId = "L1", Stars = 2, BestTime = 40f });
+            guest.UnlockedLevels.Add("L2");
+            var cloud = new FakeCloud { Json = JsonUtility.ToJson(guest) };
+            var site = new CloudPlatform(cloud);
+            using var save = Start(local, cloud, site);
+            var account = new AccountService(_platform, save);
+            Assert.IsTrue(account.CanSignIn);
+
+            // The account's save, made on another device.
+            var other = new SaveData { TotalKills = 5 };
+            other.LevelStars.Add(new LevelStarsRecord { LevelId = "L1", Stars = 3, BestTime = 55f });
+            other.LevelStars.Add(new LevelStarsRecord { LevelId = "L3", Stars = 1, BestTime = 90f });
+            other.UnlockedLevels.Add("L4");
+            cloud.Json = JsonUtility.ToJson(other);
+            var changes = 0;
+            account.Changed += () => changes++;
+
+            Assert.IsTrue(account.SignInAsync(CancellationToken.None).GetAwaiter().GetResult());
+
+            Assert.AreEqual(5, save.Data.TotalKills);
+            var l1 = save.Data.LevelStars.Find(r => r.LevelId == "L1");
+            Assert.AreEqual(3, l1.Stars);
+            Assert.AreEqual(40f, l1.BestTime, "The better time of the two.");
+            Assert.IsNotNull(save.Data.LevelStars.Find(r => r.LevelId == "L3"));
+            CollectionAssert.IsSupersetOf(save.Data.UnlockedLevels, new[] { "L2", "L4" });
+            StringAssert.Contains("\"TotalKills\":5", cloud.Json, "The merged save goes to the account.");
+            StringAssert.Contains("\"LevelId\":\"L3\"", local.Json);
+            Assert.IsFalse(account.CanSignIn, "Signed in: no more offer.");
+            Assert.AreEqual(2, changes, "Started and ended.");
+        }
+
+        [Test]
+        public void SignInClosed_ChangesNothing()
+        {
+            var local = new MemoryStorage { Json = Json(kills: 3) };
+            var cloud = new FakeCloud { Json = Json(kills: 3) };
+            var site = new CloudPlatform(cloud) { SignInResult = false };
+            using var save = Start(local, cloud, site);
+            var account = new AccountService(_platform, save);
+            cloud.Json = Json(kills: 9);
+
+            Assert.IsFalse(account.SignInAsync(CancellationToken.None).GetAwaiter().GetResult());
+
+            Assert.AreEqual(3, save.Data.TotalKills);
+            Assert.AreEqual(0, cloud.Writes);
+            Assert.IsTrue(account.CanSignIn, "The offer stays.");
+        }
+
+        [Test]
+        public void Merge_KeepsTheBestOfBoth()
+        {
+            var mine = new SaveData { TotalKills = 10 };
+            mine.LevelStars.Add(new LevelStarsRecord { LevelId = "A", Stars = 3, BestTime = 0f });
+            mine.MapUnlocks.Add(new MapUnlockRecord { LevelId = "A", Layers = MapUnlock.Keys });
+            mine.Settings.MusicVolume = 0.3f;
+            var theirs = new SaveData { TotalKills = 4 };
+            theirs.LevelStars.Add(new LevelStarsRecord { LevelId = "A", Stars = 1, BestTime = 70f });
+            theirs.MapUnlocks.Add(new MapUnlockRecord { LevelId = "A", Layers = MapUnlock.Zombies });
+            theirs.MapUnlocks.Add(new MapUnlockRecord { LevelId = "B", Layers = MapUnlock.Medkits });
+            theirs.Settings.MusicVolume = 1f;
+
+            mine.MergeFrom(theirs);
+
+            Assert.AreEqual(10, mine.TotalKills);
+            Assert.AreEqual(3, mine.LevelStars[0].Stars);
+            Assert.AreEqual(70f, mine.LevelStars[0].BestTime, "A time where there was none.");
+            Assert.AreEqual(MapUnlock.Keys | MapUnlock.Zombies, mine.MapUnlocks.Find(r => r.LevelId == "A").Layers);
+            Assert.AreEqual(MapUnlock.Medkits, mine.MapUnlocks.Find(r => r.LevelId == "B").Layers);
+            Assert.AreEqual(0.3f, mine.Settings.MusicVolume, "Settings stay these.");
+        }
+
+        [Test]
+        public void SitePause_IsPassedOn()
+        {
+            var site = new CloudPlatform(null);
+            var platform = new PlatformService(site);
+            platform.InitializeAsync(CancellationToken.None).GetAwaiter().GetResult();
+            bool? asked = null;
+            platform.PauseRequested += pause => asked = pause;
+
+            site.RequestPause(true);
+            Assert.AreEqual(true, asked);
+            site.RequestPause(false);
+            Assert.AreEqual(false, asked);
+        }
+
+        [Test]
+        public void MetrikaParameters_AreJson()
+        {
+            var parameters = new System.Collections.Generic.Dictionary<string, object>
+            {
+                ["level"] = 3, ["time"] = 12.5f, ["won"] = true, ["from"] = "menu \"x\"",
+            };
+            Assert.AreEqual("{\"level\":3,\"time\":12.5,\"won\":true,\"from\":\"menu \\\"x\\\"\"}",
+                new YandexMetrikaSink().ToJson(parameters));
+        }
+
+        private PlatformService _platform;
+
+        private SaveService Start(MemoryStorage local, FakeCloud cloud, CloudPlatform site)
+        {
+            _platform = new PlatformService(site);
+            _platform.InitializeAsync(CancellationToken.None).GetAwaiter().GetResult();
+            var save = new SaveService(local, _platform);
+            save.InitializeAsync(CancellationToken.None).GetAwaiter().GetResult();
+            return save;
+        }
+
         private static SaveService Start(MemoryStorage local, FakeCloud cloud)
         {
             var platform = new PlatformService(new CloudPlatform(cloud));
@@ -139,6 +252,18 @@ namespace Maze.Tests.EditMode.Progress
             public void GameplayStarted() { }
             public void GameplayStopped() { }
             public void HappyMoment() { }
+            public bool SupportsSignIn => true;
+            public bool IsSignedIn { get; set; }
+            public bool SignInResult = true;
+
+            public UniTask<bool> SignInAsync(CancellationToken cancellation)
+            {
+                IsSignedIn = SignInResult;
+                return UniTask.FromResult(SignInResult);
+            }
+
+            public event Action<bool> PauseRequested;
+            public void RequestPause(bool pause) => PauseRequested?.Invoke(pause);
         }
     }
 }
