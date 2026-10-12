@@ -50,6 +50,13 @@ namespace Maze.Application.Platform
         /// Null — none (sites with their own policy and no links out of the game).
         /// </summary>
         public string PrivacyPolicyUrl;
+
+        /// <summary>
+        /// How far the top-right buttons (HUD Pause and Map, the map's Close and hint) move left, in UI units of the
+        /// 1920×1080 canvas, beyond the safe area: a site's bar over the game that it does not report (the VK app on a
+        /// phone). 0 — in place.
+        /// </summary>
+        public float TopRightButtonsShift;
     }
 
     /// <summary>The developer's contacts shown to players (the same on every platform that shows them).</summary>

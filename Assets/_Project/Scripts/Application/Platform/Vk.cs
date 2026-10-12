@@ -110,7 +110,17 @@ namespace Maze.Application.Platform
         /// </summary>
         public const bool MobileBanner = true;
 
-        private static readonly PlatformTraits VkTraits = new PlatformTraits { SupportEmail = Contacts.SupportEmail };
+        /// <summary>
+        /// The VK app on a phone covers the top-right buttons with its navigation bar even with the insets fallback
+        /// (MazeVk.jslib, 48 CSS px — not enough, checked by the user 2026-10-13): on phones they move left by a button.
+        /// </summary>
+        public const float PhoneButtonsShift = 84f;
+
+        private static readonly PlatformTraits VkTraits = new PlatformTraits
+        {
+            SupportEmail = Contacts.SupportEmail,
+            TopRightButtonsShift = UnityEngine.Application.isMobilePlatform ? PhoneButtonsShift : 0f,
+        };
 
         private readonly SlottedCloudSave _cloud;
         private readonly StringBuilder _json = new StringBuilder(128);

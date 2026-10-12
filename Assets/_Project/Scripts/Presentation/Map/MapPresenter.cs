@@ -52,6 +52,7 @@ namespace Maze.Presentation.Map
         private readonly IProgressService _progress;
         private readonly AnalyticsService _analytics;
         private readonly LevelRunStats _stats;
+        private readonly PlatformService _platform;
         private readonly CancellationTokenSource _lifetime = new CancellationTokenSource();
         private bool _adPending;
         private readonly List<Vector2> _routePoints = new List<Vector2>();
@@ -65,8 +66,10 @@ namespace Maze.Presentation.Map
 
         public MapPresenter(UIRoot ui, LevelData level, LevelGrid grid, MapSystem map, PlayerSystem player,
             DoorSystem doors, SettingsService settings, LocalizationService texts, PickupSystem pickups, ZombieSystem zombies,
-            RouteHintSystem route, AdsService ads, IProgressService progress, AnalyticsService analytics, LevelRunStats stats)
+            RouteHintSystem route, AdsService ads, IProgressService progress, AnalyticsService analytics, LevelRunStats stats,
+            PlatformService platform = null)
         {
+            _platform = platform;
             _route = route;
             _ads = ads;
             _progress = progress;
@@ -124,6 +127,7 @@ namespace Maze.Presentation.Map
                 _bound = true;
             }
 
+            _ui.Map.ShiftTopRightButtons(_platform?.Traits.TopRightButtonsShift ?? 0f);
             ApplyLayerSwitches();
             Redraw();
             RefreshIcons(); // Creates the icon images now, while loading.

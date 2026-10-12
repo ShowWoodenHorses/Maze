@@ -38,6 +38,7 @@ namespace Maze.Presentation.UI
         private int _iconCount;
         private Vector2 _laidOutSize;
         private Vector2Int _mapSize;
+        private HorizontalShift _topRightShift;
 
         public event Action CloseClicked;
         /// <summary>The magnifier button: the player asks for a route hint.</summary>
@@ -107,6 +108,13 @@ namespace Maze.Presentation.UI
 
             _route.SetRoute(points, _mapSize, _icons.RouteWidth, _icons.RouteOutline, _icons.RouteMinWidth,
                 _icons.RouteColor, _icons.RouteOutlineColor);
+        }
+
+        /// <summary>Moves Close and the hint left of their places (a site's bar over the right edge; 0 — in place).</summary>
+        public void ShiftTopRightButtons(float left)
+        {
+            _topRightShift ??= new HorizontalShift(_closeButton, _hintButton);
+            _topRightShift.Apply(left);
         }
 
         /// <summary>The line under the caption: where the hint leads, or why there is none; empty hides it.</summary>

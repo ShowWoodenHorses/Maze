@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using Maze.Application.Platform;
 using Maze.Application.Services;
 using Maze.Core.Definitions;
 using Maze.Core.Grid;
@@ -42,6 +43,7 @@ namespace Maze.Presentation.UI
         private readonly WeaponVisualCatalog _visuals;
         private readonly LocalizationService _texts;
         private readonly LevelProgress _progress;
+        private readonly PlatformService _platform;
         private readonly List<Color> _keyColors = new List<Color>();
         private int _lastHealth;
         private bool _bound;
@@ -49,8 +51,9 @@ namespace Maze.Presentation.UI
         public HudPresenter(UIRoot ui, LevelData level, PlayerHealth health, PlayerInventory inventory,
             WeaponSystem weapons, PlayerInteraction interaction, MapSystem map, PlayerSystem player,
             PickupSystem pickups, ZombieSystem zombies, WeaponVisualCatalog visuals, LocalizationService texts,
-            LevelProgress progress)
+            LevelProgress progress, PlatformService platform = null)
         {
+            _platform = platform;
             _progress = progress;
             _texts = texts;
             _ui = ui;
@@ -83,6 +86,7 @@ namespace Maze.Presentation.UI
             }
 
             _ui.Hud.ClearLevelInfo();
+            _ui.Hud.ShiftTopRightButtons(_platform?.Traits.TopRightButtonsShift ?? 0f);
             _lastHealth = _health.Current;
             _ui.Hud.SetHealth(_health.Current, _health.Max);
             RefreshCounters();

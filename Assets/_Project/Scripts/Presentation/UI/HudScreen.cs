@@ -62,6 +62,7 @@ namespace Maze.Presentation.UI
         [Header("Buttons")]
         [SerializeField] private Button _pauseButton;
         [SerializeField] private Button _mapButton;
+        private HorizontalShift _topRightShift;
 
         [Tooltip("On-screen stick and buttons (ТЗ §64, Android): a separate canvas, shown while the HUD is. " +
                  "They drive gamepad controls through the Input System.")]
@@ -293,6 +294,13 @@ namespace Maze.Presentation.UI
             if (whole == _timeShown || _timer == null) return;
             _timeShown = whole;
             _timer.SetCharArray(_timeChars, 0, TimeFormat.Write(whole, _timeChars));
+        }
+
+        /// <summary>Moves Pause and Map left of their places (a site's bar over the right edge; 0 — in place).</summary>
+        public void ShiftTopRightButtons(float left)
+        {
+            _topRightShift ??= new HorizontalShift(_pauseButton, _mapButton);
+            _topRightShift.Apply(left);
         }
 
         public void ClearLevelInfo()
