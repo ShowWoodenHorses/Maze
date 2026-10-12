@@ -107,6 +107,7 @@ MonoBehaviour:
   - settings.sound
   - settings.show_fps
   - settings.language
+  - settings.support
   - settings.reset_tab
   - layout.hint
   - layout.size
@@ -257,6 +258,7 @@ MonoBehaviour:
   - Sonido
   - Mostrar contador de FPS
   - Idioma
+  - Soporte
   - "RESTABLECER PESTA\xD1A"
   - "Arrastra el stick y los botones. Toca uno para cambiar su tama\xF1o."
   - "{0}: tama\xF1o {1}"

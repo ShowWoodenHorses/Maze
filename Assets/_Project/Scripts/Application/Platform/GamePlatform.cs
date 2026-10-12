@@ -38,6 +38,12 @@ namespace Maze.Application.Platform
         /// <see cref="IGamePlatform.GameplayStopped"/> (CrazyGames).
         /// </summary>
         public bool TracksFocusItself;
+
+        /// <summary>
+        /// The support contact shown in the settings (VK: a catalog game needs a way to reach support). Null — none
+        /// (sites that forbid contacts and links outside the game).
+        /// </summary>
+        public string SupportEmail;
     }
 
     /// <summary>

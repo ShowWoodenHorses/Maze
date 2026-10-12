@@ -64,6 +64,9 @@ namespace Maze.Presentation.UI
         [SerializeField] private TMP_Text _languageName;
         [SerializeField] private Button _languageButton;
         [SerializeField] private LanguagePicker _languagePicker;
+        [Tooltip("Support contact row (only on sites that want one, PlatformTraits.SupportEmail).")]
+        [SerializeField] private GameObject _supportRow;
+        [SerializeField] private TMP_Text _supportValue;
         [SerializeField] private Button _resetButton;
         [SerializeField] private Button _backButton;
 
@@ -164,6 +167,13 @@ namespace Maze.Presentation.UI
         public void SetLanguage(string nativeName)
         {
             if (_languageName != null) _languageName.text = nativeName;
+        }
+
+        /// <summary>The support contact; empty hides the row.</summary>
+        public void SetSupport(string email)
+        {
+            if (_supportRow != null) _supportRow.SetActive(!string.IsNullOrEmpty(email));
+            if (_supportValue != null) _supportValue.text = email ?? "";
         }
 
         public void SetShowFps(bool show)

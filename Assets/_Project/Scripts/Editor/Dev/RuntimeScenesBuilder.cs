@@ -242,32 +242,35 @@ namespace Maze.Editor.Dev
             var area = SafeArea(screen.transform);
 
             // The game's name is one English word in every language: not localized.
-            AutoSize(Text(area, "Title", "MAZEBOUND", 132f, true, TopLeft, TopLeft, new Vector2(160f, -170f),
+            AutoSize(Text(area, "Title", "MAZEBOUND", 132f, true, TopLeft, TopLeft, new Vector2(160f, -110f),
                 new Vector2(1200f, 150f), TextAlignmentOptions.TopLeft, spacing: 22f));
-            OrnamentLine(area, TopLeft, new Vector2(172f, -350f), 560f);
+            OrnamentLine(area, TopLeft, new Vector2(172f, -285f), 560f);
 
             var buttons = new GameObject("Buttons", typeof(RectTransform)).GetComponent<RectTransform>();
             buttons.SetParent(area, false);
             buttons.anchorMin = buttons.anchorMax = buttons.pivot = TopLeft;
-            buttons.anchoredPosition = new Vector2(168f, -420f);
+            // High and compact: a site banner (VK) shortens the screen from below.
+            buttons.anchoredPosition = new Vector2(168f, -340f);
             buttons.sizeDelta = new Vector2(500f, 0f);
             var layout = buttons.gameObject.AddComponent<VerticalLayoutGroup>();
-            layout.spacing = 24f;
+            layout.spacing = 18f;
             layout.childControlWidth = layout.childControlHeight = true;
             layout.childForceExpandHeight = false;
             buttons.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-            var play = TextButton(buttons, "PlayButton", Loc(TextKeys.MenuPlay), true, icons.ChevronRight, 92f);
-            var levels = TextButton(buttons, "LevelsButton", Loc(TextKeys.MenuLevels), false, icons.Menu, 92f);
-            var tutorial = TextButton(buttons, "TutorialButton", Loc(TextKeys.MenuTutorial), false, icons.Help, 92f);
-            var settings = TextButton(buttons, "SettingsButton", Loc(TextKeys.Settings), false, icons.Settings, 92f);
+            var play = TextButton(buttons, "PlayButton", Loc(TextKeys.MenuPlay), true, icons.ChevronRight, 84f);
+            var levels = TextButton(buttons, "LevelsButton", Loc(TextKeys.MenuLevels), false, icons.Menu, 84f);
+            var tutorial = TextButton(buttons, "TutorialButton", Loc(TextKeys.MenuTutorial), false, icons.Help, 84f);
+            var settings = TextButton(buttons, "SettingsButton", Loc(TextKeys.Settings), false, icons.Settings, 84f);
 
-            var summary = Row(area, "Summary", Vector2.zero, new Vector2(170f, 70f), 44f, Vector2.zero);
+            // Bottom right, over the version: bottom left the totals ran into the last button on a short screen
+            // (VK's frame on a desktop).
+            var summary = Row(area, "Summary", new Vector2(1f, 0f), new Vector2(-64f, 96f), 44f, new Vector2(1f, 0f));
             var stars = Counter(summary, "Stars", icons.StarFilled, out var starsText);
             stars.transform.Find("Icon").GetComponent<Image>().color = _style.Accent;
             Counter(summary, "Kills", icons.Skull, out var killsText);
 
             var reset = LinkButton(area, "DebugResetProgressButton", Loc(TextKeys.MenuResetProgress), new Vector2(1f, 0f),
-                new Vector2(-64f, 100f), 380f);
+                new Vector2(-64f, 176f), 380f);
             var version = Text(area, "Version", "v0.1", 24f, true, new Vector2(1f, 0f), new Vector2(1f, 0f),
                 new Vector2(-64f, 52f), new Vector2(140f, 36f), TextAlignmentOptions.BottomRight, _style.MutedText, 6f);
 
@@ -1279,10 +1282,15 @@ namespace Maze.Editor.Dev
                 new Vector2(0f, -90f), new Vector2(680f, 56f), TextAlignmentOptions.Center, spacing: 8f);
             caption.textWrappingMode = TextWrappingModes.NoWrap;
             AutoSize(caption, 0.6f);
-            var close = RoundButton(screen.transform, "CloseButton", icons.Close, new Vector2(1f, 1f), new Vector2(-100f, -90f),
+            // Close and the hint inside the safe area: system bars over the page (the VK app) must not cover them.
+            var buttons = new GameObject("ButtonsSafeArea", typeof(RectTransform));
+            buttons.transform.SetParent(screen.transform, false);
+            Stretch(buttons.GetComponent<RectTransform>());
+            buttons.AddComponent<SafeAreaFitter>();
+            var close = RoundButton(buttons.transform, "CloseButton", icons.Close, new Vector2(1f, 1f), new Vector2(-100f, -90f),
                 84f, 34f);
             // Left of Close, spaced so that the widened touch areas meet but do not overlap.
-            var hint = RoundButton(screen.transform, "HintButton", icons.Search, new Vector2(1f, 1f), new Vector2(-232f, -90f),
+            var hint = RoundButton(buttons.transform, "HintButton", icons.Search, new Vector2(1f, 1f), new Vector2(-232f, -90f),
                 84f, 36f);
             AdMark(hint.transform, icons.Ad); // Every hint costs a rewarded ad.
             var hintStatus = Text(screen.transform, "HintStatus", "", 26f, false, new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f),
@@ -1508,6 +1516,12 @@ namespace Maze.Editor.Dev
             var (music, musicLabel) = SliderSetting(otherPage, "MusicVolume", Loc(TextKeys.SettingsMusic));
             var (sfx, sfxLabel) = SliderSetting(otherPage, "SfxVolume", Loc(TextKeys.SettingsSound));
             var showFps = SwitchSetting(otherPage, "ShowFps", Loc(TextKeys.SettingsShowFps));
+            // Support contact: only sites that want one (SettingsScreen.SetSupport shows it).
+            var supportRow = SettingRow(otherPage, "Support", Loc(TextKeys.SettingsSupport));
+            var supportValue = Text(supportRow, "SupportValue", "", 28f, true, Center, Center, Vector2.zero,
+                new Vector2(560f, 40f), TextAlignmentOptions.MidlineRight, _style.MutedText);
+            supportValue.gameObject.AddComponent<LayoutElement>().preferredWidth = 560f;
+            supportRow.gameObject.SetActive(false);
 
             var reset = TextButton(area, "ResetButton", Loc(TextKeys.SettingsResetTab), false, icons.Retry, 76f, 26f);
             var resetRect = (RectTransform)reset.transform;
@@ -1541,6 +1555,8 @@ namespace Maze.Editor.Dev
             SetReference(screen, "_sfxVolume", sfx);
             SetReference(screen, "_sfxVolumeLabel", sfxLabel);
             SetReference(screen, "_showFps", showFps);
+            SetReference(screen, "_supportRow", supportRow.gameObject);
+            SetReference(screen, "_supportValue", supportValue);
             SetReference(screen, "_resetButton", reset);
             SetReference(screen, "_backButton", back);
             return screen;

@@ -107,6 +107,7 @@ MonoBehaviour:
   - settings.sound
   - settings.show_fps
   - settings.language
+  - settings.support
   - settings.reset_tab
   - layout.hint
   - layout.size
@@ -257,6 +258,7 @@ MonoBehaviour:
   - Suoni
   - Mostra FPS
   - Lingua
+  - Assistenza
   - RIPRISTINA SCHEDA
   - Trascina lo stick e i pulsanti. Toccane uno per cambiarne la dimensione.
   - '{0}: dimensione {1}'

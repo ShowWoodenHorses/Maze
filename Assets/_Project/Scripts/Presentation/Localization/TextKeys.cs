@@ -117,6 +117,7 @@ namespace Maze.Presentation.Localization
         public const string SettingsSound = "settings.sound";
         public const string SettingsShowFps = "settings.show_fps";
         public const string SettingsLanguage = "settings.language";
+        public const string SettingsSupport = "settings.support";
         public const string SettingsResetTab = "settings.reset_tab";
 
         // Touch layout editor.

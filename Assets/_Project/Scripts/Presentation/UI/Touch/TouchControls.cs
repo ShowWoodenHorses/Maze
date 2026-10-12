@@ -193,7 +193,7 @@ namespace Maze.Presentation.UI.Touch
             if (_canvas == null) return;
             var dpi = Screen.dpi > 0f ? Screen.dpi : FallbackDpi;
             var scale = dpi / UnitsPerInch * _size;
-            var height = Screen.safeArea.height;
+            var height = Maze.Application.Platform.WebPage.SafeArea(Screen.safeArea, Screen.width, Screen.height).height;
             if (height > 0f) scale = Mathf.Min(scale, height / _designHeight);
             if (!Mathf.Approximately(_canvas.scaleFactor, scale))
                 _canvas.scaleFactor = scale;

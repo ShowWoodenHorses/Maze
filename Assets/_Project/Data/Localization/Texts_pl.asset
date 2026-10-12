@@ -107,6 +107,7 @@ MonoBehaviour:
   - settings.sound
   - settings.show_fps
   - settings.language
+  - settings.support
   - settings.reset_tab
   - layout.hint
   - layout.size
@@ -257,6 +258,7 @@ MonoBehaviour:
   - "D\u017Awi\u0119ki"
   - "Poka\u017C FPS"
   - "J\u0119zyk"
+  - Pomoc
   - "RESETUJ KART\u0118"
   - "Przeci\u0105gaj ga\u0142k\u0119 i przyciski. Dotknij jednego, aby zmieni\u0107
     jego rozmiar."

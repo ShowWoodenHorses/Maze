@@ -107,6 +107,7 @@ MonoBehaviour:
   - settings.sound
   - settings.show_fps
   - settings.language
+  - settings.support
   - settings.reset_tab
   - layout.hint
   - layout.size
@@ -257,6 +258,7 @@ MonoBehaviour:
   - Suara
   - Tampilkan FPS
   - Bahasa
+  - Dukungan
   - ATUR ULANG TAB
   - Seret stik dan tombol. Ketuk salah satunya untuk mengubah ukurannya.
   - '{0}: ukuran {1}'

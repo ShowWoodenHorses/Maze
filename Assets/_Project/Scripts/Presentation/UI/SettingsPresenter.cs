@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using Maze.Application.Flow;
+using Maze.Application.Platform;
 using Maze.Application.Save;
 using Maze.Application.Services;
 using Maze.Presentation.UI.Touch;
@@ -20,13 +21,16 @@ namespace Maze.Presentation.UI
         private readonly GameFlow _flow;
         private readonly UIRoot _ui;
         private readonly LocalizationService _texts;
+        private readonly PlatformService _platform;
         private readonly List<string> _names = new List<string>();
         private bool _initialized;
 
         private TouchLayoutEditor LayoutEditor => _ui.TouchControls != null ? _ui.TouchControls.LayoutEditor : null;
 
-        public SettingsPresenter(SettingsService settings, GameFlow flow, UIRoot ui, LocalizationService texts)
+        public SettingsPresenter(SettingsService settings, GameFlow flow, UIRoot ui, LocalizationService texts,
+            PlatformService platform = null)
         {
+            _platform = platform;
             _texts = texts;
             _settings = settings;
             _flow = flow;
@@ -107,6 +111,7 @@ namespace Maze.Presentation.UI
             _ui.Settings.SetValues(_settings.Controls);
             _ui.Settings.SetVolumes(_settings.MusicVolume, _settings.SfxVolume);
             _ui.Settings.SetShowFps(_settings.ShowFps);
+            _ui.Settings.SetSupport(_platform?.Traits.SupportEmail); // the site's traits are known only after its start
             ShowLanguage();
             _ui.Settings.SetVisible(true);
         }

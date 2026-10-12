@@ -107,6 +107,7 @@ MonoBehaviour:
   - settings.sound
   - settings.show_fps
   - settings.language
+  - settings.support
   - settings.reset_tab
   - layout.hint
   - layout.size
@@ -257,6 +258,7 @@ MonoBehaviour:
   - Sound
   - Show FPS counter
   - Language
+  - Support
   - RESET TAB
   - Drag the stick and buttons. Tap one to resize it.
   - '{0} size: {1}'

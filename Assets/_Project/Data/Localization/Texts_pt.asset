@@ -107,6 +107,7 @@ MonoBehaviour:
   - settings.sound
   - settings.show_fps
   - settings.language
+  - settings.support
   - settings.reset_tab
   - layout.hint
   - layout.size
@@ -257,6 +258,7 @@ MonoBehaviour:
   - Sons
   - Mostrar FPS
   - Idioma
+  - Suporte
   - REDEFINIR ABA
   - "Arraste o anal\xF3gico e os bot\xF5es. Toque em um para mudar o tamanho."
   - '{0}: tamanho {1}'

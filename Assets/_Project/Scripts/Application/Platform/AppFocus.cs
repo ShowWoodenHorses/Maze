@@ -135,6 +135,13 @@ namespace Maze.Application.Platform
         /// <summary>True when the page became visible, false when hidden (another tab, minimized browser).</summary>
         public static event Action<bool> VisibilityChanged;
 
+        /// <summary>
+        /// Edges the game keeps its controls clear of, in screen pixels (left, top, right, bottom): system bars over
+        /// the page (the VK app on a phone), notches the browser reports in CSS (<c>env(safe-area-inset-*)</c>), beyond
+        /// what <see cref="Screen.safeArea"/> knows. Zero outside a web build.
+        /// </summary>
+        public static RectInt Insets { get; private set; }
+
         private static bool _listening;
 
         public static void Listen()
@@ -143,17 +150,47 @@ namespace Maze.Application.Platform
             _listening = true;
 #if UNITY_WEBGL && !UNITY_EDITOR
             MazePage_ListenVisibility(OnVisibility);
+            MazePage_ListenInsets(OnInsets);
 #endif
         }
+
+        /// <summary>The safe area narrowed by <see cref="Insets"/>.</summary>
+        public static Rect SafeArea(Rect safeArea, int screenWidth, int screenHeight)
+        {
+            var insets = Insets;
+            if (insets.x == 0 && insets.y == 0 && insets.width == 0 && insets.height == 0) return safeArea;
+            var xMin = Mathf.Max(safeArea.xMin, insets.x);
+            var xMax = Mathf.Min(safeArea.xMax, screenWidth - insets.width);
+            var yMin = Mathf.Max(safeArea.yMin, insets.height); // screen y grows upwards: the bottom inset
+            var yMax = Mathf.Min(safeArea.yMax, screenHeight - insets.y);
+            return xMax > xMin && yMax > yMin ? Rect.MinMaxRect(xMin, yMin, xMax, yMax) : safeArea;
+        }
+
+        /// <summary>Sets the insets (left, top, right, bottom in RectInt's x, y, width, height); tests and the page.</summary>
+        public static void SetInsets(int left, int top, int right, int bottom) =>
+            Insets = new RectInt(Mathf.Max(0, left), Mathf.Max(0, top), Mathf.Max(0, right), Mathf.Max(0, bottom));
 
 #if UNITY_WEBGL && !UNITY_EDITOR
         private delegate void IntCallback(int value);
 
+        private delegate void InsetsCallback(int left, int top, int right, int bottom);
+
         [DllImport("__Internal")]
         private static extern void MazePage_ListenVisibility(IntCallback callback);
 
+        [DllImport("__Internal")]
+        private static extern void MazePage_ListenInsets(InsetsCallback callback);
+
         [AOT.MonoPInvokeCallback(typeof(IntCallback))]
         private static void OnVisibility(int visible) => Raise(visible != 0);
+
+        [AOT.MonoPInvokeCallback(typeof(InsetsCallback))]
+        private static void OnInsets(int left, int top, int right, int bottom)
+        {
+            SetInsets(left, top, right, bottom);
+            Maze.Core.Common.GameLog.Info(Maze.Core.Common.LogChannel.Bootstrap,
+                $"Screen insets: left {left}, top {top}, right {right}, bottom {bottom} px.");
+        }
 #endif
 
         private static void Raise(bool visible) => VisibilityChanged?.Invoke(visible);

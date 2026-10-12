@@ -534,7 +534,7 @@ namespace Maze.Tests.PlayMode
 
                 // Route hint: the magnifier lays a route, drawn on the map and, after closing it, on the floor.
                 var route = container.Resolve<Maze.Gameplay.Navigation.RouteHintSystem>();
-                ui.Map.transform.Find("HintButton").GetComponent<Button>().onClick.Invoke();
+                ui.Map.transform.Find("ButtonsSafeArea/HintButton").GetComponent<Button>().onClick.Invoke();
                 Assert.IsTrue(route.IsActive, "Level_Items: something useful is always reachable from the start.");
                 Assert.GreaterOrEqual(ui.Map.GetComponentInChildren<MapRouteGraphic>().PointCount, 2, "The route on the map.");
                 _flow.CloseMap();

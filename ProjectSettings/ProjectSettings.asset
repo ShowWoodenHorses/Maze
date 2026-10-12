@@ -463,7 +463,8 @@ PlayerSettings:
   openGLRequireES31AEP: 0
   openGLRequireES32: 0
   m_TemplateCustomTags:
-    MAZE_PLATFORM_HEAD: <script src="https://sdk.crazygames.com/crazygames-sdk-v3.js"></script>
+    MAZE_PLATFORM_HEAD: "<script src=\"vk-bridge.min.js\"></script>\n    <script>vkBridge.send('VKWebAppInit').catch(function
+      (e) { console.warn('[Maze] VKWebAppInit', e); });</script>"
   mobileMTRendering:
     Android: 1
     iPhone: 1

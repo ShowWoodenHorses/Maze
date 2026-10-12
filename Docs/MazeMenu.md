@@ -172,6 +172,8 @@
 | **WebGL Yandex Games (Release)** | WebGL для Яндекс Игр, релиз → `Builds/WebGL-Yandex` + `WebGL-Yandex.zip` (его загружать в консоль ЯИ) |
 | **WebGL CrazyGames (Development)** | WebGL для CrazyGames, dev-сборка (на CrazyGames не запустится: принимают только сжатые) → `Builds/WebGL-CrazyGames-dev` |
 | **WebGL CrazyGames (Release)** | WebGL для CrazyGames → `Builds/WebGL-CrazyGames` + `WebGL-CrazyGames.zip` (загружать в портал как HTML5) |
+| **WebGL VK Games (Development)** | WebGL для Игр ВКонтакте, dev-сборка → `Builds/WebGL-Vk-dev` + `Builds/vk-hosting-config.json` |
+| **WebGL VK Games (Release)** | WebGL для Игр ВКонтакте → `Builds/WebGL-Vk` + `Builds/vk-hosting-config.json` (выкладка на хостинг VK — см. ниже) |
 | **Android APK (Development)** | APK, dev-сборка |
 | **Android APK (Release)** | APK, релиз |
 
@@ -186,6 +188,16 @@
 статический сервер, например `python -m http.server 8000` в папке сборки) — SDK работает в локальном режиме (демо-реклама,
 тестовый пользователь); на другом адресе SDK выключен и игра идёт как без площадки. В портале при отправке включить
 **Progress Save** (иначе сейв не работает) и альбомную ориентацию.
+**Игры ВКонтакте:** symbol `MAZE_VK`, в `<head>` — VK Bridge (`vk-bridge.min.js` рядом со страницей, копия npm
+`@vkontakte/vk-bridge` 3.0.2 из `WebPlatforms/Vk/`; CDN в регионе игрока может быть недоступен) и `VKWebAppInit` до загрузки
+игры. Игра: язык из `vk_language`, сейв в VK Storage частями (`SlottedCloudSave`), реклама VK, баннер снизу (на телефонах — `VkPlatform.MobileBanner`), пауза при
+скрытии в приложении ВК, строка «Поддержка» в настройках (Other). Вне ВК мост не отвечает — игра идёт как без площадки.
+Сборка кладёт `Builds/vk-hosting-config.json` (папка этой сборки, `app_id` — `WebPlatforms.VkAppId`; пусто — вписать в файл
+или задать `MINI_APPS_APP_ID`) и предупреждает, если в сборке есть аудио/видеофайлы (хостинг VK их не принимает).
+**Выкладка** (нужен Node.js): в папке `Builds` — `npx @vkontakte/vk-miniapps-deploy`. Первый раз утилита даст ссылку для
+входа (ключ сохранится), каждую выкладку надо подтвердить на телефоне; на вопросы «update prod/dev urls?» — да. Только
+в режим разработки (видят админы): `set MINI_APPS_ENVIRONMENT=dev` перед командой (cmd) или `$env:MINI_APPS_ENVIRONMENT="dev"`
+(PowerShell). Лимит — 24 выкладки в сутки; адрес игры меняется при каждой выкладке.
 Проверка на своём компьютере (нужен Node.js): `npx @yandex-games/sdk-dev-proxy -p Builds/WebGL-Yandex-dev --app-id 628471`
 — прокси печатает ссылку вида `https://yandex.ru/games/app/628471?game_url=https://localhost:…`, игра открывается внутри ЯИ
 с настоящим SDK; `--dev-mode true` — имитация SDK без площадки. Вне ЯИ (просто открыть папку) SDK нет — игра работает как без площадки.

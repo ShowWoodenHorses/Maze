@@ -107,6 +107,7 @@ MonoBehaviour:
   - settings.sound
   - settings.show_fps
   - settings.language
+  - settings.support
   - settings.reset_tab
   - layout.hint
   - layout.size
@@ -257,6 +258,7 @@ MonoBehaviour:
   - Tovushlar
   - "FPS ni ko\u02BBrsatish"
   - Til
+  - Yordam
   - "BO\u02BBLIMNI TIKLASH"
   - "Stik va tugmalarni suring. O\u02BBlchamini o\u02BBzgartirish uchun birini bosing."
   - "{0}: o\u02BBlcham {1}"

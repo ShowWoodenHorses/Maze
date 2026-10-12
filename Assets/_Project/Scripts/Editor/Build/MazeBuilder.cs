@@ -41,6 +41,12 @@ namespace Maze.Editor.Build
         [MenuItem("Maze/Build/WebGL CrazyGames (Release)")]
         public static void WebGLCrazyGamesRelease() => Build(BuildTarget.WebGL, development: false, WebPlatform.CrazyGames);
 
+        [MenuItem("Maze/Build/WebGL VK Games (Development)")]
+        public static void WebGLVkDevelopment() => Build(BuildTarget.WebGL, development: true, WebPlatform.Vk);
+
+        [MenuItem("Maze/Build/WebGL VK Games (Release)")]
+        public static void WebGLVkRelease() => Build(BuildTarget.WebGL, development: false, WebPlatform.Vk);
+
         [MenuItem("Maze/Build/Android APK (Development)")]
         public static void AndroidDevelopment() => Build(BuildTarget.Android, development: true);
 
@@ -122,6 +128,8 @@ namespace Maze.Editor.Build
                        $"{SizeOf(location) / (1024f * 1024f):0.0} MB, {summary.totalTime.TotalSeconds:0}s → {Path.GetFullPath(location)}";
             if (summary.result == BuildResult.Succeeded && WebPlatforms.NeedsArchive(web))
                 text += " + " + Archive(location);
+            if (summary.result == BuildResult.Succeeded && web == WebPlatform.Vk)
+                text += " + " + PrepareVkUpload(location);
             if (summary.result == BuildResult.Succeeded) Debug.Log("[Maze] " + text);
             else Debug.LogError("[Maze] " + text);
             return text;
@@ -207,6 +215,47 @@ namespace Maze.Editor.Build
             System.IO.Compression.ZipFile.CreateFromDirectory(folder, zip, System.IO.Compression.CompressionLevel.Optimal,
                 includeBaseDirectory: false);
             return $"{new FileInfo(zip).Length / (1024f * 1024f):0.0} MB archive → {Path.GetFullPath(zip)}";
+        }
+
+        /// <summary>The upload config of the VK hosting (<c>vk-miniapps-deploy</c>, run in <c>Builds</c>).</summary>
+        public const string VkHostingConfig = "vk-hosting-config.json";
+
+        /// <summary>Files the VK hosting refuses (no audio or video files there).</summary>
+        private static readonly string[] VkForbiddenExtensions = { ".mp3", ".ogg", ".wav", ".m4a", ".aac", ".mp4", ".webm", ".mov" };
+
+        /// <summary>
+        /// VK build: VK Bridge next to the page, <c>Builds/vk-hosting-config.json</c> pointing at this build (the upload
+        /// utility zips the folder itself and updates the game's addresses), a check for files the hosting refuses.
+        /// </summary>
+        private static string PrepareVkUpload(string folder)
+        {
+            if (!File.Exists(WebPlatforms.VkBridgeSource))
+                return $"NO {WebPlatforms.VkBridgeFile}: '{WebPlatforms.VkBridgeSource}' is missing — the game will not see VK";
+            File.Copy(WebPlatforms.VkBridgeSource, Path.Combine(folder, WebPlatforms.VkBridgeFile), overwrite: true);
+
+            var appId = WebPlatforms.VkAppId.Trim();
+            var appIdValue = appId.Length > 0 ? appId : "\"\"";
+            var config = "{\n" +
+                         $"  \"static_path\": \"{Path.GetFileName(folder.TrimEnd('/', '\\'))}\",\n" +
+                         $"  \"app_id\": {appIdValue},\n" +
+                         "  \"endpoints\": { \"web\": \"index.html\", \"mvk\": \"index.html\", \"mobile\": \"index.html\" }\n" +
+                         "}\n";
+            var configPath = Path.Combine(Output, VkHostingConfig);
+            File.WriteAllText(configPath, config);
+
+            var forbidden = Directory.GetFiles(folder, "*", SearchOption.AllDirectories)
+                .Where(f => VkForbiddenExtensions.Contains(Path.GetExtension(f).ToLowerInvariant()))
+                .Select(f => Path.GetFileName(f))
+                .ToList();
+            var text = $"{VkHostingConfig} → {Path.GetFullPath(configPath)}";
+            if (appId.Length == 0) text += " (no app id: set WebPlatforms.VkAppId or MINI_APPS_APP_ID)";
+            if (forbidden.Count > 0)
+            {
+                text += "; the VK hosting refuses audio/video files: " + string.Join(", ", forbidden.Take(10));
+                Debug.LogWarning("[Maze] " + text);
+            }
+
+            return text;
         }
 
         /// <summary>Size of what ships: the APK file or the WebGL folder (the report also counts IL2CPP symbol backups).</summary>
