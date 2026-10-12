@@ -15,8 +15,8 @@ namespace Maze.Editor.Dev
     /// <item>moves everything the project uses from Import/&lt;Pack&gt;/… to Art/ThirdParty/&lt;Pack&gt;/… —
     /// <see cref="AssetDatabase.MoveAsset"/> keeps GUIDs, so prefabs, levels and Addressables stay linked;</item>
     /// <item>checks that nothing outside Import references Import any more;</item>
-    /// <item>caps texture sizes for Android and WebGL (<see cref="MobileTextureSize"/>, smaller for tiny objects in
-    /// <see cref="SmallObjectFolders"/>) with normal compression: packs ship 4096² atlases, ~10–22 MB of video memory
+    /// <item>caps texture sizes for Android and WebGL (<see cref="MobileTextureSize"/>; smaller for normal maps,
+    /// emission masks, characters and tiny objects in <see cref="SmallObjectFolders"/>) with normal compression: packs ship 4096² atlases, ~10–22 MB of video memory
     /// each on a phone, while the camera sees a few metres of the maze.</item>
     /// </list>
     /// Run again after taking anything new from a pack. What stays in Import is unused and can be deleted.
@@ -25,8 +25,21 @@ namespace Maze.Editor.Dev
     {
         private const string ImportRoot = "Assets/_Project/Import";
         private const string TargetRoot = "Assets/_Project/Art/ThirdParty";
-        private const int MobileTextureSize = 2048;
+        /// <summary>
+        /// 1024: the camera looks almost straight down at ~200 screen pixels per metre and the packs' textures are mostly
+        /// colour atlases — 2048 doubled the web download (~4x the texture bytes) without a visible difference.
+        /// </summary>
+        private const int MobileTextureSize = 1024;
         private static readonly string[] MobilePlatforms = { "Android", "WebGL" };
+
+        /// <summary>Normal maps: the camera looks down, the relief barely shows — half the colour size.</summary>
+        private const int NormalMapSize = 512;
+
+        /// <summary>Emission masks (mostly black, a few glowing spots).</summary>
+        private const int EmissionSize = 256;
+
+        /// <summary>Characters are a finger tall on screen.</summary>
+        private const int CharacterTextureSize = 512;
 
         /// <summary>Folders (under <see cref="TargetRoot"/>) of objects only a few centimetres on screen, and their size cap.</summary>
         private static readonly (string Folder, int Size)[] SmallObjectFolders = { ("Gabies_Assets/Keys", 256) };
@@ -124,6 +137,12 @@ namespace Maze.Editor.Dev
                 if (!(AssetImporter.GetAtPath(path) is TextureImporter importer)) continue;
 
                 var cap = MobileTextureSize;
+                var file = System.IO.Path.GetFileNameWithoutExtension(path);
+                if (importer.textureType == TextureImporterType.NormalMap) cap = Math.Min(cap, NormalMapSize);
+                if (file.IndexOf("emis", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    file.IndexOf("emmis", StringComparison.OrdinalIgnoreCase) >= 0)
+                    cap = Math.Min(cap, EmissionSize);
+                if (path.IndexOf("/Characters/", StringComparison.Ordinal) >= 0) cap = Math.Min(cap, CharacterTextureSize);
                 foreach (var (folder, folderCap) in SmallObjectFolders)
                     if (path.StartsWith(TargetRoot + "/" + folder + "/", StringComparison.Ordinal))
                         cap = Math.Min(cap, folderCap);

@@ -2,6 +2,8 @@ using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using Maze.Application.Flow;
+using Maze.Application.Levels;
+using Maze.Application.Save;
 using Maze.Application.Services;
 using Maze.Core.Common;
 using Maze.Gameplay.Level;
@@ -67,6 +69,9 @@ namespace Maze.Application.Platform
         /// <summary>A moment of joy worth celebrating on the site (a level with all stars).</summary>
         void HappyMoment();
 
+        /// <summary>How much of the game the player has completed, 0–100 (100 only when all of it).</summary>
+        void GameProgress(int percent);
+
         /// <summary>The site has player accounts the player can sign in to (saves then follow the account).</summary>
         bool SupportsSignIn { get; }
 
@@ -102,6 +107,7 @@ namespace Maze.Application.Platform
         public void GameplayStarted() { }
         public void GameplayStopped() { }
         public void HappyMoment() { }
+        public void GameProgress(int percent) { }
         public bool SupportsSignIn => false;
         public bool IsSignedIn => false;
         public UniTask<bool> SignInAsync(CancellationToken cancellation) => UniTask.FromResult(false);
@@ -204,6 +210,7 @@ namespace Maze.Application.Platform
         public void GameplayStarted() => Tell(p => p.GameplayStarted(), nameof(GameplayStarted));
         public void GameplayStopped() => Tell(p => p.GameplayStopped(), nameof(GameplayStopped));
         public void HappyMoment() => Tell(p => p.HappyMoment(), nameof(HappyMoment));
+        public void GameProgress(int percent) => Tell(p => p.GameProgress(percent), nameof(GameProgress));
 
         private void Tell(Action<IGamePlatform> call, string what)
         {
@@ -223,19 +230,26 @@ namespace Maze.Application.Platform
     /// Tells the platform what the game does, from <see cref="GameFlow"/> states: loading finished (the first main
     /// menu, or the first level for a new player who skips it), gameplay running only in <see cref="GameFlowState.Playing"/> (pause, map, windows, ads between levels —
     /// stopped; a pause for the background is not told to a site that tracks focus itself), a happy moment for a level
-    /// that gets all stars for the first time.
+    /// that gets all stars for the first time; the completed part of the game (levels of the catalog) at start and after
+    /// every completed level.
     /// </summary>
     public sealed class PlatformEvents : IDisposable
     {
         private readonly GameFlow _flow;
         private readonly PlatformService _platform;
         private readonly AppFocusController _focus;
+        private readonly ILevelCatalog _catalog;
+        private readonly IProgressService _progress;
+        private int _reportedProgress = -1;
         private bool _initialized;
         private bool _loaded;
         private bool _playing;
 
-        public PlatformEvents(GameFlow flow, PlatformService platform, AppFocusController focus = null)
+        public PlatformEvents(GameFlow flow, PlatformService platform, AppFocusController focus = null,
+            ILevelCatalog catalog = null, IProgressService progress = null)
         {
+            _catalog = catalog;
+            _progress = progress;
             _focus = focus;
             _flow = flow;
             _platform = platform;
@@ -261,6 +275,7 @@ namespace Maze.Application.Platform
             {
                 _loaded = true;
                 _platform.LoadingFinished();
+                ReportProgress(); // at every start: new levels in an update lower it
             }
 
             var playing = state == GameFlowState.Playing;
@@ -275,11 +290,31 @@ namespace Maze.Application.Platform
                 else _platform.GameplayStopped();
             }
 
+            if (state == GameFlowState.Completed) ReportProgress();
+
             // Rarely (site rules): only the first time a level gets all stars.
             if (state == GameFlowState.Completed && _flow.LastResult is { } result &&
                 result.Stars >= LevelResult.MaxStars && _flow.LastPreviousStars < LevelResult.MaxStars &&
                 !_flow.IsTutorialLevel)
                 _platform.HappyMoment();
+        }
+
+        /// <summary>Completed catalog levels in percent, rounded down: 100 only when every level is completed.</summary>
+        public static int CompletedPercent(int completed, int total) =>
+            total <= 0 ? 0 : Math.Min(100, completed * 100 / total);
+
+        private void ReportProgress()
+        {
+            if (_catalog == null || _progress == null) return;
+            var levels = _catalog.Levels;
+            var completed = 0;
+            for (var i = 0; i < levels.Count; i++)
+                if (_progress.GetStars(levels[i].LevelId) > 0)
+                    completed++;
+            var percent = CompletedPercent(completed, levels.Count);
+            if (percent == _reportedProgress) return;
+            _reportedProgress = percent;
+            _platform.GameProgress(percent);
         }
     }
 }

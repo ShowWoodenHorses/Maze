@@ -101,6 +101,7 @@ namespace Maze.Editor.LevelDesigner
 
             var settings = AddressableAssetSettingsDefaultObject.GetSettings(true);
             var visualsGroup = GetOrCreateGroup(settings, VisualsGroup);
+            PackSeparately(visualsGroup);
             var address = Place(settings, level, IsDevLevel(level));
 
             var added = 0;
@@ -181,12 +182,7 @@ namespace Maze.Editor.LevelDesigner
             // Music is loaded only while it plays: its own entries, each track in its own bundle (a web build downloads
             // a bundle whole: inside the start-up bundle both tracks would be downloaded before the menu).
             var musicGroup = GetOrCreateGroup(settings, MusicGroup);
-            var musicSchema = musicGroup.GetSchema<BundledAssetGroupSchema>();
-            if (musicSchema != null && musicSchema.BundleMode != BundledAssetGroupSchema.BundlePackingMode.PackSeparately)
-            {
-                musicSchema.BundleMode = BundledAssetGroupSchema.BundlePackingMode.PackSeparately;
-                EditorUtility.SetDirty(musicSchema);
-            }
+            PackSeparately(musicGroup);
             MoveToGroup(settings, musicGroup, audio.MenuMusic.Clip);
             MoveToGroup(settings, musicGroup, audio.LevelMusic.Clip);
 
@@ -314,6 +310,7 @@ namespace Maze.Editor.LevelDesigner
             }
 
             group = group != null ? group : GetOrCreateGroup(settings, SharedDependenciesGroup);
+            PackTogether(group);
             foreach (var path in duplicates)
             {
                 var entry = settings.CreateOrMoveEntry(AssetDatabase.AssetPathToGUID(path), group);
@@ -323,6 +320,39 @@ namespace Maze.Editor.LevelDesigner
             EditorUtility.SetDirty(settings);
             AssetDatabase.SaveAssets();
             return duplicates.Count;
+        }
+
+        /// <summary>
+        /// One bundle for the shared dependencies: the menu already needs most of them (weapons, common textures), and a
+        /// bundle per asset made the start ~3 s slower on a network — the browser's Unity cache asks the server about
+        /// every file on every start (measured 2026-10-12, 80 ms / 20 Mbit/s).
+        /// </summary>
+        public static void PackTogether(AddressableAssetGroup group)
+        {
+            var schema = group != null ? group.GetSchema<BundledAssetGroupSchema>() : null;
+            if (schema == null || schema.BundleMode == BundledAssetGroupSchema.BundlePackingMode.PackTogether) return;
+            schema.BundleMode = BundledAssetGroupSchema.BundlePackingMode.PackTogether;
+            EditorUtility.SetDirty(schema);
+        }
+
+        /// <summary>
+        /// A bundle per entry. A web build downloads a bundle whole: the visuals of every theme (and every shared
+        /// texture or model) in one bundle were all downloaded before the first level, which needs a few of them —
+        /// the sites' initial-download limits (CrazyGames: 20 MB for the mobile home page). A level loads only the
+        /// variants it uses (<c>LevelVisualUsage</c>), so only their bundles are downloaded now.
+        /// </summary>
+        public static void PackSeparately(AddressableAssetGroup group)
+        {
+            var schema = group != null ? group.GetSchema<BundledAssetGroupSchema>() : null;
+            if (schema == null) return;
+            // Bundle names are the hash only: a bundle per asset is named after its whole path otherwise, and the
+            // build folder's paths went past Windows' 260 characters.
+            if (schema.BundleMode == BundledAssetGroupSchema.BundlePackingMode.PackSeparately &&
+                schema.BundleNaming == BundledAssetGroupSchema.BundleNamingStyle.OnlyHash)
+                return;
+            schema.BundleMode = BundledAssetGroupSchema.BundlePackingMode.PackSeparately;
+            schema.BundleNaming = BundledAssetGroupSchema.BundleNamingStyle.OnlyHash;
+            EditorUtility.SetDirty(schema);
         }
 
         private static AddressableAssetGroup GetOrCreateGroup(AddressableAssetSettings settings, string name)

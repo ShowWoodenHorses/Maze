@@ -117,5 +117,11 @@ mergeInto(LibraryManager.library, {
   MazeCrazy_HappyTime: function () {
     var sdk = window.mazeCrazy && window.mazeCrazy.sdk;
     if (sdk) sdk.game.happytime();
+  },
+
+  // The completed part of the game, 0–100 (newer SDK versions only).
+  MazeCrazy_GameProgress: function (percent) {
+    var sdk = window.mazeCrazy && window.mazeCrazy.sdk;
+    if (sdk && typeof sdk.game.reportGameCompletedPercentage === 'function') sdk.game.reportGameCompletedPercentage(percent);
   }
 });

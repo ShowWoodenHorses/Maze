@@ -168,6 +168,16 @@ namespace Maze.Tests.EditMode.Progress
         }
 
         [Test]
+        public void GameProgress_IsCompletedLevelsInPercent_HundredOnlyForAll()
+        {
+            Assert.AreEqual(0, PlatformEvents.CompletedPercent(0, 30));
+            Assert.AreEqual(3, PlatformEvents.CompletedPercent(1, 30));
+            Assert.AreEqual(96, PlatformEvents.CompletedPercent(29, 30));
+            Assert.AreEqual(100, PlatformEvents.CompletedPercent(30, 30));
+            Assert.AreEqual(0, PlatformEvents.CompletedPercent(0, 0));
+        }
+
+        [Test]
         public void Merge_KeepsTheBestOfBoth()
         {
             var mine = new SaveData { TotalKills = 10 };
@@ -280,6 +290,7 @@ namespace Maze.Tests.EditMode.Progress
             public void GameplayStarted() { }
             public void GameplayStopped() { }
             public void HappyMoment() { }
+            public void GameProgress(int percent) { }
             public bool SupportsSignIn => true;
             public bool IsSignedIn { get; set; }
             public bool SignInResult = true;

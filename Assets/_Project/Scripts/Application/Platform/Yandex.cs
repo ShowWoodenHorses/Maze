@@ -188,6 +188,9 @@ namespace Maze.Application.Platform
         /// <summary>Yandex Games has no such event.</summary>
         public void HappyMoment() { }
 
+        /// <summary>Yandex Games has no such event.</summary>
+        public void GameProgress(int percent) { }
+
         async UniTask<string> ICloudSave.ReadAsync(CancellationToken cancellation)
         {
             var reply = await YandexBridge.GetDataAsync(cancellation);

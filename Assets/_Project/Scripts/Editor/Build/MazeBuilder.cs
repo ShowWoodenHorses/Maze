@@ -75,6 +75,8 @@ namespace Maze.Editor.Build
 
             // One copy of every shared dependency: a definition copied into two bundles is two different objects at
             // runtime (weapons in hands were not found on device), and duplicates only make the build bigger.
+            // A bundle per visual prefab (before looking for duplicates: they depend on the packing).
+            LevelSync.PackSeparately(settings.FindGroup(LevelSync.VisualsGroup));
             var isolated = LevelSync.IsolateDuplicates(settings);
             if (isolated > 0)
                 Debug.Log($"[Maze] {isolated} asset(s) used by several Addressables groups are kept in '{LevelSync.SharedDependenciesGroup}'.");
@@ -108,6 +110,9 @@ namespace Maze.Editor.Build
                 targetGroup = group,
                 options = development ? BuildOptions.Development : BuildOptions.None,
                 extraScriptingDefines = define != null ? new[] { define } : null,
+                // Without it the player is built for subtarget 0 (WebGL: Generic — DXT textures in the player's data)
+                // and the editor setting is reset to it: every next build reimported all textures back to ASTC.
+                subtarget = target == BuildTarget.WebGL ? (int)WebGLTextureSubtarget.ASTC : 0,
             };
 
             var report = BuildPipeline.BuildPlayer(options);

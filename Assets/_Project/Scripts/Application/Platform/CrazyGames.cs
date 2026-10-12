@@ -68,6 +68,11 @@ namespace Maze.Application.Platform
             if (IsReady) Native.HappyTime();
         }
 
+        public static void GameProgress(int percent)
+        {
+            if (IsReady) Native.GameProgress(percent);
+        }
+
         private delegate void ReplyCallback(int id, int code, IntPtr text);
 
         [AOT.MonoPInvokeCallback(typeof(ReplyCallback))]
@@ -124,6 +129,9 @@ namespace Maze.Application.Platform
 
             [DllImport("__Internal", EntryPoint = "MazeCrazy_HappyTime")]
             public static extern void HappyTime();
+
+            [DllImport("__Internal", EntryPoint = "MazeCrazy_GameProgress")]
+            public static extern void GameProgress(int percent);
 #else
             private static Exception NoSdk() => new PlatformNotSupportedException("The CrazyGames SDK exists only in a WebGL build.");
             public static void Init(ReplyCallback callback, int id) => throw NoSdk();
@@ -137,6 +145,7 @@ namespace Maze.Application.Platform
             public static void LoadingStop() { }
             public static void Gameplay(int start) { }
             public static void HappyTime() { }
+            public static void GameProgress(int percent) { }
 #endif
         }
     }
@@ -199,6 +208,7 @@ namespace Maze.Application.Platform
         public void GameplayStarted() => CrazyBridge.Gameplay(true);
         public void GameplayStopped() => CrazyBridge.Gameplay(false);
         public void HappyMoment() => CrazyBridge.HappyTime();
+        public void GameProgress(int percent) => CrazyBridge.GameProgress(percent);
 
         async UniTask<string> ICloudSave.ReadAsync(CancellationToken cancellation)
         {
