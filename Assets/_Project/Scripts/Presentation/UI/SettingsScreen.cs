@@ -67,6 +67,9 @@ namespace Maze.Presentation.UI
         [Tooltip("Support contact row (only on sites that want one, PlatformTraits.SupportEmail).")]
         [SerializeField] private GameObject _supportRow;
         [SerializeField] private TMP_Text _supportValue;
+        [Tooltip("Privacy policy row with an Open button (only where the platform has one, PlatformTraits.PrivacyPolicyUrl).")]
+        [SerializeField] private GameObject _privacyRow;
+        [SerializeField] private Button _privacyButton;
         [SerializeField] private Button _resetButton;
         [SerializeField] private Button _backButton;
 
@@ -85,6 +88,9 @@ namespace Maze.Presentation.UI
 
         /// <summary>The language button: open the list (<see cref="LanguagePicker"/>).</summary>
         public event Action LanguageListRequested;
+
+        /// <summary>The privacy policy's Open button.</summary>
+        public event Action PrivacyPolicyRequested;
 
         public LanguagePicker LanguagePicker => _languagePicker;
         public event Action BackClicked;
@@ -121,6 +127,7 @@ namespace Maze.Presentation.UI
             Bind(_editLayoutButton, () => EditLayoutClicked?.Invoke());
             Bind(_backButton, () => BackClicked?.Invoke());
             Bind(_languageButton, () => LanguageListRequested?.Invoke());
+            Bind(_privacyButton, () => PrivacyPolicyRequested?.Invoke());
             for (var i = 0; i < _tabButtons.Length; i++)
             {
                 var tab = (SettingsTab)i;
@@ -174,6 +181,12 @@ namespace Maze.Presentation.UI
         {
             if (_supportRow != null) _supportRow.SetActive(!string.IsNullOrEmpty(email));
             if (_supportValue != null) _supportValue.text = email ?? "";
+        }
+
+        /// <summary>Shows the privacy policy row (false hides it).</summary>
+        public void SetPrivacyPolicy(bool shown)
+        {
+            if (_privacyRow != null) _privacyRow.SetActive(shown);
         }
 
         public void SetShowFps(bool show)

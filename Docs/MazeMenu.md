@@ -174,8 +174,10 @@
 | **WebGL CrazyGames (Release)** | WebGL для CrazyGames → `Builds/WebGL-CrazyGames` + `WebGL-CrazyGames.zip` (загружать в портал как HTML5) |
 | **WebGL VK Games (Development)** | WebGL для Игр ВКонтакте, dev-сборка → `Builds/WebGL-Vk-dev` + `Builds/vk-hosting-config.json` |
 | **WebGL VK Games (Release)** | WebGL для Игр ВКонтакте → `Builds/WebGL-Vk` + `Builds/vk-hosting-config.json` (выкладка на хостинг VK — см. ниже) |
-| **Android APK (Development)** | APK, dev-сборка |
-| **Android APK (Release)** | APK, релиз |
+| **Android APK (Development)** | APK без магазина (реклама-заглушка, аналитика в лог), dev-сборка → `Builds/Android/Mazebound-dev.apk` |
+| **Android APK (Release)** | то же, релиз (подписан ключом, см. ниже) |
+| **Android RuStore APK (Development)** | APK для RuStore, dev-сборка (отладочный ключ) → `Builds/Android/Mazebound-RuStore-dev.apk` |
+| **Android RuStore APK (Release)** | APK для RuStore, релиз → `Builds/Android/Mazebound-RuStore.apk` (его загружать в консоль RuStore) |
 
 **Яндекс Игры:** в сборку попадает symbol `MAZE_YANDEX` (только в плеер, редактор без него) — игра работает через SDK ЯИ
 (язык площадки, сейв в данных игрока, кнопка «Войти» в меню, реклама ЯИ, события загрузки/геймплея), в `<head>` — `/sdk.js`
@@ -201,6 +203,20 @@
 Проверка на своём компьютере (нужен Node.js): `npx @yandex-games/sdk-dev-proxy -p Builds/WebGL-Yandex-dev --app-id 628471`
 — прокси печатает ссылку вида `https://yandex.ru/games/app/628471?game_url=https://localhost:…`, игра открывается внутри ЯИ
 с настоящим SDK; `--dev-mode true` — имитация SDK без площадки. Вне ЯИ (просто открыть папку) SDK нет — игра работает как без площадки.
+
+**RuStore (Android):** symbol `MAZE_RUSTORE` — реклама Yandex Mobile Ads, аналитика AppMetrica, в настройках (Other) — почта
+поддержки и «Политика конфиденциальности» (кнопка открывает `Contacts.PrivacyPolicyUrl`). Ключи — в одном месте,
+`RuStoreKeys` (`Scripts/Application/Platform/Android/RuStore.cs`): пустой ключ AppMetrica — аналитика только в лог, пустые
+блоки рекламы — демо-блоки Яндекса (тестовая реклама, без дохода). Команда сама выставляет: компанию **BGames**, пакет
+**ru.bgames.mazebound** (после публикации не менять), versionCode из **Version** в Player Settings (`1.2.3` → 10203; перед
+каждой загрузкой в RuStore поднять Version), IL2CPP ARM64 + ARMv7, target API — новейший установленный, APK (не AAB), иконку
+(`Art/AppIcon`), без заставки Unity. Библиотеки SDK подтягивает External Dependency Manager в Gradle-шаблоны
+`Assets/Plugins/Android` (создаются при первой Android-сборке; Gradle качает их при сборке — нужен интернет).
+**Подпись release:** ключ не в git. Один раз создать (JDK есть в Unity):
+`"<Unity>\Editor\Data\PlaybackEngines\AndroidPlayer\OpenJDKin\keytool" -genkeypair -v -keystore D:\Keys\mazebound.keystore -alias mazebound -keyalg RSA -keysize 2048 -validity 36500`,
+затем заполнить `UserSettings/MazeAndroidSigning.json` (создаётся при первой release-сборке): путь к keystore, пароли, alias.
+**Ключ и пароли хранить в надёжном месте с копией:** без них новые версии в RuStore не загрузить. Путь и пароли в
+ProjectSettings не остаются (команда сбрасывает их после сборки). Dev-сборки — отладочным ключом Unity.
 
 Платформа должна быть **активной** (File → Build Profiles). Если нет — команда только переключит платформу (долгий реимпорт),
 и её надо запустить ещё раз.

@@ -53,14 +53,24 @@ namespace Maze.Editor.Build
         [MenuItem("Maze/Build/Android APK (Release)")]
         public static void AndroidRelease() => Build(BuildTarget.Android, development: false);
 
+        [MenuItem("Maze/Build/Android RuStore APK (Development)")]
+        public static void AndroidRuStoreDevelopment() => Build(BuildTarget.Android, development: true, store: AndroidStore.RuStore);
+
+        [MenuItem("Maze/Build/Android RuStore APK (Release)")]
+        public static void AndroidRuStoreRelease() => Build(BuildTarget.Android, development: false, store: AndroidStore.RuStore);
+
         /// <summary>
         /// Builds the player. Returns the report summary, or a problem description when nothing was built.
         /// <paramref name="web"/> — the site of a WebGL build: its scripting symbol goes only to this player build
         /// (the editor keeps compiling without it), its SDK script into the page, the build into its own folder.
+        /// <paramref name="store"/> — the same for an Android build (its symbol, its APK name). An Android release
+        /// build is signed with the key from <see cref="AndroidStores.SigningFile"/>.
         /// </summary>
-        public static string Build(BuildTarget target, bool development, WebPlatform web = WebPlatform.Generic)
+        public static string Build(BuildTarget target, bool development, WebPlatform web = WebPlatform.Generic,
+            AndroidStore store = AndroidStore.Generic)
         {
             if (target != BuildTarget.WebGL) web = WebPlatform.Generic;
+            if (target != BuildTarget.Android) store = AndroidStore.Generic;
             var group = BuildPipeline.GetBuildTargetGroup(target);
             if (EditorUserBuildSettings.activeBuildTarget != target)
             {
@@ -74,6 +84,14 @@ namespace Maze.Editor.Build
             ConfigurePlatform(target, development);
             if (target == BuildTarget.WebGL)
                 PlayerSettings.SetTemplateCustomValue(PlatformHeadVariable, WebPlatforms.Head(web));
+            AndroidStores.Signing signing = null;
+            if (target == BuildTarget.Android)
+            {
+                problem = ConfigureAndroid();
+                if (problem == null && !development) (signing, problem) = AndroidStores.LoadSigning();
+                if (problem == null) problem = ResolveAndroidDependencies();
+                if (problem != null) return Fail(problem);
+            }
 
             // Addressables content must be built for the active platform before the player.
             var settings = AddressableAssetSettingsDefaultObject.GetSettings(false);
@@ -105,9 +123,9 @@ namespace Maze.Editor.Build
             if (!string.IsNullOrEmpty(content.Error)) return Fail("Addressables build failed: " + content.Error);
 
             var location = target == BuildTarget.Android
-                ? Path.Combine(Output, "Android", development ? "Maze-dev.apk" : "Maze.apk")
+                ? Path.Combine(Output, "Android", AndroidStores.FileName(store, development))
                 : Path.Combine(Output, WebPlatforms.Folder(web, development));
-            var define = WebPlatforms.Define(web);
+            var define = target == BuildTarget.Android ? AndroidStores.Define(store) : WebPlatforms.Define(web);
             var options = new BuildPlayerOptions
             {
                 scenes = new[] { RuntimeScenesBuilder.BootstrapPath, RuntimeScenesBuilder.GamePath },
@@ -121,9 +139,24 @@ namespace Maze.Editor.Build
                 subtarget = target == BuildTarget.WebGL ? (int)WebGLTextureSubtarget.ASTC : 0,
             };
 
-            var report = BuildPipeline.BuildPlayer(options);
+            BuildReport report;
+            try
+            {
+                UseSigningKey(signing);
+                report = BuildPipeline.BuildPlayer(options);
+            }
+            finally
+            {
+                // The key's path and passwords never stay in ProjectSettings: the build saved the settings with them.
+                UseSigningKey(null);
+                AssetDatabase.SaveAssets();
+            }
+
             var summary = report.summary;
-            var text = $"{target}{(web != WebPlatform.Generic ? " " + web : "")} {(development ? "development" : "release")} build: {summary.result}, " +
+            var platformName = web != WebPlatform.Generic ? " " + web : store != AndroidStore.Generic ? " " + store : "";
+            if (target == BuildTarget.Android)
+                platformName += $" {PlayerSettings.bundleVersion} ({PlayerSettings.Android.bundleVersionCode}){(signing != null ? ", signed" : ", debug key")}";
+            var text = $"{target}{platformName} {(development ? "development" : "release")} build: {summary.result}, " +
                        $"{summary.totalErrors} error(s), {summary.totalWarnings} warning(s), " +
                        $"{SizeOf(location) / (1024f * 1024f):0.0} MB, {summary.totalTime.TotalSeconds:0}s → {Path.GetFullPath(location)}";
             if (summary.result == BuildResult.Succeeded && WebPlatforms.NeedsArchive(web))
@@ -177,12 +210,126 @@ namespace Maze.Editor.Build
                 PlayerSettings.insecureHttpOption = InsecureHttpOption.NotAllowed; // Android: no cleartext traffic
             }
 
+            // No "Made with Unity" screen (optional since Unity 6, Personal included): the game's own loading shows.
+            PlayerSettings.SplashScreen.show = false;
+
             // The game is landscape only (both landscape sides, rotates between them).
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.AutoRotation;
             PlayerSettings.allowedAutorotateToPortrait = false;
             PlayerSettings.allowedAutorotateToPortraitUpsideDown = false;
             PlayerSettings.allowedAutorotateToLandscapeLeft = true;
             PlayerSettings.allowedAutorotateToLandscapeRight = true;
+        }
+
+        /// <summary>The app icon (Art/AppIcon; the adaptive icon shows the picture as its background layer).</summary>
+        private const string AppIconPath = "Assets/_Project/Art/AppIcon/AppIcon.png";
+
+        private const string AppIconForegroundPath = "Assets/_Project/Art/AppIcon/AppIconForeground.png";
+
+        /// <summary>Gradle templates External Dependency Manager writes the SDKs' Android libraries into.</summary>
+        private const string GradleTemplatesFolder = "Assets/Plugins/Android";
+
+        private static readonly (string File, string Setting)[] GradleTemplates =
+        {
+            ("mainTemplate.gradle", "useCustomMainGradleTemplate"),
+            ("gradleTemplate.properties", "useCustomGradlePropertiesTemplate"),
+            ("settingsTemplate.gradle", "useCustomGradleSettingsTemplate"),
+        };
+
+        /// <summary>
+        /// Android settings the store builds rely on (ТЗ §1–2; RuStore): the package, the version code from the
+        /// version, IL2CPP for ARM64 and ARMv7 (cheap phones are still 32-bit), the newest target API, an APK, the
+        /// icon, the Gradle templates. Returns a problem, or null.
+        /// </summary>
+        private static string ConfigureAndroid()
+        {
+            var versionCode = AndroidStores.VersionCode(PlayerSettings.bundleVersion);
+            if (versionCode == null)
+                return $"Player Settings → Version '{PlayerSettings.bundleVersion}' is not 'major.minor.patch' (minor, patch 0–99): " +
+                       "the Android version code is made from it.";
+
+            PlayerSettings.companyName = AndroidStores.CompanyName;
+            PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, AndroidStores.PackageName);
+            PlayerSettings.Android.bundleVersionCode = versionCode.Value;
+            PlayerSettings.SetScriptingBackend(NamedBuildTarget.Android, ScriptingImplementation.IL2CPP);
+            PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64 | AndroidArchitecture.ARMv7;
+            PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel25;
+            PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevelAuto; // the newest installed
+            PlayerSettings.SetManagedStrippingLevel(NamedBuildTarget.Android, ManagedStrippingLevel.Medium);
+            PlayerSettings.Android.splitApplicationBinary = false;
+            EditorUserBuildSettings.buildAppBundle = false; // RuStore takes an APK signed with our own key
+            EditorUserBuildSettings.exportAsGoogleAndroidProject = false;
+            SetAppIcons();
+            return EnableGradleTemplates();
+        }
+
+        private static void SetAppIcons()
+        {
+            var icon = AssetDatabase.LoadAssetAtPath<Texture2D>(AppIconPath);
+            var foreground = AssetDatabase.LoadAssetAtPath<Texture2D>(AppIconForegroundPath);
+            if (icon == null || foreground == null)
+            {
+                Debug.LogWarning($"[Maze] Build: no app icon at '{AppIconPath}' — the default Unity icon is used.");
+                return;
+            }
+
+            var target = NamedBuildTarget.Android;
+            foreach (var kind in PlayerSettings.GetSupportedIconKinds(target))
+            {
+                var icons = PlayerSettings.GetPlatformIcons(target, kind);
+                foreach (var slot in icons)
+                    slot.SetTextures(slot.maxLayerCount > 1 ? new[] { icon, foreground } : new[] { icon });
+                PlayerSettings.SetPlatformIcons(target, kind, icons);
+            }
+        }
+
+        /// <summary>Copies Unity's Gradle templates into the project once and switches them on.</summary>
+        private static string EnableGradleTemplates()
+        {
+            var source = Path.Combine(EditorApplication.applicationContentsPath, "PlaybackEngines/AndroidPlayer/Tools/GradleTemplates");
+            Directory.CreateDirectory(GradleTemplatesFolder);
+            var copied = false;
+            foreach (var (file, _) in GradleTemplates)
+            {
+                var destination = Path.Combine(GradleTemplatesFolder, file);
+                if (File.Exists(destination)) continue;
+                var template = Path.Combine(source, file);
+                if (!File.Exists(template)) return $"Unity's Gradle template '{template}' is missing (Android Build Support).";
+                File.Copy(template, destination);
+                copied = true;
+            }
+
+            if (copied) AssetDatabase.Refresh();
+            var settings = new SerializedObject(AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/ProjectSettings.asset")[0]);
+            foreach (var (_, setting) in GradleTemplates)
+                settings.FindProperty(setting).boolValue = true;
+            settings.ApplyModifiedPropertiesWithoutUndo();
+            return null;
+        }
+
+        /// <summary>
+        /// External Dependency Manager writes the Android libraries the SDKs need (Yandex Mobile Ads, AppMetrica) into
+        /// the Gradle templates; Gradle downloads them while building.
+        /// </summary>
+        private static string ResolveAndroidDependencies()
+        {
+            var resolver = System.AppDomain.CurrentDomain.GetAssemblies()
+                .Select(a => a.GetType("GooglePlayServices.PlayServicesResolver"))
+                .FirstOrDefault(t => t != null);
+            var resolve = resolver?.GetMethod("ResolveSync", new[] { typeof(bool) });
+            if (resolve == null) return "External Dependency Manager is not loaded: the SDKs' Android libraries cannot be resolved.";
+            var resolved = resolve.Invoke(null, new object[] { true }) is true;
+            return resolved ? null : "External Dependency Manager failed to resolve the Android libraries (see its log in the console).";
+        }
+
+        /// <summary>The release key for the build (null: the debug key; also clears the key's path and passwords).</summary>
+        private static void UseSigningKey(AndroidStores.Signing signing)
+        {
+            PlayerSettings.Android.useCustomKeystore = signing != null;
+            PlayerSettings.Android.keystoreName = signing?.keystore ?? "";
+            PlayerSettings.Android.keystorePass = signing?.keystorePass ?? "";
+            PlayerSettings.Android.keyaliasName = signing?.alias ?? "";
+            PlayerSettings.Android.keyaliasPass = signing?.aliasPass ?? "";
         }
 
         /// <summary>Every catalog level must be valid: the game refuses to start an invalid one.</summary>

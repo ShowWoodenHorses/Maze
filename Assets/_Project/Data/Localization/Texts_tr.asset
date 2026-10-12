@@ -108,6 +108,8 @@ MonoBehaviour:
   - settings.show_fps
   - settings.language
   - settings.support
+  - settings.privacy
+  - settings.privacy.open
   - settings.reset_tab
   - layout.hint
   - layout.size
@@ -259,6 +261,8 @@ MonoBehaviour:
   - "FPS sayac\u0131n\u0131 g\xF6ster"
   - Dil
   - Destek
+  - "Gizlilik politikas\u0131"
+  - "A\xC7"
   - "SEKMEY\u0130 SIFIRLA"
   - "\xC7ubu\u011Fu ve d\xFC\u011Fmeleri s\xFCr\xFCkleyin. Boyutunu de\u011Fi\u015Ftirmek
     i\xE7in birine dokunun."

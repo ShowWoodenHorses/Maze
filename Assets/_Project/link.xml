@@ -6,6 +6,12 @@
   <assembly fullname="Maze.Application" preserve="all"/>
   <assembly fullname="Maze.Presentation" preserve="all"/>
   <assembly fullname="Maze.Composition" preserve="all"/>
+  <assembly fullname="Maze.Application.Android" preserve="all" ignoreIfMissing="1"/>
   <assembly fullname="VContainer" preserve="all"/>
   <assembly fullname="UniTask" preserve="all"/>
+  <!-- Android SDKs: Java calls back into C# (AndroidJavaProxy) by method name. Not in web builds
+       (MazeBuilder filters their assemblies out there). -->
+  <assembly fullname="YandexMobileAds" preserve="all" ignoreIfMissing="1"/>
+  <assembly fullname="AppMetrica" preserve="all" ignoreIfMissing="1"/>
+  <assembly fullname="AppMetricaAdRevenueAdapter" preserve="all" ignoreIfMissing="1"/>
 </linker>

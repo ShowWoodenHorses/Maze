@@ -108,6 +108,8 @@ MonoBehaviour:
   - settings.show_fps
   - settings.language
   - settings.support
+  - settings.privacy
+  - settings.privacy.open
   - settings.reset_tab
   - layout.hint
   - layout.size
@@ -259,6 +261,8 @@ MonoBehaviour:
   - "FPS-Z\xE4hler anzeigen"
   - Sprache
   - Support
+  - Datenschutz
+  - "\xD6FFNEN"
   - "TAB ZUR\xDCCKSETZEN"
   - "Stick und Tasten ziehen. Antippen, um die Gr\xF6\xDFe zu \xE4ndern."
   - "{0}: Gr\xF6\xDFe {1}"

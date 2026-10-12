@@ -54,6 +54,7 @@ namespace Maze.Presentation.UI
             _ui.Settings.BackClicked += Close;
             _ui.Settings.EditLayoutClicked += BeginLayoutEdit;
             _ui.Settings.LanguageListRequested += OnLanguageListRequested;
+            _ui.Settings.PrivacyPolicyRequested += OnPrivacyPolicyRequested;
             if (_ui.Settings.LanguagePicker != null) _ui.Settings.LanguagePicker.Picked += OnLanguagePicked;
             _texts.LanguageChanged += ShowLanguage;
             if (LayoutEditor != null)
@@ -87,6 +88,7 @@ namespace Maze.Presentation.UI
             _ui.Settings.VolumesChanged -= OnVolumesEdited;
             _ui.Settings.EditLayoutClicked -= BeginLayoutEdit;
             _ui.Settings.LanguageListRequested -= OnLanguageListRequested;
+            _ui.Settings.PrivacyPolicyRequested -= OnPrivacyPolicyRequested;
             if (_ui.Settings.LanguagePicker != null) _ui.Settings.LanguagePicker.Picked -= OnLanguagePicked;
             if (LayoutEditor != null)
             {
@@ -102,6 +104,13 @@ namespace Maze.Presentation.UI
             if (_ui.FpsCounter != null) _ui.FpsCounter.SetVisible(_settings.ShowFps);
         }
 
+        /// <summary>The policy opens in the browser (the game goes to the background and pauses as usual).</summary>
+        private void OnPrivacyPolicyRequested()
+        {
+            var url = _platform?.Traits.PrivacyPolicyUrl;
+            if (!string.IsNullOrEmpty(url)) UnityEngine.Application.OpenURL(url);
+        }
+
         private void OnShowFpsEdited(bool show) => _settings.ShowFps = show;
 
         private void OnVolumesEdited(float music, float sfx) => _settings.PreviewVolumes(music, sfx);
@@ -112,6 +121,7 @@ namespace Maze.Presentation.UI
             _ui.Settings.SetVolumes(_settings.MusicVolume, _settings.SfxVolume);
             _ui.Settings.SetShowFps(_settings.ShowFps);
             _ui.Settings.SetSupport(_platform?.Traits.SupportEmail); // the site's traits are known only after its start
+            _ui.Settings.SetPrivacyPolicy(!string.IsNullOrEmpty(_platform?.Traits.PrivacyPolicyUrl));
             ShowLanguage();
             _ui.Settings.SetVisible(true);
         }

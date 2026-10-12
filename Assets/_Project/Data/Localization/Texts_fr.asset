@@ -108,6 +108,8 @@ MonoBehaviour:
   - settings.show_fps
   - settings.language
   - settings.support
+  - settings.privacy
+  - settings.privacy.open
   - settings.reset_tab
   - layout.hint
   - layout.size
@@ -259,6 +261,8 @@ MonoBehaviour:
   - Afficher les FPS
   - Langue
   - Assistance
+  - "Confidentialit\xE9"
+  - OUVRIR
   - "R\xC9INITIALISER L\u2019ONGLET"
   - "D\xE9placez le joystick et les boutons. Touchez-en un pour changer sa taille."
   - '{0} : taille {1}'

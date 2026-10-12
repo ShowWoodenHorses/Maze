@@ -1522,6 +1522,11 @@ namespace Maze.Editor.Dev
                 new Vector2(560f, 40f), TextAlignmentOptions.MidlineRight, _style.MutedText);
             supportValue.gameObject.AddComponent<LayoutElement>().preferredWidth = 560f;
             supportRow.gameObject.SetActive(false);
+            // Privacy policy: only where the platform has one (the Android stores; SettingsScreen.SetPrivacyPolicy).
+            var privacyRow = SettingRow(otherPage, "Privacy", Loc(TextKeys.SettingsPrivacy));
+            var privacyButton = TextButton(privacyRow, "PrivacyButton", Loc(TextKeys.SettingsPrivacyOpen), false, icons.ChevronRight, 60f, 26f);
+            privacyButton.GetComponent<LayoutElement>().preferredWidth = 260f;
+            privacyRow.gameObject.SetActive(false);
 
             var reset = TextButton(area, "ResetButton", Loc(TextKeys.SettingsResetTab), false, icons.Retry, 76f, 26f);
             var resetRect = (RectTransform)reset.transform;
@@ -1557,6 +1562,8 @@ namespace Maze.Editor.Dev
             SetReference(screen, "_showFps", showFps);
             SetReference(screen, "_supportRow", supportRow.gameObject);
             SetReference(screen, "_supportValue", supportValue);
+            SetReference(screen, "_privacyRow", privacyRow.gameObject);
+            SetReference(screen, "_privacyButton", privacyButton);
             SetReference(screen, "_resetButton", reset);
             SetReference(screen, "_backButton", back);
             return screen;

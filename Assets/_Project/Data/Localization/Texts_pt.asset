@@ -108,6 +108,8 @@ MonoBehaviour:
   - settings.show_fps
   - settings.language
   - settings.support
+  - settings.privacy
+  - settings.privacy.open
   - settings.reset_tab
   - layout.hint
   - layout.size
@@ -259,6 +261,8 @@ MonoBehaviour:
   - Mostrar FPS
   - Idioma
   - Suporte
+  - "Pol\xEDtica de privacidade"
+  - ABRIR
   - REDEFINIR ABA
   - "Arraste o anal\xF3gico e os bot\xF5es. Toque em um para mudar o tamanho."
   - '{0}: tamanho {1}'

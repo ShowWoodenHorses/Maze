@@ -44,6 +44,21 @@ namespace Maze.Application.Platform
         /// (sites that forbid contacts and links outside the game).
         /// </summary>
         public string SupportEmail;
+
+        /// <summary>
+        /// The privacy policy page, opened from the settings (stores: the app collects analytics and ad identifiers).
+        /// Null — none (sites with their own policy and no links out of the game).
+        /// </summary>
+        public string PrivacyPolicyUrl;
+    }
+
+    /// <summary>The developer's contacts shown to players (the same on every platform that shows them).</summary>
+    public static class Contacts
+    {
+        public const string SupportEmail = "bukun.vv.games@gmail.com";
+
+        /// <summary>The privacy policy (GitHub Pages; the page's source — <c>Docs/PrivacyPolicy</c>).</summary>
+        public const string PrivacyPolicyUrl = "https://showwoodenhorses.github.io/mazebound/privacy.html";
     }
 
     /// <summary>

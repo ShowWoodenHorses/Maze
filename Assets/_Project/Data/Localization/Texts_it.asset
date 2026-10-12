@@ -108,6 +108,8 @@ MonoBehaviour:
   - settings.show_fps
   - settings.language
   - settings.support
+  - settings.privacy
+  - settings.privacy.open
   - settings.reset_tab
   - layout.hint
   - layout.size
@@ -259,6 +261,8 @@ MonoBehaviour:
   - Mostra FPS
   - Lingua
   - Assistenza
+  - Privacy
+  - APRI
   - RIPRISTINA SCHEDA
   - Trascina lo stick e i pulsanti. Toccane uno per cambiarne la dimensione.
   - '{0}: dimensione {1}'

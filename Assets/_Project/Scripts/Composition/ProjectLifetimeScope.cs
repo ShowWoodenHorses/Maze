@@ -31,13 +31,16 @@ namespace Maze.Composition
 
             // IApplicationService initialization order = registration order. Settings are read from the save.
             // The site the build runs on (its SDK): first, saves and language depend on it. A platform build defines
-            // its symbol (MazeBuilder: MAZE_YANDEX, MAZE_CRAZYGAMES, MAZE_VK); no symbol = no site.
+            // its symbol (MazeBuilder: MAZE_YANDEX, MAZE_CRAZYGAMES, MAZE_VK; Android for RuStore: MAZE_RUSTORE); no
+            // symbol = no site.
 #if MAZE_YANDEX
             builder.Register<YandexPlatform>(Lifetime.Singleton).As<IGamePlatform>();
 #elif MAZE_CRAZYGAMES
             builder.Register<CrazyGamesPlatform>(Lifetime.Singleton).As<IGamePlatform>();
 #elif MAZE_VK
             builder.Register<VkPlatform>(Lifetime.Singleton).As<IGamePlatform>();
+#elif MAZE_RUSTORE
+            builder.Register<RuStorePlatform>(Lifetime.Singleton).As<IGamePlatform>();
 #else
             builder.Register<GenericPlatform>(Lifetime.Singleton).As<IGamePlatform>();
 #endif
@@ -62,6 +65,9 @@ namespace Maze.Composition
             builder.Register<CrazyGamesAdProvider>(Lifetime.Singleton).As<IAdProvider>(); // its own statistics: no sink
 #elif MAZE_VK
             builder.Register<VkAdProvider>(Lifetime.Singleton).As<IAdProvider>(); // VK's own statistics: no sink
+#elif MAZE_RUSTORE
+            builder.Register<AppMetricaSink>(Lifetime.Singleton).As<IAnalyticsSink>();
+            builder.Register<YandexMobileAdsProvider>(Lifetime.Singleton).As<IAdProvider>();
 #else
             builder.Register<SimulatedAdProvider>(Lifetime.Singleton).As<IAdProvider>();
 #endif

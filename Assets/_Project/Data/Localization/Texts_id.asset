@@ -108,6 +108,8 @@ MonoBehaviour:
   - settings.show_fps
   - settings.language
   - settings.support
+  - settings.privacy
+  - settings.privacy.open
   - settings.reset_tab
   - layout.hint
   - layout.size
@@ -259,6 +261,8 @@ MonoBehaviour:
   - Tampilkan FPS
   - Bahasa
   - Dukungan
+  - Kebijakan privasi
+  - BUKA
   - ATUR ULANG TAB
   - Seret stik dan tombol. Ketuk salah satunya untuk mengubah ukurannya.
   - '{0}: ukuran {1}'

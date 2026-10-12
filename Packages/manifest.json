@@ -2,11 +2,14 @@
   "dependencies": {
     "com.coplaydev.unity-mcp": "https://github.com/CoplayDev/unity-mcp.git?path=/MCPForUnity#v10.2.0",
     "com.cysharp.unitask": "2.5.11",
+    "com.google.external-dependency-manager": "1.2.190",
     "com.unity.addressables": "4.1.0",
     "com.unity.feature.development": "1.0.2",
     "com.unity.inputsystem": "1.18.0",
     "com.unity.timeline": "1.8.10",
     "com.unity.ugui": "2.0.0",
+    "com.yandex.mobileads": "8.5.0",
+    "io.appmetrica.analytics": "6.10.0",
     "jp.hadashikick.vcontainer": "1.19.0",
     "com.unity.modules.accessibility": "1.0.0",
     "com.unity.modules.adaptiveperformance": "1.0.0",
@@ -49,7 +52,10 @@
       "url": "https://package.openupm.com",
       "scopes": [
         "jp.hadashikick",
-        "com.cysharp"
+        "com.cysharp",
+        "com.google.external-dependency-manager",
+        "com.yandex",
+        "io.appmetrica"
       ]
     }
   ]

@@ -104,15 +104,13 @@ namespace Maze.Application.Platform
     {
         public static readonly TimeSpan InitTimeout = TimeSpan.FromSeconds(10);
 
-        public const string SupportEmail = "bukun.vv.games@gmail.com";
-
         /// <summary>
         /// The banner on phones too (m.vk.com, the VK apps): on for a look on a device (2026-10-12); in landscape it
         /// takes height from a short screen — turn off again if it gets in the way.
         /// </summary>
         public const bool MobileBanner = true;
 
-        private static readonly PlatformTraits VkTraits = new PlatformTraits { SupportEmail = SupportEmail };
+        private static readonly PlatformTraits VkTraits = new PlatformTraits { SupportEmail = Contacts.SupportEmail };
 
         private readonly SlottedCloudSave _cloud;
         private readonly StringBuilder _json = new StringBuilder(128);

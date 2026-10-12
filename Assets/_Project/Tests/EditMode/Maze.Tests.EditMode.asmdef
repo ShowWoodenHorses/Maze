@@ -5,6 +5,7 @@
         "Maze.Core",
         "Maze.Gameplay",
         "Maze.Application",
+        "Maze.Application.Android",
         "Maze.Presentation",
         "UniTask",
         "Unity.Addressables",
