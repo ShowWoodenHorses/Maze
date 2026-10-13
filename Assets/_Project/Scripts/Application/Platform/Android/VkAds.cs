@@ -23,6 +23,9 @@ namespace Maze.Application.Platform
         /// <summary>Seconds before loading again after the 1st, 2nd… failure in a row (no fill, no network).</summary>
         private static readonly int[] RetryDelays = { 10, 30, 60, 120 };
 
+        /// <summary>A load the SDK never answers (an exception inside it) counts as failed after this.</summary>
+        private static readonly TimeSpan LoadTimeout = TimeSpan.FromSeconds(60);
+
         /// <summary>Frames the result waits after the dismissal: the plugin delivers one queued callback per frame.</summary>
         private const int CallbackFrames = 3;
 
@@ -139,6 +142,15 @@ namespace Maze.Application.Platform
                 ad.AdLoadFailed += (_, e) => OnFailed(slot, ad, e);
                 ad.Load();
             }
+
+            WatchLoadAsync(slot, slot.Pending).Forget();
+        }
+
+        private async UniTaskVoid WatchLoadAsync(Slot slot, AbstractAd ad)
+        {
+            var cancelled = await UniTask.Delay(LoadTimeout, DelayType.Realtime, cancellationToken: _lifetime.Token)
+                .SuppressCancellationThrow();
+            if (!cancelled && slot.Pending == ad) OnFailed(slot, ad, null);
         }
 
         private void OnLoaded(Slot slot, AbstractAd ad)
@@ -165,7 +177,8 @@ namespace Maze.Application.Platform
             ad.Dispose();
             var delay = RetryDelays[Math.Min(slot.Failures, RetryDelays.Length - 1)];
             slot.Failures++;
-            GameLog.Info(LogChannel.Analytics, $"VK Ads: no {slot.Kind} ad ({error?.Code}: {error?.Message}); again in {delay} s.");
+            var reason = error == null ? "no answer from the SDK" : $"{error.Code}: {error.Message}";
+            GameLog.Info(LogChannel.Analytics, $"VK Ads: no {slot.Kind} ad ({reason}); again in {delay} s.");
             RetryAsync(slot, delay).Forget();
         }
 

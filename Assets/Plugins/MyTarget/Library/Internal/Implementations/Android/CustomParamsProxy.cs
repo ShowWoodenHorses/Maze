@@ -74,23 +74,23 @@ namespace Mycom.Target.Unity.Internal.Implementations.Android
                 return;
             }
 
-            const String methodName = "setIcqIds";
+            // Maze patch: the plugin called Call("setIcqIds", null) — a null params array means no arguments, the
+            // SDK has no setIcqIds() and the exception broke every ad's creation (no ad ever loaded). Null = the
+            // SDK's default, nothing to set.
             if (value == null)
             {
-                _javaCustomParams.Call(methodName, null);
+                return;
             }
-            else
+
+            String[] array = new String[value.Length];
+            for (int i = 0; i < value.Length; i++)
             {
-                String[] array = new String[value.Length];
-                for (int i = 0; i < value.Length; i++)
-                {
-                    array[i] = Convert.ToString(value[i]);
-                }
-
-                using var javaArray = PlatformHelper.CreateJavaStringArray(array);
-
-                _javaCustomParams.Call(methodName, javaArray);
+                array[i] = Convert.ToString(value[i]);
             }
+
+            using var javaArray = PlatformHelper.CreateJavaStringArray(array);
+
+            _javaCustomParams.Call("setIcqIds", javaArray);
         }
 
         void ICustomParamsProxy.SetMrgsAppId(String value)
