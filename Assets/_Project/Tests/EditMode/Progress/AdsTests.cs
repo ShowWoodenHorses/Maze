@@ -106,6 +106,20 @@ namespace Maze.Tests.EditMode.Progress
         }
 
         [Test]
+        public void Interstitial_AtEveryBreak_WhenTheSiteKeepsTheFrequency()
+        {
+            _ads.ShowOnMenuReturnAsync(CancellationToken.None).GetAwaiter().GetResult();
+            Assert.AreEqual(0, _provider.Shown.Count, "Our policy: no ad on the way back to the menu.");
+
+            _provider.ManagesFrequency = true;
+            BeforeLevel("L1", fromMenu: true);
+            BeforeLevel("L2");
+            _ads.ShowOnMenuReturnAsync(CancellationToken.None).GetAwaiter().GetResult();
+            Assert.AreEqual(3, _provider.Shown.Count,
+                "GameDistribution: the first PLAY, every next level and every return to the menu; the SDK skips what is too soon.");
+        }
+
+        [Test]
         public void Sound_GoesOff_OnlyWhenTheAdReallyStarts()
         {
             _provider.CallStarted = false;
@@ -150,6 +164,10 @@ namespace Maze.Tests.EditMode.Progress
             public string Name => "Fake";
 
             public bool InterstitialBetweenLevelsOnly => BetweenLevelsOnly;
+
+            public bool ManagesFrequency;
+
+            public bool ManagesInterstitialFrequency => ManagesFrequency;
 
             public UniTask InitializeAsync(CancellationToken cancellation) => UniTask.CompletedTask;
 

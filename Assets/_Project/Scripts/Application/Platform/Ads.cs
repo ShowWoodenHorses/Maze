@@ -50,6 +50,13 @@ namespace Maze.Application.Platform
         /// </summary>
         bool InterstitialBetweenLevelsOnly { get; }
 
+        /// <summary>
+        /// The site's SDK limits interstitials itself and wants one at every break: each level start (the first PLAY
+        /// included) and each return to the menu after a level (GameDistribution: pre-roll and mid-roll). The game's
+        /// <see cref="AdPolicy"/> is not applied then.
+        /// </summary>
+        bool ManagesInterstitialFrequency => false;
+
         /// <param name="started">Called when the ad really starts playing (the game goes silent then, not at the request).</param>
         UniTask<AdResult> ShowAsync(AdKind kind, string placement, Action started, CancellationToken cancellation);
     }
@@ -77,7 +84,9 @@ namespace Maze.Application.Platform
 
     /// <summary>
     /// Ads of the game: rewarded ads for hints and map layers, an interstitial before a level start (retry, next,
-    /// from the menu) by <see cref="AdPolicy"/>. From the request to the end the ad is <see cref="IsShowing"/> (the game
+    /// from the menu) by <see cref="AdPolicy"/> — or, where the site keeps the frequency itself
+    /// (<see cref="IAdProvider.ManagesInterstitialFrequency"/>), at every level start and every return to the menu after
+    /// a level. From the request to the end the ad is <see cref="IsShowing"/> (the game
     /// blocks progress); the sound is paused only while the ad really plays (<see cref="SoundSuspension"/>).
     /// Reports every ad to analytics. Failures never break the flow: no ad = no reward / just go on. Ads switched off
     /// by the site (<see cref="AdResult.Disabled"/>) give rewards for free.
@@ -143,8 +152,15 @@ namespace Maze.Application.Platform
         public async UniTask ShowBeforeLevelAsync(string levelId, bool fromMenu, CancellationToken cancellation)
         {
             if (fromMenu && _provider.InterstitialBetweenLevelsOnly) return;
-            if (!_policy.AllowsInterstitial(LevelNumber(levelId), Clock())) return;
+            if (!_provider.ManagesInterstitialFrequency && !_policy.AllowsInterstitial(LevelNumber(levelId), Clock())) return;
             await ShowAsync(AdKind.Interstitial, "level_start", cancellation);
+        }
+
+        /// <summary>Back to the menu after a level ended: an interstitial only where the site wants one there.</summary>
+        public async UniTask ShowOnMenuReturnAsync(CancellationToken cancellation)
+        {
+            if (!_provider.ManagesInterstitialFrequency) return;
+            await ShowAsync(AdKind.Interstitial, "menu_return", cancellation);
         }
 
         private async UniTask<AdResult> ShowAsync(AdKind kind, string placement, CancellationToken cancellation)

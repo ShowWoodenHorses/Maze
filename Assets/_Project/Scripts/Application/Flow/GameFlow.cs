@@ -115,8 +115,11 @@ namespace Maze.Application.Flow
         {
             if (HasLevel)
             {
+                var levelEnded = State == GameFlowState.Completed || State == GameFlowState.Failed;
                 SetState(GameFlowState.Loading);
                 await UnloadLevelAsync();
+                // From the result window: an interstitial where the site wants one at this break (over the loading screen).
+                if (levelEnded && _ads != null) await _ads.ShowOnMenuReturnAsync(cancellation);
             }
 
             cancellation.ThrowIfCancellationRequested();

@@ -47,6 +47,12 @@ namespace Maze.Editor.Build
         [MenuItem("Maze/Build/WebGL VK Games (Release)")]
         public static void WebGLVkRelease() => Build(BuildTarget.WebGL, development: false, WebPlatform.Vk);
 
+        [MenuItem("Maze/Build/WebGL GameDistribution (Development)")]
+        public static void WebGLGameDistributionDevelopment() => Build(BuildTarget.WebGL, development: true, WebPlatform.GameDistribution);
+
+        [MenuItem("Maze/Build/WebGL GameDistribution (Release)")]
+        public static void WebGLGameDistributionRelease() => Build(BuildTarget.WebGL, development: false, WebPlatform.GameDistribution);
+
         [MenuItem("Maze/Build/Android APK (Development)")]
         public static void AndroidDevelopment() => Build(BuildTarget.Android, development: true);
 

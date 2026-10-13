@@ -9,6 +9,8 @@ namespace Maze.Editor.Build
         CrazyGames = 2,
         /// <summary>VK Games: vk.com, m.vk.com, the VK apps (and later Odnoklassniki).</summary>
         Vk = 3,
+        /// <summary>GameDistribution: GD hosts the game and spreads it over thousands of game sites.</summary>
+        GameDistribution = 4,
     }
 
     internal static class WebPlatforms
@@ -22,6 +24,7 @@ namespace Maze.Editor.Build
             WebPlatform.Yandex => "MAZE_YANDEX",
             WebPlatform.CrazyGames => "MAZE_CRAZYGAMES",
             WebPlatform.Vk => "MAZE_VK",
+            WebPlatform.GameDistribution => "MAZE_GAMEDISTRIBUTION",
             _ => null,
         };
 
@@ -49,8 +52,39 @@ namespace Maze.Editor.Build
             // game's resources load (within 30 s).
             WebPlatform.Vk => "<script src=\"" + VkBridgeFile + "\"></script>\n    " +
                               "<script>vkBridge.send('VKWebAppInit').catch(function (e) { console.warn('[Maze] VKWebAppInit', e); });</script>",
+            WebPlatform.GameDistribution => GameDistributionHead(GameDistributionGameId),
             _ => "",
         };
+
+        /// <summary>The game's id in the GameDistribution developer panel (Upload tab). Rebuild after a change.</summary>
+        public const string GameDistributionGameId = "738b7f3f16bf4176bb70e01f8d655802";
+
+        /// <summary>
+        /// GD's loader, as in its docs: <c>GD_OPTIONS</c>, then the SDK script once, while the game loads (not later —
+        /// GD rule). <c>onEvent</c> keeps SDK_READY / SDK_ERROR in <c>window.mazeGd</c> for the game (it may come before
+        /// the game starts) and passes every event to the game's listener (<c>MazeGd.jslib</c>).
+        /// </summary>
+        private static string GameDistributionHead(string gameId) =>
+            "<script>\n" +
+            "      window.mazeGd = { ready: false, error: null, listener: null };\n" +
+            "      window.GD_OPTIONS = {\n" +
+            $"        gameId: '{gameId.Trim()}',\n" +
+            "        advertisementSettings: { autoplay: false },\n" +
+            "        onEvent: function (event) {\n" +
+            "          var gd = window.mazeGd;\n" +
+            "          if (event.name === 'SDK_READY') gd.ready = true;\n" +
+            "          else if (event.name === 'SDK_ERROR') gd.error = event.message || 'SDK_ERROR';\n" +
+            "          if (gd.listener) gd.listener(event);\n" +
+            "        }\n" +
+            "      };\n" +
+            "      (function (d, s, id) {\n" +
+            "        var js, fjs = d.getElementsByTagName(s)[0];\n" +
+            "        if (d.getElementById(id)) return;\n" +
+            "        js = d.createElement(s); js.id = id;\n" +
+            "        js.src = 'https://html5.api.gamedistribution.com/main.min.js';\n" +
+            "        fjs.parentNode.insertBefore(js, fjs);\n" +
+            "      }(document, 'script', 'gamedistribution-jssdk'));\n" +
+            "    </script>";
 
         /// <summary>The standard Metrica counter snippet; <c>window.mazeMetrika</c> tells the game its id.</summary>
         private static string YandexMetrika(string counter)
@@ -75,8 +109,11 @@ namespace Maze.Editor.Build
 
         public const string VkBridgeFile = "vk-bridge.min.js";
 
-        /// <summary>The site takes the build as a zip archive (index.html at its root): Yandex Games, CrazyGames (HTML5).</summary>
+        /// <summary>
+        /// The site takes the build as a zip archive (index.html at its root): Yandex Games, CrazyGames (HTML5),
+        /// GameDistribution.
+        /// </summary>
         public static bool NeedsArchive(WebPlatform platform) =>
-            platform == WebPlatform.Yandex || platform == WebPlatform.CrazyGames;
+            platform == WebPlatform.Yandex || platform == WebPlatform.CrazyGames || platform == WebPlatform.GameDistribution;
     }
 }

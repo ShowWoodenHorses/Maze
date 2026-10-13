@@ -174,6 +174,8 @@
 | **WebGL CrazyGames (Release)** | WebGL для CrazyGames → `Builds/WebGL-CrazyGames` + `WebGL-CrazyGames.zip` (загружать в портал как HTML5) |
 | **WebGL VK Games (Development)** | WebGL для Игр ВКонтакте, dev-сборка → `Builds/WebGL-Vk-dev` + `Builds/vk-hosting-config.json` |
 | **WebGL VK Games (Release)** | WebGL для Игр ВКонтакте → `Builds/WebGL-Vk` + `Builds/vk-hosting-config.json` (выкладка на хостинг VK — см. ниже) |
+| **WebGL GameDistribution (Development)** | WebGL для GameDistribution, dev-сборка (для своей проверки) → `Builds/WebGL-GameDistribution-dev` + `.zip` |
+| **WebGL GameDistribution (Release)** | WebGL для GameDistribution → `Builds/WebGL-GameDistribution` + `WebGL-GameDistribution.zip` (его загружать в панель GD, вкладка Upload) |
 | **Android APK (Development)** | APK без магазина (реклама-заглушка, аналитика в лог), dev-сборка → `Builds/Android/Mazebound-dev.apk` |
 | **Android APK (Release)** | то же, релиз (подписан ключом, см. ниже) |
 | **Android RuStore APK (Development)** | APK для RuStore, dev-сборка (отладочный ключ) → `Builds/Android/Mazebound-RuStore-dev.apk` |
@@ -200,6 +202,14 @@
 входа (ключ сохранится), каждую выкладку надо подтвердить на телефоне; на вопросы «update prod/dev urls?» — да. Только
 в режим разработки (видят админы): `set MINI_APPS_ENVIRONMENT=dev` перед командой (cmd) или `$env:MINI_APPS_ENVIRONMENT="dev"`
 (PowerShell). Лимит — 24 выкладки в сутки; адрес игры меняется при каждой выкладке.
+**GameDistribution:** symbol `MAZE_GAMEDISTRIBUTION`, в `<head>` — `GD_OPTIONS` с Game ID (`WebPlatforms.GameDistributionGameId`
+в `Editor/Build/WebPlatform.cs`) и загрузчик их SDK (`html5.api.gamedistribution.com/main.min.js`). Игра: interstitial перед
+каждым уровнем (и первым PLAY) и при выходе в меню с окна результата — частоту ведёт SDK GD (наши «не раньше 4-го уровня /
+раз в 90 с» здесь выключены); rewarded как везде, награда — только за досмотренную; пауза и тишина на время рекламы.
+Облака, языка площадки, входа, ссылок и почты нет (правила GD) — сейв в браузере, язык системы. В панели GD: загрузить zip,
+включить **rewarded ads**, открыть игру в iframe со страницы загрузки и **досмотреть тестовый pre-roll** (без этого GD не
+активирует игру), отключив блокировщик рекламы. Тестовая реклама в своей проверке — `gdsdk.openConsole()` в консоли
+браузера (выключить — очистить localStorage). Без SDK (заблокирован, нет сети) игра идёт как без площадки.
 Проверка на своём компьютере (нужен Node.js): `npx @yandex-games/sdk-dev-proxy -p Builds/WebGL-Yandex-dev --app-id 628471`
 — прокси печатает ссылку вида `https://yandex.ru/games/app/628471?game_url=https://localhost:…`, игра открывается внутри ЯИ
 с настоящим SDK; `--dev-mode true` — имитация SDK без площадки. Вне ЯИ (просто открыть папку) SDK нет — игра работает как без площадки.
