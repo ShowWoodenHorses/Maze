@@ -25,11 +25,10 @@
       "url": "https://package.openupm.com"
     },
     "com.google.external-dependency-manager": {
-      "version": "1.2.190",
+      "version": "file:com.google.external-dependency-manager",
       "depth": 0,
-      "source": "registry",
-      "dependencies": {},
-      "url": "https://package.openupm.com"
+      "source": "embedded",
+      "dependencies": {}
     },
     "com.unity.addressables": {
       "version": "4.1.0",
@@ -59,6 +58,15 @@
       "depth": 2,
       "source": "builtin",
       "dependencies": {}
+    },
+    "com.unity.external-dependency-manager": {
+      "version": "2.1.1",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {
+        "com.unity.modules.uielements": "1.0.0"
+      },
+      "url": "https://packages.unity.com"
     },
     "com.unity.feature.development": {
       "version": "1.0.2",
