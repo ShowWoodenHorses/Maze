@@ -2,19 +2,20 @@ using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using Maze.Core.Common;
-using YandexMobileAds;
-using YandexMobileAds.Base;
+using Mycom.Target.Unity.Ads;
+using Mycom.Target.Unity.Common;
 
 namespace Maze.Application.Platform
 {
     /// <summary>
-    /// Ads of the Android build: Yandex Mobile Ads (Yandex Advertising Network), units from <see cref="RuStoreKeys"/>.
-    /// One rewarded and one interstitial ad are kept loaded ahead (a new one after each show; a failed load is retried
-    /// later, longer and longer). The player's rewarded button waits a few seconds for an ad still loading; an
-    /// interstitial that is not ready is skipped. The ad's own activity covers the game: Unity is paused meanwhile and
-    /// the SDK's callbacks arrive when it resumes. <c>started</c> is the ad really on screen.
+    /// Ads of the Android build: VK Ad Network (ex. myTarget, plugin in <c>Assets/Plugins/MyTarget</c>), slots from
+    /// <see cref="RuStoreKeys"/>. One rewarded and one interstitial ad are kept loaded ahead (an ad object shows once:
+    /// a new one is loaded after each show; a failed load is retried later, longer and longer). The player's rewarded
+    /// button waits a few seconds for an ad still loading; an interstitial that is not ready is skipped. The ad's own
+    /// activity covers the game: Unity is paused meanwhile and the SDK's callbacks arrive when it resumes (the plugin
+    /// queues them for the main thread, one per frame). <c>started</c> is the ad really on screen.
     /// </summary>
-    public sealed class YandexMobileAdsProvider : IAdProvider, IDisposable
+    public sealed class VkAdsProvider : IAdProvider, IDisposable
     {
         /// <summary>How long the player's rewarded button waits for an ad that is still loading.</summary>
         public static readonly TimeSpan RewardedWait = TimeSpan.FromSeconds(4);
@@ -22,22 +23,25 @@ namespace Maze.Application.Platform
         /// <summary>Seconds before loading again after the 1st, 2nd… failure in a row (no fill, no network).</summary>
         private static readonly int[] RetryDelays = { 10, 30, 60, 120 };
 
+        /// <summary>Frames the result waits after the dismissal: the plugin delivers one queued callback per frame.</summary>
+        private const int CallbackFrames = 3;
+
         private readonly CancellationTokenSource _lifetime = new CancellationTokenSource();
         private readonly Slot _rewarded = new Slot(AdKind.Rewarded, RuStoreKeys.Rewarded);
         private readonly Slot _interstitial = new Slot(AdKind.Interstitial, RuStoreKeys.Interstitial);
-        private RewardedAdLoader _rewardedLoader;
-        private InterstitialAdLoader _interstitialLoader;
+        private bool _initialized;
 
-        public string Name => "YandexMobileAds";
+        public string Name => "VkAds";
 
         public bool InterstitialBetweenLevelsOnly => false;
 
         public UniTask InitializeAsync(CancellationToken cancellation)
         {
             if (RuStoreKeys.DemoAds)
-                GameLog.Warning(LogChannel.Analytics, "Yandex Mobile Ads: demo ad units (RuStoreKeys) — test ads, no income.");
-            _rewardedLoader = new RewardedAdLoader();
-            _interstitialLoader = new InterstitialAdLoader();
+                GameLog.Warning(LogChannel.Analytics, "VK Ads: demo slots (RuStoreKeys) — test ads, no income.");
+            MyTargetManager.DebugMode = UnityEngine.Debug.isDebugBuild;
+            MyTargetManager.InitSdk();
+            _initialized = true;
             Load(_rewarded);
             Load(_interstitial);
             return UniTask.CompletedTask;
@@ -60,23 +64,24 @@ namespace Maze.Application.Platform
             var rewardedAd = slot.Rewarded;
             slot.Interstitial = null;
             slot.Rewarded = null;
+            slot.Shown = true;
             var completion = new UniTaskCompletionSource<AdResult>();
             var rewarded = false;
             try
             {
                 if (rewardedAd != null)
                 {
-                    rewardedAd.OnAdShown += (_, _) => started?.Invoke();
-                    rewardedAd.OnRewarded += (_, _) => rewarded = true;
-                    rewardedAd.OnAdDismissed += (_, _) => CompleteAfterCallbacks(completion, () => rewarded ? AdResult.Rewarded : AdResult.Closed);
-                    rewardedAd.OnAdFailedToShow += (_, e) => Fail(completion, placement, e?.Message);
+                    rewardedAd.AdDisplayed += (_, _) => started?.Invoke();
+                    rewardedAd.AdRewarded += (_, _) => rewarded = true;
+                    rewardedAd.AdDismissed += (_, _) => CompleteAfterCallbacks(completion, () => rewarded ? AdResult.Rewarded : AdResult.Closed);
+                    rewardedAd.AdFailedToShow += (_, _) => Fail(completion, placement);
                     rewardedAd.Show();
                 }
                 else
                 {
-                    interstitial.OnAdShown += (_, _) => started?.Invoke();
-                    interstitial.OnAdDismissed += (_, _) => CompleteAfterCallbacks(completion, () => AdResult.Closed);
-                    interstitial.OnAdFailedToShow += (_, e) => Fail(completion, placement, e?.Message);
+                    interstitial.AdDisplayed += (_, _) => started?.Invoke();
+                    interstitial.AdDismissed += (_, _) => CompleteAfterCallbacks(completion, () => AdResult.Closed);
+                    interstitial.AdFailedToShow += (_, _) => Fail(completion, placement);
                     interstitial.Show();
                 }
 
@@ -84,8 +89,9 @@ namespace Maze.Application.Platform
             }
             finally
             {
-                rewardedAd?.Destroy();
-                interstitial?.Destroy();
+                rewardedAd?.Dispose();
+                interstitial?.Dispose();
+                slot.Shown = false;
                 Load(slot); // the next one, ready for the next request
             }
         }
@@ -100,52 +106,66 @@ namespace Maze.Application.Platform
 
         /// <summary>
         /// The reward callback may come right after the dismissal (both are queued for the main thread when Unity
-        /// resumes): the result is read a frame later.
+        /// resumes): the result is read a few frames later.
         /// </summary>
         private static void CompleteAfterCallbacks(UniTaskCompletionSource<AdResult> completion, Func<AdResult> result)
         {
-            UniTask.DelayFrame(2, PlayerLoopTiming.Update).ContinueWith(() => completion.TrySetResult(result())).Forget();
+            UniTask.DelayFrame(CallbackFrames, PlayerLoopTiming.Update).ContinueWith(() => completion.TrySetResult(result())).Forget();
         }
 
-        private static void Fail(UniTaskCompletionSource<AdResult> completion, string placement, string message)
+        private static void Fail(UniTaskCompletionSource<AdResult> completion, string placement)
         {
-            GameLog.Warning(LogChannel.Analytics, $"Yandex Mobile Ads: '{placement}' failed to show: {message}");
+            GameLog.Warning(LogChannel.Analytics, $"VK Ads: '{placement}' failed to show.");
             completion.TrySetResult(AdResult.Failed);
         }
 
         private void Load(Slot slot)
         {
-            if (slot.Ready || slot.Loading || _lifetime.IsCancellationRequested) return;
-            if (_rewardedLoader == null || _interstitialLoader == null) return; // not initialized
+            if (!_initialized || slot.Ready || slot.Loading || slot.Shown || _lifetime.IsCancellationRequested) return;
             slot.Loading = true;
-            var request = new AdRequest(slot.Unit);
             if (slot.Kind == AdKind.Rewarded)
-                _rewardedLoader.LoadAd(request, ad => OnLoaded(slot, ad, null), error => OnFailed(slot, error));
+            {
+                var ad = new RewardedAd(slot.SlotId);
+                slot.Pending = ad;
+                ad.AdLoadCompleted += (_, _) => OnLoaded(slot, ad);
+                ad.AdLoadFailed += (_, e) => OnFailed(slot, ad, e);
+                ad.Load();
+            }
             else
-                _interstitialLoader.LoadAd(request, ad => OnLoaded(slot, null, ad), error => OnFailed(slot, error));
+            {
+                var ad = new InterstitialAd(slot.SlotId);
+                slot.Pending = ad;
+                ad.AdLoadCompleted += (_, _) => OnLoaded(slot, ad);
+                ad.AdLoadFailed += (_, e) => OnFailed(slot, ad, e);
+                ad.Load();
+            }
         }
 
-        private void OnLoaded(Slot slot, RewardedAd rewarded, Interstitial interstitial)
+        private void OnLoaded(Slot slot, AbstractAd ad)
         {
+            if (slot.Pending != ad) return; // a cleared one
+            slot.Pending = null;
             slot.Loading = false;
             slot.Failures = 0;
             if (_lifetime.IsCancellationRequested)
             {
-                rewarded?.Destroy();
-                interstitial?.Destroy();
+                ad.Dispose();
                 return;
             }
 
-            slot.Rewarded = rewarded;
-            slot.Interstitial = interstitial;
+            slot.Rewarded = ad as RewardedAd;
+            slot.Interstitial = ad as InterstitialAd;
         }
 
-        private void OnFailed(Slot slot, AdFailedToLoadEventArgs error)
+        private void OnFailed(Slot slot, AbstractAd ad, ErrorEventArgs error)
         {
+            if (slot.Pending != ad) return;
+            slot.Pending = null;
             slot.Loading = false;
+            ad.Dispose();
             var delay = RetryDelays[Math.Min(slot.Failures, RetryDelays.Length - 1)];
             slot.Failures++;
-            GameLog.Info(LogChannel.Analytics, $"Yandex Mobile Ads: no {slot.Kind} ad ({error?.Message}); again in {delay} s.");
+            GameLog.Info(LogChannel.Analytics, $"VK Ads: no {slot.Kind} ad ({error?.Code}: {error?.Message}); again in {delay} s.");
             RetryAsync(slot, delay).Forget();
         }
 
@@ -160,26 +180,31 @@ namespace Maze.Application.Platform
         private sealed class Slot
         {
             public readonly AdKind Kind;
-            public readonly string Unit;
+            public readonly uint SlotId;
             public RewardedAd Rewarded;
-            public Interstitial Interstitial;
+            public InterstitialAd Interstitial;
+            public AbstractAd Pending;
             public bool Loading;
+            public bool Shown;
             public int Failures;
 
-            public Slot(AdKind kind, string unit)
+            public Slot(AdKind kind, uint slotId)
             {
                 Kind = kind;
-                Unit = unit;
+                SlotId = slotId;
             }
 
             public bool Ready => Rewarded != null || Interstitial != null;
 
             public void Clear()
             {
-                Rewarded?.Destroy();
-                Interstitial?.Destroy();
+                Rewarded?.Dispose();
+                Interstitial?.Dispose();
+                Pending?.Dispose();
                 Rewarded = null;
                 Interstitial = null;
+                Pending = null;
+                Loading = false;
             }
         }
     }

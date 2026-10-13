@@ -35,7 +35,7 @@ namespace Maze.Application.Platform
     }
 
     /// <summary>
-    /// The ad SDK of a platform (Yandex Games SDK, Yandex Mobile Ads…). Shows one ad and reports how it ended; knows
+    /// The ad SDK of a platform (Yandex Games SDK, VK Ad Network…). Shows one ad and reports how it ended; knows
     /// nothing about the game. A new platform = a new provider.
     /// </summary>
     public interface IAdProvider

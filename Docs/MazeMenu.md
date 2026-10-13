@@ -204,10 +204,10 @@
 — прокси печатает ссылку вида `https://yandex.ru/games/app/628471?game_url=https://localhost:…`, игра открывается внутри ЯИ
 с настоящим SDK; `--dev-mode true` — имитация SDK без площадки. Вне ЯИ (просто открыть папку) SDK нет — игра работает как без площадки.
 
-**RuStore (Android):** symbol `MAZE_RUSTORE` — реклама Yandex Mobile Ads, аналитика AppMetrica, в настройках (Other) — почта
+**RuStore (Android):** symbol `MAZE_RUSTORE` — реклама — Рекламная сеть VK, аналитика — MyTracker, в настройках (Other) — почта
 поддержки и «Политика конфиденциальности» (кнопка открывает `Contacts.PrivacyPolicyUrl`). Ключи — в одном месте,
-`RuStoreKeys` (`Scripts/Application/Platform/Android/RuStore.cs`): пустой ключ AppMetrica — аналитика только в лог, пустые
-блоки рекламы — демо-блоки Яндекса (тестовая реклама, без дохода). Команда сама выставляет: компанию **BGames**, пакет
+`RuStoreKeys` (`Scripts/Application/Platform/Android/RuStore.cs`): пустой ключ MyTracker — аналитика только в лог, нулевые
+слоты рекламы — демо-слоты VK (тестовая реклама, без дохода). Команда сама выставляет: компанию **BGames**, пакет
 **ru.bgames.mazebound** (после публикации не менять), versionCode из **Version** в Player Settings (`1.2.3` → 10203; перед
 каждой загрузкой в RuStore поднять Version), IL2CPP ARM64 + ARMv7, target API — новейший установленный, APK (не AAB), иконку
 (`Art/AppIcon`), без заставки Unity. Библиотеки SDK подтягивает External Dependency Manager в Gradle-шаблоны

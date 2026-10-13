@@ -5,8 +5,8 @@
         "Maze.Core",
         "Maze.Application",
         "UniTask",
-        "YandexMobileAds",
-        "AppMetrica"
+        "MyTarget",
+        "MyTracker"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

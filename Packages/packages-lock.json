@@ -179,32 +179,6 @@
         "com.unity.modules.imgui": "1.0.0"
       }
     },
-    "com.yandex.mobileads": {
-      "version": "8.5.0",
-      "depth": 0,
-      "source": "registry",
-      "dependencies": {
-        "com.google.external-dependency-manager": "1.2.178",
-        "com.yandex.mobileads.appmetrica.adrevenue.adapter": "1.0.0"
-      },
-      "url": "https://package.openupm.com"
-    },
-    "com.yandex.mobileads.appmetrica.adrevenue.adapter": {
-      "version": "1.0.0",
-      "depth": 1,
-      "source": "registry",
-      "dependencies": {},
-      "url": "https://package.openupm.com"
-    },
-    "io.appmetrica.analytics": {
-      "version": "6.10.0",
-      "depth": 0,
-      "source": "registry",
-      "dependencies": {
-        "com.google.external-dependency-manager": "1.2.187"
-      },
-      "url": "https://package.openupm.com"
-    },
     "jp.hadashikick.vcontainer": {
       "version": "1.19.0",
       "depth": 0,

@@ -8,7 +8,7 @@ using Maze.Core.Common;
 namespace Maze.Application.Platform
 {
     /// <summary>
-    /// One analytics backend of a platform (Yandex Metrica on Yandex Games, AppMetrica on Android, a log in the
+    /// One analytics backend of a platform (Yandex Metrica on Yandex Games, MyTracker on Android, a log in the
     /// editor…). Gets ready-made events; knows nothing about the game. A new platform = a new sink.
     /// </summary>
     public interface IAnalyticsSink

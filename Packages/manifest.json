@@ -8,8 +8,6 @@
     "com.unity.inputsystem": "1.18.0",
     "com.unity.timeline": "1.8.10",
     "com.unity.ugui": "2.0.0",
-    "com.yandex.mobileads": "8.5.0",
-    "io.appmetrica.analytics": "6.10.0",
     "jp.hadashikick.vcontainer": "1.19.0",
     "com.unity.modules.accessibility": "1.0.0",
     "com.unity.modules.adaptiveperformance": "1.0.0",
@@ -53,9 +51,7 @@
       "scopes": [
         "jp.hadashikick",
         "com.cysharp",
-        "com.google.external-dependency-manager",
-        "com.yandex",
-        "io.appmetrica"
+        "com.google.external-dependency-manager"
       ]
     }
   ]

@@ -308,7 +308,7 @@ namespace Maze.Editor.Build
         }
 
         /// <summary>
-        /// External Dependency Manager writes the Android libraries the SDKs need (Yandex Mobile Ads, AppMetrica) into
+        /// External Dependency Manager writes the Android libraries the SDKs need (VK Ad Network, MyTracker) into
         /// the Gradle templates; Gradle downloads them while building.
         /// </summary>
         private static string ResolveAndroidDependencies()

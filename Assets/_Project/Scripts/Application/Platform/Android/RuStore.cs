@@ -6,37 +6,36 @@ namespace Maze.Application.Platform
 {
     /// <summary>
     /// Keys of the Android build for RuStore — the one place to set them; rebuild after a change. Empty means "not yet":
-    /// AppMetrica stays off (events only go to the log), ads use Yandex's demo units (test ads, no income).
+    /// MyTracker stays off (events only go to the log), ads use VK Ad Network's demo slots (test ads, no income).
     /// </summary>
     public static class RuStoreKeys
     {
-        /// <summary>AppMetrica API key (appmetrica.yandex.ru → the app's settings).</summary>
-        public const string AppMetricaApiKey = "";
+        /// <summary>MyTracker SDK key (tracker.my.com → the app's settings).</summary>
+        public const string MyTrackerSdkKey = "08865277942125933786";
 
-        /// <summary>Rewarded ad unit id (Yandex Advertising Network partner interface, "R-M-…").</summary>
-        public const string RewardedAdUnit = "";
+        /// <summary>Rewarded ad slot id (VK Ad Network partner interface → the ad unit, <c>slot_id</c>); 0 = not yet.</summary>
+        public const uint RewardedSlotId = 2088152;
 
-        /// <summary>Interstitial ad unit id ("R-M-…").</summary>
-        public const string InterstitialAdUnit = "";
+        /// <summary>Interstitial ad slot id; 0 = not yet.</summary>
+        public const uint InterstitialSlotId = 2088149;
 
-        public const string DemoRewardedAdUnit = "demo-rewarded-yandex";
+        /// <summary>VK Ad Network's demo slots (its demo app): rewarded video and a video interstitial.</summary>
+        public const uint DemoRewardedSlotId = 45101;
 
-        public const string DemoInterstitialAdUnit = "demo-interstitial-yandex";
+        public const uint DemoInterstitialSlotId = 10138;
 
-        public static string Rewarded => Or(RewardedAdUnit, DemoRewardedAdUnit);
+        public static uint Rewarded => RewardedSlotId != 0 ? RewardedSlotId : DemoRewardedSlotId;
 
-        public static string Interstitial => Or(InterstitialAdUnit, DemoInterstitialAdUnit);
+        public static uint Interstitial => InterstitialSlotId != 0 ? InterstitialSlotId : DemoInterstitialSlotId;
 
-        /// <summary>The ads are Yandex's demo ones (no real units yet).</summary>
-        public static bool DemoAds => string.IsNullOrWhiteSpace(RewardedAdUnit) || string.IsNullOrWhiteSpace(InterstitialAdUnit);
-
-        private static string Or(string value, string fallback) => string.IsNullOrWhiteSpace(value) ? fallback : value.Trim();
+        /// <summary>The ads are VK's demo ones (no real slots yet).</summary>
+        public static bool DemoAds => RewardedSlotId == 0 || InterstitialSlotId == 0;
     }
 
     /// <summary>
     /// The Android app from RuStore: no site SDK — the language is the system's, saves are local (<c>PlayerPrefs</c>);
-    /// the store's rules: a support contact and the privacy policy in the settings. Ads — <see cref="YandexMobileAdsProvider"/>,
-    /// analytics — <see cref="AppMetricaSink"/>.
+    /// the store's rules: a support contact and the privacy policy in the settings. Ads — <see cref="VkAdsProvider"/>,
+    /// analytics — <see cref="MyTrackerSink"/>.
     /// </summary>
     public sealed class RuStorePlatform : IGamePlatform
     {

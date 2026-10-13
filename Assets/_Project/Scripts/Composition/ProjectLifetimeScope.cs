@@ -66,8 +66,8 @@ namespace Maze.Composition
 #elif MAZE_VK
             builder.Register<VkAdProvider>(Lifetime.Singleton).As<IAdProvider>(); // VK's own statistics: no sink
 #elif MAZE_RUSTORE
-            builder.Register<AppMetricaSink>(Lifetime.Singleton).As<IAnalyticsSink>();
-            builder.Register<YandexMobileAdsProvider>(Lifetime.Singleton).As<IAdProvider>();
+            builder.Register<MyTrackerSink>(Lifetime.Singleton).As<IAnalyticsSink>();
+            builder.Register<VkAdsProvider>(Lifetime.Singleton).As<IAdProvider>();
 #else
             builder.Register<SimulatedAdProvider>(Lifetime.Singleton).As<IAdProvider>();
 #endif
